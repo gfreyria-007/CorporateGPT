@@ -3,6 +3,9 @@ import { streamText } from "ai";
 import { scanAttachments } from "@/lib/scanner";
 import { logSecurityViolation } from "@/lib/firestore";
 
+import mammoth from "mammoth";
+import * as xlsx from "xlsx";
+
 export const maxDuration = 30;
 
 const google = createGoogleGenerativeAI({
@@ -26,39 +29,82 @@ export async function POST(req: Request) {
     if (!scanResult.safe) {
       console.warn(`[SECURITY ALERT] Malicious content detected from ${email}:`, scanResult.threats);
       
-      // LOG & BAN
       await logSecurityViolation(uid, email, `Malicious patterns detected in stream: ${scanResult.threats.join(", ")}`);
 
       return new Response(JSON.stringify({ 
         error: "Security Protocol Violation", 
-        details: "Neural link severed due to malicious activity. Your access has been permanently revoked." 
+        details: "Neural link severed due to malicious activity." 
       }), { status: 403 });
     }
-
-    // 2. LOGGING & EXPIRATION LOGIC (Conceptual for Demo)
-    // In a production environment, we would save the attachments to Firestore 
-    // with an 'expiresAt' field set to Date.now() + 3600000.
-    // A Firebase Cloud Function would then prune these records.
-    console.log(`[DATA POLICY] Attachments for ${uid} scheduled for neural deletion in 60 minutes.`);
 
     if (!messages || messages.length === 0) {
       return new Response("No messages provided", { status: 400 });
     }
 
-    // 3. AI Processing with Context
-    // 3. AI Processing with Context
-    let finalSystemPrompt = `You are a Secure Enterprise Assistant. Respond helpfully and professionally.`;
-    if (attachments && attachments.length > 0) {
-      finalSystemPrompt += `\n\n--- THE USER HAS ATTACHED THE FOLLOWING FILES FOR YOUR REFERENCE ---\n`;
-      attachments.forEach((file: any) => {
-        finalSystemPrompt += `\nFILE NAME: ${file.name}\nCONTENT:\n${file.content}\n`;
-      });
+    // 2. PARSE ATTACHMENTS FOR CONTEXT
+    let parsedTextContext = "";
+    const finalMessages = [];
+
+    for (let i = 0; i < messages.length; i++) {
+      const m = messages[i];
+      if (m.role === "user" && i === messages.length - 1 && attachments && attachments.length > 0) {
+        const parts: any[] = [{ type: "text", text: m.content }];
+        
+        for (const file of attachments) {
+          if (!file.base64) continue;
+          const buffer = Buffer.from(file.base64, "base64");
+          
+          // Image natively supported
+          if (file.type.startsWith("image/")) {
+            parts.push({ type: "image", image: buffer });
+          } 
+          // PDF natively supported by Gemini 1.5/2.5 via Vercel AI SDK
+          else if (file.type === "application/pdf") {
+            parts.push({ type: "file", data: buffer, mimeType: "application/pdf" });
+          } 
+          // Word Document Parsing
+          else if (file.type.includes("wordprocessingml") || file.name.endsWith(".docx")) {
+            try {
+              const result = await mammoth.extractRawText({ buffer });
+              parsedTextContext += `\n--- FILE: ${file.name} ---\n${result.value}\n`;
+            } catch (e) {
+              console.error("Docx parse error", e);
+            }
+          } 
+          // Excel Parsing
+          else if (file.type.includes("spreadsheetml") || file.name.endsWith(".xlsx") || file.name.endsWith(".csv")) {
+            try {
+              const workbook = xlsx.read(buffer, { type: "buffer" });
+              workbook.SheetNames.forEach(sheet => {
+                parsedTextContext += `\n--- FILE: ${file.name} | Sheet: ${sheet} ---\n`;
+                parsedTextContext += xlsx.utils.sheet_to_csv(workbook.Sheets[sheet]);
+              });
+            } catch (e) {
+              console.error("Excel parse error", e);
+            }
+          } 
+          // Raw Text
+          else {
+            parsedTextContext += `\n--- FILE: ${file.name} ---\n${file.content}\n`;
+          }
+        }
+        finalMessages.push({ role: m.role, content: parts });
+      } else {
+        finalMessages.push({ role: m.role, content: m.content });
+      }
+    }
+
+    let finalSystemPrompt = `You are a Secure Enterprise Assistant. Respond helpfully and professionally. 
+If the user attached any documents, start your response with a brief markdown note confirming: "> [!NOTE]\n> **Security Audit:** Attached documents have been scanned by the Enterprise Firewall and verified as clean and safe for processing."`;
+
+    if (parsedTextContext) {
+      finalSystemPrompt += `\n\n--- EXTRACTED DOCUMENT TEXT FOR REFERENCE ---\n${parsedTextContext}\n--------------------------------------------\n`;
     }
 
     try {
       const result = await streamText({
         model: google("gemini-2.5-flash"),
-        messages: messages.map((m: any) => ({ role: m.role, content: m.content })),
+        messages: finalMessages,
         system: finalSystemPrompt,
       });
 

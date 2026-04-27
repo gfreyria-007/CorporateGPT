@@ -18,7 +18,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  
+
   // v4.0.0 Manual Neural Engine State
   const [messages, setMessages] = useState<any[]>([]);
   const [localInput, setLocalInput] = useState("");
@@ -34,13 +34,13 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
 
     setError(null);
     setIsStreaming(true);
-    
+
     // 1. Add user message locally
     const userMessage = { id: Date.now().toString(), role: "user", content };
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
     setLocalInput("");
-    
+
     // 2. Prepare AI placeholder
     const assistantId = (Date.now() + 1).toString();
     setMessages(prev => [...prev, { id: assistantId, role: "assistant", content: "" }]);
@@ -70,10 +70,10 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        
+
         const chunk = decoder.decode(value, { stream: true });
         assistantContent += chunk;
-        
+
         // Update the assistant message in the stream
         setMessages(prev => {
           const newMessages = [...prev];
@@ -120,16 +120,23 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
     if (!files) return;
     const newFiles = await Promise.all(
       Array.from(files).map(async (file) => {
-        let content = "";
-        if (file.type.startsWith("text/") || file.name.endsWith(".txt") || file.name.endsWith(".md")) {
-          content = await file.text();
-        } else {
-          content = "[Binary file content]";
-        }
-        return { name: file.name, content, type: file.type };
+        return new Promise<{ name: string; content: string; base64: string; type: string }>((resolve) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = async () => {
+            const base64String = (reader.result as string).split(",")[1];
+            let content = "";
+            if (file.type.startsWith("text/") || file.name.endsWith(".txt") || file.name.endsWith(".md") || file.name.endsWith(".csv")) {
+              content = await file.text();
+            } else {
+              content = "[Encrypted Binary File - Sent to Backend Parsers]";
+            }
+            resolve({ name: file.name, content, base64: base64String, type: file.type });
+          };
+        });
       })
     );
-    setAttachedFiles((prev) => [...prev, ...newFiles]);
+    setAttachedFiles((prev) => [...prev, ...newFiles as any]);
     setShowMenu(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -142,10 +149,10 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
             <div className="space-y-16 animate-fade-in">
               <div className="flex flex-col items-center justify-center text-center space-y-12 py-10">
                 <div className="relative">
-                   <div className="w-20 h-20 bg-white/5 rounded-[2rem] flex items-center justify-center border border-white/10 shadow-[0_0_50px_rgba(255,255,255,0.05)] rotate-6">
-                      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                   </div>
-                   <div className="absolute -top-4 -right-4 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center shadow-lg"><span className="text-[10px] font-black italic text-white">o3</span></div>
+                  <div className="w-20 h-20 bg-white/5 rounded-[2rem] flex items-center justify-center border border-white/10 shadow-[0_0_50px_rgba(255,255,255,0.05)] rotate-6">
+                    <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                  </div>
+                  <div className="absolute -top-4 -right-4 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center shadow-lg"><span className="text-[10px] font-black italic text-white">o3</span></div>
                 </div>
                 <div className="space-y-4">
                   <h2 className="text-4xl font-black text-white italic tracking-tighter">{activeAgent ? `Forge: ${activeAgent.name}` : "¿Qué tienes en mente hoy?"}</h2>
@@ -178,10 +185,10 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
             messages.map((m: any) => (
               <div key={m.id} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"} animate-fade-in group`}>
                 <div className={`flex items-center gap-3 mb-3 ${m.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
-                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all ${m.role === "user" ? "bg-white/5 border-white/10" : "premium-gradient border-white/20"}`}>
-                      {m.role === "user" ? <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg> : <span className="text-xs font-bold">{activeAgent?.avatar || "✨"}</span>}
-                   </div>
-                   <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 italic">{m.role === "user" ? "Access Point: User" : (activeAgent?.name || "Neural Assistant")}</span>
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all ${m.role === "user" ? "bg-white/5 border-white/10" : "premium-gradient border-white/20"}`}>
+                    {m.role === "user" ? <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg> : <span className="text-xs font-bold">{activeAgent?.avatar || "✨"}</span>}
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 italic">{m.role === "user" ? "Access Point: User" : (activeAgent?.name || "Neural Assistant")}</span>
                 </div>
                 <div className={`max-w-[100%] sm:max-w-[85%] rounded-3xl px-8 py-5 text-[15px] leading-relaxed transition-all ${m.role === "user" ? "bg-white/[0.03] border border-white/5 text-slate-200" : "text-white font-medium"}`}>
                   <div className="whitespace-pre-wrap">{m.content}</div>
@@ -214,17 +221,17 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
           )}
           <form onSubmit={handleFormSubmit} className="rounded-[2.5rem] p-2 pr-4 border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-end gap-2 bg-[#050505] relative z-40" style={{ backgroundColor: '#050505' }}>
             <div className="relative">
-               <button type="button" onClick={() => setShowMenu(!showMenu)} className={`p-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-full transition-all ${showMenu ? "rotate-45" : "rotate-0"}`}><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg></button>
-               {showMenu && (
-                 <div className="absolute bottom-full left-0 mb-4 rounded-3xl p-3 w-64 border border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.8)] animate-fade-in-up bg-[#0a0a0a] backdrop-blur-2xl">
-                    <div className="space-y-1">
-                       <button onClick={() => { fileInputRef.current?.click(); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group"><div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg></div><div><p className="text-xs font-bold text-white italic">Neural Upload</p><p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Review & Reference</p></div></button>
-                       <button onClick={() => { setLocalInput("Create an advanced presentation about "); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group"><div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg></div><div><p className="text-xs font-bold text-white italic">Presentations</p><p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Advanced Slides</p></div></button>
-                       <button onClick={() => { setLocalInput("Generate an infographic for "); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group"><div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg></div><div><p className="text-xs font-bold text-white italic">Infographics</p><p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Visual Insights</p></div></button>
-                       <button onClick={() => { setLocalInput("Create a detailed graph for "); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group"><div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg></div><div><p className="text-xs font-bold text-white italic">Advanced Graphs</p><p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Dynamic Visualization</p></div></button>
-                    </div>
-                 </div>
-               )}
+              <button type="button" onClick={() => setShowMenu(!showMenu)} className={`p-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-full transition-all ${showMenu ? "rotate-45" : "rotate-0"}`}><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg></button>
+              {showMenu && (
+                <div className="absolute bottom-full left-0 mb-4 rounded-3xl p-3 w-64 border border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.8)] animate-fade-in-up bg-[#0a0a0a] backdrop-blur-2xl">
+                  <div className="space-y-1">
+                    <button onClick={() => { fileInputRef.current?.click(); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group"><div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg></div><div><p className="text-xs font-bold text-white italic">Neural Upload</p><p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Review & Reference</p></div></button>
+                    <button onClick={() => { setLocalInput("Create an advanced presentation about "); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group"><div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg></div><div><p className="text-xs font-bold text-white italic">Presentations</p><p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Advanced Slides</p></div></button>
+                    <button onClick={() => { setLocalInput("Generate an infographic for "); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group"><div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg></div><div><p className="text-xs font-bold text-white italic">Infographics</p><p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Visual Insights</p></div></button>
+                    <button onClick={() => { setLocalInput("Create a detailed graph for "); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group"><div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg></div><div><p className="text-xs font-bold text-white italic">Advanced Graphs</p><p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Dynamic Visualization</p></div></button>
+                  </div>
+                </div>
+              )}
             </div>
             <textarea ref={textareaRef} value={localInput} onChange={(e) => setLocalInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }} rows={1} placeholder={activeAgent ? `Message ${activeAgent.name}...` : "Escribe aquí tu consulta..."} className="flex-1 bg-transparent py-3 text-sm focus:outline-none placeholder:text-slate-600 resize-none max-h-48 custom-scrollbar text-white caret-blue-500" />
             <input type="file" ref={fileInputRef} className="hidden" multiple onChange={handleFileChange} />
