@@ -6,7 +6,7 @@ import { logSecurityViolation } from "@/lib/firestore";
 export const maxDuration = 30;
 
 const google = createGoogleGenerativeAI({
-  apiKey: process.env.GEMINI_API_KEY || "",
+  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY || "",
 });
 
 export async function POST(req: Request) {
