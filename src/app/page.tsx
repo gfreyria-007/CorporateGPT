@@ -18,8 +18,8 @@ export default function Home() {
   const [forceLoad, setForceLoad] = useState(false);
 
   useEffect(() => {
-    // Safety timeout: If loading takes > 8s, allow the app to show (it will show login if no user)
-    const timer = setTimeout(() => setForceLoad(true), 8000);
+    // 3s hard-cap on loading screen for high-performance UX
+    const timer = setTimeout(() => setForceLoad(true), 3000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -33,11 +33,11 @@ export default function Home() {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-[#000000] overflow-hidden">
         <div className="relative flex flex-col items-center gap-12">
-          {/* Glowing Neural Ring */}
+          {/* Glowing Neural Ring - Sped up for snappy feel */}
           <div className="relative w-48 h-48 flex items-center justify-center">
             <div className="absolute inset-0 rounded-full border-2 border-blue-500/10 shadow-[0_0_100px_rgba(59,130,246,0.1)]"></div>
-            <div className="absolute inset-0 rounded-full border-t-2 border-blue-500 animate-[spin_3s_linear_infinite] shadow-[0_0_20px_rgba(59,130,246,0.5)]"></div>
-            <div className="absolute inset-4 rounded-full border-b-2 border-blue-400/30 animate-[spin_5s_linear_infinite_reverse]"></div>
+            <div className="absolute inset-0 rounded-full border-t-2 border-blue-500 animate-[spin_1.5s_linear_infinite] shadow-[0_0_20px_rgba(59,130,246,0.5)]"></div>
+            <div className="absolute inset-4 rounded-full border-b-2 border-blue-400/30 animate-[spin_2s_linear_infinite_reverse]"></div>
             
             {/* Center Core */}
             <div className="w-4 h-4 bg-white rounded-full shadow-[0_0_30px_rgba(255,255,255,1)] animate-pulse"></div>
