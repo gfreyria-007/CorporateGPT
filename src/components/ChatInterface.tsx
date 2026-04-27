@@ -100,7 +100,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
   };
 
   return (
-    <div className={`flex flex-col w-full h-full relative ${fullScreen ? "bg-transparent" : "bg-[#0D0D0D] rounded-3xl border border-white/5"}`}>
+    <div className={`flex flex-col w-full h-full relative overflow-hidden ${fullScreen ? "bg-transparent" : "bg-[#050505] rounded-3xl border border-white/5"}`}>
       
       {/* Scrollable Message Area */}
       <div 
@@ -127,22 +127,21 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                 <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em]">Neural Processing Node • Ready for Input</p>
               </div>
 
-              {/* Quick Action Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl pt-8">
                  {[
-                   { icon: "📝", title: "Write/Edit Docs", sub: "Neural Draft Generation", prompt: "Help me write a professional document about " },
-                   { icon: "🔬", title: "Analyze Policies", sub: "Deep Context RAG", prompt: "Explain the company policy regarding " },
-                   { icon: "📊", title: "Summarize Reports", sub: "Efficient Data Distillation", prompt: "Summarize the following data: " },
-                   { icon: "🛡️", title: "Security Audit", sub: "Mode 007 Hardening", prompt: "Perform a security audit on " }
+                   { icon: "📝", title: "Technical Doc", sub: "Neural Synthesis", prompt: "Generate a technical specification for a new microservice architecture." },
+                   { icon: "🛡️", title: "Security Audit", sub: "Mode 007 Hardening", prompt: "Perform a comprehensive security audit on the current infrastructure. Identify potential OWASP vulnerabilities." },
+                   { icon: "⚖️", title: "Policy Check", sub: "Compliance RAG", prompt: "Review our internal data retention policy and identify any GDPR non-compliance." },
+                   { icon: "🎨", title: "Image Synthesis", sub: "DALL-E 3 / Flux", prompt: "Create a high-fidelity cinematic concept art of a futuristic neural laboratory. Dark aesthetic, blue neon." }
                  ].map((action, i) => (
                    <button 
                     key={i} 
                     onClick={() => handleActionClick(action.prompt)}
-                    className="glass-card p-5 rounded-3xl text-left border-white/[0.03] hover:border-white/10 hover:bg-white/[0.02] transition-all group active:scale-[0.98]"
+                    className="glass-card p-6 rounded-[2rem] text-left border-white/[0.03] hover:border-blue-500/20 hover:bg-white/[0.02] transition-all group active:scale-[0.98] shadow-lg"
                    >
-                      <span className="text-2xl mb-3 block group-hover:scale-110 transition-transform">{action.icon}</span>
-                      <p className="text-sm font-bold text-white italic">{action.title}</p>
-                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-600 mt-1">{action.sub}</p>
+                      <span className="text-3xl mb-4 block group-hover:scale-110 transition-transform">{action.icon}</span>
+                      <p className="text-base font-bold text-white italic">{action.title}</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-600 mt-1">{action.sub}</p>
                    </button>
                  ))}
               </div>
@@ -214,12 +213,12 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
               </div>
             </div>
           )}
-          <div className="h-40" />
+          <div className="h-10" />
         </div>
       </div>
 
-      {/* ── FLOATING INPUT ── */}
-      <div className="absolute bottom-0 left-0 w-full p-6 z-30">
+      {/* ── STABLE INPUT AREA (Not Absolute) ── */}
+      <div className="w-full p-6 bg-gradient-to-t from-black via-black to-transparent pt-12 relative z-50">
         <div className="max-w-3xl mx-auto relative">
           
           {/* Attachments (Pills) */}

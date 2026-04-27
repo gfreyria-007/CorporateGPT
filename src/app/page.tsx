@@ -29,7 +29,7 @@ export default function Home() {
     }
   }, [user]);
 
-  if ((authLoading || configLoading) && !forceLoad) {
+  if (authLoading && !forceLoad) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-[#000000] overflow-hidden">
         <div className="relative flex flex-col items-center gap-12">
@@ -47,19 +47,7 @@ export default function Home() {
             <h2 className="text-white text-[12px] font-black tracking-[0.6em] uppercase italic animate-pulse">Neural Link Active</h2>
             <p className="text-slate-600 text-[8px] font-black uppercase tracking-[0.4em]">Synchronizing Intelligence Nodes...</p>
           </div>
-
-          {/* Progress Bar (Faux but indicative) */}
-          <div className="w-40 h-[1px] bg-white/5 relative overflow-hidden">
-            <div className="absolute inset-0 bg-blue-500/50 animate-[loading_2s_ease-in-out_infinite]"></div>
-          </div>
         </div>
-
-        <style jsx>{`
-          @keyframes loading {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-          }
-        `}</style>
       </div>
     );
   }

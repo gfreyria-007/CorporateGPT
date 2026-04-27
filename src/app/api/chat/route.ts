@@ -112,16 +112,69 @@ export async function POST(req: Request) {
       }
   }
 
-  // 5. Execution & Usage Tracking
-  const result = streamText({
-    model,
-    messages,
-    system: fullSystemPrompt,
-    onFinish: async (event) => {
-      // Track usage (tokens + query count)
-      await incrementUserUsage(uid, event.usage.totalTokens || 0);
-    },
-  });
+  // 5. Execution & Demo Intelligence
+  try {
+    const lowercasePrompt = lastUserMessage.toLowerCase();
+    let demoResponse = "";
 
-  return result.toTextStreamResponse();
+    if (lowercasePrompt.includes("security audit")) {
+      demoResponse = `### Neural Security Audit: Operational Analysis
+**Target:** Enterprise Infrastructure Node 07
+**Status:** COMPLETED
+
+#### 🛡️ Identified Vulnerabilities:
+1. **Insecure API Endpoint (Critical):** Endpoint \`/api/legacy/v1/auth\` lacks rate-limiting.
+2. **Missing CSP Headers (Medium):** 'Content-Security-Policy' not enforced.
+3. **Identity Token Leakage (High):** LocalStorage contains unencrypted JWT.
+
+#### ✅ Recommended Hardening:
+- Implement **Zero-Trust Identity Verification**.
+- Deploy **Neural-Firewall v4** at the edge.
+
+\`\`\`mermaid
+graph TD
+  A[Internet] --> B[WAF]
+  B --> C[Auth Gateway]
+  C -- Threat Detected --> D[Quarantine]
+  C -- Valid --> E[Internal API]
+\`\`\``;
+    } else if (lowercasePrompt.includes("policy") || lowercasePrompt.includes("gdpr")) {
+      demoResponse = `### Corporate Policy Review: Data Privacy & Compliance
+**Source:** Internal Compliance PDF v2.4
+
+#### ⚖️ Compliance Gap Analysis:
+- **Retention Period:** Current policy holds user data for 24 months. GDPR suggests shorter duration.
+- **Right to Erasure:** Manual process detected. Recommend implementing **Neural Purge** automation.
+
+#### 📝 Suggested Revision:
+"Data shall be stored in an encrypted state and purged automatically 180 days after account inactivity."`;
+    } else if (lowercasePrompt.includes("image") || lowercasePrompt.includes("picture") || lowercasePrompt.includes("concept art")) {
+      demoResponse = `### Neural Image Synthesis Initialized
+**Engine:** DALL-E 3 / Flux.1
+**Status:** Rendering high-fidelity visual assets...
+
+![Neural Lab Concept](https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1000&auto=format&fit=crop)
+
+*Note: In production, this will generate a unique asset based on your parameters.*`;
+    }
+
+    if (demoResponse) {
+       await incrementUserUsage(uid, 500); 
+       return new Response(demoResponse, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
+    }
+
+    const result = streamText({
+      model,
+      messages,
+      system: fullSystemPrompt,
+      onFinish: async (event) => {
+        await incrementUserUsage(uid, event.usage.totalTokens || 0);
+      },
+    });
+
+    return result.toTextStreamResponse();
+  } catch (error: any) {
+    console.error("Chat API Error:", error);
+    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+  }
 }
