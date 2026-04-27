@@ -53,6 +53,9 @@ export async function POST(req: Request) {
     case "claude-3-5-sonnet":
       model = anthropic("claude-3-5-sonnet-latest");
       break;
+    case "gemini-1.5-flash":
+      model = google("gemini-1.5-flash");
+      break;
     case "gemini-1.5-pro":
       model = google("gemini-1.5-pro");
       break;
@@ -67,14 +70,16 @@ export async function POST(req: Request) {
       break;
     case "auto":
     default:
-      if (/code|complex|analyze|debug/i.test(lastUserMessage)) {
-        model = anthropic("claude-3-5-sonnet-latest");
-      } else if (/search|latest news|today|current/i.test(lastUserMessage)) {
+      // Default to Google Gemini 1.5 Flash for the fastest, free-tier performance
+      model = google("gemini-1.5-flash");
+      
+      // Still allow smart routing if specific keywords are present
+      if (/search|latest news|today|current/i.test(lastUserMessage)) {
         model = perplexity("llama-3.1-sonar-large-128k-online");
-      } else if (lastUserMessage.length < 50) {
-        model = openai("gpt-4o-mini");
-      } else {
-        model = openai("gpt-4o");
+      } else if (/code|complex|analyze|debug/i.test(lastUserMessage)) {
+        // High-reasoning tasks can stay on Pro or Sonnet if available, 
+        // but let's stick to Gemini 1.5 Pro for the user's preference
+        model = google("gemini-1.5-pro");
       }
   }
 

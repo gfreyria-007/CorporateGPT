@@ -70,10 +70,11 @@ export default function ChatInterface({ activeAgent, onBackToAgents }: ChatInter
           onChange={(e) => setSelectedModel(e.target.value)}
           className="text-xs bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-gray-300"
         >
-          <option value="auto">✨ Auto-Select (Smart Routing)</option>
+          <option value="auto">✨ Auto (Gemini Preferred)</option>
+          <option value="gemini-1.5-flash">Google Gemini 1.5 Flash (Free Tier)</option>
+          <option value="gemini-1.5-pro">Google Gemini 1.5 Pro</option>
           <option value="gpt-4o">OpenAI GPT-4o</option>
           <option value="claude-3-5-sonnet">Anthropic Claude 3.5</option>
-          <option value="gemini-1.5-pro">Google Gemini 1.5 Pro</option>
           <option value="llama-3.1-sonar-large-128k-online">Perplexity Online</option>
         </select>
       </div>
