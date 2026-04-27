@@ -185,28 +185,46 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                       : "text-white font-medium"
                   }`}
                 >
-                  <div className="whitespace-pre-wrap">
-                    {m.parts
-                      ?.filter((p) => p.type === "text")
-                      .map((p, idx) => {
+                  <div className="flex flex-col gap-3">
+                    {m.parts?.map((p, idx) => {
+                      if (p.type === "reasoning") {
+                        return (
+                          <div key={idx} className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-4 mb-2 animate-pulse-subtle">
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-ping"></div>
+                              <span className="text-[10px] font-black uppercase tracking-widest text-blue-400/70">Neural Reasoning</span>
+                            </div>
+                            <div className="text-[13px] text-blue-300/60 font-mono leading-relaxed whitespace-pre-wrap italic">
+                              {(p as any).reasoning}
+                            </div>
+                          </div>
+                        );
+                      }
+                      
+                      if (p.type === "text") {
                         const text = (p as any).text || "";
                         if (text.includes("```mermaid")) {
                           const [before, rest] = text.split("```mermaid");
                           const [code, after] = rest.split("```");
                           return (
-                            <div key={idx} className="my-4">
-                              {before}
+                            <div key={idx} className="my-2">
+                              {before && <div className="whitespace-pre-wrap">{before}</div>}
                               <div className="bg-white/5 p-4 rounded-xl border border-white/10 overflow-x-auto my-4">
                                 <pre className="mermaid text-[10px] text-emerald-400">
                                   {code.trim()}
                                 </pre>
                               </div>
-                              {after}
+                              {after && <div className="whitespace-pre-wrap">{after}</div>}
                             </div>
                           );
                         }
-                        return <span key={idx}>{text}</span>;
-                      }) || (m as any).content || ""}
+                        return <div key={idx} className="whitespace-pre-wrap">{text}</div>;
+                      }
+                      
+                      return null;
+                    }) || (
+                      <div className="whitespace-pre-wrap">{(m as any).content || ""}</div>
+                    )}
                   </div>
                 </div>
               </div>
