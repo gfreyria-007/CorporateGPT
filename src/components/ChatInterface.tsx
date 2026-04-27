@@ -135,7 +135,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                 <h2 className="text-4xl font-black text-white italic tracking-tighter">
                   {activeAgent ? `Forge: ${activeAgent.name}` : "¿Qué tienes en mente hoy?"}
                 </h2>
-                <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em]">Neural Processing Node • Ready for Input</p>
+                <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em]">Catalizia Neural Processing Node • Ready for Input</p>
               </div>
 
               <div className="grid grid-cols-2 gap-3 w-full max-w-xl pt-8">
@@ -361,7 +361,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
           </form>
 
           <p className="text-[9px] text-center mt-4 text-slate-700 font-black uppercase tracking-[0.4em]">
-            Neural Core v3.2.0 • Secure Enterprise Intelligence
+            Neural Core v3.3.0 • Secure Enterprise Intelligence
           </p>
         </div>
       </div>
