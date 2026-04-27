@@ -48,19 +48,29 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
     setInput(e.target.value);
   };
 
-  const handleActionClick = (content: string) => {
-    append({ role: "user", content });
+  const handleActionClick = async (content: string) => {
+    try {
+      await append({ role: "user", content });
+    } catch (e) {
+      console.error("Append error:", e);
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() && attachedFiles.length === 0) return;
+    const message = input.trim();
+    if (!message && attachedFiles.length === 0) return;
     
-    append({
-      role: "user",
-      content: input,
-    });
     setInput("");
+    try {
+      await append({
+        role: "user",
+        content: message,
+      });
+    } catch (e) {
+      console.error("Submit error:", e);
+      setInput(message); // Restore if failed
+    }
   };
 
   // Auto-scroll to bottom

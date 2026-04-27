@@ -78,10 +78,23 @@ export const deletePolicy = async (id: string) => {
   await deleteDoc(doc(db, "policies", id));
 };
 
+/** Helper for timeout wrapping */
+const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, fallback: T): Promise<T> => {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), timeoutMs))
+  ]);
+};
+
 /** Get ALL policy documents (small set – company‑wide) */
 export const getAllPolicies = async (): Promise<PolicyDocument[]> => {
-  const snap = await getDocs(collection(db, "policies"));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as PolicyDocument));
+  try {
+    const snap = await withTimeout(getDocs(collection(db, "policies")), 2000, { docs: [] } as any);
+    return snap.docs.map((d: any) => ({ id: d.id, ...d.data() } as PolicyDocument));
+  } catch (e) {
+    console.error("Policy fetch error:", e);
+    return [];
+  }
 };
 
 /** Build a context string from policy docs that match the user query (keyword) */
@@ -106,32 +119,15 @@ export const getPolicyContext = async (queryText: string): Promise<string> => {
   return scored.map((p) => `## ${p.title}\n${p.content}`).join("\n\n---\n\n");
 };
 
-/* ================================================================
-   AGENT RAG  –  /agents/{agentId}/documents/{docId}
-   ================================================================ */
-
-/** Add a document to an agent's knowledge base */
-export const addAgentDoc = async (
-  agentId: string,
-  data: Omit<AgentDocument, "id" | "createdAt">
-): Promise<string> => {
-  const colRef = collection(db, "agents", agentId, "documents");
-  const ref = await addDoc(colRef, {
-    ...data,
-    createdAt: new Date().toISOString(),
-  });
-  return ref.id;
-};
-
-/** Delete a document from an agent's knowledge base */
-export const deleteAgentDoc = async (agentId: string, docId: string) => {
-  await deleteDoc(doc(db, "agents", agentId, "documents", docId));
-};
-
 /** Get all documents for an agent */
 export const getAgentDocs = async (agentId: string): Promise<AgentDocument[]> => {
-  const snap = await getDocs(collection(db, "agents", agentId, "documents"));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as AgentDocument));
+  try {
+    const snap = await withTimeout(getDocs(collection(db, "agents", agentId, "documents")), 2000, { docs: [] } as any);
+    return snap.docs.map((d: any) => ({ id: d.id, ...d.data() } as AgentDocument));
+  } catch (e) {
+    console.error("Agent docs fetch error:", e);
+    return [];
+  }
 };
 
 /** Build a context string from agent docs that match the user query */

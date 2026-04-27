@@ -47,6 +47,11 @@ export const updateCompanyConfig = async (config: Partial<CompanyConfig>): Promi
 export const getUserUsage = async (
   uid: string
 ): Promise<{ tokensUsed: number; queriesUsed: number; month: string }> => {
+  // ── DEMO BYPASS ──
+  if (uid === "GUEST_DEMO_UID") {
+    return { tokensUsed: 0, queriesUsed: 0, month: "DEMO" };
+  }
+
   try {
     const usageRef = doc(db, "usage", uid);
     const snap = await getDoc(usageRef);
@@ -74,6 +79,8 @@ export const getUserUsage = async (
 };
 
 export const incrementUserUsage = async (uid: string, tokens: number) => {
+  if (uid === "GUEST_DEMO_UID") return; // Skip for demo
+  
   const { tokensUsed, queriesUsed, month } = await getUserUsage(uid);
   const usageRef = doc(db, "usage", uid);
   await setDoc(usageRef, { 

@@ -9,7 +9,7 @@ import { getUserAgents } from "@/lib/agents";
 import type { Agent } from "@/types/agent";
 
 export default function Home() {
-  const { user, loading: authLoading, signInWithGoogle, logOut } = useAuth();
+  const { user, loading: authLoading, signInWithGoogle, signInAsGuest, logOut } = useAuth();
   const { config, loading: configLoading } = useCompany();
   const [activeTab, setActiveTab] = useState<"chat" | "agents">("chat");
   const [activeAgent, setActiveAgent] = useState<Agent | null>(null);
@@ -18,7 +18,7 @@ export default function Home() {
   const [forceLoad, setForceLoad] = useState(false);
 
   useEffect(() => {
-    // 3s hard-cap on loading screen for high-performance UX
+    // 3s hard-cap on neural splash
     const timer = setTimeout(() => setForceLoad(true), 3000);
     return () => clearTimeout(timer);
   }, []);
@@ -29,20 +29,17 @@ export default function Home() {
     }
   }, [user]);
 
+  // Loading Screen (Splash)
   if (authLoading && !forceLoad) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-[#000000] overflow-hidden">
         <div className="relative flex flex-col items-center gap-12">
-          {/* Glowing Neural Ring - Sped up for snappy feel */}
           <div className="relative w-48 h-48 flex items-center justify-center">
             <div className="absolute inset-0 rounded-full border-2 border-blue-500/10 shadow-[0_0_100px_rgba(59,130,246,0.1)]"></div>
             <div className="absolute inset-0 rounded-full border-t-2 border-blue-500 animate-[spin_1.5s_linear_infinite] shadow-[0_0_20px_rgba(59,130,246,0.5)]"></div>
             <div className="absolute inset-4 rounded-full border-b-2 border-blue-400/30 animate-[spin_2s_linear_infinite_reverse]"></div>
-            
-            {/* Center Core */}
             <div className="w-4 h-4 bg-white rounded-full shadow-[0_0_30px_rgba(255,255,255,1)] animate-pulse"></div>
           </div>
-
           <div className="text-center space-y-3">
             <h2 className="text-white text-[12px] font-black tracking-[0.6em] uppercase italic animate-pulse">Neural Link Active</h2>
             <p className="text-slate-600 text-[8px] font-black uppercase tracking-[0.4em]">Synchronizing Intelligence Nodes...</p>
@@ -52,52 +49,39 @@ export default function Home() {
     );
   }
 
+  // Auth Screen (Login)
   if (!user) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#050505] text-slate-100 selection:bg-blue-500/30 overflow-hidden">
-        {/* Background Atmosphere */}
-        <div className="fixed top-[-10%] left-[-10%] w-[60%] h-[60%] bg-blue-600/5 blur-[150px] rounded-full pointer-events-none animate-pulse"></div>
-        <div className="fixed bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-purple-600/5 blur-[150px] rounded-full pointer-events-none animate-pulse"></div>
-
-        <div className="max-w-md w-full glass-card rounded-[2.5rem] overflow-hidden p-12 text-center space-y-10 animate-fade-in relative z-10 border-white/5">
-          {config.logoUrl ? (
-            <img src={config.logoUrl} alt="Logo" className="h-16 mx-auto object-contain" />
-          ) : (
-            <div className="w-16 h-16 premium-gradient rounded-3xl mx-auto flex items-center justify-center shadow-[0_0_50px_rgba(59,130,246,0.3)] rotate-6 group hover:rotate-0 transition-transform duration-500">
-               <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-            </div>
-          )}
+      <main className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#050505] text-slate-100 overflow-hidden">
+        <div className="fixed top-[-10%] left-[-10%] w-[60%] h-[60%] bg-blue-600/5 blur-[150px] rounded-full pointer-events-none"></div>
+        <div className="max-w-md w-full glass-card rounded-[2.5rem] p-12 text-center space-y-10 animate-fade-in relative z-10 border-white/5">
+          <div className="w-16 h-16 premium-gradient rounded-3xl mx-auto flex items-center justify-center shadow-[0_0_50px_rgba(59,130,246,0.3)] rotate-6">
+             <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+          </div>
           
           <div className="space-y-4">
-            <h1 className="text-4xl font-black tracking-tighter text-white italic">
-              {config.name || "Corporate GPT"}
-            </h1>
+            <h1 className="text-4xl font-black tracking-tighter text-white italic">{config.name || "Corporate GPT"}</h1>
             <p className="text-[10px] text-slate-500 font-black tracking-[0.4em] uppercase">{config.slogan || "Next-Gen Intelligence"}</p>
           </div>
           
-          <div className="h-px w-24 mx-auto bg-gradient-to-r from-transparent via-blue-500/30 to-transparent"></div>
+          <div className="space-y-4">
+            <button
+              onClick={signInWithGoogle}
+              className="group w-full flex items-center justify-center gap-4 bg-white text-slate-950 py-5 px-8 rounded-3xl transition-all hover:scale-[1.02] active:scale-[0.98] font-black uppercase tracking-widest text-xs shadow-[0_20px_40px_rgba(255,255,255,0.1)]"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24"><path d="M22.56 12.25C22.56 11.47 22.49 10.72 22.36 10H12V14.26H17.92C17.66 15.63 16.88 16.8 15.71 17.58V20.34H19.28C21.36 18.42 22.56 15.6 22.56 12.25Z" fill="#4285F4"/><path d="M12 23C14.97 23 17.46 22.02 19.28 20.34L15.71 17.58C14.72 18.24 13.47 18.64 12 18.64C9.15 18.64 6.74 16.71 5.86 14.12H2.18V16.97C3.99 20.57 7.68 23 12 23Z" fill="#34A853"/><path d="M5.86 14.12C5.63 13.45 5.5 12.74 5.5 12C5.5 11.26 5.63 10.55 5.86 9.88V7.03H2.18C1.43 8.52 1 10.21 1 12C1 13.79 1.43 15.48 2.18 16.97L5.86 14.12Z" fill="#FBBC05"/><path d="M12 5.38C13.62 5.38 15.06 5.93 16.2 7.02L19.36 3.86C17.46 2.09 14.97 1 12 1C7.68 1 3.99 3.43 2.18 7.03L5.86 9.88C6.74 7.29 9.15 5.38 12 5.38Z" fill="#EA4335"/></svg>
+              Initialize Session
+            </button>
 
-          <button
-            onClick={signInWithGoogle}
-            className="group w-full flex items-center justify-center gap-4 bg-white text-slate-950 py-5 px-8 rounded-3xl transition-all hover:scale-[1.02] active:scale-[0.98] font-black uppercase tracking-widest text-xs shadow-[0_20px_40px_rgba(255,255,255,0.1)]"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path d="M22.56 12.25C22.56 11.47 22.49 10.72 22.36 10H12V14.26H17.92C17.66 15.63 16.88 16.8 15.71 17.58V20.34H19.28C21.36 18.42 22.56 15.6 22.56 12.25Z" fill="#4285F4"/>
-              <path d="M12 23C14.97 23 17.46 22.02 19.28 20.34L15.71 17.58C14.72 18.24 13.47 18.64 12 18.64C9.15 18.64 6.74 16.71 5.86 14.12H2.18V16.97C3.99 20.57 7.68 23 12 23Z" fill="#34A853"/>
-              <path d="M5.86 14.12C5.63 13.45 5.5 12.74 5.5 12C5.5 11.26 5.63 10.55 5.86 9.88V7.03H2.18C1.43 8.52 1 10.21 1 12C1 13.79 1.43 15.48 2.18 16.97L5.86 14.12Z" fill="#FBBC05"/>
-              <path d="M12 5.38C13.62 5.38 15.06 5.93 16.2 7.02L19.36 3.86C17.46 2.09 14.97 1 12 1C7.68 1 3.99 3.43 2.18 7.03L5.86 9.88C6.74 7.29 9.15 5.38 12 5.38Z" fill="#EA4335"/>
-            </svg>
-            Initialize Session
-          </button>
-          
-          <div className="flex flex-col gap-2">
-            <p className="text-[9px] text-slate-600 font-black uppercase tracking-[0.3em]">Quantum-Secure Access</p>
-            <div className="flex justify-center gap-1">
-              <div className="w-1 h-1 bg-blue-500 rounded-full animate-pulse"></div>
-              <div className="w-1 h-1 bg-blue-500 rounded-full animate-pulse delay-75"></div>
-              <div className="w-1 h-1 bg-blue-500 rounded-full animate-pulse delay-150"></div>
-            </div>
+            <button
+              onClick={signInAsGuest}
+              className="w-full py-4 px-8 rounded-3xl border border-white/5 text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] hover:bg-white/5 hover:text-white transition-all active:scale-95"
+            >
+              Enter Operational Demo
+            </button>
           </div>
+          
+          <p className="text-[9px] text-slate-600 font-black uppercase tracking-[0.3em]">Quantum-Secure Access</p>
         </div>
       </main>
     );
