@@ -268,7 +268,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
 
           <form 
             onSubmit={handleFormSubmit}
-            className="glass-card rounded-[2rem] p-2 pr-4 border-white/10 shadow-2xl focus-within:border-white/20 transition-all flex items-end gap-2 bg-[#141414] relative z-40"
+            className="rounded-[2rem] p-2 pr-4 border border-white/10 shadow-2xl focus-within:border-white/20 transition-all flex items-end gap-2 bg-[#0a0a0a] relative z-40"
           >
             {/* Add Menu Button */}
             <div className="relative">
