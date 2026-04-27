@@ -34,6 +34,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
       body: () => ({
         selectedModel,
         uid: user?.uid,
+        email: user?.email,
         agentId: activeAgent?.id,
         systemPrompt: activeAgent?.systemPrompt,
         attachments: attachedFiles,

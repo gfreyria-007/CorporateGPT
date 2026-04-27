@@ -21,33 +21,27 @@ export const maxDuration = 30;
 const SUPER_ADMIN_EMAIL = "gfreyria@gmail.com";
 
 export async function POST(req: Request) {
-  const { messages, selectedModel, uid, agentId, systemPrompt, attachments } = await req.json();
+  const { messages, selectedModel, uid, email, agentId, systemPrompt, attachments } = await req.json();
 
   if (!uid) {
     return new Response("Unauthorized: UID missing", { status: 401 });
   }
 
   // 1. Security & Demo Limits
-  // For demo purposes, we check usage by UID. 
+  const isAdmin = email === SUPER_ADMIN_EMAIL;
   let usage = { queriesUsed: 0, tokensUsed: 0 };
+  
   try {
     usage = await getUserUsage(uid);
   } catch (e) {
     console.error("Usage check failed:", e);
   }
   
-  // Note: In a real app, we'd verify the email via Firebase Admin SDK
-  // Since we are in an Edge/Serverless context, we rely on the UID passed 
-  // (In production, you'd verify the ID Token properly)
-  
-  // For now, let's assume if usage.queriesUsed >= 5, we block unless it's the owner
-  // We'll add a check for the super admin later if we can verify the email server-side
-  if (usage.queriesUsed >= 5) {
-     // Check if this is the super admin (This is a simplified check for the demo)
-     // To be truly secure, we'd verify the JWT token here.
-     if (uid !== "SUPER_ADMIN_UID_PLACEHOLDER") { 
-       // return new Response("Demo limit reached: 5 queries max for non-admins.", { status: 403 });
-     }
+  if (!isAdmin && usage.queriesUsed >= 5) {
+     return new Response(
+       "### 🛡️ Demo Version Limit Reached\n\nThis is a preview version of the platform. You have reached the limit of **5 free queries**.\n\nTo unlock full access, please contact the administrator.", 
+       { status: 403, headers: { "Content-Type": "text/plain; charset=utf-8" } }
+     );
   }
 
   // 2. Context Extraction (RAG)
