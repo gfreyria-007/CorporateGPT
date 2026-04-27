@@ -24,6 +24,8 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; content: string; type: string }[]>([]);
   const [showMenu, setShowMenu] = useState(false);
 
+  const [localInput, setLocalInput] = useState("");
+ 
   // useChat configuration
   const chatProps = (useChat as any)({
     api: "/api/chat",
@@ -40,7 +42,11 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
     }
   });
 
-  const { messages, append, status, input, setInput, handleInputChange } = chatProps;
+  const { messages, append, status } = chatProps;
+
+  const handleInputChange = (e: any) => {
+    setLocalInput(e.target.value);
+  };
 
   // Simplified loading state
   const isCurrentlyLoading = status === "submitted" || status === "streaming";
@@ -56,7 +62,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const message = input?.trim();
+    const message = localInput?.trim();
     console.log("[CHAT] Submit Triggered:", { message, attachedFiles: attachedFiles.length });
     
     if (!message && attachedFiles.length === 0) {
@@ -67,7 +73,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
     try {
       console.log("[CHAT] Appending to stream...");
       await append({ role: "user", content: message || "" });
-      setInput("");
+      setLocalInput("");
     } catch (e) {
       console.error("[CHAT] Submission crash:", e);
     }
@@ -86,7 +92,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
     }
-  }, [input]);
+  }, [localInput]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -335,7 +341,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
 
             <textarea
               ref={textareaRef}
-              value={input || ""}
+              value={localInput || ""}
               onChange={handleInputChange}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
@@ -352,7 +358,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
 
             <button
               type="submit"
-              disabled={isCurrentlyLoading || (!(input?.trim()) && attachedFiles.length === 0)}
+              disabled={isCurrentlyLoading || (!(localInput?.trim()) && attachedFiles.length === 0)}
               className="p-3 bg-white text-black rounded-full disabled:opacity-20 hover:scale-105 active:scale-95 transition-all shadow-xl"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
@@ -360,7 +366,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
           </form>
 
           <p className="text-[9px] text-center mt-4 text-slate-700 font-black uppercase tracking-[0.4em]">
-            Neural Core v3.5.0 • Secure Enterprise Intelligence
+            Neural Core v3.6.0 • Secure Enterprise Intelligence
           </p>
         </div>
       </div>
