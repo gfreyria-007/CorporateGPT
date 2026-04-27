@@ -46,17 +46,17 @@ export async function POST(req: Request) {
     }
 
     // 3. AI Processing with Context
+    // 3. AI Processing with Context
     try {
-      const result = streamText({
+      const result = await streamText({
         model: google("gemini-1.5-flash"),
         messages: messages,
-        system: `
-          You are a Secure Enterprise Assistant. 
-          Respond helpfully and professionally.
-        `,
+        system: `You are a Secure Enterprise Assistant. Respond helpfully and professionally.`,
       });
 
-      return result.toTextStreamResponse();
+      return new Response(result.textStream, {
+        headers: { "Content-Type": "text/plain; charset=utf-8" },
+      });
     } catch (aiError: any) {
       console.error("[AI ERROR]:", aiError);
       return new Response(`AI Node Error: ${aiError.message}`, { status: 500 });
