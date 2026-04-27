@@ -19,6 +19,6 @@ const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
 // Optional: you can add custom scopes to the provider for Google Drive integration later
-googleProvider.addScope("https://www.googleapis.com/auth/drive.readonly");
+// googleProvider.addScope("https://www.googleapis.com/auth/drive.readonly");
 
 export { app, auth, db, googleProvider };
