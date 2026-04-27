@@ -46,7 +46,7 @@ export const updateCompanyConfig = async (config: Partial<CompanyConfig>): Promi
 
 export const getUserUsage = async (
   uid: string
-): Promise<{ tokensUsed: number; month: string }> => {
+): Promise<{ tokensUsed: number; queriesUsed: number; month: string }> => {
   try {
     const usageRef = doc(db, "usage", uid);
     const snap = await getDoc(usageRef);
@@ -56,20 +56,29 @@ export const getUserUsage = async (
     if (snap.exists()) {
       const data = snap.data() as any;
       if (data.month === month) {
-        return { tokensUsed: data.tokensUsed || 0, month };
+        return { 
+          tokensUsed: data.tokensUsed || 0, 
+          queriesUsed: data.queriesUsed || 0,
+          month 
+        };
       }
     }
     // No record for this month → initialise
-    await setDoc(usageRef, { tokensUsed: 0, month }, { merge: true });
-    return { tokensUsed: 0, month };
+    const initial = { tokensUsed: 0, queriesUsed: 0, month };
+    await setDoc(usageRef, initial, { merge: true });
+    return initial;
   } catch (e) {
     console.error("Error fetching usage:", e);
-    return { tokensUsed: 0, month: "" };
+    return { tokensUsed: 0, queriesUsed: 0, month: "" };
   }
 };
 
 export const incrementUserUsage = async (uid: string, tokens: number) => {
-  const { tokensUsed, month } = await getUserUsage(uid);
+  const { tokensUsed, queriesUsed, month } = await getUserUsage(uid);
   const usageRef = doc(db, "usage", uid);
-  await setDoc(usageRef, { tokensUsed: tokensUsed + tokens, month }, { merge: true });
+  await setDoc(usageRef, { 
+    tokensUsed: tokensUsed + tokens, 
+    queriesUsed: queriesUsed + 1,
+    month 
+  }, { merge: true });
 };

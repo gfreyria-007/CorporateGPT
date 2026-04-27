@@ -15,6 +15,8 @@ export interface Agent {
   systemPrompt: string;
   /** Preferred model – "auto" means use smart routing */
   preferredModel: string;
+  /** IDs of documents uploaded for this agent */
+  docIds?: string[];
   /** Tags for filtering reference documents */
   tags: string[];
   createdAt: string;
@@ -29,6 +31,8 @@ export interface AgentDocument {
   content: string;
   /** Original file name for display */
   fileName: string;
+  /** URL to the stored file in Firebase Storage */
+  fileUrl?: string;
   createdAt: string;
 }
 

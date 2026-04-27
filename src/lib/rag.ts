@@ -19,8 +19,39 @@ import {
   deleteDoc,
   addDoc,
 } from "firebase/firestore";
-import { db } from "./firebase";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { db, storage } from "./firebase";
 import type { PolicyDocument, AgentDocument } from "@/types/agent";
+
+/** Upload a file to storage and link it to an agent */
+export const uploadAgentDoc = async (
+  agentId: string,
+  file: File
+): Promise<string> => {
+  const filePath = `agents/${agentId}/docs/${Date.now()}_${file.name}`;
+  const storageRef = ref(storage, filePath);
+  
+  // 1. Upload to Storage
+  await uploadBytes(storageRef, file);
+  const fileUrl = await getDownloadURL(storageRef);
+  
+  // 2. Extract text (Simulated for now, would typically use a Cloud Function or library)
+  // For basic text files we can read them directly
+  let content = `Reference file: ${file.name}`;
+  if (file.type === "text/plain" || file.name.endsWith(".txt") || file.name.endsWith(".md")) {
+    content = await file.text();
+  } else {
+    content = `Binary file uploaded: ${file.name}. URL: ${fileUrl}`;
+  }
+
+  // 3. Save metadata in Firestore
+  return await addAgentDoc(agentId, {
+    agentId,
+    content,
+    fileName: file.name,
+    fileUrl
+  });
+};
 
 /* ================================================================
    POLICY RAG  –  /policies/{docId}
