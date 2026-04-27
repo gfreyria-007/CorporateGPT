@@ -47,11 +47,19 @@ export async function POST(req: Request) {
 
     // 3. AI Processing with Context
     // 3. AI Processing with Context
+    let finalSystemPrompt = `You are a Secure Enterprise Assistant. Respond helpfully and professionally.`;
+    if (attachments && attachments.length > 0) {
+      finalSystemPrompt += `\n\n--- THE USER HAS ATTACHED THE FOLLOWING FILES FOR YOUR REFERENCE ---\n`;
+      attachments.forEach((file: any) => {
+        finalSystemPrompt += `\nFILE NAME: ${file.name}\nCONTENT:\n${file.content}\n`;
+      });
+    }
+
     try {
       const result = await streamText({
         model: google("gemini-2.5-flash"),
         messages: messages.map((m: any) => ({ role: m.role, content: m.content })),
-        system: `You are a Secure Enterprise Assistant. Respond helpfully and professionally.`,
+        system: finalSystemPrompt,
       });
 
       return result.toTextStreamResponse();
