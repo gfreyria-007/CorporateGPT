@@ -268,20 +268,21 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
 
           <form 
             onSubmit={handleFormSubmit}
-            className="rounded-[2rem] p-2 pr-4 border border-white/10 shadow-2xl focus-within:border-white/20 transition-all flex items-end gap-2 bg-[#0a0a0a] relative z-40"
+            className="rounded-[2.5rem] p-2 pr-4 border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-end gap-2 bg-[#050505] relative z-40"
+            style={{ backgroundColor: '#050505' }}
           >
             {/* Add Menu Button */}
             <div className="relative">
                <button 
                 type="button"
                 onClick={() => setShowMenu(!showMenu)}
-                className={`p-3 text-slate-500 hover:text-white hover:bg-white/5 rounded-full transition-all ${showMenu ? "rotate-45" : "rotate-0"}`}
+                className={`p-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-full transition-all ${showMenu ? "rotate-45" : "rotate-0"}`}
                >
                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
                </button>
 
                {showMenu && (
-                 <div className="absolute bottom-full left-0 mb-4 glass-card rounded-3xl p-3 w-64 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-fade-in-up bg-[#1A1A1A]">
+                 <div className="absolute bottom-full left-0 mb-4 rounded-3xl p-3 w-64 border border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.8)] animate-fade-in-up bg-[#0a0a0a] backdrop-blur-2xl">
                     <div className="space-y-1">
                        <button onClick={() => { fileInputRef.current?.click(); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group">
                           <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
@@ -289,7 +290,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                           </div>
                           <div>
                              <p className="text-xs font-bold text-white italic">Neural Upload</p>
-                             <p className="text-[9px] font-black uppercase tracking-widest text-slate-600">Review & Reference</p>
+                             <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Review & Reference</p>
                           </div>
                        </button>
 
@@ -299,7 +300,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                           </div>
                           <div>
                              <p className="text-xs font-bold text-white italic">Presentations</p>
-                             <p className="text-[9px] font-black uppercase tracking-widest text-slate-600">Advanced Slides</p>
+                             <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Advanced Slides</p>
                           </div>
                        </button>
 
@@ -309,7 +310,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                           </div>
                           <div>
                              <p className="text-xs font-bold text-white italic">Infographics</p>
-                             <p className="text-[9px] font-black uppercase tracking-widest text-slate-600">Visual Insights</p>
+                             <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Visual Insights</p>
                           </div>
                        </button>
 
@@ -319,7 +320,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                           </div>
                           <div>
                              <p className="text-xs font-bold text-white italic">Advanced Graphs</p>
-                             <p className="text-[9px] font-black uppercase tracking-widest text-slate-600">Dynamic Visualization</p>
+                             <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Dynamic Visualization</p>
                           </div>
                        </button>
                     </div>
@@ -339,7 +340,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
               }}
               rows={1}
               placeholder={activeAgent ? `Message ${activeAgent.name}...` : "Escribe aquí tu consulta..."}
-              className="flex-1 bg-transparent py-3 text-sm focus:outline-none placeholder:text-slate-600 resize-none max-h-48 custom-scrollbar text-white"
+              className="flex-1 bg-transparent py-3 text-sm focus:outline-none placeholder:text-slate-600 resize-none max-h-48 custom-scrollbar text-white caret-blue-500"
             />
 
             <input type="file" ref={fileInputRef} className="hidden" multiple onChange={handleFileChange} />

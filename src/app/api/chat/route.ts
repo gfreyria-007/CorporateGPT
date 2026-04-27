@@ -29,8 +29,12 @@ export async function POST(req: Request) {
 
   // 1. Security & Demo Limits
   // For demo purposes, we check usage by UID. 
-  // Non-super-admins are limited to 5 queries total for this preview.
-  const usage = await getUserUsage(uid);
+  let usage = { queriesUsed: 0, tokensUsed: 0 };
+  try {
+    usage = await getUserUsage(uid);
+  } catch (e) {
+    console.error("Usage check failed:", e);
+  }
   
   // Note: In a real app, we'd verify the email via Firebase Admin SDK
   // Since we are in an Edge/Serverless context, we rely on the UID passed 
