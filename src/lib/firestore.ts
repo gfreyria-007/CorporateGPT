@@ -12,16 +12,21 @@ const COLLECTION_NAME = "companies";
    Company Config
    ---------------------------------------------------------------- */
 
+const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, defaultValue: T): Promise<T> => {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(defaultValue), timeoutMs))
+  ]);
+};
+
 export const getCompanyConfig = async (): Promise<CompanyConfig> => {
   try {
     const docRef = doc(db, COLLECTION_NAME, COMPANY_DOC_ID);
-    const docSnap = await getDoc(docRef);
+    const docSnap = await withTimeout(getDoc(docRef), 2000, { exists: () => false } as any);
 
     if (docSnap.exists()) {
       return docSnap.data() as CompanyConfig;
     } else {
-      // If no config exists, set and return the default
-      await setDoc(docRef, defaultCompanyConfig);
       return defaultCompanyConfig;
     }
   } catch (error) {
@@ -47,16 +52,17 @@ export const updateCompanyConfig = async (config: Partial<CompanyConfig>): Promi
 export const getUserUsage = async (
   uid: string
 ): Promise<{ tokensUsed: number; queriesUsed: number; month: string }> => {
-  // ── DEMO BYPASS ──
   if (uid === "GUEST_DEMO_UID") {
     return { tokensUsed: 0, queriesUsed: 0, month: "DEMO" };
   }
 
+  const now = new Date();
+  const month = `${now.getFullYear()}-${now.getMonth() + 1}`;
+  const fallback = { tokensUsed: 0, queriesUsed: 0, month };
+
   try {
     const usageRef = doc(db, "usage", uid);
-    const snap = await getDoc(usageRef);
-    const now = new Date();
-    const month = `${now.getFullYear()}-${now.getMonth() + 1}`;
+    const snap = await withTimeout(getDoc(usageRef), 2000, { exists: () => false } as any);
 
     if (snap.exists()) {
       const data = snap.data() as any;
@@ -68,13 +74,10 @@ export const getUserUsage = async (
         };
       }
     }
-    // No record for this month → initialise
-    const initial = { tokensUsed: 0, queriesUsed: 0, month };
-    await setDoc(usageRef, initial, { merge: true });
-    return initial;
+    return fallback;
   } catch (e) {
     console.error("Error fetching usage:", e);
-    return { tokensUsed: 0, queriesUsed: 0, month: "" };
+    return fallback;
   }
 };
 
