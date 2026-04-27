@@ -23,11 +23,9 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
   const [selectedModel, setSelectedModel] = useState("auto");
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; content: string; type: string }[]>([]);
   const [showMenu, setShowMenu] = useState(false);
-  const [input, setInput] = useState("");
 
   // useChat configuration
-  const { messages, status, append, reload, stop } = useChat({
-    // @ts-ignore - SDK v6 mismatch
+  const { messages, input, handleInputChange, handleSubmit, setInput, append, status, reload, stop } = useChat({
     api: "/api/chat",
     body: {
       selectedModel,
@@ -39,37 +37,28 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
     onFinish: () => {
       setAttachedFiles([]);
     }
-  } as any);
+  });
 
   // Simplified loading state
   const isCurrentlyLoading = status === "submitted" || status === "streaming";
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value);
-  };
 
   const handleActionClick = async (content: string) => {
     try {
       await append({ role: "user", content });
     } catch (e) {
-      console.error("Append error:", e);
+      console.error("Action error:", e);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const message = input.trim();
-    if (!message && attachedFiles.length === 0) return;
+    if (!input.trim() && attachedFiles.length === 0) return;
     
-    setInput("");
     try {
-      await append({
-        role: "user",
-        content: message,
-      });
+      await append({ role: "user", content: input });
+      setInput("");
     } catch (e) {
       console.error("Submit error:", e);
-      setInput(message); // Restore if failed
     }
   };
 
@@ -246,7 +235,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
           )}
 
           <form 
-            onSubmit={handleSubmit}
+            onSubmit={handleFormSubmit}
             className="glass-card rounded-[2rem] p-2 pr-4 border-white/10 shadow-2xl focus-within:border-white/20 transition-all flex items-end gap-2 bg-[#141414] relative z-40"
           >
             {/* Add Menu Button */}
@@ -313,7 +302,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
-                  handleSubmit(e as any);
+                  handleFormSubmit(e as any);
                 }
               }}
               rows={1}

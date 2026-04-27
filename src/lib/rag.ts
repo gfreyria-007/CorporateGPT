@@ -119,6 +119,28 @@ export const getPolicyContext = async (queryText: string): Promise<string> => {
   return scored.map((p) => `## ${p.title}\n${p.content}`).join("\n\n---\n\n");
 };
 
+/* ================================================================
+   AGENT RAG  –  /agents/{agentId}/documents/{docId}
+   ================================================================ */
+
+/** Add a document to an agent's knowledge base */
+export const addAgentDoc = async (
+  agentId: string,
+  data: Omit<AgentDocument, "id" | "createdAt">
+): Promise<string> => {
+  const colRef = collection(db, "agents", agentId, "documents");
+  const ref = await addDoc(colRef, {
+    ...data,
+    createdAt: new Date().toISOString(),
+  });
+  return ref.id;
+};
+
+/** Delete a document from an agent's knowledge base */
+export const deleteAgentDoc = async (agentId: string, docId: string) => {
+  await deleteDoc(doc(db, "agents", agentId, "documents", docId));
+};
+
 /** Get all documents for an agent */
 export const getAgentDocs = async (agentId: string): Promise<AgentDocument[]> => {
   try {
