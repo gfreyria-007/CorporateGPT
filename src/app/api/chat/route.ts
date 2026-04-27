@@ -49,8 +49,12 @@ export async function POST(req: Request) {
   // 2. Context Extraction (RAG)
   const lastUserMessage = messages[messages.length - 1].content || "";
   
-  // Sanitize input to prevent basic injection
-  const sanitizedQuery = lastUserMessage.replace(/[<>]/g, "");
+  // Super Protect: Rigorous sanitization to prevent injection and excessive tokens
+  const sanitizedQuery = lastUserMessage
+    .trim()
+    .slice(0, 2000) // Limit query length to prevent DoS/token explosion
+    .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, "") // Strip scripts
+    .replace(/[<>]/g, ""); // Strip basic HTML tags
 
   const policyContext = await getPolicyContext(sanitizedQuery);
   const agentContext = agentId ? await getAgentContext(agentId, sanitizedQuery) : "";
