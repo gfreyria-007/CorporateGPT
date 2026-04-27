@@ -159,8 +159,22 @@ graph TD
     }
 
     if (demoResponse) {
-       await incrementUserUsage(uid, 500, "demo-logic"); 
+       try {
+         await incrementUserUsage(uid, 500, "demo-logic"); 
+       } catch (e) {
+         console.warn("Usage tracking failed:", e);
+       }
        return new Response(demoResponse, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
+    }
+
+    // Check for API keys
+    const hasApiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || 
+                      process.env.OPENAI_API_KEY || 
+                      process.env.ANTHROPIC_API_KEY;
+    
+    if (!hasApiKey && !process.env.VERCEL) {
+       // Only throw locally if no keys at all
+       console.warn("No AI API keys found in environment.");
     }
 
     const result = streamText({
@@ -168,7 +182,11 @@ graph TD
       messages,
       system: fullSystemPrompt,
       onFinish: async (event) => {
-        await incrementUserUsage(uid, event.usage.totalTokens || 0, selectedModel);
+        try {
+          await incrementUserUsage(uid, event.usage.totalTokens || 0, selectedModel);
+        } catch (e) {
+          console.warn("Usage tracking failed on finish:", e);
+        }
       },
     });
 
