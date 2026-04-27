@@ -5,6 +5,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useCompany } from "@/components/providers/CompanyProvider";
 import { updateCompanyConfig } from "@/lib/firestore";
 import { CompanyConfig } from "@/types/company";
+import PolicyManager from "@/components/PolicyManager";
 
 export default function AdminDashboard() {
   const { user, loading: authLoading } = useAuth();
@@ -43,7 +44,19 @@ export default function AdminDashboard() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => prev ? { ...prev, [name]: value } : null);
+    
+    if (name.startsWith("apiKey_")) {
+      const keyName = name.replace("apiKey_", "");
+      setFormData((prev) => prev ? {
+        ...prev,
+        apiKeys: {
+          ...prev.apiKeys,
+          [keyName]: value
+        }
+      } : null);
+    } else {
+      setFormData((prev) => prev ? { ...prev, [name]: value } : null);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -160,6 +173,71 @@ export default function AdminDashboard() {
                 className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent resize-y"
               />
             </div>
+
+            <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+              <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300">Provider API Keys</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Provide the keys for the models you wish to use. If left blank, the system will fall back to environment variables.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">OpenAI API Key</label>
+                  <input
+                    type="password"
+                    name="apiKey_openai"
+                    value={formData.apiKeys?.openai || ""}
+                    onChange={handleChange}
+                    placeholder="sk-..."
+                    className="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Anthropic API Key</label>
+                  <input
+                    type="password"
+                    name="apiKey_anthropic"
+                    value={formData.apiKeys?.anthropic || ""}
+                    onChange={handleChange}
+                    placeholder="sk-ant-..."
+                    className="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Google Gemini API Key</label>
+                  <input
+                    type="password"
+                    name="apiKey_google"
+                    value={formData.apiKeys?.google || ""}
+                    onChange={handleChange}
+                    placeholder="AIzaSy..."
+                    className="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">DeepSeek API Key</label>
+                  <input
+                    type="password"
+                    name="apiKey_deepseek"
+                    value={formData.apiKeys?.deepseek || ""}
+                    onChange={handleChange}
+                    placeholder="sk-..."
+                    className="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Perplexity API Key</label>
+                  <input
+                    type="password"
+                    name="apiKey_perplexity"
+                    value={formData.apiKeys?.perplexity || ""}
+                    onChange={handleChange}
+                    placeholder="pplx-..."
+                    className="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Super Admin / Tiers Section */}
@@ -215,6 +293,12 @@ export default function AdminDashboard() {
           </div>
 
         </form>
+
+        {/* Company Policies (RAG) Section */}
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+          <PolicyManager />
+        </div>
+
       </div>
     </div>
   );
