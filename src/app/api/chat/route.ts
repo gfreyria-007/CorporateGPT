@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     // 3. AI Processing with Context
     try {
       const result = await streamText({
-        model: google("gemini-1.5-flash"),
+        model: google("gemini-2.5-flash"),
         messages: messages.map((m: any) => ({ role: m.role, content: m.content })),
         system: `You are a Secure Enterprise Assistant. Respond helpfully and professionally.`,
       });
