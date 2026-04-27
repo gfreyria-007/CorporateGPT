@@ -26,6 +26,11 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; content: string; type: string }[]>([]);
   const [showMenu, setShowMenu] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [expandedThoughts, setExpandedThoughts] = useState<Record<string, boolean>>({});
+
+  const toggleThought = (id: string) => {
+    setExpandedThoughts(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   // Manual Submission Logic (v4.0.0 Neural Override)
   const sendMessage = async (overrideContent?: string) => {
@@ -182,19 +187,59 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
               </div>
             </div>
           ) : (
-            messages.map((m: any) => (
-              <div key={m.id} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"} animate-fade-in group`}>
-                <div className={`flex items-center gap-3 mb-3 ${m.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all ${m.role === "user" ? "bg-white/5 border-white/10" : "premium-gradient border-white/20"}`}>
-                    {m.role === "user" ? <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg> : <span className="text-xs font-bold">{activeAgent?.avatar || "✨"}</span>}
+            messages.map((m: any) => {
+              // Extract think block if present
+              let displayContent = m.content;
+              let thinkContent = null;
+              
+              if (m.role === "assistant" && typeof displayContent === "string") {
+                const thinkMatch = displayContent.match(/<think>([\s\S]*?)<\/think>/);
+                if (thinkMatch) {
+                  thinkContent = thinkMatch[1].trim();
+                  displayContent = displayContent.replace(/<think>[\s\S]*?<\/think>/, "").trim();
+                } else if (displayContent.startsWith("<think>")) {
+                  // Currently streaming the thought process
+                  thinkContent = displayContent.replace("<think>", "").trim();
+                  displayContent = ""; // Hide main content until thought finishes
+                }
+              }
+
+              return (
+                <div key={m.id} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"} animate-fade-in group`}>
+                  <div className={`flex items-center gap-3 mb-3 ${m.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all ${m.role === "user" ? "bg-white/5 border-white/10" : "premium-gradient border-white/20"}`}>
+                      {m.role === "user" ? <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg> : <span className="text-xs font-bold">{activeAgent?.avatar || "✨"}</span>}
+                    </div>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 italic">{m.role === "user" ? "Access Point: User" : (activeAgent?.name || "Neural Assistant")}</span>
                   </div>
-                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 italic">{m.role === "user" ? "Access Point: User" : (activeAgent?.name || "Neural Assistant")}</span>
+                  
+                  {thinkContent && (
+                    <div className="mb-3 max-w-[100%] sm:max-w-[85%] w-full">
+                      <button 
+                        onClick={() => toggleThought(m.id)}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-slate-400 hover:text-slate-200"
+                      >
+                        <svg className={`w-4 h-4 transition-transform ${expandedThoughts[m.id] ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                        <span className="text-[10px] font-black uppercase tracking-widest">{!displayContent ? "Processing Neural Network..." : "View Neural Synapse Log"}</span>
+                      </button>
+                      
+                      {(expandedThoughts[m.id] || !displayContent) && (
+                        <div className="mt-2 p-4 rounded-2xl bg-black/40 border border-white/5 text-slate-400 text-xs font-mono leading-relaxed max-h-60 overflow-y-auto custom-scrollbar">
+                          {thinkContent}
+                          {!displayContent && <span className="inline-block w-2 h-4 ml-1 bg-blue-500 animate-pulse"></span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {displayContent && (
+                    <div className={`max-w-[100%] sm:max-w-[85%] rounded-3xl px-8 py-5 text-[15px] leading-relaxed transition-all ${m.role === "user" ? "bg-white/[0.03] border border-white/5 text-slate-200" : "text-white font-medium"}`}>
+                      <div className="whitespace-pre-wrap">{displayContent}</div>
+                    </div>
+                  )}
                 </div>
-                <div className={`max-w-[100%] sm:max-w-[85%] rounded-3xl px-8 py-5 text-[15px] leading-relaxed transition-all ${m.role === "user" ? "bg-white/[0.03] border border-white/5 text-slate-200" : "text-white font-medium"}`}>
-                  <div className="whitespace-pre-wrap">{m.content}</div>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
           {error && <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-400 text-[11px] font-black uppercase tracking-widest text-center animate-shake">{error}</div>}
           {isStreaming && (
