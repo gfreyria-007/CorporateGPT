@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, collection, addDoc, getFirestore } from "firebase/firestore";
 import { db } from "./firebase";
 import { CompanyConfig, defaultCompanyConfig } from "@/types/company";
 
@@ -20,6 +20,7 @@ const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, defaultVal
 };
 
 export const getCompanyConfig = async (): Promise<CompanyConfig> => {
+  if (!db) return defaultCompanyConfig;
   try {
     const docRef = doc(db, COLLECTION_NAME, COMPANY_DOC_ID);
     const docSnap = await withTimeout(getDoc(docRef), 2000, { exists: () => false } as any);
@@ -36,6 +37,7 @@ export const getCompanyConfig = async (): Promise<CompanyConfig> => {
 };
 
 export const updateCompanyConfig = async (config: Partial<CompanyConfig>): Promise<void> => {
+  if (!db) return;
   try {
     const docRef = doc(db, COLLECTION_NAME, COMPANY_DOC_ID);
     await setDoc(docRef, config, { merge: true });
@@ -61,6 +63,7 @@ export const getUserUsage = async (
   const fallback = { tokensUsed: 0, queriesUsed: 0, month };
 
   try {
+    if (!db) return fallback;
     const usageRef = doc(db, "usage", uid);
     const snap = await withTimeout(getDoc(usageRef), 2000, { exists: () => false } as any);
 
@@ -82,7 +85,7 @@ export const getUserUsage = async (
 };
 
 export const incrementUserUsage = async (uid: string, tokens: number, model: string = "auto") => {
-  if (uid === "GUEST_DEMO_UID") return; // Skip for demo
+  if (uid === "GUEST_DEMO_UID" || !db) return; // Skip for demo or if no db
   
   const now = new Date();
   const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
@@ -119,4 +122,56 @@ export const getDailyUsage = async (uid: string, dateStr: string) => {
   const dailyRef = doc(db, "usage", uid, "daily", dateStr);
   const snap = await getDoc(dailyRef);
   return snap.exists() ? snap.data() : null;
+};
+
+/**
+ * SECURITY: Log a violation and potentially ban the user
+ */
+export const logSecurityViolation = async (uid: string, email: string, reason: string) => {
+  if (!db) return;
+  try {
+    await addDoc(collection(db, "security_logs"), {
+      uid,
+      email,
+      reason,
+      timestamp: new Date().toISOString(),
+      severity: "CRITICAL"
+    });
+
+    // Auto-ban after any security violation in public mode
+    await banUser(uid, email, reason);
+  } catch (e) {
+    console.error("Failed to log violation:", e);
+  }
+};
+
+/**
+ * Ban a user permanently
+ */
+export const banUser = async (uid: string, email: string, reason: string) => {
+  if (!db) return;
+  try {
+    await setDoc(doc(db, "banned_users", uid), {
+      uid,
+      email,
+      reason,
+      bannedAt: new Date().toISOString(),
+    });
+  } catch (e) {
+    console.error("Failed to ban user:", e);
+  }
+};
+
+/**
+ * Check if a user is banned
+ */
+export const isUserBanned = async (uid: string): Promise<boolean> => {
+  if (!db) return false;
+  try {
+    const banRef = doc(db, "banned_users", uid);
+    const banSnap = await getDoc(banRef);
+    return banSnap.exists();
+  } catch (e) {
+    return false;
+  }
 };

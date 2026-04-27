@@ -61,6 +61,7 @@ export const uploadAgentDoc = async (
 export const upsertPolicy = async (
   policy: Omit<PolicyDocument, "id" | "createdAt"> & { id?: string }
 ): Promise<string> => {
+  if (!db) return "db-not-found";
   if (policy.id) {
     const ref = doc(db, "policies", policy.id);
     await setDoc(ref, { ...policy, createdAt: new Date().toISOString() }, { merge: true });
@@ -75,6 +76,7 @@ export const upsertPolicy = async (
 
 /** Delete a policy document */
 export const deletePolicy = async (id: string) => {
+  if (!db) return;
   await deleteDoc(doc(db, "policies", id));
 };
 
@@ -88,6 +90,7 @@ const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, fallback: T): Pr
 
 /** Get ALL policy documents (small set – company‑wide) */
 export const getAllPolicies = async (): Promise<PolicyDocument[]> => {
+  if (!db) return [];
   try {
     const snap = await withTimeout(getDocs(collection(db, "policies")), 2000, { docs: [] } as any);
     return snap.docs.map((d: any) => ({ id: d.id, ...d.data() } as PolicyDocument));
@@ -128,6 +131,7 @@ export const addAgentDoc = async (
   agentId: string,
   data: Omit<AgentDocument, "id" | "createdAt">
 ): Promise<string> => {
+  if (!db) return "db-not-found";
   const colRef = collection(db, "agents", agentId, "documents");
   const ref = await addDoc(colRef, {
     ...data,
@@ -138,11 +142,13 @@ export const addAgentDoc = async (
 
 /** Delete a document from an agent's knowledge base */
 export const deleteAgentDoc = async (agentId: string, docId: string) => {
+  if (!db) return;
   await deleteDoc(doc(db, "agents", agentId, "documents", docId));
 };
 
 /** Get all documents for an agent */
 export const getAgentDocs = async (agentId: string): Promise<AgentDocument[]> => {
+  if (!db) return [];
   try {
     const snap = await withTimeout(getDocs(collection(db, "agents", agentId, "documents")), 2000, { docs: [] } as any);
     return snap.docs.map((d: any) => ({ id: d.id, ...d.data() } as AgentDocument));

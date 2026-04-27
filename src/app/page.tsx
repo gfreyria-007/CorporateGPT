@@ -73,12 +73,6 @@ export default function Home() {
               Initialize Session
             </button>
 
-            <button
-              onClick={signInAsGuest}
-              className="w-full py-4 px-8 rounded-3xl border border-white/5 text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] hover:bg-white/5 hover:text-white transition-all active:scale-95"
-            >
-              Enter Operational Demo
-            </button>
           </div>
           
           <p className="text-[9px] text-slate-600 font-black uppercase tracking-[0.3em]">Quantum-Secure Access</p>

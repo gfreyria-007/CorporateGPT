@@ -1,7 +1,6 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
 import { useEffect, useState, useRef } from "react";
 import Script from "next/script";
 import { useAuth } from "./providers/AuthProvider";
@@ -24,54 +23,54 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
   const [selectedModel, setSelectedModel] = useState("auto");
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; content: string; type: string }[]>([]);
   const [showMenu, setShowMenu] = useState(false);
-  const [input, setInput] = useState("");
 
 
   // useChat configuration
-  const { messages, sendMessage, setMessages, status, stop } = useChat({
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-      body: () => ({
-        selectedModel,
-        uid: user?.uid,
-        email: user?.email,
-        agentId: activeAgent?.id,
-        systemPrompt: activeAgent?.systemPrompt,
-        attachments: attachedFiles,
-      })
-    }),
+  const { messages, append, setMessages, status, stop, input, setInput, handleInputChange } = useChat({
+    api: "/api/chat",
+    body: {
+      selectedModel,
+      uid: user?.uid,
+      email: user?.email,
+      agentId: activeAgent?.id,
+      systemPrompt: activeAgent?.systemPrompt,
+      attachments: attachedFiles,
+    },
     onFinish: () => {
       setAttachedFiles([]);
     }
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
-    setInput(e.target.value);
-  };
 
 
   // Simplified loading state
   const isCurrentlyLoading = status === "submitted" || status === "streaming";
 
   const handleActionClick = async (content: string) => {
-    console.log("Action click:", content);
+    console.log("[CHAT] Action Click:", content);
     try {
-      await sendMessage({ text: content });
+      await append({ role: "user", content });
     } catch (e) {
-      console.error("Action error:", e);
+      console.error("[CHAT] Action error:", e);
     }
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const message = input?.trim();
-    if (!message && attachedFiles.length === 0) return;
+    console.log("[CHAT] Submit Triggered:", { message, attachedFiles: attachedFiles.length });
+    
+    if (!message && attachedFiles.length === 0) {
+      console.warn("[CHAT] Empty submission blocked");
+      return;
+    }
     
     try {
-      await sendMessage({ text: message || "" });
+      console.log("[CHAT] Appending to stream...");
+      await append({ role: "user", content: message || "" });
       setInput("");
     } catch (e) {
-      console.error("Submit error:", e);
+      console.error("[CHAT] Submission crash:", e);
     }
   };
 
@@ -234,6 +233,12 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
             ))
           )}
           
+          {status === "error" && (
+            <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-400 text-[11px] font-black uppercase tracking-widest text-center animate-shake">
+               Neural Link Severed: Connection to AI Nodes Lost.
+            </div>
+          )}
+
           {isCurrentlyLoading && (
             <div className="flex items-center gap-4 animate-pulse pt-4">
               <div className="w-8 h-8 rounded-lg premium-gradient flex items-center justify-center">
@@ -356,7 +361,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
           </form>
 
           <p className="text-[9px] text-center mt-4 text-slate-700 font-black uppercase tracking-[0.4em]">
-            Neural Core v3.0 • Secure Enterprise Intelligence
+            Neural Core v3.2.0 • Secure Enterprise Intelligence
           </p>
         </div>
       </div>

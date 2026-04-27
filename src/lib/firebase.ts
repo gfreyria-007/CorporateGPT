@@ -15,12 +15,19 @@ const firebaseConfig = {
 // Initialize Firebase only if it hasn't been initialized already
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
-const googleProvider = new GoogleAuthProvider();
+// Safe initialization helper
+const getSafeService = <T>(serviceInit: (app: any) => T, name: string): T | null => {
+  try {
+    return serviceInit(app);
+  } catch (e) {
+    console.error(`Firebase Service Init Failed (${name}):`, e);
+    return null;
+  }
+};
 
-// Optional: you can add custom scopes to the provider for Google Drive integration later
-// googleProvider.addScope("https://www.googleapis.com/auth/drive.readonly");
+const auth = getAuth(app);
+const db = getSafeService(getFirestore, "Firestore");
+const storage = getSafeService(getStorage, "Storage");
+const googleProvider = new GoogleAuthProvider();
 
 export { app, auth, db, storage, googleProvider };

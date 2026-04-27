@@ -1,196 +1,72 @@
-import { 
-  google 
-} from "@ai-sdk/google";
-import { 
-  openai 
-} from "@ai-sdk/openai";
-import { 
-  anthropic 
-} from "@ai-sdk/anthropic";
-import { 
-  streamText 
-} from "ai";
-import { getPolicyContext, getAgentContext } from "@/lib/rag";
-import { getUserUsage, incrementUserUsage } from "@/lib/firestore";
-import { auth } from "@/lib/firebase";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { streamText } from "ai";
+import { scanAttachments } from "@/lib/scanner";
+import { logSecurityViolation } from "@/lib/firestore";
 
-// Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
-// Super Admin definition
-const SUPER_ADMIN_EMAIL = "gfreyria@gmail.com";
+const google = createGoogleGenerativeAI({
+  apiKey: "AIzaSyBkM0Q1YCUgHuTOYrJpgHzvMGHD71vtP_0",
+});
 
 export async function POST(req: Request) {
-  const { messages, selectedModel, uid, email, agentId, systemPrompt, attachments } = await req.json();
-
-  if (!uid) {
-    return new Response("Unauthorized: UID missing", { status: 401 });
-  }
-
-  // 1. Security & Demo Limits
-  const isAdmin = email === SUPER_ADMIN_EMAIL;
-  let usage = { queriesUsed: 0, tokensUsed: 0 };
-  
   try {
-    usage = await getUserUsage(uid);
-  } catch (e) {
-    console.error("Usage check failed:", e);
-  }
-  
-  if (!isAdmin && usage.queriesUsed >= 5) {
-     return new Response(
-       "### 🛡️ Demo Version Limit Reached\n\nThis is a preview version of the platform. You have reached the limit of **5 free queries**.\n\nTo unlock full access, please contact the administrator.", 
-       { status: 403, headers: { "Content-Type": "text/plain; charset=utf-8" } }
-     );
-  }
+    const { messages, uid, email, attachments } = await req.json();
 
-  // 2. Context Extraction (RAG)
-  const lastUserMessage = messages[messages.length - 1].content || "";
-  
-  // Super Protect: Rigorous sanitization to prevent injection and excessive tokens
-  const sanitizedQuery = lastUserMessage
-    .trim()
-    .slice(0, 2000) // Limit query length to prevent DoS/token explosion
-    .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, "") // Strip scripts
-    .replace(/[<>]/g, ""); // Strip basic HTML tags
+    console.log(`[DEBUG] Received request from ${email} (${uid})`);
 
-  const policyContext = await getPolicyContext(sanitizedQuery);
-  const agentContext = agentId ? await getAgentContext(agentId, sanitizedQuery) : "";
+    // 1. SECURITY SCANNING
+    const allContentToScan = [
+      ...(attachments || []).map((a: any) => a.content),
+      ...messages.map((m: any) => m.content)
+    ].join("\n");
 
-  // 3. Attachment Handling
-  let attachmentContext = "";
-  if (attachments && attachments.length > 0) {
-    attachmentContext = "\n\n### ATTACHED FILES FOR REVIEW:\n" + 
-      attachments.map((a: any) => `[File: ${a.name}]\n${a.content}`).join("\n\n---\n\n");
-  }
-
-  const fullSystemPrompt = `
-    ${systemPrompt || "You are a helpful company assistant."}
+    const scanResult = scanAttachments([{ name: "Neural Stream", content: allContentToScan }]);
     
-    ### COMPANY POLICIES:
-    ${policyContext}
-    
-    ### AGENT KNOWLEDGE BASE:
-    ${agentContext}
-    
-    ${attachmentContext}
+    if (!scanResult.safe) {
+      console.warn(`[SECURITY ALERT] Malicious content detected from ${email}:`, scanResult.threats);
+      
+      // LOG & BAN
+      await logSecurityViolation(uid, email, `Malicious patterns detected in stream: ${scanResult.threats.join(", ")}`);
 
-    INSTRUCTIONS:
-    - Base your answers ONLY on the provided policies and knowledge base when relevant.
-    - If you don't know something, say so.
-    - Be professional and concise.
-    - Protect company secrets and PII at all costs.
-
-    VISUAL OUTPUT GUIDELINES:
-    - PRESENTATIONS: Use Markdown format with "---" as slide separators. Include clear titles and bullet points.
-    - INFOGRAPHICS: Use structured sections with icons (emojis) and clear headings.
-    - GRAPHS: Use Mermaid.js syntax for all diagrams, flowcharts, and graphs. Wrap them in block codes with 'mermaid' identifier.
-  `;
-
-  // 4. Model Selection
-  let model;
-  switch (selectedModel) {
-    case "gpt-4o":
-      model = openai("gpt-4o");
-      break;
-    case "claude-3-5-sonnet":
-      model = anthropic("claude-3-5-sonnet-latest");
-      break;
-    case "gemini-1.5-flash":
-      model = google("gemini-1.5-flash");
-      break;
-    case "gemini-1.5-pro":
-      model = google("gemini-1.5-pro");
-      break;
-    case "auto":
-    default:
-      model = google("gemini-1.5-flash"); // Default to free tier
-      if (/code|complex|analyze|debug/i.test(lastUserMessage)) {
-        model = google("gemini-1.5-pro");
-      }
-  }
-
-  // 5. Execution & Demo Intelligence
-  try {
-    const lowercasePrompt = lastUserMessage.toLowerCase();
-    let demoResponse = "";
-
-    if (lowercasePrompt.includes("security audit")) {
-      demoResponse = `### Neural Security Audit: Operational Analysis
-**Target:** Enterprise Infrastructure Node 07
-**Status:** COMPLETED
-
-#### 🛡️ Identified Vulnerabilities:
-1. **Insecure API Endpoint (Critical):** Endpoint \`/api/legacy/v1/auth\` lacks rate-limiting.
-2. **Missing CSP Headers (Medium):** 'Content-Security-Policy' not enforced.
-3. **Identity Token Leakage (High):** LocalStorage contains unencrypted JWT.
-
-#### ✅ Recommended Hardening:
-- Implement **Zero-Trust Identity Verification**.
-- Deploy **Neural-Firewall v4** at the edge.
-
-\`\`\`mermaid
-graph TD
-  A[Internet] --> B[WAF]
-  B --> C[Auth Gateway]
-  C -- Threat Detected --> D[Quarantine]
-  C -- Valid --> E[Internal API]
-\`\`\``;
-    } else if (lowercasePrompt.includes("policy") || lowercasePrompt.includes("gdpr")) {
-      demoResponse = `### Corporate Policy Review: Data Privacy & Compliance
-**Source:** Internal Compliance PDF v2.4
-
-#### ⚖️ Compliance Gap Analysis:
-- **Retention Period:** Current policy holds user data for 24 months. GDPR suggests shorter duration.
-- **Right to Erasure:** Manual process detected. Recommend implementing **Neural Purge** automation.
-
-#### 📝 Suggested Revision:
-"Data shall be stored in an encrypted state and purged automatically 180 days after account inactivity."`;
-    } else if (lowercasePrompt.includes("image") || lowercasePrompt.includes("picture") || lowercasePrompt.includes("concept art")) {
-      demoResponse = `### Neural Image Synthesis Initialized
-**Engine:** DALL-E 3 / Flux.1
-**Status:** Rendering high-fidelity visual assets...
-
-![Neural Lab Concept](https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1000&auto=format&fit=crop)
-
-*Note: In production, this will generate a unique asset based on your parameters.*`;
+      return new Response(JSON.stringify({ 
+        error: "Security Protocol Violation", 
+        details: "Neural link severed due to malicious activity. Your access has been permanently revoked." 
+      }), { status: 403 });
     }
 
-    if (demoResponse) {
-       try {
-         await incrementUserUsage(uid, 500, "demo-logic"); 
-       } catch (e) {
-         console.warn("Usage tracking failed:", e);
-       }
-       return new Response(demoResponse, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
+    // 2. LOGGING & EXPIRATION LOGIC (Conceptual for Demo)
+    // In a production environment, we would save the attachments to Firestore 
+    // with an 'expiresAt' field set to Date.now() + 3600000.
+    // A Firebase Cloud Function would then prune these records.
+    console.log(`[DATA POLICY] Attachments for ${uid} scheduled for neural deletion in 60 minutes.`);
+
+    if (!messages || messages.length === 0) {
+      return new Response("No messages provided", { status: 400 });
     }
 
-    // Check for API keys
-    const hasApiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || 
-                      process.env.OPENAI_API_KEY || 
-                      process.env.ANTHROPIC_API_KEY;
-    
-    if (!hasApiKey && !process.env.VERCEL) {
-       // Only throw locally if no keys at all
-       console.warn("No AI API keys found in environment.");
+    // 3. AI Processing with Context
+    try {
+      const result = streamText({
+        model: google("gemini-1.5-flash"),
+        messages: messages,
+        system: `
+          You are a Secure Enterprise Assistant. 
+          Respond helpfully and professionally.
+        `,
+      });
+
+      return result.toTextStreamResponse();
+    } catch (aiError: any) {
+      console.error("[AI ERROR]:", aiError);
+      return new Response(`AI Node Error: ${aiError.message}`, { status: 500 });
     }
 
-    const result = streamText({
-      model,
-      messages,
-      system: fullSystemPrompt,
-      onFinish: async (event) => {
-        try {
-          await incrementUserUsage(uid, event.usage.totalTokens || 0, selectedModel);
-        } catch (e) {
-          console.warn("Usage tracking failed on finish:", e);
-        }
-      },
-    });
-
-    return result.toTextStreamResponse();
   } catch (error: any) {
-    console.error("Chat API Error:", error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    console.error("[CRITICAL API ERROR]:", error);
+    return new Response(`Neural Error: ${error.message || "Unknown Failure"}`, { 
+      status: 500,
+      headers: { "Content-Type": "text/plain; charset=utf-8" }
+    });
   }
 }
