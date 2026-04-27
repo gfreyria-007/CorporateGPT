@@ -15,7 +15,12 @@ export async function POST(req: Request) {
   const apiKeys = config.apiKeys ?? {};
 
   // 2️⃣  Build RAG‑enriched system prompt
-  const lastUserMessage = messages[messages.length - 1]?.content?.toString() ?? "";
+  const lastUserMessageObj = messages[messages.length - 1];
+  const lastUserMessage = lastUserMessageObj?.parts
+    ?.filter((p: any) => p.type === "text")
+    .map((p: any) => p.text)
+    .join("") || lastUserMessageObj?.content?.toString() || "";
+  
   let enrichedPrompt = systemPrompt || config.systemPrompt;
 
   // Always inject company policy context into the main chatbot
@@ -80,5 +85,5 @@ export async function POST(req: Request) {
     system: enrichedPrompt,
   });
 
-  return result.toTextStreamResponse();
+  return result.toDataStreamResponse();
 }
