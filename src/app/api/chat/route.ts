@@ -82,6 +82,11 @@ export async function POST(req: Request) {
     - If you don't know something, say so.
     - Be professional and concise.
     - Protect company secrets and PII at all costs.
+
+    VISUAL OUTPUT GUIDELINES:
+    - PRESENTATIONS: Use Markdown format with "---" as slide separators. Include clear titles and bullet points.
+    - INFOGRAPHICS: Use structured sections with icons (emojis) and clear headings.
+    - GRAPHS: Use Mermaid.js syntax for all diagrams, flowcharts, and graphs. Wrap them in ```mermaid blocks.
   `;
 
   // 4. Model Selection

@@ -9,9 +9,10 @@ import { Agent } from "@/types/agent";
 interface ChatInterfaceProps {
   activeAgent?: Agent | null;
   onBackToAgents?: () => void;
+  fullScreen?: boolean;
 }
 
-export default function ChatInterface({ activeAgent, onBackToAgents }: ChatInterfaceProps) {
+export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen }: ChatInterfaceProps) {
   const { user } = useAuth();
   const { config } = useCompany();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -20,8 +21,9 @@ export default function ChatInterface({ activeAgent, onBackToAgents }: ChatInter
   
   const [selectedModel, setSelectedModel] = useState("auto");
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; content: string; type: string }[]>([]);
+  const [showMenu, setShowMenu] = useState(false);
 
-  // useChat configuration for SDK 6.x
+  // useChat configuration
   const { messages, input, handleInputChange, handleSubmit, isLoading, setInput } = useChat({
     api: "/api/chat",
     body: {
@@ -29,10 +31,10 @@ export default function ChatInterface({ activeAgent, onBackToAgents }: ChatInter
       uid: user?.uid,
       agentId: activeAgent?.id,
       systemPrompt: activeAgent?.systemPrompt,
-      attachments: attachedFiles, // Send attachments to the backend
+      attachments: attachedFiles,
     },
     onFinish: () => {
-      setAttachedFiles([]); // Clear attachments after successful send
+      setAttachedFiles([]);
     }
   });
 
@@ -61,141 +63,197 @@ export default function ChatInterface({ activeAgent, onBackToAgents }: ChatInter
         if (file.type.startsWith("text/") || file.name.endsWith(".txt") || file.name.endsWith(".md")) {
           content = await file.text();
         } else {
-          content = "[Binary file content - metadata only]";
+          content = "[Binary file content]";
         }
         return { name: file.name, content, type: file.type };
       })
     );
 
     setAttachedFiles((prev) => [...prev, ...newFiles]);
+    setShowMenu(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const removeAttachment = (index: number) => {
-    setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
-  };
-
   return (
-    <div className="flex flex-col h-[700px] w-full glass-card rounded-3xl overflow-hidden animate-fade-in relative">
+    <div className={`flex flex-col w-full h-full relative ${fullScreen ? "bg-transparent" : "glass-card rounded-3xl"}`}>
       
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/5 backdrop-blur-md relative z-10">
-        <div className="flex items-center gap-3">
-          {activeAgent ? (
-            <button 
-              onClick={onBackToAgents}
-              className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-            </button>
-          ) : (
-            <div className="w-10 h-10 premium-gradient rounded-xl flex items-center justify-center shadow-lg">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
-            </div>
-          )}
-          <div>
-            <h3 className="font-black text-white italic tracking-tight">
-              {activeAgent ? activeAgent.name : "Neural Assistant"}
-            </h3>
-            <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              Secure Drive Active
-            </p>
-          </div>
-        </div>
-
-        <select
-          value={selectedModel}
-          onChange={(e) => setSelectedModel(e.target.value)}
-          className="text-[10px] font-black uppercase tracking-widest bg-white/5 border border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-gray-300 outline-none"
-        >
-          <option value="auto">✨ Auto (Gemini)</option>
-          <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-          <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-          <option value="gpt-4o">GPT-4o</option>
-          <option value="claude-3-5-sonnet">Claude 3.5</option>
-        </select>
-      </div>
-
-      {/* Messages */}
+      {/* Scrollable Message Area */}
       <div 
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-6 space-y-8 scroll-smooth relative"
+        className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar relative"
       >
-        {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center space-y-6 opacity-40">
-            <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center border border-white/5 animate-pulse">
-              <svg className="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-            </div>
-            <div className="max-w-xs">
-              <p className="font-black text-white italic text-xl">Systems Online.</p>
-              <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500 mt-2">Ready for neural processing</p>
-            </div>
-          </div>
-        ) : (
-          messages.map((m) => (
-            <div 
-              key={m.id} 
-              className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"} animate-fade-in group`}
-            >
-              <div className="flex items-center gap-2 mb-2 px-2">
-                <span className={`text-[10px] font-black uppercase tracking-widest ${m.role === "user" ? "text-blue-400" : "text-emerald-400 italic"}`}>
-                  {m.role === "user" ? "Protocol: User" : `Neural: ${activeAgent?.name || "Assistant"}`}
-                </span>
+        <div className="max-w-3xl mx-auto px-6 py-20 space-y-10">
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center text-center space-y-12 py-20 animate-fade-in">
+              {/* Central Logo/Icon */}
+              <div className="relative">
+                 <div className="w-20 h-20 bg-white/5 rounded-[2rem] flex items-center justify-center border border-white/10 shadow-[0_0_50px_rgba(255,255,255,0.05)] rotate-6">
+                    <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                 </div>
+                 <div className="absolute -top-4 -right-4 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center shadow-lg animate-bounce">
+                    <span className="text-[10px] font-black italic">o3</span>
+                 </div>
               </div>
+
+              <div className="space-y-4">
+                <h2 className="text-4xl font-black text-white italic tracking-tighter">
+                  {activeAgent ? `Forge: ${activeAgent.name}` : "¿Qué tienes en mente hoy?"}
+                </h2>
+                <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em]">Neural Processing Node • Ready for Input</p>
+              </div>
+
+              {/* Quick Action Cards (Inspired by the Image) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl pt-8">
+                 {[
+                   { icon: "📝", title: "Write/Edit Docs", sub: "Neural Draft Generation" },
+                   { icon: "🔬", title: "Analyze Policies", sub: "Deep Context RAG" },
+                   { icon: "📊", title: "Summarize Reports", sub: "Efficient Data Distillation" },
+                   { icon: "🛡️", title: "Security Audit", sub: "Mode 007 Hardening" }
+                 ].map((action, i) => (
+                   <button 
+                    key={i} 
+                    onClick={() => setInput(action.title)}
+                    className="glass-card p-5 rounded-3xl text-left border-white/[0.03] hover:border-white/10 hover:bg-white/[0.02] transition-all group"
+                   >
+                      <span className="text-2xl mb-3 block group-hover:scale-110 transition-transform">{action.icon}</span>
+                      <p className="text-sm font-bold text-white italic">{action.title}</p>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-600 mt-1">{action.sub}</p>
+                   </button>
+                 ))}
+              </div>
+            </div>
+          ) : (
+            messages.map((m) => (
               <div 
-                className={`max-w-[90%] rounded-2xl px-6 py-4 text-sm leading-relaxed shadow-xl border ${
-                  m.role === "user" 
-                    ? "chat-bubble-user border-white/10" 
-                    : "chat-bubble-ai border-white/5"
-                }`}
+                key={m.id} 
+                className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"} animate-fade-in group`}
               >
-                <div className="whitespace-pre-wrap font-medium">
-                  {m.parts
-                    ?.filter((p) => p.type === "text")
-                    .map((p) => (p as any).text)
-                    .join("") || (m as any).content || ""}
+                {/* Identity Header */}
+                <div className={`flex items-center gap-3 mb-3 ${m.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
+                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all ${m.role === "user" ? "bg-white/5 border-white/10" : "premium-gradient border-white/20"}`}>
+                      {m.role === "user" ? (
+                        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                      ) : (
+                        <span className="text-xs font-bold">{activeAgent?.avatar || "✨"}</span>
+                      )}
+                   </div>
+                   <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 italic">
+                      {m.role === "user" ? "Access Point: User" : (activeAgent?.name || "Neural Assistant")}
+                   </span>
+                </div>
+
+                {/* Message Bubble */}
+                <div 
+                  className={`max-w-[100%] sm:max-w-[85%] rounded-3xl px-8 py-5 text-[15px] leading-relaxed transition-all ${
+                    m.role === "user" 
+                      ? "bg-white/[0.03] border border-white/5 text-slate-200" 
+                      : "text-white font-medium"
+                  }`}
+                >
+                  <div className="whitespace-pre-wrap">
+                    {m.parts
+                      ?.filter((p) => p.type === "text")
+                      .map((p) => (p as any).text)
+                      .join("") || (m as any).content || ""}
+                  </div>
                 </div>
               </div>
-              {/* Message Timestamp/Decor */}
-              <div className="mt-2 text-[8px] font-black uppercase tracking-tighter opacity-0 group-hover:opacity-30 transition-opacity">
-                {new Date().toLocaleTimeString()} • Encrypted Node
+            ))
+          )}
+          {isLoading && (
+            <div className="flex items-center gap-4 animate-pulse pt-4">
+              <div className="w-8 h-8 rounded-lg premium-gradient flex items-center justify-center">
+                <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+              </div>
+              <div className="space-y-2">
+                 <div className="h-2 w-32 bg-white/5 rounded-full"></div>
+                 <div className="h-2 w-24 bg-white/5 rounded-full opacity-50"></div>
               </div>
             </div>
-          ))
-        )}
-        {isLoading && (
-          <div className="flex items-center gap-4 animate-pulse">
-            <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping"></div>
-            </div>
-            <div className="space-y-2">
-               <div className="h-2 w-32 bg-white/10 rounded-full"></div>
-               <div className="h-2 w-24 bg-white/5 rounded-full"></div>
-            </div>
-          </div>
-        )}
+          )}
+          <div className="h-40" /> {/* Spacer for floating input */}
+        </div>
       </div>
 
-      {/* Input */}
-      <div className="p-6 bg-white/5 border-t border-white/10 backdrop-blur-xl relative z-10">
-        
-        {/* Attachments Preview */}
-        {attachedFiles.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4 animate-fade-in">
-            {attachedFiles.map((file, i) => (
-              <div key={i} className="flex items-center gap-2 bg-white/10 border border-white/10 rounded-xl px-3 py-1.5 group">
-                <span className="text-[10px] font-bold text-white truncate max-w-[120px]">{file.name}</span>
-                <button onClick={() => removeAttachment(i)} className="text-rose-500 hover:text-white transition-colors">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+      {/* ── FLOATING INPUT (Inspired by Image) ── */}
+      <div className="absolute bottom-0 left-0 w-full p-6 z-20">
+        <div className="max-w-3xl mx-auto relative">
+          
+          {/* Attachments (Pills) */}
+          {attachedFiles.length > 0 && (
+            <div className="absolute bottom-full left-0 mb-4 flex flex-wrap gap-2 animate-fade-in">
+              {attachedFiles.map((file, i) => (
+                <div key={i} className="flex items-center gap-2 bg-white/5 border border-white/5 rounded-2xl px-4 py-2 group backdrop-blur-xl">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 truncate max-w-[150px]">{file.name}</span>
+                  <button onClick={() => setAttachedFiles(f => f.filter((_, idx) => idx !== i))} className="text-rose-500 hover:text-white transition-colors">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="relative space-y-4">
-          <div className="relative group bg-white/5 rounded-2xl border border-white/10 focus-within:border-blue-500/50 transition-all">
+          <form 
+            onSubmit={handleSubmit}
+            className="glass-card rounded-[2rem] p-2 pr-4 border-white/5 shadow-2xl focus-within:border-white/20 transition-all flex items-end gap-2 bg-[#1A1A1A]/80 backdrop-blur-3xl"
+          >
+            {/* Add Menu Button */}
+            <div className="relative">
+               <button 
+                type="button"
+                onClick={() => setShowMenu(!showMenu)}
+                className={`p-3 text-slate-500 hover:text-white hover:bg-white/5 rounded-full transition-all ${showMenu ? "rotate-45" : "rotate-0"}`}
+               >
+                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+               </button>
+
+               {showMenu && (
+                 <div className="absolute bottom-full left-0 mb-4 glass-card rounded-3xl p-3 w-64 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-fade-in-up">
+                    <div className="space-y-1">
+                       <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group">
+                          <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
+                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                          </div>
+                          <div>
+                             <p className="text-xs font-bold text-white italic">Neural Upload</p>
+                             <p className="text-[9px] font-black uppercase tracking-widest text-slate-600">Review & Reference</p>
+                          </div>
+                       </button>
+
+                       <button onClick={() => setInput("Create an advanced presentation about ")} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group">
+                          <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
+                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>
+                          </div>
+                          <div>
+                             <p className="text-xs font-bold text-white italic">Presentations</p>
+                             <p className="text-[9px] font-black uppercase tracking-widest text-slate-600">Advanced Slides</p>
+                          </div>
+                       </button>
+
+                       <button onClick={() => setInput("Generate an infographic for ")} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group">
+                          <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
+                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg>
+                          </div>
+                          <div>
+                             <p className="text-xs font-bold text-white italic">Infographics</p>
+                             <p className="text-[9px] font-black uppercase tracking-widest text-slate-600">Visual Insights</p>
+                          </div>
+                       </button>
+
+                       <button onClick={() => setInput("Create a detailed graph for ")} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group">
+                          <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
+                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                          </div>
+                          <div>
+                             <p className="text-xs font-bold text-white italic">Advanced Graphs</p>
+                             <p className="text-[9px] font-black uppercase tracking-widest text-slate-600">Dynamic Visualization</p>
+                          </div>
+                       </button>
+                    </div>
+                 </div>
+               )}
+            </div>
+
             <textarea
               ref={textareaRef}
               value={input}
@@ -207,46 +265,24 @@ export default function ChatInterface({ activeAgent, onBackToAgents }: ChatInter
                 }
               }}
               rows={1}
-              placeholder={activeAgent ? `Transmit to ${activeAgent.name}...` : "Query neural network..."}
-              className="w-full bg-transparent py-4 pl-14 pr-14 focus:outline-none transition-all placeholder:text-slate-600 text-sm resize-none"
-            />
-            
-            {/* Attachment Button */}
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="absolute left-3 top-3.5 p-2 text-slate-500 hover:text-white hover:bg-white/5 rounded-xl transition-all"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
-            </button>
-            
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
-              multiple 
-              onChange={handleFileChange} 
+              placeholder={activeAgent ? `Message ${activeAgent.name}...` : "Pregunta lo que quieras..."}
+              className="flex-1 bg-transparent py-3 text-sm focus:outline-none placeholder:text-slate-600 resize-none max-h-48 custom-scrollbar"
             />
 
-            {/* Submit Button */}
+            <input type="file" ref={fileInputRef} className="hidden" multiple onChange={handleFileChange} />
+
             <button
               type="submit"
               disabled={isLoading || (!input.trim() && attachedFiles.length === 0)}
-              className="absolute right-3 top-3.5 p-2 bg-blue-600 text-white rounded-xl disabled:opacity-30 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-blue-500/20"
+              className="p-3 bg-white text-black rounded-full disabled:opacity-20 hover:scale-105 active:scale-95 transition-all shadow-xl"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
             </button>
-          </div>
-        </form>
-        
-        <div className="flex items-center justify-between mt-4">
-          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-600">
-            Node-to-Node Encryption Active
+          </form>
+
+          <p className="text-[9px] text-center mt-4 text-slate-700 font-black uppercase tracking-[0.4em]">
+            Neural Core v3.0 • Secure Enterprise Intelligence
           </p>
-          <div className="flex gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)]"></div>
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)]"></div>
-          </div>
         </div>
       </div>
     </div>
