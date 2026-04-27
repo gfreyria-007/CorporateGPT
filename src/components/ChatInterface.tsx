@@ -138,23 +138,25 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                 <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em]">Neural Processing Node • Ready for Input</p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl pt-8">
-                 {[
-                   { icon: "📝", title: "Technical Doc", sub: "Neural Synthesis", prompt: "Generate a technical specification for a new microservice architecture." },
-                   { icon: "🛡️", title: "Security Audit", sub: "Mode 007 Hardening", prompt: "Perform a comprehensive security audit on the current infrastructure. Identify potential OWASP vulnerabilities." },
-                   { icon: "⚖️", title: "Policy Check", sub: "Compliance RAG", prompt: "Review our internal data retention policy and identify any GDPR non-compliance." },
-                   { icon: "🎨", title: "Image Synthesis", sub: "DALL-E 3 / Flux", prompt: "Create a high-fidelity cinematic concept art of a futuristic neural laboratory. Dark aesthetic, blue neon." }
-                 ].map((action, i) => (
-                   <button 
-                    key={i} 
+              <div className="grid grid-cols-2 gap-3 w-full max-w-xl pt-8">
+                {[
+                  { title: "Technical Synthesis", sub: "DRAFT GEN", prompt: "Draft a technical summary of " },
+                  { title: "Security Protocols", sub: "AUDIT NODE", prompt: "Audit the security of " },
+                  { title: "Compliance Logic", sub: "POLICY RAG", prompt: "Verify compliance for " },
+                  { title: "Visual Assets", sub: "IMAGE GEN", prompt: "Generate a concept visual for " }
+                ].map((action) => (
+                  <button 
+                    key={action.title}
                     onClick={() => handleActionClick(action.prompt)}
-                    className="glass-card p-6 rounded-[2rem] text-left border-white/[0.03] hover:border-blue-500/20 hover:bg-white/[0.02] transition-all group active:scale-[0.98] shadow-lg"
-                   >
-                      <span className="text-3xl mb-4 block group-hover:scale-110 transition-transform">{action.icon}</span>
-                      <p className="text-base font-bold text-white italic">{action.title}</p>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-600 mt-1">{action.sub}</p>
-                   </button>
-                 ))}
+                    className="flex flex-col items-start p-4 rounded-xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.05] hover:border-blue-500/30 transition-all group relative overflow-hidden"
+                  >
+                    <div className="absolute top-0 right-0 p-2 opacity-5 group-hover:opacity-20 transition-opacity">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                    </div>
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-400 mb-1">{action.sub}</p>
+                    <p className="text-xs font-bold text-white tracking-tight">{action.title}</p>
+                  </button>
+                ))}
               </div>
             </div>
           ) : (
