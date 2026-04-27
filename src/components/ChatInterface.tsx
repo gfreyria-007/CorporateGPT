@@ -79,7 +79,6 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
         const chunk = decoder.decode(value, { stream: true });
         assistantContent += chunk;
 
-        // Update the assistant message in the stream
         setMessages(prev => {
           const newMessages = [...prev];
           const lastMsg = newMessages[newMessages.length - 1];
@@ -90,12 +89,18 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
         });
       }
 
+      if (!assistantContent.trim()) {
+        throw new Error("Neural Core returned an empty payload. The file may be too large or unreadable by the selected AI model.");
+      }
+
+      // Only clear attached files on complete success
       setAttachedFiles([]);
     } catch (err: any) {
       console.error("[NEURAL OVERRIDE CRASH]:", err);
       setError(err.message || "Unknown neural link failure");
     } finally {
       setIsStreaming(false);
+      setProcessingState("");
     }
   };
 

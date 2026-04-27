@@ -3,6 +3,7 @@ import { streamText } from "ai";
 import { scanAttachments } from "@/lib/scanner";
 import { logSecurityViolation } from "@/lib/firestore";
 
+import pdf from "pdf-parse";
 import mammoth from "mammoth";
 import * as xlsx from "xlsx";
 
@@ -58,9 +59,14 @@ export async function POST(req: Request) {
           if (file.type.startsWith("image/")) {
             parts.push({ type: "image", image: buffer });
           } 
-          // PDF natively supported by Gemini 1.5/2.5 via Vercel AI SDK
-          else if (file.type === "application/pdf") {
-            parts.push({ type: "file", data: buffer, mimeType: "application/pdf" });
+          // PDF Parsing via pdf-parse
+          else if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
+            try {
+              const data = await pdf(buffer);
+              parsedTextContext += `\n--- FILE: ${file.name} ---\n${data.text}\n`;
+            } catch (e) {
+              console.error("PDF parse error", e);
+            }
           } 
           // Word Document Parsing
           else if (file.type.includes("wordprocessingml") || file.name.endsWith(".docx")) {
@@ -94,8 +100,9 @@ export async function POST(req: Request) {
       }
     }
 
-    let finalSystemPrompt = `You are a Secure Enterprise Assistant. Respond helpfully and professionally. 
-If the user attached any documents, start your response with a brief markdown note confirming: "> [!NOTE]\n> **Security Audit:** Attached documents have been scanned by the Enterprise Firewall and verified as clean and safe for processing."`;
+    let finalSystemPrompt = `You are a Secure Enterprise Assistant. Respond helpfully and professionally.
+ALWAYS wrap your internal thought process, reasoning, and analysis inside <think>...</think> XML tags at the very beginning of your response. After you finish thinking, provide your final response to the user outside the tags.
+If the user attached any documents, start your final response (after the think block) with a brief markdown note confirming: "> [!NOTE]\n> **Security Audit:** Attached documents have been scanned by the Enterprise Firewall and verified as clean and safe for processing."`;
 
     if (parsedTextContext) {
       finalSystemPrompt += `\n\n--- EXTRACTED DOCUMENT TEXT FOR REFERENCE ---\n${parsedTextContext}\n--------------------------------------------\n`;
