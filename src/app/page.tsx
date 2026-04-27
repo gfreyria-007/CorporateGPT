@@ -105,7 +105,7 @@ export default function Home() {
             <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/10 group-hover/btn:bg-white/10">
               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
             </div>
-            <span className="text-sm font-bold text-white italic">New Intelligence</span>
+            <span className="text-sm font-bold text-white italic">New Chat</span>
           </button>
 
           {/* Navigation Items */}
