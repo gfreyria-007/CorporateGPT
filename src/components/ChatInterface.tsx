@@ -345,16 +345,19 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
         type="module"
         strategy="afterInteractive"
       />
-      <Script id="mermaid-init" strategy="afterInteractive">
+      <Script 
+        id="mermaid-init" 
+        strategy="afterInteractive"
+        type="module"
+      >
         {`
-          import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+          import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
           mermaid.initialize({ startOnLoad: true, theme: 'dark' });
           setInterval(() => {
-            try {
-              if (document.querySelectorAll('.mermaid[data-processed="false"]').length > 0) {
-                mermaid.run();
-              }
-            } catch (e) {}
+            const elements = document.querySelectorAll('.mermaid:not([data-processed="true"])');
+            if (elements.length > 0) {
+              mermaid.run({ nodes: Array.from(elements) });
+            }
           }, 2000);
         `}
       </Script>
