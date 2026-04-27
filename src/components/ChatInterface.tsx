@@ -26,7 +26,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
   const [input, setInput] = useState("");
 
   // useChat configuration
-  const { messages, sendMessage, status } = useChat({
+  const { messages, status, append, reload, stop } = useChat({
     // @ts-ignore - SDK v6 mismatch
     api: "/api/chat",
     body: {
@@ -41,21 +41,25 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
     }
   } as any);
 
-  const append = (content: string) => {
-    sendMessage({ text: content });
-  };
-
-  const isLoading = status !== "ready";
+  // Simplified loading state
+  const isCurrentlyLoading = status === "submitted" || status === "streaming";
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
+  };
+
+  const handleActionClick = (content: string) => {
+    append({ role: "user", content });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() && attachedFiles.length === 0) return;
     
-    append(input);
+    append({
+      role: "user",
+      content: input,
+    });
     setInput("");
   };
 
@@ -96,12 +100,12 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
   };
 
   return (
-    <div className={`flex flex-col w-full h-full relative ${fullScreen ? "bg-transparent" : "glass-card rounded-3xl"}`}>
+    <div className={`flex flex-col w-full h-full relative ${fullScreen ? "bg-transparent" : "bg-[#0D0D0D] rounded-3xl border border-white/5"}`}>
       
       {/* Scrollable Message Area */}
       <div 
         ref={scrollRef}
-        className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar relative"
+        className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar relative z-10"
       >
         <div className="max-w-3xl mx-auto px-6 py-20 space-y-10">
           {messages.length === 0 ? (
@@ -112,7 +116,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                     <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                  </div>
                  <div className="absolute -top-4 -right-4 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center shadow-lg animate-bounce">
-                    <span className="text-[10px] font-black italic">o3</span>
+                    <span className="text-[10px] font-black italic text-white">o3</span>
                  </div>
               </div>
 
@@ -123,18 +127,18 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                 <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em]">Neural Processing Node • Ready for Input</p>
               </div>
 
-              {/* Quick Action Cards (Inspired by the Image) */}
+              {/* Quick Action Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl pt-8">
                  {[
-                   { icon: "📝", title: "Write/Edit Docs", sub: "Neural Draft Generation" },
-                   { icon: "🔬", title: "Analyze Policies", sub: "Deep Context RAG" },
-                   { icon: "📊", title: "Summarize Reports", sub: "Efficient Data Distillation" },
-                   { icon: "🛡️", title: "Security Audit", sub: "Mode 007 Hardening" }
+                   { icon: "📝", title: "Write/Edit Docs", sub: "Neural Draft Generation", prompt: "Help me write a professional document about " },
+                   { icon: "🔬", title: "Analyze Policies", sub: "Deep Context RAG", prompt: "Explain the company policy regarding " },
+                   { icon: "📊", title: "Summarize Reports", sub: "Efficient Data Distillation", prompt: "Summarize the following data: " },
+                   { icon: "🛡️", title: "Security Audit", sub: "Mode 007 Hardening", prompt: "Perform a security audit on " }
                  ].map((action, i) => (
                    <button 
                     key={i} 
-                    onClick={() => setInput(action.title)}
-                    className="glass-card p-5 rounded-3xl text-left border-white/[0.03] hover:border-white/10 hover:bg-white/[0.02] transition-all group"
+                    onClick={() => handleActionClick(action.prompt)}
+                    className="glass-card p-5 rounded-3xl text-left border-white/[0.03] hover:border-white/10 hover:bg-white/[0.02] transition-all group active:scale-[0.98]"
                    >
                       <span className="text-2xl mb-3 block group-hover:scale-110 transition-transform">{action.icon}</span>
                       <p className="text-sm font-bold text-white italic">{action.title}</p>
@@ -198,24 +202,8 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
               </div>
             ))
           )}
-          {/* Mermaid.js Integration */}
-          <Script 
-            src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs"
-            type="module"
-            strategy="afterInteractive"
-          />
-          <Script id="mermaid-init" strategy="afterInteractive">
-            {`
-              import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-              mermaid.initialize({ startOnLoad: true, theme: 'dark' });
-              setInterval(() => {
-                try {
-                  mermaid.run();
-                } catch (e) {}
-              }, 2000);
-            `}
-          </Script>
-          {isLoading && (
+          
+          {isCurrentlyLoading && (
             <div className="flex items-center gap-4 animate-pulse pt-4">
               <div className="w-8 h-8 rounded-lg premium-gradient flex items-center justify-center">
                 <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
@@ -226,12 +214,12 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
               </div>
             </div>
           )}
-          <div className="h-40" /> {/* Spacer for floating input */}
+          <div className="h-40" />
         </div>
       </div>
 
-      {/* ── FLOATING INPUT (Inspired by Image) ── */}
-      <div className="absolute bottom-0 left-0 w-full p-6 z-20">
+      {/* ── FLOATING INPUT ── */}
+      <div className="absolute bottom-0 left-0 w-full p-6 z-30">
         <div className="max-w-3xl mx-auto relative">
           
           {/* Attachments (Pills) */}
@@ -250,7 +238,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
 
           <form 
             onSubmit={handleSubmit}
-            className="glass-card rounded-[2rem] p-2 pr-4 border-white/5 shadow-2xl focus-within:border-white/20 transition-all flex items-end gap-2 bg-[#1A1A1A]/80 backdrop-blur-3xl"
+            className="glass-card rounded-[2rem] p-2 pr-4 border-white/10 shadow-2xl focus-within:border-white/20 transition-all flex items-end gap-2 bg-[#141414] relative z-40"
           >
             {/* Add Menu Button */}
             <div className="relative">
@@ -263,9 +251,9 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                </button>
 
                {showMenu && (
-                 <div className="absolute bottom-full left-0 mb-4 glass-card rounded-3xl p-3 w-64 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-fade-in-up">
+                 <div className="absolute bottom-full left-0 mb-4 glass-card rounded-3xl p-3 w-64 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-fade-in-up bg-[#1A1A1A]">
                     <div className="space-y-1">
-                       <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group">
+                       <button onClick={() => { fileInputRef.current?.click(); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group">
                           <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
                           </div>
@@ -275,7 +263,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                           </div>
                        </button>
 
-                       <button onClick={() => setInput("Create an advanced presentation about ")} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group">
+                       <button onClick={() => { setInput("Create an advanced presentation about "); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group">
                           <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>
                           </div>
@@ -285,7 +273,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                           </div>
                        </button>
 
-                       <button onClick={() => setInput("Generate an infographic for ")} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group">
+                       <button onClick={() => { setInput("Generate an infographic for "); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group">
                           <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg>
                           </div>
@@ -295,7 +283,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                           </div>
                        </button>
 
-                       <button onClick={() => setInput("Create a detailed graph for ")} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group">
+                       <button onClick={() => { setInput("Create a detailed graph for "); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group">
                           <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                           </div>
@@ -320,15 +308,15 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                 }
               }}
               rows={1}
-              placeholder={activeAgent ? `Message ${activeAgent.name}...` : "Pregunta lo que quieras..."}
-              className="flex-1 bg-transparent py-3 text-sm focus:outline-none placeholder:text-slate-600 resize-none max-h-48 custom-scrollbar"
+              placeholder={activeAgent ? `Message ${activeAgent.name}...` : "Escribe aquí tu consulta..."}
+              className="flex-1 bg-transparent py-3 text-sm focus:outline-none placeholder:text-slate-600 resize-none max-h-48 custom-scrollbar text-white"
             />
 
             <input type="file" ref={fileInputRef} className="hidden" multiple onChange={handleFileChange} />
 
             <button
               type="submit"
-              disabled={isLoading || (!input.trim() && attachedFiles.length === 0)}
+              disabled={isCurrentlyLoading || (!input.trim() && attachedFiles.length === 0)}
               className="p-3 bg-white text-black rounded-full disabled:opacity-20 hover:scale-105 active:scale-95 transition-all shadow-xl"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
@@ -340,6 +328,26 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
           </p>
         </div>
       </div>
+
+      {/* Mermaid Setup */}
+      <Script 
+        src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs"
+        type="module"
+        strategy="afterInteractive"
+      />
+      <Script id="mermaid-init" strategy="afterInteractive">
+        {`
+          import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+          mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+          setInterval(() => {
+            try {
+              if (document.querySelectorAll('.mermaid[data-processed="false"]').length > 0) {
+                mermaid.run();
+              }
+            } catch (e) {}
+          }, 2000);
+        `}
+      </Script>
     </div>
   );
 }

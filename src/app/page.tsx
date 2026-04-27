@@ -15,6 +15,13 @@ export default function Home() {
   const [activeAgent, setActiveAgent] = useState<Agent | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [userAgents, setUserAgents] = useState<Agent[]>([]);
+  const [forceLoad, setForceLoad] = useState(false);
+
+  useEffect(() => {
+    // Safety timeout: If loading takes > 8s, allow the app to show (it will show login if no user)
+    const timer = setTimeout(() => setForceLoad(true), 8000);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -22,13 +29,37 @@ export default function Home() {
     }
   }, [user]);
 
-  if (authLoading || configLoading) {
+  if ((authLoading || configLoading) && !forceLoad) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-[#050505]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)]"></div>
-          <p className="text-gray-400 text-[10px] font-black tracking-[0.3em] uppercase animate-pulse italic">Neural Link Active</p>
+      <div className="flex h-screen w-full items-center justify-center bg-[#000000] overflow-hidden">
+        <div className="relative flex flex-col items-center gap-12">
+          {/* Glowing Neural Ring */}
+          <div className="relative w-48 h-48 flex items-center justify-center">
+            <div className="absolute inset-0 rounded-full border-2 border-blue-500/10 shadow-[0_0_100px_rgba(59,130,246,0.1)]"></div>
+            <div className="absolute inset-0 rounded-full border-t-2 border-blue-500 animate-[spin_3s_linear_infinite] shadow-[0_0_20px_rgba(59,130,246,0.5)]"></div>
+            <div className="absolute inset-4 rounded-full border-b-2 border-blue-400/30 animate-[spin_5s_linear_infinite_reverse]"></div>
+            
+            {/* Center Core */}
+            <div className="w-4 h-4 bg-white rounded-full shadow-[0_0_30px_rgba(255,255,255,1)] animate-pulse"></div>
+          </div>
+
+          <div className="text-center space-y-3">
+            <h2 className="text-white text-[12px] font-black tracking-[0.6em] uppercase italic animate-pulse">Neural Link Active</h2>
+            <p className="text-slate-600 text-[8px] font-black uppercase tracking-[0.4em]">Synchronizing Intelligence Nodes...</p>
+          </div>
+
+          {/* Progress Bar (Faux but indicative) */}
+          <div className="w-40 h-[1px] bg-white/5 relative overflow-hidden">
+            <div className="absolute inset-0 bg-blue-500/50 animate-[loading_2s_ease-in-out_infinite]"></div>
+          </div>
         </div>
+
+        <style jsx>{`
+          @keyframes loading {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+          }
+        `}</style>
       </div>
     );
   }
@@ -208,20 +239,17 @@ export default function Home() {
         </header>
 
         {/* Content Render */}
-        <div className="flex-1 relative flex flex-col items-center">
+        <div className="flex-1 relative flex flex-col h-[calc(100vh-3.5rem)]">
            {activeTab === "chat" ? (
-             <div className="w-full h-full flex flex-col">
-                {/* Greeting Area (Only when no messages) */}
-                <div className="flex-1 flex flex-col">
-                   <ChatInterface 
-                      activeAgent={activeAgent} 
-                      onBackToAgents={() => { setActiveTab("agents"); setActiveAgent(null); }}
-                      fullScreen={true}
-                   />
-                </div>
+             <div className="flex-1 flex flex-col w-full h-full">
+                <ChatInterface 
+                   activeAgent={activeAgent} 
+                   onBackToAgents={() => { setActiveTab("agents"); setActiveAgent(null); }}
+                   fullScreen={true}
+                />
              </div>
            ) : (
-             <div className="w-full max-w-5xl p-8 overflow-y-auto custom-scrollbar">
+             <div className="flex-1 w-full max-w-5xl mx-auto p-8 overflow-y-auto custom-scrollbar">
                 <AgentCreator onSelectAgent={(agent) => {
                    if (agent) {
                       setActiveAgent(agent);

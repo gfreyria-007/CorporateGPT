@@ -24,16 +24,22 @@ export const CompanyProvider = ({ children }: { children: React.ReactNode }) => 
   const [loading, setLoading] = useState(true);
   const { user } = useAuth(); // Depend on auth to fetch securely if needed
 
-  const refreshConfig = async () => {
+  const refreshConfig = async (force = false) => {
+    if (config.name && !force && !loading) return; // Already have it
     setLoading(true);
-    const fetchedConfig = await getCompanyConfig();
-    setConfig(fetchedConfig);
-    setLoading(false);
+    try {
+      const fetchedConfig = await getCompanyConfig();
+      setConfig(fetchedConfig);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     refreshConfig();
-  }, [user]); // Re-fetch if auth state changes
+  }, []); // Only fetch on mount, or rely on manual refresh
 
   // Inject CSS variables for primary color based on config
   useEffect(() => {
