@@ -2,6 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { useEffect, useState, useRef } from "react";
+import Script from "next/script";
 import { useAuth } from "./providers/AuthProvider";
 import { useCompany } from "./providers/CompanyProvider";
 import { Agent } from "@/types/agent";
@@ -22,9 +23,11 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
   const [selectedModel, setSelectedModel] = useState("auto");
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; content: string; type: string }[]>([]);
   const [showMenu, setShowMenu] = useState(false);
+  const [input, setInput] = useState("");
 
   // useChat configuration
-  const { messages, input, handleInputChange, handleSubmit, isLoading, setInput } = useChat({
+  const { messages, sendMessage, status } = useChat({
+    // @ts-ignore - SDK v6 mismatch
     api: "/api/chat",
     body: {
       selectedModel,
@@ -36,7 +39,25 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
     onFinish: () => {
       setAttachedFiles([]);
     }
-  });
+  } as any);
+
+  const append = (content: string) => {
+    sendMessage({ text: content });
+  };
+
+  const isLoading = status !== "ready";
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() && attachedFiles.length === 0) return;
+    
+    append(input);
+    setInput("");
+  };
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -153,13 +174,47 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                   <div className="whitespace-pre-wrap">
                     {m.parts
                       ?.filter((p) => p.type === "text")
-                      .map((p) => (p as any).text)
-                      .join("") || (m as any).content || ""}
+                      .map((p, idx) => {
+                        const text = (p as any).text || "";
+                        if (text.includes("```mermaid")) {
+                          const [before, rest] = text.split("```mermaid");
+                          const [code, after] = rest.split("```");
+                          return (
+                            <div key={idx} className="my-4">
+                              {before}
+                              <div className="bg-white/5 p-4 rounded-xl border border-white/10 overflow-x-auto my-4">
+                                <pre className="mermaid text-[10px] text-emerald-400">
+                                  {code.trim()}
+                                </pre>
+                              </div>
+                              {after}
+                            </div>
+                          );
+                        }
+                        return <span key={idx}>{text}</span>;
+                      }) || (m as any).content || ""}
                   </div>
                 </div>
               </div>
             ))
           )}
+          {/* Mermaid.js Integration */}
+          <Script 
+            src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs"
+            type="module"
+            strategy="afterInteractive"
+          />
+          <Script id="mermaid-init" strategy="afterInteractive">
+            {`
+              import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+              mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+              setInterval(() => {
+                try {
+                  mermaid.run();
+                } catch (e) {}
+              }, 2000);
+            `}
+          </Script>
           {isLoading && (
             <div className="flex items-center gap-4 animate-pulse pt-4">
               <div className="w-8 h-8 rounded-lg premium-gradient flex items-center justify-center">

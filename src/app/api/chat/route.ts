@@ -86,7 +86,7 @@ export async function POST(req: Request) {
     VISUAL OUTPUT GUIDELINES:
     - PRESENTATIONS: Use Markdown format with "---" as slide separators. Include clear titles and bullet points.
     - INFOGRAPHICS: Use structured sections with icons (emojis) and clear headings.
-    - GRAPHS: Use Mermaid.js syntax for all diagrams, flowcharts, and graphs. Wrap them in ```mermaid blocks.
+    - GRAPHS: Use Mermaid.js syntax for all diagrams, flowcharts, and graphs. Wrap them in block codes with 'mermaid' identifier.
   `;
 
   // 4. Model Selection
@@ -119,9 +119,9 @@ export async function POST(req: Request) {
     system: fullSystemPrompt,
     onFinish: async (event) => {
       // Track usage (tokens + query count)
-      await incrementUserUsage(uid, event.usage.totalTokens);
+      await incrementUserUsage(uid, event.usage.totalTokens || 0);
     },
   });
 
-  return result.toDataStreamResponse();
+  return result.toTextStreamResponse();
 }
