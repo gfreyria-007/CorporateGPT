@@ -149,7 +149,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                   { title: "Security Protocols", sub: "AUDIT NODE", prompt: "Audit the security of " },
                   { title: "Compliance Logic", sub: "POLICY RAG", prompt: "Verify compliance for " },
                   { title: "Visual Assets", sub: "IMAGE GEN", prompt: "Generate a concept visual for " }
-                ].map((action) => (
+                ].map((action: any) => (
                   <button 
                     key={action.title}
                     onClick={() => handleActionClick(action.prompt)}
@@ -303,7 +303,9 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                              <p className="text-xs font-bold text-white italic">Neural Upload</p>
                              <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Review & Reference</p>
                           </div>
-                                           <button onClick={() => { setLocalInput("Create an advanced presentation about "); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group">
+                       </button>
+
+                       <button onClick={() => { setLocalInput("Create an advanced presentation about "); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group">
                           <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>
                           </div>
@@ -312,7 +314,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                              <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Advanced Slides</p>
                           </div>
                        </button>
- 
+
                        <button onClick={() => { setLocalInput("Generate an infographic for "); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group">
                           <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg>
@@ -322,7 +324,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                              <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Visual Insights</p>
                           </div>
                        </button>
- 
+
                        <button onClick={() => { setLocalInput("Create a detailed graph for "); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group">
                           <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
@@ -333,9 +335,9 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                           </div>
                        </button>
                     </div>
-                 </div>
-               )}
-            </div>
+                  </div>
+                )}
+             </div>
 
             <textarea
               ref={textareaRef}
@@ -364,7 +366,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
           </form>
 
           <p className="text-[9px] text-center mt-4 text-slate-700 font-black uppercase tracking-[0.4em]">
-            Neural Core v3.6.0 • Secure Enterprise Intelligence
+            Neural Core v3.7.1 • Secure Enterprise Intelligence
           </p>
         </div>
       </div>
