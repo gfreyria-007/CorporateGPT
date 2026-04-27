@@ -50,13 +50,11 @@ export async function POST(req: Request) {
     try {
       const result = await streamText({
         model: google("gemini-1.5-flash"),
-        messages: messages,
+        messages: messages.map((m: any) => ({ role: m.role, content: m.content })),
         system: `You are a Secure Enterprise Assistant. Respond helpfully and professionally.`,
       });
 
-      return new Response(result.textStream, {
-        headers: { "Content-Type": "text/plain; charset=utf-8" },
-      });
+      return result.toTextStreamResponse();
     } catch (aiError: any) {
       console.error("[AI ERROR]:", aiError);
       return new Response(`AI Node Error: ${aiError.message}`, { status: 500 });
