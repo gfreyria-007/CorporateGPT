@@ -26,8 +26,8 @@ const getSafeService = <T>(serviceInit: (app: any) => T, name: string): T | null
 };
 
 const auth = getAuth(app);
-const db = getSafeService(getFirestore, "Firestore");
-const storage = getSafeService(getStorage, "Storage");
+const db = getFirestore(app);
+const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();
 
 export { app, auth, db, storage, googleProvider };

@@ -24,9 +24,8 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; content: string; type: string }[]>([]);
   const [showMenu, setShowMenu] = useState(false);
 
-
   // useChat configuration
-  const { messages, append, setMessages, status, stop, input, setInput, handleInputChange } = useChat({
+  const chatProps = (useChat as any)({
     api: "/api/chat",
     body: {
       selectedModel,
@@ -41,7 +40,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
     }
   });
 
-
+  const { messages, append, status, input, setInput, handleInputChange } = chatProps;
 
   // Simplified loading state
   const isCurrentlyLoading = status === "submitted" || status === "streaming";
@@ -160,7 +159,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
               </div>
             </div>
           ) : (
-            messages.map((m) => (
+            messages.map((m: any) => (
               <div 
                 key={m.id} 
                 className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"} animate-fade-in group`}
@@ -188,7 +187,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                   }`}
                 >
                   <div className="flex flex-col gap-3">
-                    {m.parts?.map((p, idx) => {
+                    {m.parts?.map((p: any, idx: number) => {
                       if (p.type === "reasoning") {
                         return (
                           <div key={idx} className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-4 mb-2 animate-pulse-subtle">
@@ -361,7 +360,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
           </form>
 
           <p className="text-[9px] text-center mt-4 text-slate-700 font-black uppercase tracking-[0.4em]">
-            Neural Core v3.3.0 • Secure Enterprise Intelligence
+            Neural Core v3.5.0 • Secure Enterprise Intelligence
           </p>
         </div>
       </div>

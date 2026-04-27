@@ -9,7 +9,7 @@ import { getUserAgents } from "@/lib/agents";
 import type { Agent } from "@/types/agent";
 
 export default function Home() {
-  const { user, loading: authLoading, signInWithGoogle, signInAsGuest, logOut } = useAuth();
+  const { user, loading: authLoading, signInWithGoogle, logOut } = useAuth();
   const { config, loading: configLoading } = useCompany();
   const [activeTab, setActiveTab] = useState<"chat" | "agents">("chat");
   const [activeAgent, setActiveAgent] = useState<Agent | null>(null);
