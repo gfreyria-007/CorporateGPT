@@ -159,7 +159,7 @@ graph TD
     }
 
     if (demoResponse) {
-       await incrementUserUsage(uid, 500); 
+       await incrementUserUsage(uid, 500, "demo-logic"); 
        return new Response(demoResponse, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
     }
 
@@ -168,7 +168,7 @@ graph TD
       messages,
       system: fullSystemPrompt,
       onFinish: async (event) => {
-        await incrementUserUsage(uid, event.usage.totalTokens || 0);
+        await incrementUserUsage(uid, event.usage.totalTokens || 0, selectedModel);
       },
     });
 

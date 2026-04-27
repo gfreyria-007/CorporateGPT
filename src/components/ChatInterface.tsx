@@ -1,6 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
 import { useEffect, useState, useRef } from "react";
 import Script from "next/script";
 import { useAuth } from "./providers/AuthProvider";
@@ -23,35 +24,38 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
   const [selectedModel, setSelectedModel] = useState("auto");
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; content: string; type: string }[]>([]);
   const [showMenu, setShowMenu] = useState(false);
+  const [input, setInput] = useState("");
+
 
   // useChat configuration
-  const chat = useChat({
-    api: "/api/chat",
-    body: {
-      selectedModel,
-      uid: user?.uid,
-      agentId: activeAgent?.id,
-      systemPrompt: activeAgent?.systemPrompt,
-      attachments: attachedFiles,
-    },
+  const { messages, sendMessage, setMessages, status, stop } = useChat({
+    transport: new DefaultChatTransport({
+      api: "/api/chat",
+      body: () => ({
+        selectedModel,
+        uid: user?.uid,
+        agentId: activeAgent?.id,
+        systemPrompt: activeAgent?.systemPrompt,
+        attachments: attachedFiles,
+      })
+    }),
     onFinish: () => {
       setAttachedFiles([]);
     }
   });
 
-  const { messages, input, handleInputChange, handleSubmit, setInput, status } = chat;
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+    setInput(e.target.value);
+  };
+
 
   // Simplified loading state
   const isCurrentlyLoading = status === "submitted" || status === "streaming";
 
   const handleActionClick = async (content: string) => {
-    console.log("Action click:", content, "Chat object:", !!chat.append);
-    if (typeof chat.append !== "function") {
-      console.error("Critical: chat.append is not a function!");
-      return;
-    }
+    console.log("Action click:", content);
     try {
-      await chat.append({ role: "user", content });
+      await sendMessage({ text: content });
     } catch (e) {
       console.error("Action error:", e);
     }
@@ -62,15 +66,8 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
     const message = input?.trim();
     if (!message && attachedFiles.length === 0) return;
     
-    console.log("Form submit:", message, "Chat object:", !!chat.append);
-    if (typeof chat.append !== "function") {
-       // Fallback to standard handleSubmit if append is missing for some reason
-       handleSubmit(e);
-       return;
-    }
-
     try {
-      await chat.append({ role: "user", content: message || "" });
+      await sendMessage({ text: message || "" });
       setInput("");
     } catch (e) {
       console.error("Submit error:", e);

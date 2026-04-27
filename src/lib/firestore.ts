@@ -78,14 +78,42 @@ export const getUserUsage = async (
   }
 };
 
-export const incrementUserUsage = async (uid: string, tokens: number) => {
+export const incrementUserUsage = async (uid: string, tokens: number, model: string = "auto") => {
   if (uid === "GUEST_DEMO_UID") return; // Skip for demo
   
-  const { tokensUsed, queriesUsed, month } = await getUserUsage(uid);
+  const now = new Date();
+  const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
+  const month = `${now.getFullYear()}-${now.getMonth() + 1}`;
+  
+  const { tokensUsed, queriesUsed } = await getUserUsage(uid);
   const usageRef = doc(db, "usage", uid);
+  
+  // 1. Update Monthly Totals
   await setDoc(usageRef, { 
     tokensUsed: tokensUsed + tokens, 
     queriesUsed: queriesUsed + 1,
     month 
   }, { merge: true });
+
+  // 2. Update Daily Detailed Log
+  const dailyRef = doc(db, "usage", uid, "daily", dateStr);
+  const dailySnap = await getDoc(dailyRef);
+  const dailyData = dailySnap.exists() ? dailySnap.data() : { tokens: 0, queries: 0, models: {} };
+  
+  const modelUsage = dailyData.models || {};
+  modelUsage[model] = (modelUsage[model] || 0) + tokens;
+
+  await setDoc(dailyRef, {
+    tokens: (dailyData.tokens || 0) + tokens,
+    queries: (dailyData.queries || 0) + 1,
+    models: modelUsage,
+    updatedAt: now.toISOString()
+  }, { merge: true });
+};
+
+/** Get daily usage for a specific user and date */
+export const getDailyUsage = async (uid: string, dateStr: string) => {
+  const dailyRef = doc(db, "usage", uid, "daily", dateStr);
+  const snap = await getDoc(dailyRef);
+  return snap.exists() ? snap.data() : null;
 };
