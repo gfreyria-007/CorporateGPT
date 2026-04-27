@@ -1,6 +1,7 @@
 "use client";
 
-import { useChat } from "ai/react";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
 import { useState } from "react";
 import { useCompany } from "./providers/CompanyProvider";
 import { useAuth } from "./providers/AuthProvider";
@@ -18,19 +19,33 @@ export default function ChatInterface({ activeAgent, onBackToAgents }: ChatInter
     activeAgent?.preferredModel || "auto"
   );
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: "/api/chat",
-    body: {
-      selectedModel: activeAgent?.preferredModel !== "auto" ? activeAgent?.preferredModel : selectedModel,
-      systemPrompt: activeAgent?.systemPrompt || config.systemPrompt,
-      uid: user?.uid || "",
-      agentId: activeAgent?.id || null,
-    },
+  const [input, setInput] = useState("");
+  const { messages, sendMessage, status } = useChat({
+    transport: new DefaultChatTransport({
+      api: "/api/chat",
+      body: {
+        selectedModel: activeAgent?.preferredModel !== "auto" ? activeAgent?.preferredModel : selectedModel,
+        systemPrompt: activeAgent?.systemPrompt || config.systemPrompt,
+        uid: user?.uid || "",
+        agentId: activeAgent?.id || null,
+      },
+    }),
   });
 
   const chatTitle = activeAgent
     ? `${activeAgent.avatar} ${activeAgent.name}`
     : `${config.name} Assistant`;
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    sendMessage({ text: input });
+    setInput("");
+  };
 
   return (
     <div className="flex flex-col h-[600px] w-full max-w-4xl bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-700">
@@ -85,12 +100,17 @@ export default function ChatInterface({ activeAgent, onBackToAgents }: ChatInter
           messages.map((m) => (
             <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${m.role === "user" ? "bg-[var(--color-primary)] text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100"}`}>
-                <p className="whitespace-pre-wrap">{m.content}</p>
+                <p className="whitespace-pre-wrap">
+                  {m.parts
+                    ?.filter((p) => p.type === "text")
+                    .map((p) => (p as any).text)
+                    .join("") || ""}
+                </p>
               </div>
             </div>
           ))
         )}
-        {isLoading && (
+        {status === 'streaming' && (
           <div className="flex justify-start">
             <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl px-4 py-3 flex gap-1">
               <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
@@ -112,7 +132,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents }: ChatInter
           />
           <button
             type="submit"
-            disabled={!input.trim() || isLoading}
+            disabled={!input.trim() || status === 'streaming'}
             className="absolute right-2 p-2 bg-[var(--color-primary)] text-white rounded-lg disabled:opacity-50 transition-opacity hover:opacity-90"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

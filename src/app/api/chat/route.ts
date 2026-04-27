@@ -80,5 +80,5 @@ export async function POST(req: Request) {
     system: enrichedPrompt,
   });
 
-  return result.toDataStreamResponse();
+  return result.toTextStreamResponse();
 }
