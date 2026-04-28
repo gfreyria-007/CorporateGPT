@@ -140,21 +140,15 @@ export const logActivity = async (uid: string) => {
   }
 };
 
-/** Get number of queries in the last X minutes */
-export const getRecentUsageCount = async (uid: string, minutes: number = 60): Promise<number> => {
+/** Get total number of queries ever made by this user */
+export const getTotalUsageCount = async (uid: string): Promise<number> => {
   if (!db || !uid || uid === "GUEST_DEMO_UID") return 0;
   try {
-    const threshold = new Date();
-    threshold.setMinutes(threshold.getMinutes() - minutes);
-    
-    const q = query(
-      collection(db, "usage", uid, "activity"),
-      where("timestamp", ">=", threshold.toISOString())
-    );
+    const q = query(collection(db, "usage", uid, "activity"));
     const snap = await getDocs(q);
     return snap.size;
   } catch (e) {
-    console.error("Error fetching recent usage:", e);
+    console.error("Error fetching total usage:", e);
     return 0;
   }
 };

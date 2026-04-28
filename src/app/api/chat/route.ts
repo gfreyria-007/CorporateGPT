@@ -9,7 +9,7 @@ import {
   getActiveUserGems, 
   saveGem, 
   SUPER_ADMIN_EMAIL,
-  getRecentUsageCount
+  getTotalUsageCount
 } from "@/lib/firestore";
 
 import { extractText } from "unpdf";
@@ -32,11 +32,11 @@ export async function POST(req: Request) {
 
     // 0. USAGE CHECK (Skip for Super Admin)
     if (!isSuperAdmin) {
-      const recentQueries = await getRecentUsageCount(uid, 60);
-      if (recentQueries >= 5) {
+      const totalQueries = await getTotalUsageCount(uid);
+      if (totalQueries >= 5) {
         return new Response(JSON.stringify({ 
           error: "Demo Limit Reached", 
-          details: "You have reached the 5-query limit for this hour in demo mode. Please wait or contact administration for a permanent link." 
+          details: "You have reached the 5-query lifetime limit for this demo. Please contact administration for permanent access." 
         }), { status: 403 });
       }
     }
