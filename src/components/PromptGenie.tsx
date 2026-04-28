@@ -21,19 +21,24 @@ export function PromptGenie({ isOpen, onClose, onApply, theme }: PromptGenieProp
     setIsGenerating(true);
     
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
       const prompt = `You are a Prompt Engineering Expert. The user provided this simple prompt: "${input}". 
       Generate 3 distinct, high-quality, professional versions of this prompt that are more descriptive, contextual, and structured. 
       Format: Only return the 3 options separated by "---". No preamble.`;
 
-      const result = await ai.models.generateContent({
+      const payload = {
         model: "gemini-3-flash-preview",
         contents: prompt
+      };
+
+      const res = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'generateContent', payload })
       });
+      const result = await res.json();
       
       const text = result.text || '';
-      const options = text.split('---').map(s => s.trim()).filter(Boolean);
+      const options = text.split('---').map((s: string) => s.trim()).filter(Boolean);
       setSuggestions(options);
     } catch (error) {
       console.error("Genie error:", error);

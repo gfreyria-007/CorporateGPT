@@ -452,12 +452,18 @@ export function ImageEditor({ onClose, theme, lang = 'en', appConfig, onTrialEnd
         // If Sketchbook style, try to generate a real sketch via nano banana 2
         if (selectedStyle === 'classic' && section.iconHint) {
           try {
-            const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-            const imgRes = await genAI.models.generateContent({
+            const payload = {
               model: 'gemini-3.1-flash-image-preview',
               contents: { parts: [{ text: `A highly detailed, professional hand-drawn pencil sketch of ${section.iconHint}, sketchbook style, minimal colors, white background, artistic and scientific feel.` }] },
               config: { imageConfig: { aspectRatio: "1:1" } }
+            };
+
+            const res = await fetch('/api/gemini', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'generateContent', payload })
             });
+            const imgRes = await res.json();
 
             const imgPart = imgRes.candidates[0].content.parts.find(p => p.inlineData);
             if (imgPart) {
