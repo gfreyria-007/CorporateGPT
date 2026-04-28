@@ -3,6 +3,7 @@ import { streamText } from "ai";
 import { scanAttachments } from "@/lib/scanner";
 import { logSecurityViolation } from "@/lib/firestore";
 
+import { extractText } from "unpdf";
 import mammoth from "mammoth";
 import * as xlsx from "xlsx";
 
@@ -58,9 +59,17 @@ export async function POST(req: Request) {
           if (file.type.startsWith("image/")) {
             parts.push({ type: "image", image: buffer });
           } 
-          // PDF natively supported by Gemini 2.5 Flash via base64 inline data
+          // PDF text extraction via unpdf (server-side, Turbopack-compatible)
           else if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
-            parts.push({ type: "file", data: file.base64, mimeType: "application/pdf" });
+            try {
+              const pdfData = new Uint8Array(buffer);
+              const { text: pages } = await extractText(pdfData);
+              const fullText = pages.join("\n");
+              parsedTextContext += `\n--- FILE: ${file.name} ---\n${fullText}\n`;
+            } catch (e) {
+              console.error("PDF parse error", e);
+              parsedTextContext += `\n--- FILE: ${file.name} ---\n[PDF could not be parsed. The file may be scanned/image-based.]\n`;
+            }
           } 
           // Word Document Parsing
           else if (file.type.includes("wordprocessingml") || file.name.endsWith(".docx")) {
