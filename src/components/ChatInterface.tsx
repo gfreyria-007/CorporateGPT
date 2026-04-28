@@ -62,8 +62,16 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
   const [favorites, setFavorites] = useState<string[]>([]);
   const [showModelSelector, setShowModelSelector] = useState(false);
 
-  // Load Favorites and Last Model
+  const [apiStatus, setApiStatus] = useState<"checking" | "active" | "offline">("checking");
+
+  // Load Status, Favorites and Last Model
   useEffect(() => {
+    // Check API Status
+    fetch("/api/status")
+      .then(res => res.json())
+      .then(data => setApiStatus(data.status))
+      .catch(() => setApiStatus("offline"));
+
     const savedFavs = localStorage.getItem("neural_favorites");
     if (savedFavs) setFavorites(JSON.parse(savedFavs));
     
@@ -315,6 +323,24 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Neural Link Status Badge */}
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${
+            apiStatus === "active" ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : 
+            apiStatus === "offline" ? "bg-rose-500/10 border-rose-500/20 text-rose-400" :
+            "bg-white/5 border-white/10 text-slate-500"
+          }`}>
+            <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+              apiStatus === "active" ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : 
+              apiStatus === "offline" ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]" :
+              "bg-slate-500"
+            }`}></div>
+            <span className="text-[9px] font-black uppercase tracking-widest">
+              {apiStatus === "active" ? "Neural Link Active" : 
+               apiStatus === "offline" ? "Neural Link Offline" : 
+               "Verifying Link..."}
+            </span>
           </div>
 
           {/* Info & Usage (Right) */}
