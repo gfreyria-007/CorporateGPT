@@ -1,0 +1,180 @@
+import React from 'react';
+import { motion } from 'motion/react';
+import { Check, Zap, Shield, Crown, Terminal } from 'lucide-react';
+import { cn } from '../lib/utils';
+
+interface PricingCardProps {
+  plan: string;
+  users: string;
+  oldPrice: string;
+  newPrice: string;
+  features: string[];
+  isFeatured?: boolean;
+  onBuy: () => void;
+}
+
+const PricingCard = ({ plan, users, oldPrice, newPrice, features, isFeatured, onBuy }: PricingCardProps) => (
+  <motion.div 
+    whileHover={{ y: -8, scale: 1.02 }}
+    className={cn(
+      "p-8 lg:p-10 rounded-[3rem] border transition-all flex flex-col gap-8 h-full relative overflow-hidden group",
+      isFeatured 
+        ? "bg-corporate-900 border-blue-600/50 shadow-2xl shadow-blue-500/20 text-white" 
+        : "bg-white border-corporate-200 text-corporate-900 shadow-sm hover:shadow-xl dark:bg-corporate-900 dark:border-white/10 dark:text-white"
+    )}
+  >
+    {isFeatured && (
+      <div className="absolute top-6 right-6 px-4 py-1 bg-blue-600 text-white text-[9px] font-black uppercase tracking-widest rounded-full">
+        Más Popular
+      </div>
+    )}
+    
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center", isFeatured ? "bg-blue-600 shadow-lg shadow-blue-500/30" : "bg-slate-100 dark:bg-white/5")}>
+          {plan === 'SME' && <Zap size={20} className={isFeatured ? "text-white" : "text-blue-600"} />}
+          {plan === 'Professional' && <Shield size={20} className={isFeatured ? "text-white" : "text-blue-600"} />}
+          {plan === 'Corporate' && <Crown size={20} className={isFeatured ? "text-white" : "text-blue-600"} />}
+        </div>
+        <div>
+          <h3 className="font-display font-black text-xl tracking-tight uppercase leading-none">{plan}</h3>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-50 mt-1">{users} Usuarios</p>
+        </div>
+      </div>
+
+      <div className="pt-4 border-t border-current/10">
+        <p className="text-sm font-bold opacity-40 line-through leading-none">{oldPrice}</p>
+        <div className="flex items-baseline gap-2 mt-1">
+          <span className="text-4xl font-display font-black tracking-tighter leading-none">{newPrice}</span>
+          <span className="text-[10px] font-black uppercase tracking-widest opacity-50">MXN/año</span>
+        </div>
+      </div>
+    </div>
+
+    <ul className="space-y-4 flex-1">
+      {features.map((feature, i) => (
+        <li key={i} className="flex items-start gap-3">
+          <div className="mt-1 w-4 h-4 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
+            <Check size={10} className="text-blue-500" />
+          </div>
+          <span className="text-[11px] font-bold leading-tight uppercase tracking-wider opacity-80">{feature}</span>
+        </li>
+      ))}
+    </ul>
+
+    <button 
+      onClick={onBuy}
+      className={cn(
+        "w-full h-16 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3",
+        isFeatured 
+          ? "bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/40" 
+          : "bg-corporate-900 text-white hover:bg-black dark:bg-white dark:text-corporate-950"
+      )}
+    >
+      Comprar Ahora <Terminal size={14} className="opacity-50" />
+    </button>
+  </motion.div>
+);
+
+export const PricingSection = () => {
+  const handleBuy = (plan: string) => {
+    // Placeholder for Stripe redirection
+    const stripeUrls: Record<string, string> = {
+      'SME': 'https://buy.stripe.com/test_sme_plan',
+      'Professional': 'https://buy.stripe.com/test_pro_plan',
+      'Corporate': 'https://buy.stripe.com/test_corp_plan'
+    };
+    window.open(stripeUrls[plan] || '#', '_blank');
+  };
+
+  return (
+    <section className="py-24 px-6 lg:px-12 max-w-7xl mx-auto w-full space-y-16">
+      <div className="text-center space-y-4">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          className="inline-flex items-center gap-2 px-6 py-2 bg-blue-600/10 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-[0.4em] mb-4"
+        >
+          <Zap size={14} /> Oferta de Lanzamiento
+        </motion.div>
+        <motion.h2 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          className="text-4xl lg:text-7xl font-display font-black tracking-tighter leading-[0.85] uppercase"
+        >
+          Potencia tu PyME con <span className="text-blue-600 underline decoration-blue-600/30 underline-offset-12">IA Segura</span>
+        </motion.h2>
+        <motion.div 
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          className="flex items-center justify-center gap-4 text-xs font-black uppercase tracking-[0.2em] text-blue-600"
+        >
+           <div className="w-12 h-[1px] bg-blue-600/20" />
+           50% de Descuento hasta el 31 de Mayo
+           <div className="w-12 h-[1px] bg-blue-600/20" />
+        </motion.div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <PricingCard 
+          plan="SME"
+          users="1 a 10"
+          oldPrice="$18,000"
+          newPrice="$9,000"
+          features={[
+            "Acceso a Modelos Top (OpenAI, Anthropic, Gemini)",
+            "Seguridad de Nivel Corporativo",
+            "Soporte por Correo",
+            "Auditoría de Consultas Básica"
+          ]}
+          onBuy={() => handleBuy('SME')}
+        />
+        <PricingCard 
+          plan="Professional"
+          users="11 a 50"
+          oldPrice="$55,000"
+          newPrice="$27,500"
+          isFeatured
+          features={[
+             "Todo en SME",
+             "Knowledge Bank Avanzado",
+             "Dashboard de Análisis de Uso",
+             "Administrador de Usuarios",
+             "Consultas Prioritarias"
+          ]}
+          onBuy={() => handleBuy('Professional')}
+        />
+        <PricingCard 
+          plan="Corporate"
+          users="51 a 100"
+          oldPrice="$95,000"
+          newPrice="$47,500"
+          features={[
+             "Todo en Professional",
+             "Auditoría Full Compliance",
+             "Control de Seguridad ZDR Plus",
+             "API Access para ERP/CRM",
+             "Soporte 24/7 Dedicado"
+          ]}
+          onBuy={() => handleBuy('Corporate')}
+        />
+      </div>
+
+      <motion.div 
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        className="max-w-3xl mx-auto p-10 lg:p-12 bg-slate-50 dark:bg-white/5 rounded-[4rem] border border-corporate-200 dark:border-white/10 flex flex-col md:flex-row items-center gap-10 text-center md:text-left"
+      >
+        <div className="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center text-white shrink-0 shadow-2xl shadow-blue-500/20">
+          <Terminal size={32} />
+        </div>
+        <div className="space-y-3">
+          <h4 className="font-display font-black text-xl tracking-tight uppercase">Modelo de Consumo Transparente</h4>
+          <p className="text-xs font-bold leading-relaxed opacity-60 uppercase tracking-widest">
+            El costo de los tokens de IA se gestiona de forma independiente mediante una bolsa de saldo prepagada, garantizando transparencia total en el consumo y evitando cargos inesperados.
+          </p>
+        </div>
+      </motion.div>
+    </section>
+  );
+};

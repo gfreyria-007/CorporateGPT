@@ -1,49 +1,138 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Company Config: Read by all auth users, Write by Admin only
-    match /companies/main {
-      allow read: if request.auth != null;
-      allow write: if request.auth.token.email == "gfreyria@gmail.com";
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
     }
+
+    // --- Primitives & Global Helpers ---
     
-    // Usage Tracking: User can read/write their own usage
-    match /usage/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    function isSignedIn() {
+      return request.auth != null;
     }
-    
-    // Agents: Users can manage their own agents
-    match /agents/{agentId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null && request.resource.data.ownerUid == request.auth.uid;
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && isEmailVerified() && (
+        request.auth.token.email == 'gfreyria@gmail.com' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'super-admin'])
+      );
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // --- Entity Validations ---
+
+    function isValidUser(data, userId) {
+      return data.keys().hasAll(['uid', 'email', 'role', 'isBanned', 'queriesUsed']) && 
+             data.keys().size() <= 20 &&
+             data.uid == userId &&
+             data.email is string && data.email.size() <= 200 &&
+             data.role in ['user', 'admin', 'super-admin'] &&
+             data.isBanned is bool &&
+             data.queriesUsed is int &&
+             (!data.keys().hasAny(['displayName']) || (data.displayName == null || (data.displayName is string && data.displayName.size() <= 100))) &&
+             (!data.keys().hasAny(['photoURL']) || (data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 512)));
+    }
+
+    function isValidGPT(data) {
+      return data.keys().hasAll(['id', 'userId', 'name', 'instructions']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.userId == request.auth.uid && // Must own what you create
+             data.name is string && data.name.size() <= 100 &&
+             data.instructions is string && data.instructions.size() <= 2000 &&
+             data.isPublic is bool;
+    }
+
+    function isValidDocument(data) {
+      return data.keys().hasAll(['id', 'name', 'ownerId', 'content']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.ownerId == request.auth.uid &&
+             data.name is string && data.name.size() <= 255 &&
+             data.content is string && data.content.size() <= 500000; // 500KB cap
+    }
+
+    // --- Match Rules ---
+
+    // User Collection
+    match /users/{userId} {
+      // Hardened: only the owner or an admin can read the full profile
+      allow get: if isOwner(userId) || isAdmin();
+      // Only admins can list users for management
+      allow list: if isAdmin();
       
-      // Agent Knowledge Base
-      match /documents/{docId} {
-        allow read, write: if request.auth != null;
-      }
-    }
-    
-    // Policies: Read by all, Write by Admin
-    match /policies/{policyId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth.token.email == "gfreyria@gmail.com";
-    }
-
-    // Gems (Knowledge Assets): Admin can manage all, Users can read global and their own
-    match /gems/{gemId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow delete, update: if request.auth.token.email == "gfreyria@gmail.com" || (request.auth != null && resource.data.uid == request.auth.uid);
+      allow create: if isOwner(userId) && isValidUser(incoming(), userId) && 
+                    (incoming().role == 'user' || (incoming().role == 'super-admin' && incoming().email == 'gfreyria@gmail.com'));
+      
+      allow update: if (isOwner(userId) || isAdmin()) && (
+        // Action: Self-update (Profile fields only)
+        (isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'lastActive', 'queriesUsed', 'imagesUsed', 'flagged', 'flaggedAt', 'flagReason']) && 
+         incoming().role == existing().role && incoming().uid == existing().uid && incoming().email == existing().email) ||
+        // Action: Admin override
+        (isAdmin())
+      ) && isValidUser(incoming(), userId);
     }
 
-    // Security & Banning
-    match /security_logs/{logId} {
-      allow read, write: if request.auth.token.email == "gfreyria@gmail.com";
+    // GPTs Collection
+    match /gpts/{gptId} {
+      allow get: if isSignedIn() && (resource.data.isPublic == true || resource.data.userId == request.auth.uid || isAdmin());
+      // Secure List Queries pattern: filter enforced by matching resource fields
+      allow list: if isSignedIn() && (resource.data.isPublic == true || resource.data.userId == request.auth.uid || isAdmin());
+      
+      allow create: if isSignedIn() && isValidId(gptId) && isValidGPT(incoming());
+      
+      allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin()) && (
+        // Action: Update metadata
+        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'instructions', 'isPublic', 'updatedAt', 'description', 'avatarUrl', 'tags', 'files'])
+      ) && isValidGPT(incoming());
+      
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
     }
-    match /banned_users/{userId} {
-      allow read: if true;
-      allow write: if request.auth.token.email == "gfreyria@gmail.com";
+
+    // Documents Collection
+    match /documents/{docId} {
+      allow get: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
+      
+      allow create: if isSignedIn() && isValidId(docId) && isValidDocument(incoming());
+      
+      allow update: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin()) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'content', 'updatedAt'])
+      ) && isValidDocument(incoming());
+      
+      allow delete: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
+    }
+
+    // Admin Config
+    match /admin/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() && isValidId(docId);
+    }
+
+    // Global Settings
+    match /settings/{settingId} {
+      allow read: if isSignedIn(); // Hardened: only signed in users can see settings
+      allow write: if isAdmin() && isValidId(settingId);
     }
   }
 }

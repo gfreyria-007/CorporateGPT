@@ -1,0 +1,87 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Application user profile and usage tracking",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["super-admin", "admin", "user"] },
+        "isBanned": { "type": "boolean" },
+        "queriesUsed": { "type": "integer" },
+        "imagesUsed": { "type": "integer" },
+        "maxQueries": { "type": "integer" },
+        "maxImages": { "type": "integer" },
+        "unlimitedUsage": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "lastActive": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "AppConfig": {
+      "title": "Global Application Configuration",
+      "description": "Enterprise-level settings and licensing",
+      "type": "object",
+      "properties": {
+        "licenseStatus": { "type": "string", "enum": ["active", "expired", "trial"] },
+        "licenseValidFrom": { "type": "string", "format": "date-time" },
+        "licenseValidTo": { "type": "string", "format": "date-time" },
+        "openRouterThreshold": { "type": "number" },
+        "adminEmails": { "type": "array", "items": { "type": "string" } },
+        "superAdminEmails": { "type": "array", "items": { "type": "string" } },
+        "isProduction": { "type": "boolean" },
+        "forceWhiteCanvas": { "type": "boolean" },
+        "enabledVisualTemplates": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "Setting": {
+      "title": "Global Settings",
+      "description": "App customization settings",
+      "type": "object",
+      "properties": {
+        "appName": { "type": "string" },
+        "slogan": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "theme": { "type": "string", "enum": ["light", "dark"] }
+      }
+    },
+    "Document": {
+      "title": "Knowledge Document",
+      "description": "Uploaded documents for context",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "content": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/settings/config": {
+      "schema": "Setting",
+      "description": "Global user-facing app configuration"
+    },
+    "/admin/config": {
+      "schema": "AppConfig",
+      "description": "System-level administrative configuration"
+    },
+    "/documents/{docId}": {
+      "schema": "Document",
+      "description": "User knowledge base"
+    },
+    "/gpts/{gptId}": {
+      "schema": "object",
+      "description": "Custom AI assistant configurations"
+    }
+  }
+}
