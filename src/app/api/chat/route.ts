@@ -19,7 +19,7 @@ import * as xlsx from "xlsx";
 export const maxDuration = 30;
 
 const openrouter = createOpenAI({
-  apiKey: "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",
+  apiKey: process.env.OPENROUTER_API_KEY || "",
   baseURL: "https://openrouter.ai/api/v1",
 });
 
@@ -48,6 +48,13 @@ const FREE_MODELS = [
 
 export async function POST(req: Request) {
   try {
+    if (!process.env.OPENROUTER_API_KEY) {
+      return new Response(JSON.stringify({ 
+        error: "Configuration Error", 
+        details: "OPENROUTER_API_KEY is not set in Vercel. Please add your new key to Environment Variables and redeploy." 
+      }), { status: 500 });
+    }
+
     const { messages, uid, email, attachments, model } = await req.json();
 
     const isSuperAdmin = email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
