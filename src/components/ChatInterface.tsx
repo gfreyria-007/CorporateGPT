@@ -33,7 +33,6 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
 
   // v6.0.0 Dual-Tier Neural Selection (Super Admin vs standard)
   const AVAILABLE_MODELS = [
-    // Premium Tier (Super Admin Only)
     { id: "openrouter/auto", name: "Auto Router (Dynamic)", provider: "OpenRouter", icon: "⚡", isFree: false },
     { id: "anthropic/claude-3-5-sonnet", name: "Claude 3.5 Sonnet", provider: "Anthropic", icon: "🎭", isFree: false },
     { id: "openai/gpt-4o", name: "GPT-4o Omniscience", provider: "OpenAI", icon: "🧠", isFree: false },
@@ -57,7 +56,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
 
   const filteredModels = isSuperAdmin ? AVAILABLE_MODELS : AVAILABLE_MODELS.filter(m => m.isFree);
 
-  const [selectedModel, setSelectedModel] = useState(isSuperAdmin ? "openrouter/auto" : "meta-llama/llama-3.1-8b-instruct:free");
+  const [selectedModel, setSelectedModel] = useState("openrouter/auto");
   const [favorites, setFavorites] = useState<string[]>([]);
   const [showModelSelector, setShowModelSelector] = useState(false);
 
@@ -273,13 +272,81 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
   };
 
   return (
-    <div className={`flex flex-col w-full h-full relative overflow-hidden ${fullScreen ? "bg-transparent" : "bg-[#050505] rounded-3xl border border-white/5"}`}>
-      
-      {/* Demo Mode Banner */}
-      <div className="absolute top-0 left-0 w-full z-50 p-4 pointer-events-none">
-        <div className="max-w-xl mx-auto backdrop-blur-2xl bg-black/60 border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.5)] rounded-2xl p-4 flex items-center justify-between pointer-events-auto">
-          {/* Neural Model Selector (Left) */}
-          <div className="flex flex-col items-start gap-2">
+    <div className="flex h-screen bg-black text-slate-200 font-sans selection:bg-blue-500/30 overflow-hidden">
+      {/* Left Sidebar: Intelligence Selection */}
+      <aside className="w-72 bg-zinc-950 border-r border-white/5 flex flex-col h-full z-50">
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-8 h-8 rounded-lg premium-gradient flex items-center justify-center shadow-lg shadow-blue-500/20">
+              <Zap className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-sm font-black tracking-tighter text-white italic leading-none uppercase">Corporate</h1>
+              <p className="text-[8px] text-slate-500 font-bold tracking-[0.3em] uppercase">Neural Core v4.0</p>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4 px-2">Select Intelligence</p>
+              <div className="space-y-1.5 overflow-y-auto max-h-[calc(100vh-250px)] pr-2 custom-scrollbar">
+                {AVAILABLE_MODELS.map((m) => (
+                  <button
+                    key={m.id}
+                    onClick={() => handleModelSelect(m.id)}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${
+                      selectedModel === m.id 
+                        ? "bg-white/10 text-white shadow-xl shadow-black/40 border border-white/10" 
+                        : "text-slate-500 hover:bg-white/5 hover:text-slate-300"
+                    }`}
+                  >
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg ${
+                      selectedModel === m.id ? "bg-white/10" : "bg-white/5"
+                    }`}>
+                      {m.icon}
+                    </div>
+                    <div className="text-left min-w-0">
+                      <p className="text-[11px] font-bold truncate leading-tight">{m.name}</p>
+                      <p className="text-[8px] text-slate-600 font-medium uppercase tracking-tighter">{m.provider}</p>
+                    </div>
+                    {m.isFree && <span className="ml-auto text-[7px] bg-emerald-500/10 text-emerald-500 px-1 py-0.5 rounded border border-emerald-500/20 font-black">FREE</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-auto p-6 bg-white/[0.02] border-t border-white/5">
+          <div className="flex items-center gap-3">
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center border ${isSuperAdmin ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-blue-500/10 border-blue-500/20 text-blue-400"}`}>
+              <span className="text-sm">⚡</span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-black text-white tracking-widest uppercase truncate">{isSuperAdmin ? "Neural Admin" : "User Node"}</p>
+              <p className="text-[7px] text-slate-500 font-bold uppercase tracking-widest truncate">{user?.email || "Anonymous Access"}</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Chat Interface Area */}
+      <main className="flex-1 flex flex-col relative h-full">
+        {/* Minimized Status Bar */}
+        <header className="absolute top-0 left-0 right-0 p-6 flex justify-end items-center z-40">
+          <div 
+            onClick={() => apiStatus !== "active" && alert(`Diagnostic Report:\n\nStatus: ${apiStatus}\nError: ${apiError || "None"}`)}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full border bg-black/40 backdrop-blur-xl transition-all cursor-help ${
+              apiStatus === "active" ? "border-emerald-500/20 text-emerald-400" : "border-rose-500/20 text-rose-400"
+            }`}
+          >
+            <div className={`w-1 h-1 rounded-full ${apiStatus === "active" ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`} />
+            <span className="text-[8px] font-black uppercase tracking-[0.2em]">{apiStatus === "active" ? "Neural Link Active" : "Neural Link Offline"}</span>
+          </div>
+        </header>
+
+        {/* The old banner content is removed, keeping only the relative positioning for children */}
+        <div className="flex-col hidden">
             <div className="relative">
               <button 
                 onClick={() => setShowModelSelector(!showModelSelector)}
