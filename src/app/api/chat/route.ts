@@ -25,6 +25,13 @@ const openrouter = createOpenAI({
 
 export async function POST(req: Request) {
   try {
+    if (!process.env.OPENROUTER_API_KEY) {
+      return new Response(JSON.stringify({ 
+        error: "Configuration Error", 
+        details: "OPENROUTER_API_KEY is not set in Vercel. Please check your Environment Variables." 
+      }), { status: 500 });
+    }
+
     const { messages, uid, email, attachments, model } = await req.json();
 
     const selectedModel = model || "openrouter/auto";

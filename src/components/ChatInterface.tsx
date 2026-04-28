@@ -35,10 +35,10 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
   const AVAILABLE_MODELS = [
     { id: "openrouter/auto", name: "Auto Router (Best Fit)", provider: "OpenRouter", icon: "⚡" },
     { id: "anthropic/claude-3.5-sonnet", name: "Claude 3.5 Sonnet", provider: "Anthropic", icon: "🎭" },
-    { id: "openai/gpt-4o", name: "GPT-4o Omniscience", provider: "OpenAI", icon: "🧠" },
+    { id: "openai/gpt-4o-2024-08-06", name: "GPT-4o Omniscience", provider: "OpenAI", icon: "🧠" },
     { id: "google/gemini-pro-1.5", name: "Gemini 1.5 Pro", provider: "Google", icon: "✨" },
     { id: "meta-llama/llama-3.1-405b", name: "Llama 3.1 405B", provider: "Meta", icon: "🦙" },
-    { id: "mistralai/mistral-large", name: "Mistral Large", provider: "Mistral", icon: "🌪️" },
+    { id: "mistralai/mistral-large-2411", name: "Mistral Large", provider: "Mistral", icon: "🌪️" },
   ];
 
   const [selectedModel, setSelectedModel] = useState("openrouter/auto");
@@ -134,7 +134,17 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
         })
       });
 
-      if (!response.ok) throw new Error(`Neural Link Error: ${response.statusText}`);
+      if (!response.ok) {
+        let details = `Neural Link Error: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          details = errorData.details || errorData.error || details;
+        } catch (e) {
+          const textError = await response.text().catch(() => "");
+          if (textError) details = textError;
+        }
+        throw new Error(details);
+      }
 
       const reader = response.body?.getReader();
       if (!reader) throw new Error("Neural stream is empty");
