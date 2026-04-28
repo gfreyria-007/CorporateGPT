@@ -53,7 +53,6 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
     { id: "qwen/qwen-2-7b-instruct:free", name: "Qwen 2 7B", provider: "Alibaba", icon: "🐉", isFree: true },
     { id: "google/gemma-2-9b-it:free", name: "Gemma 2 9B", provider: "Google", icon: "💎", isFree: true },
     { id: "cognitivecomputations/dolphin-mixtral-8x7b:free", name: "Dolphin Mixtral", provider: "Dolphin", icon: "🐬", isFree: true },
-    { id: "openrouter/auto", name: "Auto Router", provider: "OpenRouter", icon: "🆓", isFree: true },
   ];
 
   const filteredModels = isSuperAdmin ? AVAILABLE_MODELS : AVAILABLE_MODELS.filter(m => m.isFree);
@@ -329,13 +328,14 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
             </div>
           </div>
 
-          {/* Neural Link Status Badge */}
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${
+          <div 
+            onClick={() => apiStatus !== "active" && alert(`Diagnostic Report:\n\nStatus: ${apiStatus}\nError: ${apiError || "None"}\n\nCheck Vercel Environment Variables for OPENROUTER_API_KEY.`)}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all cursor-help ${
             apiStatus === "active" ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : 
             apiStatus === "fault" ? "bg-amber-500/10 border-amber-500/20 text-amber-400 animate-pulse" :
             apiStatus === "offline" ? "bg-rose-500/10 border-rose-500/20 text-rose-400" :
             "bg-white/5 border-white/10 text-slate-500"
-          }`} title={apiError || ""}>
+          }`} title={apiError || "Neural link active and verified."}>
             <div className={`w-1.5 h-1.5 rounded-full ${
               apiStatus === "active" ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" : 
               apiStatus === "fault" ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" :
@@ -344,7 +344,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
             }`}></div>
             <span className="text-[9px] font-black uppercase tracking-widest">
               {apiStatus === "active" ? "Neural Link Active" : 
-               apiStatus === "fault" ? `Neural Fault: ${apiError?.split(' ')[0]}` :
+               apiStatus === "fault" ? "Neural Fault Detected" :
                apiStatus === "offline" ? "Neural Link Offline" : 
                "Verifying Link..."}
             </span>

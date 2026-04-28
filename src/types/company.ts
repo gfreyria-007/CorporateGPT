@@ -14,6 +14,7 @@ export interface CompanyConfig {
     google?: string;
     deepseek?: string;
     perplexity?: string;
+    openrouter?: string;
   };
 }
 
@@ -32,6 +33,7 @@ export const defaultCompanyConfig: CompanyConfig = {
     google: "",
     deepseek: "",
     perplexity: "",
+    openrouter: "",
   },
 };
 

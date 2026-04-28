@@ -29,5 +29,21 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if request.auth.token.email == "gfreyria@gmail.com";
     }
+
+    // Gems (Knowledge Assets): Admin can manage all, Users can read global and their own
+    match /gems/{gemId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow delete, update: if request.auth.token.email == "gfreyria@gmail.com" || (request.auth != null && resource.data.uid == request.auth.uid);
+    }
+
+    // Security & Banning
+    match /security_logs/{logId} {
+      allow read, write: if request.auth.token.email == "gfreyria@gmail.com";
+    }
+    match /banned_users/{userId} {
+      allow read: if true;
+      allow write: if request.auth.token.email == "gfreyria@gmail.com";
+    }
   }
 }

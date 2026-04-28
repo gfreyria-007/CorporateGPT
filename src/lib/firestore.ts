@@ -23,7 +23,7 @@ export const getCompanyConfig = async (): Promise<CompanyConfig> => {
   if (!db) return defaultCompanyConfig;
   try {
     const docRef = doc(db, COLLECTION_NAME, COMPANY_DOC_ID);
-    const docSnap = await withTimeout(getDoc(docRef), 2000, { exists: () => false } as any);
+    const docSnap = await withTimeout(getDoc(docRef), 5000, { exists: () => false } as any);
 
     if (docSnap.exists()) {
       return docSnap.data() as CompanyConfig;

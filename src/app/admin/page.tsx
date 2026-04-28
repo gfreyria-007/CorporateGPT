@@ -236,6 +236,17 @@ export default function AdminDashboard() {
                     className="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent"
                   />
                 </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">OpenRouter API Key</label>
+                  <input
+                    type="password"
+                    name="apiKey_openrouter"
+                    value={formData.apiKeys?.openrouter || ""}
+                    onChange={handleChange}
+                    placeholder="sk-or-v1-..."
+                    className="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent"
+                  />
+                </div>
               </div>
             </div>
           </div>

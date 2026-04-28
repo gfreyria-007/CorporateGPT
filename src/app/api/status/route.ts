@@ -1,26 +1,42 @@
 import { NextResponse } from "next/server";
+import { getResolvedApiKey } from "@/lib/config";
 
 export async function GET() {
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  const apiKey = await getResolvedApiKey("openrouter");
   const hasKey = !!apiKey;
+  const keySnippet = hasKey ? `${apiKey?.slice(0, 6)}...${apiKey?.slice(-4)}` : "none";
+  
   let keyValid = false;
   let errorDetail = null;
+  let credits = null;
 
   if (hasKey) {
     try {
-      // Live ping to verify key validity
+      // Live ping to verify key validity and fetch credits
       const verify = await fetch("https://openrouter.ai/api/v1/auth/key", {
-        headers: { "Authorization": `Bearer ${apiKey}` }
+        headers: { 
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json"
+        }
       });
-      const data = await verify.json();
-      if (verify.ok && data.data) {
-        keyValid = true;
+      
+      if (verify.ok) {
+        const data = await verify.json();
+        if (data.data) {
+          keyValid = true;
+          credits = data.data.usage !== undefined ? data.data.usage : "check limits";
+        } else {
+          errorDetail = "Key check returned no data payload";
+        }
       } else {
-        errorDetail = data.error?.message || "Invalid Key or No Credits";
+        const errData = await verify.json().catch(() => ({}));
+        errorDetail = errData.error?.message || `HTTP ${verify.status}: ${verify.statusText}`;
       }
-    } catch (e) {
-      errorDetail = "Connection Timeout";
+    } catch (e: any) {
+      errorDetail = `Network Failure: ${e.message}`;
     }
+  } else {
+    errorDetail = "OPENROUTER_API_KEY is missing in environment variables";
   }
   
   return NextResponse.json({
@@ -29,6 +45,9 @@ export async function GET() {
     diagnostics: {
       keyDetected: hasKey,
       keyVerified: keyValid,
+      keyPreview: keySnippet,
+      credits: credits,
+      env: process.env.NODE_ENV,
       nodeVersion: process.version,
       timestamp: new Date().toISOString()
     }
