@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (u) {
         try {
-          await ensureUserRecord(u);
+          ensureUserRecord(u).catch(e => console.error("ensureUserRecord failed", e));
           unsubProfile = onSnapshot(doc(db, 'users', u.uid), (snap) => {
             if (snap.exists()) {
               setProfile(snap.data());
