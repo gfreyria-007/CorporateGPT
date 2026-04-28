@@ -5,6 +5,7 @@ import Script from "next/script";
 import { useAuth } from "./providers/AuthProvider";
 import { useCompany } from "./providers/CompanyProvider";
 import { Agent } from "@/types/agent";
+import { getUserUsage, SUPER_ADMIN_EMAIL } from "@/lib/firestore";
 
 interface ChatInterfaceProps {
   activeAgent?: Agent | null;
@@ -28,6 +29,31 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
   const [error, setError] = useState<string | null>(null);
   const [expandedThoughts, setExpandedThoughts] = useState<Record<string, boolean>>({});
   const [queriesLeft, setQueriesLeft] = useState(5);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  // Sync Usage with Firestore
+  useEffect(() => {
+    if (!user?.uid) return;
+    
+    const checkUsage = async () => {
+      const isAdmin = user.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+      setIsSuperAdmin(isAdmin);
+      
+      if (isAdmin) {
+        setQueriesLeft(999); // Symbolic unlimited
+        return;
+      }
+
+      try {
+        const usage = await getUserUsage(user.uid);
+        setQueriesLeft(Math.max(0, 5 - (usage.queriesUsed || 0)));
+      } catch (e) {
+        console.error("Failed to sync usage:", e);
+      }
+    };
+
+    checkUsage();
+  }, [user]);
 
   const toggleThought = (id: string) => {
     setExpandedThoughts(prev => ({ ...prev, [id]: !prev[id] }));
@@ -35,12 +61,14 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
 
   // Manual Submission Logic (v4.0.0 Neural Override)
   const sendMessage = async (overrideContent?: string) => {
-    if (queriesLeft <= 0) return;
+    if (!isSuperAdmin && queriesLeft <= 0) return;
     
     const content = overrideContent || localInput;
     if (!content.trim() && attachedFiles.length === 0) return;
 
-    setQueriesLeft(prev => prev - 1);
+    if (!isSuperAdmin) {
+      setQueriesLeft(prev => Math.max(0, prev - 1));
+    }
     setError(null);
     setIsStreaming(true);
 
@@ -161,24 +189,28 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
       <div className="absolute top-0 left-0 w-full z-50 p-4 pointer-events-none">
         <div className="max-w-xl mx-auto backdrop-blur-2xl bg-black/60 border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.5)] rounded-2xl p-4 flex items-center justify-between pointer-events-auto">
           <div className="flex items-center gap-4">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${queriesLeft > 0 ? "bg-blue-500/20 border-blue-500/30 text-blue-400" : "bg-rose-500/20 border-rose-500/30 text-rose-400"}`}>
-              {queriesLeft > 0 ? (
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${isSuperAdmin ? "bg-amber-500/20 border-amber-500/30 text-amber-400" : queriesLeft > 0 ? "bg-blue-500/20 border-blue-500/30 text-blue-400" : "bg-rose-500/20 border-rose-500/30 text-rose-400"}`}>
+              {isSuperAdmin ? (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+              ) : queriesLeft > 0 ? (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
               ) : (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
               )}
             </div>
             <div>
-              <p className="text-xs font-black text-white tracking-widest uppercase">Demo Mode Active</p>
-              <p className="text-[10px] text-slate-400 font-bold italic tracking-wide">Enterprise Intelligence Evaluation</p>
+              <p className="text-xs font-black text-white tracking-widest uppercase">{isSuperAdmin ? "Neural Admin Active" : "Demo Mode Active"}</p>
+              <p className="text-[10px] text-slate-400 font-bold italic tracking-wide">{isSuperAdmin ? "Strategic Corporate Oversight" : "Enterprise Intelligence Evaluation"}</p>
             </div>
           </div>
           <div className="flex flex-col items-end">
             <div className="flex items-center gap-2">
-              <span className={`text-xl font-black italic ${queriesLeft > 0 ? "text-emerald-400" : "text-rose-500"}`}>{queriesLeft}</span>
-              <span className="text-[9px] text-slate-500 font-black uppercase tracking-[0.2em]">Queries Left</span>
+              <span className={`text-xl font-black italic ${isSuperAdmin ? "text-amber-400" : queriesLeft > 0 ? "text-emerald-400" : "text-rose-500"}`}>
+                {isSuperAdmin ? "∞" : queriesLeft}
+              </span>
+              <span className="text-[9px] text-slate-500 font-black uppercase tracking-[0.2em]">{isSuperAdmin ? "Unlimited Access" : "Queries Left"}</span>
             </div>
-            {queriesLeft === 0 && <p className="text-[9px] text-rose-400 font-bold uppercase tracking-widest animate-pulse">Limit Reached</p>}
+            {(!isSuperAdmin && queriesLeft === 0) && <p className="text-[9px] text-rose-400 font-bold uppercase tracking-widest animate-pulse">Limit Reached</p>}
           </div>
         </div>
       </div>

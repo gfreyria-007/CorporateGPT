@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, updateDoc, collection, addDoc, getFirestore } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, collection, addDoc, getFirestore, getDocs, query, where, limit } from "firebase/firestore";
 import { db } from "./firebase";
 import { CompanyConfig, defaultCompanyConfig } from "@/types/company";
 
@@ -123,6 +123,94 @@ export const getDailyUsage = async (uid: string, dateStr: string) => {
   const snap = await getDoc(dailyRef);
   return snap.exists() ? snap.data() : null;
 };
+
+/* ----------------------------------------------------------------
+   Gem (Knowledge Assets) Management
+   ---------------------------------------------------------------- */
+
+export const SUPER_ADMIN_EMAIL = "gfreyria@gmail.com";
+
+export interface Gem {
+  id?: string;
+  uid: string;
+  email: string;
+  fileName: string;
+  content: string;
+  type: string;
+  isPermanent: boolean;
+  createdAt: string;
+}
+
+/**
+ * Save a new Knowledge Gem
+ */
+export const saveGem = async (
+  uid: string,
+  email: string,
+  fileName: string,
+  content: string,
+  type: string
+): Promise<void> => {
+  if (!db) return;
+  try {
+    const isPermanent = email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+    await addDoc(collection(db, "gems"), {
+      uid,
+      email,
+      fileName,
+      content,
+      type,
+      isPermanent,
+      createdAt: new Date().toISOString()
+    });
+  } catch (e) {
+    console.error("Failed to save gem:", e);
+    throw e;
+  }
+};
+
+/**
+ * Get all permanent global gems (accessible by all)
+ */
+export const getGlobalGems = async (): Promise<Gem[]> => {
+  if (!db) return [];
+  try {
+    const q = query(collection(db, "gems"), where("isPermanent", "==", true));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as Gem));
+  } catch (e) {
+    console.error("Error fetching global gems:", e);
+    return [];
+  }
+};
+
+/**
+ * Get gems for a specific user that haven't expired (created today)
+ */
+export const getActiveUserGems = async (uid: string): Promise<Gem[]> => {
+  if (!db || !uid) return [];
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dateStr = today.toISOString();
+
+    const q = query(
+      collection(db, "gems"), 
+      where("uid", "==", uid),
+      where("isPermanent", "==", false),
+      where("createdAt", ">=", dateStr)
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as Gem));
+  } catch (e) {
+    console.error("Error fetching user gems:", e);
+    return [];
+  }
+};
+
+/* ----------------------------------------------------------------
+   Security & Banning
+   ---------------------------------------------------------------- */
 
 /**
  * SECURITY: Log a violation and potentially ban the user
