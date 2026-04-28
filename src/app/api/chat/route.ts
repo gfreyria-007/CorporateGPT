@@ -188,13 +188,15 @@ If the user attached any documents, start your final response (after the think b
       finalSystemPrompt += `\n\n--- CURRENT UPLOAD CONTEXT ---\n${parsedTextContext}\n--------------------------------------------\n`;
     }
 
+    console.log(`[NEURAL REQUEST]: User=${email} | Admin=${isSuperAdmin} | Model=${selectedModel}`);
+
     try {
       const result = await streamText({
         model: openrouter(selectedModel),
         messages: finalMessages,
         system: finalSystemPrompt,
         headers: {
-          "HTTP-Referer": "https://v0-corporategpt.vercel.app",
+          "HTTP-Referer": req.headers.get("origin") || "https://v0-corporategpt.vercel.app",
           "X-Title": "Corporate GPT",
         },
         onFinish: async () => {
@@ -205,8 +207,20 @@ If the user attached any documents, start your final response (after the think b
 
       return result.toTextStreamResponse();
     } catch (aiError: any) {
-      console.error("[AI ERROR]:", aiError);
-      return new Response(`AI Node Error: ${aiError.message}`, { status: 500 });
+      console.error("[NEURAL PROVIDER ERROR]:", {
+        message: aiError.message,
+        user: email,
+        isAdmin: isSuperAdmin,
+        model: selectedModel
+      });
+      return new Response(JSON.stringify({ 
+        error: "Neural Node Error", 
+        details: aiError.message,
+        diagnostics: { user: email, model: selectedModel, isAdmin: isSuperAdmin }
+      }), { 
+        status: 502,
+        headers: { "Content-Type": "application/json" }
+      });
     }
 
   } catch (error: any) {

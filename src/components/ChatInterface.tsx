@@ -160,6 +160,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
         let details = `Neural Link Error: ${response.statusText}`;
         try {
           const errorData = await response.json();
+          console.error("[NEURAL REJECTION]:", errorData);
           details = errorData.details || errorData.error || details;
         } catch (e) {
           const textError = await response.text().catch(() => "");
