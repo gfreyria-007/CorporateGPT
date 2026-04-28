@@ -44,31 +44,21 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
     { id: "qwen/qwen-2.5-72b-instruct", name: "Qwen 2.5 72B", provider: "Alibaba", icon: "🐉", isFree: false },
 
     // Free & Open Tier (Available to All)
-    { id: "google/gemini-flash-1.5-exp", name: "Gemini 1.5 Flash (EXP)", provider: "Google", icon: "⚡", isFree: true },
-    { id: "google/gemini-pro-1.5-exp", name: "Gemini 1.5 Pro (EXP)", provider: "Google", icon: "✨", isFree: true },
-    { id: "meta-llama/llama-3.1-8b-instruct:free", name: "Llama 3.1 8B (Free)", provider: "Meta", icon: "🦙", isFree: true },
+    { id: "meta-llama/llama-3.1-8b-instruct:free", name: "Llama 3.1 8B", provider: "Meta", icon: "🦙", isFree: true },
+    { id: "meta-llama/llama-3.1-70b-instruct:free", name: "Llama 3.1 70B", provider: "Meta", icon: "🐘", isFree: true },
+    { id: "google/gemini-2.0-flash-exp:free", name: "Gemini 2.0 Flash", provider: "Google", icon: "✨", isFree: true },
+    { id: "google/gemini-flash-1.5-exp", name: "Gemini Flash 1.5", provider: "Google", icon: "⚡", isFree: true },
     { id: "mistralai/pixtral-12b:free", name: "Pixtral 12B (Vision)", provider: "Mistral", icon: "👁️", isFree: true },
-    { id: "microsoft/phi-3-mini-128k-instruct:free", name: "Phi-3 Mini (Fast)", provider: "Microsoft", icon: "🔬", isFree: true },
-    { id: "microsoft/phi-3-medium-128k-instruct:free", name: "Phi-3 Medium", provider: "Microsoft", icon: "🧪", isFree: true },
+    { id: "microsoft/phi-3-mini-128k-instruct:free", name: "Phi-3 Mini", provider: "Microsoft", icon: "🔬", isFree: true },
     { id: "qwen/qwen-2-7b-instruct:free", name: "Qwen 2 7B", provider: "Alibaba", icon: "🐉", isFree: true },
-    { id: "huggingfaceh4/zephyr-7b-beta:free", name: "Zephyr 7B", provider: "HF", icon: "🪁", isFree: true },
-    { id: "undi95/toppy-m-7b:free", name: "Toppy M 7B", provider: "OpenSource", icon: "🔝", isFree: true },
-    { id: "openchat/openchat-7b:free", name: "OpenChat 7B", provider: "OpenChat", icon: "💬", isFree: true },
-    { id: "gryphe/mythomist-7b:free", name: "Mythomist 7B", provider: "Gryphe", icon: "🦄", isFree: true },
-    { id: "nousresearch/hermes-2-pro-llama-3-8b:free", name: "Hermes 2 Pro", provider: "Nous", icon: "🏛️", isFree: true },
     { id: "google/gemma-2-9b-it:free", name: "Gemma 2 9B", provider: "Google", icon: "💎", isFree: true },
-    { id: "meta-llama/llama-3-8b-instruct:free", name: "Llama 3 8B", provider: "Meta", icon: "🦙", isFree: true },
-    { id: "mistralai/mistral-7b-instruct:free", name: "Mistral 7B", provider: "Mistral", icon: "🌪️", isFree: true },
-    { id: "openrouter/free", name: "Auto Router (Free)", provider: "OpenRouter", icon: "🆓", isFree: true },
-    { id: "sophosympatheia/rogue-rose-103b-v0.2:free", name: "Rogue Rose 103B", provider: "Sopho", icon: "🌹", isFree: true },
     { id: "cognitivecomputations/dolphin-mixtral-8x7b:free", name: "Dolphin Mixtral", provider: "Dolphin", icon: "🐬", isFree: true },
-    { id: "nousresearch/hermes-2-theta-llama-3-8b:free", name: "Hermes 2 Theta", provider: "Nous", icon: "🌌", isFree: true },
-    { id: "jondurbin/airoboros-l2-70b:free", name: "Airoboros 70B", provider: "Jon", icon: "🐍", isFree: true },
+    { id: "openrouter/auto", name: "Auto Router", provider: "OpenRouter", icon: "🆓", isFree: true },
   ];
 
   const filteredModels = isSuperAdmin ? AVAILABLE_MODELS : AVAILABLE_MODELS.filter(m => m.isFree);
 
-  const [selectedModel, setSelectedModel] = useState(isSuperAdmin ? "openrouter/auto" : "openrouter/free");
+  const [selectedModel, setSelectedModel] = useState(isSuperAdmin ? "openrouter/auto" : "meta-llama/llama-3.1-8b-instruct:free");
   const [favorites, setFavorites] = useState<string[]>([]);
   const [showModelSelector, setShowModelSelector] = useState(false);
 
@@ -144,7 +134,12 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
 
     // 2. Prepare AI placeholder
     const assistantId = (Date.now() + 1).toString();
-    setMessages(prev => [...prev, { id: assistantId, role: "assistant", content: "" }]);
+    setMessages(prev => [...prev, { 
+      id: assistantId, 
+      role: "assistant", 
+      content: "",
+      isStreaming: true // Custom flag for loading state
+    }]);
 
     try {
       const response = await fetch("/api/chat", {
@@ -185,14 +180,18 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
 
         const chunk = decoder.decode(value, { stream: true });
         assistantContent += chunk;
+        
+        console.log(`[NEURAL CHUNK]: ${chunk.length} bytes`);
 
         setMessages(prev => {
-          const newMessages = [...prev];
-          const lastMsg = newMessages[newMessages.length - 1];
-          if (lastMsg && lastMsg.role === "assistant") {
-            lastMsg.content = assistantContent;
+          const last = prev[prev.length - 1];
+          if (last && last.role === "assistant") {
+            return [
+              ...prev.slice(0, -1),
+              { ...last, content: assistantContent, isStreaming: false }
+            ];
           }
-          return newMessages;
+          return prev;
         });
       }
 
