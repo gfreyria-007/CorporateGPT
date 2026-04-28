@@ -62,14 +62,18 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
   const [favorites, setFavorites] = useState<string[]>([]);
   const [showModelSelector, setShowModelSelector] = useState(false);
 
-  const [apiStatus, setApiStatus] = useState<"checking" | "active" | "offline">("checking");
+  const [apiStatus, setApiStatus] = useState<"checking" | "active" | "offline" | "fault">("checking");
+  const [apiError, setApiError] = useState<string | null>(null);
 
   // Load Status, Favorites and Last Model
   useEffect(() => {
     // Check API Status
     fetch("/api/status")
       .then(res => res.json())
-      .then(data => setApiStatus(data.status))
+      .then(data => {
+        setApiStatus(data.status);
+        if (data.details) setApiError(data.details);
+      })
       .catch(() => setApiStatus("offline"));
 
     const savedFavs = localStorage.getItem("neural_favorites");
@@ -328,16 +332,19 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
           {/* Neural Link Status Badge */}
           <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${
             apiStatus === "active" ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : 
+            apiStatus === "fault" ? "bg-amber-500/10 border-amber-500/20 text-amber-400 animate-pulse" :
             apiStatus === "offline" ? "bg-rose-500/10 border-rose-500/20 text-rose-400" :
             "bg-white/5 border-white/10 text-slate-500"
-          }`}>
-            <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${
-              apiStatus === "active" ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : 
+          }`} title={apiError || ""}>
+            <div className={`w-1.5 h-1.5 rounded-full ${
+              apiStatus === "active" ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" : 
+              apiStatus === "fault" ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" :
               apiStatus === "offline" ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]" :
               "bg-slate-500"
             }`}></div>
             <span className="text-[9px] font-black uppercase tracking-widest">
               {apiStatus === "active" ? "Neural Link Active" : 
+               apiStatus === "fault" ? `Neural Fault: ${apiError?.split(' ')[0]}` :
                apiStatus === "offline" ? "Neural Link Offline" : 
                "Verifying Link..."}
             </span>
