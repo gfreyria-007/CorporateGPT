@@ -31,14 +31,21 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
   const [queriesLeft, setQueriesLeft] = useState(5);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
-  // v5.0.0 OpenRouter Neural Selection
+  // v5.1.0 Expanded OpenRouter Neural Selection (inc. Free Tier)
   const AVAILABLE_MODELS = [
-    { id: "openrouter/auto", name: "Auto Router (Best Fit)", provider: "OpenRouter", icon: "⚡" },
-    { id: "anthropic/claude-3.5-sonnet", name: "Claude 3.5 Sonnet", provider: "Anthropic", icon: "🎭" },
-    { id: "openai/gpt-4o-2024-08-06", name: "GPT-4o Omniscience", provider: "OpenAI", icon: "🧠" },
-    { id: "google/gemini-pro-1.5", name: "Gemini 1.5 Pro", provider: "Google", icon: "✨" },
-    { id: "meta-llama/llama-3.1-405b", name: "Llama 3.1 405B", provider: "Meta", icon: "🦙" },
-    { id: "mistralai/mistral-large-2411", name: "Mistral Large", provider: "Mistral", icon: "🌪️" },
+    { id: "openrouter/auto", name: "Auto Router (Dynamic)", provider: "OpenRouter", icon: "⚡", isFree: false },
+    
+    // Premium Tier
+    { id: "anthropic/claude-3.5-sonnet", name: "Claude 3.5 Sonnet", provider: "Anthropic", icon: "🎭", isFree: false },
+    { id: "openai/gpt-4o-2024-08-06", name: "GPT-4o Omniscience", provider: "OpenAI", icon: "🧠", isFree: false },
+    { id: "google/gemini-pro-1.5", name: "Gemini 1.5 Pro (v2)", provider: "Google", icon: "✨", isFree: false },
+    { id: "liquid/lfm-40b", name: "Liquid 40B (State of Art)", provider: "Liquid", icon: "💧", isFree: false },
+    
+    // Free & Experimental Tier
+    { id: "google/gemini-flash-1.5-exp", name: "Gemini 1.5 Flash (EXP)", provider: "Google", icon: "⚡", isFree: true },
+    { id: "meta-llama/llama-3.1-8b-instruct:free", name: "Llama 3.1 8B (Free)", provider: "Meta", icon: "🦙", isFree: true },
+    { id: "mistralai/pixtral-12b:free", name: "Pixtral 12B (Free Vision)", provider: "Mistral", icon: "👁️", isFree: true },
+    { id: "qwen/qwen-2.5-72b-instruct", name: "Qwen 2.5 72B (Powerful)", provider: "Alibaba", icon: "🐉", isFree: false },
   ];
 
   const [selectedModel, setSelectedModel] = useState("openrouter/auto");
@@ -284,7 +291,10 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                           <div className="flex items-center gap-3 text-left">
                             <span className="text-lg">{m.icon}</span>
                             <div>
-                              <p className="text-[11px] font-bold leading-tight">{m.name}</p>
+                              <div className="flex items-center gap-1.5">
+                                <p className="text-[11px] font-bold leading-tight">{m.name}</p>
+                                {m.isFree && <span className="text-[8px] bg-emerald-500/20 text-emerald-400 px-1 rounded border border-emerald-500/30 font-black tracking-tighter">FREE</span>}
+                              </div>
                               <p className="text-[8px] text-slate-500 font-medium">{m.provider}</p>
                             </div>
                           </div>
