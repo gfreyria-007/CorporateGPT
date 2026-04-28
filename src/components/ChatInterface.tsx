@@ -5,7 +5,7 @@ import Script from "next/script";
 import { useAuth } from "./providers/AuthProvider";
 import { useCompany } from "./providers/CompanyProvider";
 import { Agent } from "@/types/agent";
-import { getUserUsage, SUPER_ADMIN_EMAIL } from "@/lib/firestore";
+import { getUserUsage, SUPER_ADMIN_EMAIL, getRecentUsageCount } from "@/lib/firestore";
 
 interface ChatInterfaceProps {
   activeAgent?: Agent | null;
@@ -45,8 +45,8 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
       }
 
       try {
-        const usage = await getUserUsage(user.uid);
-        setQueriesLeft(Math.max(0, 5 - (usage.queriesUsed || 0)));
+        const count = await getRecentUsageCount(user.uid, 60);
+        setQueriesLeft(Math.max(0, 5 - count));
       } catch (e) {
         console.error("Failed to sync usage:", e);
       }

@@ -115,6 +115,9 @@ export const incrementUserUsage = async (uid: string, tokens: number, model: str
     models: modelUsage,
     updatedAt: now.toISOString()
   }, { merge: true });
+
+  // 3. Log Activity for Rolling Limits
+  await logActivity(uid);
 };
 
 /** Get daily usage for a specific user and date */
@@ -122,6 +125,38 @@ export const getDailyUsage = async (uid: string, dateStr: string) => {
   const dailyRef = doc(db, "usage", uid, "daily", dateStr);
   const snap = await getDoc(dailyRef);
   return snap.exists() ? snap.data() : null;
+};
+
+/** Log a single activity event for precision tracking */
+export const logActivity = async (uid: string) => {
+  if (!db || uid === "GUEST_DEMO_UID") return;
+  try {
+    await addDoc(collection(db, "usage", uid, "activity"), {
+      timestamp: new Date().toISOString(),
+      type: "QUERY"
+    });
+  } catch (e) {
+    console.error("Failed to log activity:", e);
+  }
+};
+
+/** Get number of queries in the last X minutes */
+export const getRecentUsageCount = async (uid: string, minutes: number = 60): Promise<number> => {
+  if (!db || !uid || uid === "GUEST_DEMO_UID") return 0;
+  try {
+    const threshold = new Date();
+    threshold.setMinutes(threshold.getMinutes() - minutes);
+    
+    const q = query(
+      collection(db, "usage", uid, "activity"),
+      where("timestamp", ">=", threshold.toISOString())
+    );
+    const snap = await getDocs(q);
+    return snap.size;
+  } catch (e) {
+    console.error("Error fetching recent usage:", e);
+    return 0;
+  }
 };
 
 /* ----------------------------------------------------------------
@@ -185,14 +220,14 @@ export const getGlobalGems = async (): Promise<Gem[]> => {
 };
 
 /**
- * Get gems for a specific user that haven't expired (created today)
+ * Get gems for a specific user that haven't expired (created within the last hour)
  */
 export const getActiveUserGems = async (uid: string): Promise<Gem[]> => {
   if (!db || !uid) return [];
   try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const dateStr = today.toISOString();
+    const oneHourAgo = new Date();
+    oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+    const dateStr = oneHourAgo.toISOString();
 
     const q = query(
       collection(db, "gems"), 
