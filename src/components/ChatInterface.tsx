@@ -27,6 +27,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
   const [showMenu, setShowMenu] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedThoughts, setExpandedThoughts] = useState<Record<string, boolean>>({});
+  const [queriesLeft, setQueriesLeft] = useState(5);
 
   const toggleThought = (id: string) => {
     setExpandedThoughts(prev => ({ ...prev, [id]: !prev[id] }));
@@ -34,9 +35,12 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
 
   // Manual Submission Logic (v4.0.0 Neural Override)
   const sendMessage = async (overrideContent?: string) => {
+    if (queriesLeft <= 0) return;
+    
     const content = overrideContent || localInput;
     if (!content.trim() && attachedFiles.length === 0) return;
 
+    setQueriesLeft(prev => prev - 1);
     setError(null);
     setIsStreaming(true);
 
@@ -100,7 +104,6 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
       setError(err.message || "Unknown neural link failure");
     } finally {
       setIsStreaming(false);
-      setProcessingState("");
     }
   };
 
@@ -153,8 +156,35 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
 
   return (
     <div className={`flex flex-col w-full h-full relative overflow-hidden ${fullScreen ? "bg-transparent" : "bg-[#050505] rounded-3xl border border-white/5"}`}>
+      
+      {/* Demo Mode Banner */}
+      <div className="absolute top-0 left-0 w-full z-50 p-4 pointer-events-none">
+        <div className="max-w-xl mx-auto backdrop-blur-2xl bg-black/60 border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.5)] rounded-2xl p-4 flex items-center justify-between pointer-events-auto">
+          <div className="flex items-center gap-4">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${queriesLeft > 0 ? "bg-blue-500/20 border-blue-500/30 text-blue-400" : "bg-rose-500/20 border-rose-500/30 text-rose-400"}`}>
+              {queriesLeft > 0 ? (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+              )}
+            </div>
+            <div>
+              <p className="text-xs font-black text-white tracking-widest uppercase">Demo Mode Active</p>
+              <p className="text-[10px] text-slate-400 font-bold italic tracking-wide">Enterprise Intelligence Evaluation</p>
+            </div>
+          </div>
+          <div className="flex flex-col items-end">
+            <div className="flex items-center gap-2">
+              <span className={`text-xl font-black italic ${queriesLeft > 0 ? "text-emerald-400" : "text-rose-500"}`}>{queriesLeft}</span>
+              <span className="text-[9px] text-slate-500 font-black uppercase tracking-[0.2em]">Queries Left</span>
+            </div>
+            {queriesLeft === 0 && <p className="text-[9px] text-rose-400 font-bold uppercase tracking-widest animate-pulse">Limit Reached</p>}
+          </div>
+        </div>
+      </div>
+
       <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar relative z-10">
-        <div className="max-w-3xl mx-auto px-6 py-20 space-y-12">
+        <div className="max-w-3xl mx-auto px-6 py-24 space-y-12">
           {messages.length === 0 ? (
             <div className="space-y-16 animate-fade-in">
               <div className="flex flex-col items-center justify-center text-center space-y-12 py-10">
@@ -269,24 +299,31 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
               ))}
             </div>
           )}
-          <form onSubmit={handleFormSubmit} className="rounded-[2.5rem] p-2 pr-4 border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-end gap-2 bg-[#050505] relative z-40" style={{ backgroundColor: '#050505' }}>
-            <div className="relative">
-              <button type="button" onClick={() => setShowMenu(!showMenu)} className={`p-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-full transition-all ${showMenu ? "rotate-45" : "rotate-0"}`}><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg></button>
-              {showMenu && (
-                <div className="absolute bottom-full left-0 mb-4 rounded-3xl p-3 w-64 border border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.8)] animate-fade-in-up bg-[#0a0a0a] backdrop-blur-2xl">
-                  <div className="space-y-1">
-                    <button onClick={() => { fileInputRef.current?.click(); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group"><div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg></div><div><p className="text-xs font-bold text-white italic">Neural Upload</p><p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Review & Reference</p></div></button>
-                    <button onClick={() => { setLocalInput("Create an advanced presentation about "); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group"><div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg></div><div><p className="text-xs font-bold text-white italic">Presentations</p><p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Advanced Slides</p></div></button>
-                    <button onClick={() => { setLocalInput("Generate an infographic for "); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group"><div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg></div><div><p className="text-xs font-bold text-white italic">Infographics</p><p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Visual Insights</p></div></button>
-                    <button onClick={() => { setLocalInput("Create a detailed graph for "); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group"><div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg></div><div><p className="text-xs font-bold text-white italic">Advanced Graphs</p><p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Dynamic Visualization</p></div></button>
-                  </div>
-                </div>
-              )}
+          {queriesLeft <= 0 ? (
+            <div className="rounded-[2.5rem] p-6 text-center border border-rose-500/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-[#050505] relative z-40 space-y-2 backdrop-blur-xl">
+              <p className="text-sm font-black text-rose-400 italic tracking-wide">Neural Link Depleted</p>
+              <p className="text-xs text-slate-400 font-medium">You have exhausted your demo queries. Please rest or upgrade your access tier to continue.</p>
             </div>
-            <textarea ref={textareaRef} value={localInput} onChange={(e) => setLocalInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }} rows={1} placeholder={activeAgent ? `Message ${activeAgent.name}...` : "Escribe aquí tu consulta..."} className="flex-1 bg-transparent py-3 text-sm focus:outline-none placeholder:text-slate-600 resize-none max-h-48 custom-scrollbar text-white caret-blue-500" />
-            <input type="file" ref={fileInputRef} className="hidden" multiple onChange={handleFileChange} />
-            <button type="button" onClick={() => sendMessage()} disabled={isStreaming || (!localInput.trim() && attachedFiles.length === 0)} className="p-3 bg-white text-black rounded-full disabled:opacity-20 hover:scale-105 active:scale-95 transition-all shadow-xl"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg></button>
-          </form>
+          ) : (
+            <form onSubmit={handleFormSubmit} className="rounded-[2.5rem] p-2 pr-4 border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-end gap-2 bg-[#050505] relative z-40" style={{ backgroundColor: '#050505' }}>
+              <div className="relative">
+                <button type="button" onClick={() => setShowMenu(!showMenu)} className={`p-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-full transition-all ${showMenu ? "rotate-45" : "rotate-0"}`}><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg></button>
+                {showMenu && (
+                  <div className="absolute bottom-full left-0 mb-4 rounded-3xl p-3 w-64 border border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.8)] animate-fade-in-up bg-[#0a0a0a] backdrop-blur-2xl">
+                    <div className="space-y-1">
+                      <button onClick={() => { fileInputRef.current?.click(); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group"><div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg></div><div><p className="text-xs font-bold text-white italic">Neural Upload</p><p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Review & Reference</p></div></button>
+                      <button onClick={() => { setLocalInput("Create an advanced presentation about "); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group"><div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg></div><div><p className="text-xs font-bold text-white italic">Presentations</p><p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Advanced Slides</p></div></button>
+                      <button onClick={() => { setLocalInput("Generate an infographic for "); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group"><div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg></div><div><p className="text-xs font-bold text-white italic">Infographics</p><p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Visual Insights</p></div></button>
+                      <button onClick={() => { setLocalInput("Create a detailed graph for "); setShowMenu(false); }} className="flex items-center gap-4 w-full p-3 rounded-2xl hover:bg-white/5 text-left group"><div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg></div><div><p className="text-xs font-bold text-white italic">Advanced Graphs</p><p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Dynamic Visualization</p></div></button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <textarea ref={textareaRef} value={localInput} onChange={(e) => setLocalInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }} rows={1} placeholder={activeAgent ? `Message ${activeAgent.name}...` : "Escribe aquí tu consulta..."} className="flex-1 bg-transparent py-3 text-sm focus:outline-none placeholder:text-slate-600 resize-none max-h-48 custom-scrollbar text-white caret-blue-500" />
+              <input type="file" ref={fileInputRef} className="hidden" multiple onChange={handleFileChange} />
+              <button type="button" onClick={() => sendMessage()} disabled={isStreaming || (!localInput.trim() && attachedFiles.length === 0)} className="p-3 bg-white text-black rounded-full disabled:opacity-20 hover:scale-105 active:scale-95 transition-all shadow-xl"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg></button>
+            </form>
+          )}
           <p className="text-[9px] text-center mt-4 text-slate-700 font-black uppercase tracking-[0.4em]">Neural Core v4.0.0 • Secure Enterprise Intelligence</p>
         </div>
       </div>

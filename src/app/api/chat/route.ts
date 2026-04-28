@@ -3,7 +3,6 @@ import { streamText } from "ai";
 import { scanAttachments } from "@/lib/scanner";
 import { logSecurityViolation } from "@/lib/firestore";
 
-import pdf from "pdf-parse";
 import mammoth from "mammoth";
 import * as xlsx from "xlsx";
 
@@ -55,18 +54,13 @@ export async function POST(req: Request) {
           if (!file.base64) continue;
           const buffer = Buffer.from(file.base64, "base64");
           
-          // Image natively supported
+          // Image natively supported by Gemini
           if (file.type.startsWith("image/")) {
             parts.push({ type: "image", image: buffer });
           } 
-          // PDF Parsing via pdf-parse
+          // PDF natively supported by Gemini 2.5 Flash via base64 inline data
           else if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
-            try {
-              const data = await pdf(buffer);
-              parsedTextContext += `\n--- FILE: ${file.name} ---\n${data.text}\n`;
-            } catch (e) {
-              console.error("PDF parse error", e);
-            }
+            parts.push({ type: "file", data: file.base64, mimeType: "application/pdf" });
           } 
           // Word Document Parsing
           else if (file.type.includes("wordprocessingml") || file.name.endsWith(".docx")) {
