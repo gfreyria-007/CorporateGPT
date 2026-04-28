@@ -348,7 +348,8 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
             <div className="flex items-center gap-3 mb-1">
               <div className="flex flex-col">
                 <p className="text-[10px] font-black text-white tracking-widest uppercase">{isSuperAdmin ? "Neural Admin" : "Demo Mode"}</p>
-                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest leading-none mt-0.5">{isSuperAdmin ? "Full Oversight" : "Evaluation Access"}</p>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest leading-none mt-0.5">{user?.email || "Anonymous Access Point"}</p>
+                <p className="text-[7px] text-slate-600 font-medium uppercase tracking-[0.2em] mt-1">{isSuperAdmin ? "Full Oversight" : "Evaluation Access"}</p>
               </div>
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${isSuperAdmin ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-blue-500/10 border-blue-500/20 text-blue-400"}`}>
                 <span className="text-sm">⚡</span>
