@@ -19,26 +19,49 @@ import * as xlsx from "xlsx";
 export const maxDuration = 30;
 
 const openrouter = createOpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY || "",
+  apiKey: "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",
   baseURL: "https://openrouter.ai/api/v1",
 });
 
+const FREE_MODELS = [
+  "google/gemini-flash-1.5-exp",
+  "google/gemini-pro-1.5-exp",
+  "meta-llama/llama-3.1-8b-instruct:free",
+  "mistralai/pixtral-12b:free",
+  "microsoft/phi-3-mini-128k-instruct:free",
+  "microsoft/phi-3-medium-128k-instruct:free",
+  "qwen/qwen-2-7b-instruct:free",
+  "huggingfaceh4/zephyr-7b-beta:free",
+  "undi95/toppy-m-7b:free",
+  "openchat/openchat-7b:free",
+  "gryphe/mythomist-7b:free",
+  "nousresearch/hermes-2-pro-llama-3-8b:free",
+  "google/gemma-2-9b-it:free",
+  "meta-llama/llama-3-8b-instruct:free",
+  "mistralai/mistral-7b-instruct:free",
+  "openrouter/free",
+  "sophosympatheia/rogue-rose-103b-v0.2:free",
+  "cognitivecomputations/dolphin-mixtral-8x7b:free",
+  "nousresearch/hermes-2-theta-llama-3-8b:free",
+  "jondurbin/airoboros-l2-70b:free"
+];
+
 export async function POST(req: Request) {
   try {
-    if (!process.env.OPENROUTER_API_KEY) {
-      return new Response(JSON.stringify({ 
-        error: "Configuration Error", 
-        details: "OPENROUTER_API_KEY is not set in Vercel. Please check your Environment Variables." 
-      }), { status: 500 });
-    }
-
     const { messages, uid, email, attachments, model } = await req.json();
 
-    const selectedModel = model || "openrouter/auto";
+    const isSuperAdmin = email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+    const selectedModel = model || "openrouter/free";
+
+    // Security: Non-admins can ONLY use free models
+    if (!isSuperAdmin && !FREE_MODELS.includes(selectedModel)) {
+      return new Response(JSON.stringify({ 
+        error: "Access Denied", 
+        details: "Selected model is reserved for Super Admin tier. Please select a FREE model from the Neural Core menu." 
+      }), { status: 403 });
+    }
 
     console.log(`[DEBUG] Request from ${email} using model ${selectedModel}`);
-
-    const isSuperAdmin = email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
 
     // 0. USAGE CHECK (Skip for Super Admin)
     if (!isSuperAdmin) {

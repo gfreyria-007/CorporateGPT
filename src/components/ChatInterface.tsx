@@ -31,24 +31,44 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
   const [queriesLeft, setQueriesLeft] = useState(5);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
-  // v5.1.0 Expanded OpenRouter Neural Selection (inc. Free Tier)
+  // v6.0.0 Dual-Tier Neural Selection (Super Admin vs standard)
   const AVAILABLE_MODELS = [
+    // Premium Tier (Super Admin Only)
     { id: "openrouter/auto", name: "Auto Router (Dynamic)", provider: "OpenRouter", icon: "⚡", isFree: false },
-    
-    // Premium Tier
     { id: "anthropic/claude-3.5-sonnet", name: "Claude 3.5 Sonnet", provider: "Anthropic", icon: "🎭", isFree: false },
     { id: "openai/gpt-4o-2024-08-06", name: "GPT-4o Omniscience", provider: "OpenAI", icon: "🧠", isFree: false },
     { id: "google/gemini-pro-1.5", name: "Gemini 1.5 Pro (v2)", provider: "Google", icon: "✨", isFree: false },
     { id: "liquid/lfm-40b", name: "Liquid 40B (State of Art)", provider: "Liquid", icon: "💧", isFree: false },
-    
-    // Free & Experimental Tier
+    { id: "mistralai/mistral-large-2411", name: "Mistral Large", provider: "Mistral", icon: "🌪️", isFree: false },
+    { id: "meta-llama/llama-3.1-405b", name: "Llama 3.1 405B", provider: "Meta", icon: "🦙", isFree: false },
+    { id: "qwen/qwen-2.5-72b-instruct", name: "Qwen 2.5 72B", provider: "Alibaba", icon: "🐉", isFree: false },
+
+    // Free & Open Tier (Available to All)
     { id: "google/gemini-flash-1.5-exp", name: "Gemini 1.5 Flash (EXP)", provider: "Google", icon: "⚡", isFree: true },
+    { id: "google/gemini-pro-1.5-exp", name: "Gemini 1.5 Pro (EXP)", provider: "Google", icon: "✨", isFree: true },
     { id: "meta-llama/llama-3.1-8b-instruct:free", name: "Llama 3.1 8B (Free)", provider: "Meta", icon: "🦙", isFree: true },
-    { id: "mistralai/pixtral-12b:free", name: "Pixtral 12B (Free Vision)", provider: "Mistral", icon: "👁️", isFree: true },
-    { id: "qwen/qwen-2.5-72b-instruct", name: "Qwen 2.5 72B (Powerful)", provider: "Alibaba", icon: "🐉", isFree: false },
+    { id: "mistralai/pixtral-12b:free", name: "Pixtral 12B (Vision)", provider: "Mistral", icon: "👁️", isFree: true },
+    { id: "microsoft/phi-3-mini-128k-instruct:free", name: "Phi-3 Mini (Fast)", provider: "Microsoft", icon: "🔬", isFree: true },
+    { id: "microsoft/phi-3-medium-128k-instruct:free", name: "Phi-3 Medium", provider: "Microsoft", icon: "🧪", isFree: true },
+    { id: "qwen/qwen-2-7b-instruct:free", name: "Qwen 2 7B", provider: "Alibaba", icon: "🐉", isFree: true },
+    { id: "huggingfaceh4/zephyr-7b-beta:free", name: "Zephyr 7B", provider: "HF", icon: "🪁", isFree: true },
+    { id: "undi95/toppy-m-7b:free", name: "Toppy M 7B", provider: "OpenSource", icon: "🔝", isFree: true },
+    { id: "openchat/openchat-7b:free", name: "OpenChat 7B", provider: "OpenChat", icon: "💬", isFree: true },
+    { id: "gryphe/mythomist-7b:free", name: "Mythomist 7B", provider: "Gryphe", icon: "🦄", isFree: true },
+    { id: "nousresearch/hermes-2-pro-llama-3-8b:free", name: "Hermes 2 Pro", provider: "Nous", icon: "🏛️", isFree: true },
+    { id: "google/gemma-2-9b-it:free", name: "Gemma 2 9B", provider: "Google", icon: "💎", isFree: true },
+    { id: "meta-llama/llama-3-8b-instruct:free", name: "Llama 3 8B", provider: "Meta", icon: "🦙", isFree: true },
+    { id: "mistralai/mistral-7b-instruct:free", name: "Mistral 7B", provider: "Mistral", icon: "🌪️", isFree: true },
+    { id: "openrouter/free", name: "Auto Router (Free)", provider: "OpenRouter", icon: "🆓", isFree: true },
+    { id: "sophosympatheia/rogue-rose-103b-v0.2:free", name: "Rogue Rose 103B", provider: "Sopho", icon: "🌹", isFree: true },
+    { id: "cognitivecomputations/dolphin-mixtral-8x7b:free", name: "Dolphin Mixtral", provider: "Dolphin", icon: "🐬", isFree: true },
+    { id: "nousresearch/hermes-2-theta-llama-3-8b:free", name: "Hermes 2 Theta", provider: "Nous", icon: "🌌", isFree: true },
+    { id: "jondurbin/airoboros-l2-70b:free", name: "Airoboros 70B", provider: "Jon", icon: "🐍", isFree: true },
   ];
 
-  const [selectedModel, setSelectedModel] = useState("openrouter/auto");
+  const filteredModels = isSuperAdmin ? AVAILABLE_MODELS : AVAILABLE_MODELS.filter(m => m.isFree);
+
+  const [selectedModel, setSelectedModel] = useState(isSuperAdmin ? "openrouter/auto" : "openrouter/free");
   const [favorites, setFavorites] = useState<string[]>([]);
   const [showModelSelector, setShowModelSelector] = useState(false);
 
@@ -276,14 +296,8 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                 <div className="absolute top-full right-0 mt-2 w-64 backdrop-blur-3xl bg-slate-900/90 border border-white/10 rounded-xl shadow-2xl p-2 z-[60] pointer-events-auto">
                   <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-2 py-1 mb-1">Select Neural Engine</p>
                   <div className="space-y-1">
-                    {AVAILABLE_MODELS.sort((a, b) => {
-                      const aFav = favorites.includes(a.id);
-                      const bFav = favorites.includes(b.id);
-                      if (aFav && !bFav) return -1;
-                      if (!aFav && bFav) return 1;
-                      return 0;
-                    }).map((m) => (
-                      <div key={m.id} className="flex items-center gap-1">
+                    {filteredModels.map((m) => (
+                      <div key={m.id} className="flex items-center gap-1 pr-1 group">
                         <button
                           onClick={() => handleModelSelect(m.id)}
                           className={`flex-1 flex items-center justify-between px-3 py-2 rounded-lg transition-all ${selectedModel === m.id ? 'bg-blue-500/20 text-blue-400' : 'hover:bg-white/5 text-slate-300'}`}
