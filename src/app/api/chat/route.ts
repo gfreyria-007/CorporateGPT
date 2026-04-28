@@ -47,7 +47,14 @@ export async function POST(req: Request) {
 
     const { messages, uid, email, attachments, model } = await req.json();
     const modelId = model || "meta-llama/llama-3.1-8b-instruct:free";
-    const isSuperAdmin = email?.toLowerCase() === "gfreyria@gmail.com";
+
+    // Sanitize messages: ensure content is always a string (fixes "expected string, received array" errors)
+    const sanitizedMessages = messages.map((m: any) => ({
+      ...m,
+      content: Array.isArray(m.content) 
+        ? m.content.map((c: any) => c.text || "").join("\n")
+        : String(m.content)
+    }));
 
     // 1. Direct Google Routing (Fallback/Stability)
     if (modelId.includes("google/")) {
@@ -55,10 +62,9 @@ export async function POST(req: Request) {
       if (googleKey) {
         try {
           const google = createGoogleGenerativeAI({ apiKey: googleKey });
-          const cleanGoogleId = modelId.split("/")[1]?.split(":")[0] || "gemini-1.5-flash";
           const result = await streamText({
-            model: google(cleanGoogleId),
-            messages,
+            model: google("gemini-1.5-flash"),
+            messages: sanitizedMessages,
             system: "You are a Corporate AI. Thinking blocks <think>...</think> are active."
           });
           return new Response(result.textStream);
@@ -75,7 +81,7 @@ export async function POST(req: Request) {
     });
 
     // Security & Scanning
-    const allContent = messages.map((m: any) => m.content).join("\n");
+    const allContent = sanitizedMessages.map((m: any) => m.content).join("\n");
     const scanResult = scanAttachments([{ name: "Neural Stream", content: allContent }]);
     if (!scanResult.safe) {
       return new Response(JSON.stringify({ error: "Security Violation" }), { status: 403 });
@@ -83,15 +89,12 @@ export async function POST(req: Request) {
 
     const result = await streamText({
       model: openrouter(modelId),
-      messages,
+      messages: sanitizedMessages,
       system: `You are Corporate GPT. ALWAYS wrap your reasoning in <think>...</think> tags.`,
       headers: {
         "HTTP-Referer": "https://v0-corporategpt.vercel.app",
         "X-Title": "Corporate GPT",
       },
-      onFinish: async () => {
-        if (uid) await incrementUserUsage(uid, 0, modelId);
-      }
     });
 
     return new Response(result.textStream);

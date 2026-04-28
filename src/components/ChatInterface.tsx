@@ -35,9 +35,9 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
   const AVAILABLE_MODELS = [
     // Premium Tier (Super Admin Only)
     { id: "openrouter/auto", name: "Auto Router (Dynamic)", provider: "OpenRouter", icon: "⚡", isFree: false },
-    { id: "anthropic/claude-3.5-sonnet", name: "Claude 3.5 Sonnet", provider: "Anthropic", icon: "🎭", isFree: false },
-    { id: "openai/gpt-4o-2024-08-06", name: "GPT-4o Omniscience", provider: "OpenAI", icon: "🧠", isFree: false },
-    { id: "google/gemini-pro-1.5", name: "Gemini 1.5 Pro (v2)", provider: "Google", icon: "✨", isFree: false },
+    { id: "anthropic/claude-3-5-sonnet", name: "Claude 3.5 Sonnet", provider: "Anthropic", icon: "🎭", isFree: false },
+    { id: "openai/gpt-4o", name: "GPT-4o Omniscience", provider: "OpenAI", icon: "🧠", isFree: false },
+    { id: "google/gemini-flash-1.5", name: "Gemini 1.5 Pro (v2)", provider: "Google", icon: "✨", isFree: false },
     { id: "liquid/lfm-40b", name: "Liquid 40B (State of Art)", provider: "Liquid", icon: "💧", isFree: false },
     { id: "mistralai/mistral-large-2411", name: "Mistral Large", provider: "Mistral", icon: "🌪️", isFree: false },
     { id: "meta-llama/llama-3.1-405b", name: "Llama 3.1 405B", provider: "Meta", icon: "🦙", isFree: false },
@@ -46,8 +46,8 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
     // Free & Open Tier (Available to All)
     { id: "meta-llama/llama-3.1-8b-instruct:free", name: "Llama 3.1 8B", provider: "Meta", icon: "🦙", isFree: true },
     { id: "meta-llama/llama-3.1-70b-instruct:free", name: "Llama 3.1 70B", provider: "Meta", icon: "🐘", isFree: true },
-    { id: "google/gemini-2.0-flash-exp:free", name: "Gemini 2.0 Flash", provider: "Google", icon: "✨", isFree: true },
-    { id: "google/gemini-flash-1.5-exp", name: "Gemini Flash 1.5", provider: "Google", icon: "⚡", isFree: true },
+    { id: "google/gemini-flash-1.5-free", name: "Gemini 1.5 Flash (Free)", provider: "Google", icon: "✨", isFree: true },
+    { id: "google/gemini-flash-1.5", name: "Gemini Flash 1.5", provider: "Google", icon: "⚡", isFree: true },
     { id: "mistralai/pixtral-12b:free", name: "Pixtral 12B (Vision)", provider: "Mistral", icon: "👁️", isFree: true },
     { id: "microsoft/phi-3-mini-128k-instruct:free", name: "Phi-3 Mini", provider: "Microsoft", icon: "🔬", isFree: true },
     { id: "qwen/qwen-2-7b-instruct:free", name: "Qwen 2 7B", provider: "Alibaba", icon: "🐉", isFree: true },
