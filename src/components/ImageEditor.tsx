@@ -519,7 +519,7 @@ export function ImageEditor({ onClose, theme, lang = 'en', appConfig, onTrialEnd
       }
 
       fabricCanvas.renderAll();
-      await incrementImageCount(user.uid);
+      incrementImageCount(user.uid).catch(e => console.error(e));
     } catch (error) {
       console.error("Generation failed", error);
       alert("Asset synthesis failed. Please try a more specific prompt.");

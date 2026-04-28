@@ -219,7 +219,8 @@ export default function App() {
           timestamp: Date.now()
         };
         setMessages(prev => [...prev, assistantMessage]);
-        await incrementQueryCount(user.uid);
+        // Do not await this, if firestore is offline or uninitialized it will hang the UI
+        incrementQueryCount(user.uid).catch(e => console.error("Failed to increment count:", e));
       } else {
         throw new Error(data.error || 'Failed to get response');
       }
