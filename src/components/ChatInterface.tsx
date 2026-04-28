@@ -350,7 +350,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                 </div>
                 <div className="space-y-4">
                   <h2 className="text-4xl font-black text-white italic tracking-tighter">{activeAgent ? `Forge: ${activeAgent.name}` : "¿Qué tienes en mente hoy?"}</h2>
-                  <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em]">Catalizia Neural Processing Node • Ready for Input</p>
+                  <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em]">Neural Core v4.0.0 • Secure Enterprise Intelligence</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3 w-full max-w-xl pt-4">
                   {[{ title: "Technical Synthesis", sub: "DRAFT GEN", prompt: "Draft a technical summary of " }, { title: "Security Protocols", sub: "AUDIT NODE", prompt: "Audit the security of " }, { title: "Compliance Logic", sub: "POLICY RAG", prompt: "Verify compliance for " }, { title: "Visual Assets", sub: "IMAGE GEN", prompt: "Generate a concept visual for " }].map((action: any) => (
