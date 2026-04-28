@@ -1,4 +1,4 @@
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { createOpenAI } from "@ai-sdk/openai";
 import { streamText } from "ai";
 import { scanAttachments } from "@/lib/scanner";
 import { 
@@ -18,15 +18,18 @@ import * as xlsx from "xlsx";
 
 export const maxDuration = 30;
 
-const google = createGoogleGenerativeAI({
-  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY || "",
+const openrouter = createOpenAI({
+  apiKey: process.env.OPENROUTER_API_KEY || "",
+  baseURL: "https://openrouter.ai/api/v1",
 });
 
 export async function POST(req: Request) {
   try {
-    const { messages, uid, email, attachments } = await req.json();
+    const { messages, uid, email, attachments, model } = await req.json();
 
-    console.log(`[DEBUG] Received request from ${email} (${uid})`);
+    const selectedModel = model || "openrouter/auto";
+
+    console.log(`[DEBUG] Request from ${email} using model ${selectedModel}`);
 
     const isSuperAdmin = email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
 
@@ -153,12 +156,16 @@ If the user attached any documents, start your final response (after the think b
 
     try {
       const result = await streamText({
-        model: google("gemini-1.5-flash"),
+        model: openrouter(selectedModel),
         messages: finalMessages,
         system: finalSystemPrompt,
+        headers: {
+          "HTTP-Referer": "https://v0-corporategpt.vercel.app",
+          "X-Title": "Corporate GPT",
+        },
         onFinish: async () => {
           // Increment Usage (Persistent)
-          await incrementUserUsage(uid, 0, "gemini-2.5-flash");
+          await incrementUserUsage(uid, 0, selectedModel);
         }
       });
 

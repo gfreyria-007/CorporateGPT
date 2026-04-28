@@ -31,6 +31,43 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
   const [queriesLeft, setQueriesLeft] = useState(5);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
+  // v5.0.0 OpenRouter Neural Selection
+  const AVAILABLE_MODELS = [
+    { id: "openrouter/auto", name: "Auto Router (Best Fit)", provider: "OpenRouter", icon: "⚡" },
+    { id: "anthropic/claude-3.5-sonnet", name: "Claude 3.5 Sonnet", provider: "Anthropic", icon: "🎭" },
+    { id: "openai/gpt-4o", name: "GPT-4o Omniscience", provider: "OpenAI", icon: "🧠" },
+    { id: "google/gemini-pro-1.5", name: "Gemini 1.5 Pro", provider: "Google", icon: "✨" },
+    { id: "meta-llama/llama-3.1-405b", name: "Llama 3.1 405B", provider: "Meta", icon: "🦙" },
+    { id: "mistralai/mistral-large", name: "Mistral Large", provider: "Mistral", icon: "🌪️" },
+  ];
+
+  const [selectedModel, setSelectedModel] = useState("openrouter/auto");
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [showModelSelector, setShowModelSelector] = useState(false);
+
+  // Load Favorites and Last Model
+  useEffect(() => {
+    const savedFavs = localStorage.getItem("neural_favorites");
+    if (savedFavs) setFavorites(JSON.parse(savedFavs));
+    
+    const lastModel = localStorage.getItem("neural_last_model");
+    if (lastModel) setSelectedModel(lastModel);
+  }, []);
+
+  const toggleFavorite = (id: string) => {
+    setFavorites(prev => {
+      const next = prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id];
+      localStorage.setItem("neural_favorites", JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const handleModelSelect = (id: string) => {
+    setSelectedModel(id);
+    localStorage.setItem("neural_last_model", id);
+    setShowModelSelector(false);
+  };
+
   // Sync Usage with Firestore
   useEffect(() => {
     if (!user?.uid) return;
@@ -92,7 +129,8 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
           email: user?.email,
           attachments: attachedFiles,
           agentId: activeAgent?.id,
-          systemPrompt: activeAgent?.systemPrompt
+          systemPrompt: activeAgent?.systemPrompt,
+          model: selectedModel
         })
       });
 
@@ -203,7 +241,58 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
               <p className="text-[10px] text-slate-400 font-bold italic tracking-wide">{isSuperAdmin ? "Strategic Corporate Oversight" : "Enterprise Intelligence Evaluation"}</p>
             </div>
           </div>
-          <div className="flex flex-col items-end">
+          <div className="flex flex-col items-end gap-2">
+            {/* Neural Model Selector */}
+            <div className="relative">
+              <button 
+                onClick={() => setShowModelSelector(!showModelSelector)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all pointer-events-auto"
+              >
+                <span className="text-sm">{AVAILABLE_MODELS.find(m => m.id === selectedModel)?.icon}</span>
+                <span className="text-[10px] font-black text-white/70 uppercase tracking-wider">
+                  {AVAILABLE_MODELS.find(m => m.id === selectedModel)?.name.split(' ')[0]}
+                </span>
+                <svg className={`w-3 h-3 text-slate-500 transition-transform ${showModelSelector ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+              </button>
+
+              {showModelSelector && (
+                <div className="absolute top-full right-0 mt-2 w-64 backdrop-blur-3xl bg-slate-900/90 border border-white/10 rounded-xl shadow-2xl p-2 z-[60] pointer-events-auto">
+                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-2 py-1 mb-1">Select Neural Engine</p>
+                  <div className="space-y-1">
+                    {AVAILABLE_MODELS.sort((a, b) => {
+                      const aFav = favorites.includes(a.id);
+                      const bFav = favorites.includes(b.id);
+                      if (aFav && !bFav) return -1;
+                      if (!aFav && bFav) return 1;
+                      return 0;
+                    }).map((m) => (
+                      <div key={m.id} className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleModelSelect(m.id)}
+                          className={`flex-1 flex items-center justify-between px-3 py-2 rounded-lg transition-all ${selectedModel === m.id ? 'bg-blue-500/20 text-blue-400' : 'hover:bg-white/5 text-slate-300'}`}
+                        >
+                          <div className="flex items-center gap-3 text-left">
+                            <span className="text-lg">{m.icon}</span>
+                            <div>
+                              <p className="text-[11px] font-bold leading-tight">{m.name}</p>
+                              <p className="text-[8px] text-slate-500 font-medium">{m.provider}</p>
+                            </div>
+                          </div>
+                          {selectedModel === m.id && <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]" />}
+                        </button>
+                        <button 
+                          onClick={() => toggleFavorite(m.id)}
+                          className={`p-2 rounded-lg hover:bg-white/5 transition-colors ${favorites.includes(m.id) ? 'text-amber-400' : 'text-slate-600'}`}
+                        >
+                          <svg className="w-4 h-4" fill={favorites.includes(m.id) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.382-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="flex items-center gap-2">
               <span className={`text-xl font-black italic ${isSuperAdmin ? "text-amber-400" : queriesLeft > 0 ? "text-emerald-400" : "text-rose-500"}`}>
                 {isSuperAdmin ? "∞" : queriesLeft}
