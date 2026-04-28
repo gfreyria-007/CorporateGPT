@@ -153,7 +153,7 @@ If the user attached any documents, start your final response (after the think b
 
     try {
       const result = await streamText({
-        model: google("gemini-2.5-flash"),
+        model: google("gemini-1.5-flash"),
         messages: finalMessages,
         system: finalSystemPrompt,
         onFinish: async () => {
