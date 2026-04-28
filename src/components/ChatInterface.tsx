@@ -196,14 +196,18 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
         });
       }
 
-      if (!assistantContent.trim()) {
-        throw new Error("Neural Core returned an empty payload. The file may be too large or unreadable by the selected AI model.");
-      }
-
       // Only clear attached files on complete success
       setAttachedFiles([]);
     } catch (err: any) {
-      console.error("[NEURAL OVERRIDE CRASH]:", err);
+      console.error("[NEURAL ERROR]:", err);
+      // Remove the empty assistant message placeholder if it failed
+      setMessages(prev => {
+        const lastMsg = prev[prev.length - 1];
+        if (lastMsg && lastMsg.role === "assistant" && !lastMsg.content) {
+          return prev.slice(0, -1);
+        }
+        return prev;
+      });
       setError(err.message || "Unknown neural link failure");
     } finally {
       setIsStreaming(false);
@@ -263,23 +267,8 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
       {/* Demo Mode Banner */}
       <div className="absolute top-0 left-0 w-full z-50 p-4 pointer-events-none">
         <div className="max-w-xl mx-auto backdrop-blur-2xl bg-black/60 border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.5)] rounded-2xl p-4 flex items-center justify-between pointer-events-auto">
-          <div className="flex items-center gap-4">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${isSuperAdmin ? "bg-amber-500/20 border-amber-500/30 text-amber-400" : queriesLeft > 0 ? "bg-blue-500/20 border-blue-500/30 text-blue-400" : "bg-rose-500/20 border-rose-500/30 text-rose-400"}`}>
-              {isSuperAdmin ? (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-              ) : queriesLeft > 0 ? (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-              )}
-            </div>
-            <div>
-              <p className="text-xs font-black text-white tracking-widest uppercase">{isSuperAdmin ? "Neural Admin Active" : "Demo Mode Active"}</p>
-              <p className="text-[10px] text-slate-400 font-bold italic tracking-wide">{isSuperAdmin ? "Strategic Corporate Oversight" : "Enterprise Intelligence Evaluation"}</p>
-            </div>
-          </div>
-          <div className="flex flex-col items-end gap-2">
-            {/* Neural Model Selector */}
+          {/* Neural Model Selector (Left) */}
+          <div className="flex flex-col items-start gap-2">
             <div className="relative">
               <button 
                 onClick={() => setShowModelSelector(!showModelSelector)}
@@ -293,11 +282,11 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
               </button>
 
               {showModelSelector && (
-                <div className="absolute top-full right-0 mt-2 w-64 backdrop-blur-3xl bg-slate-900/90 border border-white/10 rounded-xl shadow-2xl p-2 z-[60] pointer-events-auto">
-                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-2 py-1 mb-1">Select Neural Engine</p>
-                  <div className="space-y-1">
+                <div className="absolute top-full left-0 mt-2 w-64 backdrop-blur-3xl bg-slate-900/90 border border-white/10 rounded-xl shadow-2xl p-2 z-[60] pointer-events-auto">
+                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-2 py-1 mb-1 border-b border-white/5 pb-2">Select Neural Engine</p>
+                  <div className="space-y-1 max-h-80 overflow-y-auto custom-scrollbar pr-1">
                     {filteredModels.map((m) => (
-                      <div key={m.id} className="flex items-center gap-1 pr-1 group">
+                      <div key={m.id} className="flex items-center gap-1 group">
                         <button
                           onClick={() => handleModelSelect(m.id)}
                           className={`flex-1 flex items-center justify-between px-3 py-2 rounded-lg transition-all ${selectedModel === m.id ? 'bg-blue-500/20 text-blue-400' : 'hover:bg-white/5 text-slate-300'}`}
@@ -318,7 +307,7 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                           onClick={() => toggleFavorite(m.id)}
                           className={`p-2 rounded-lg hover:bg-white/5 transition-colors ${favorites.includes(m.id) ? 'text-amber-400' : 'text-slate-600'}`}
                         >
-                          <svg className="w-4 h-4" fill={favorites.includes(m.id) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.382-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
+                          <svg className="w-4 h-4" fill={favorites.includes(m.id) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976-2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.382-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
                         </button>
                       </div>
                     ))}
@@ -326,17 +315,28 @@ export default function ChatInterface({ activeAgent, onBackToAgents, fullScreen 
                 </div>
               )}
             </div>
+          </div>
 
+          {/* Info & Usage (Right) */}
+          <div className="flex flex-col items-end text-right">
+            <div className="flex items-center gap-3 mb-1">
+              <div className="flex flex-col">
+                <p className="text-[10px] font-black text-white tracking-widest uppercase">{isSuperAdmin ? "Neural Admin" : "Demo Mode"}</p>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest leading-none mt-0.5">{isSuperAdmin ? "Full Oversight" : "Evaluation Access"}</p>
+              </div>
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${isSuperAdmin ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-blue-500/10 border-blue-500/20 text-blue-400"}`}>
+                <span className="text-sm">⚡</span>
+              </div>
+            </div>
             <div className="flex items-center gap-2">
-              <span className={`text-xl font-black italic ${isSuperAdmin ? "text-amber-400" : queriesLeft > 0 ? "text-emerald-400" : "text-rose-500"}`}>
+              <span className={`text-sm font-black italic ${isSuperAdmin ? "text-amber-400" : queriesLeft > 0 ? "text-emerald-400" : "text-rose-500"}`}>
                 {isSuperAdmin ? "∞" : queriesLeft}
               </span>
-              <span className="text-[9px] text-slate-500 font-black uppercase tracking-[0.2em]">{isSuperAdmin ? "Unlimited Access" : "Queries Left"}</span>
+              <span className="text-[8px] text-slate-600 font-black uppercase tracking-widest">Left</span>
             </div>
-            {(!isSuperAdmin && queriesLeft === 0) && <p className="text-[9px] text-rose-400 font-bold uppercase tracking-widest animate-pulse">Limit Reached</p>}
-          </div>
         </div>
       </div>
+    </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar relative z-10">
         <div className="max-w-3xl mx-auto px-6 py-24 space-y-12">
