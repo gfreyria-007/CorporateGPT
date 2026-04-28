@@ -38,8 +38,8 @@ export const CompanyProvider = ({ children }: { children: React.ReactNode }) => 
   };
 
   useEffect(() => {
-    refreshConfig();
-  }, []); // Only fetch on mount, or rely on manual refresh
+    refreshConfig(true); // Force refresh when user state changes
+  }, [user]); // Re-fetch once user is authenticated
 
   // Inject CSS variables for primary color based on config
   useEffect(() => {
