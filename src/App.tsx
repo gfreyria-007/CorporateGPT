@@ -1,4 +1,4 @@
-// Build 5.0.0 Production Sync - Cinematic Storyteller Release
+// Build 5.0.1 Deployment Sync - [2026-04-29T22:33:30]
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
