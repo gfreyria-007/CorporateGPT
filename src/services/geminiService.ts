@@ -15,7 +15,8 @@ export interface InfographicData {
 
 export interface StudioSlideData {
   id: string;
-  type: 'hero' | 'infographic' | 'diagram' | 'metric_focus' | 'process_flow';
+  type: 'hero' | 'infographic' | 'diagram' | 'metric_focus' | 'process_flow' | 'data_breakdown' | 'comparative_analysis';
+  narrativePhase: string; // Intro, Problem, Data, Solution, etc.
   title: string;
   subtitle: string;
   content: {
@@ -23,32 +24,41 @@ export interface StudioSlideData {
     value?: string;
     description?: string;
     iconHint?: string;
+    tableData?: { [key: string]: string }[];
   }[];
   badge?: string;
   imagePrompt?: string;
   visualStrategy: string;
-  aiSuggestedMood?: string; // AI decides the style
+  visualLayout: 'split' | 'grid' | 'focal' | 'dense_table' | 'technical_drawing';
+  aiSuggestedMood?: string;
 }
 
 export async function generateStudioSlides(prompt: string, mood: string, lang: 'en' | 'es'): Promise<{ slides: StudioSlideData[], finalMood: string }> {
   const model = "gemini-1.5-pro"; 
   
-  const systemInstruction = `You are the Neural Studio Engine 4.2. Your goal is to synthesize a set of 5-7 high-fidelity presentation slides.
-  Topic: "${prompt}"
-  Requested Mood: "${mood}"
-  Language: "${lang}"
-
-  Instructions for High-Fidelity Results:
-  1. If Mood is "ai_orchestrator", ANALYZE the context of the data and SELECT the best visual language from these styles: [corporativo, lego, boceto, laboratorio, brutalista, arcilla_3d, pizarron_blanco, pizarron_verde, pizarron_negro, plano_tecnico, cuantico, manuscrito, retro_80s, minimal_jp, ciberpunk].
-  2. DO NOT return generic text. Provide deep, professional insights.
-  3. Map each slide to a specific 'type':
-     - 'hero': High-impact title.
-     - 'infographic': 3-4 data points.
-     - 'diagram': 3 concepts with central visual.
-     - 'metric_focus': One large statistic.
-     - 'process_flow': 4-step transition.
+  const systemInstruction = `You are the Neural Studio Engine 5.0 (Cinematic Storyteller). 
+  Goal: Synthesize a NON-EDITABLE 10-slide professional infographic narrative.
+  Reference Style: High-density, professional astrophysical data visuals (Solar System style).
   
-  Return a JSON object: { "slides": [...], "finalMood": "selected_style_name" }`;
+  Instructions:
+  1. NARRATIVE: Create a 10-slide arc: 
+     Slide 1: Executive Opening
+     Slide 2-3: Context & Challenges
+     Slide 4-6: Deep Data Breakdown (High Density)
+     Slide 7-8: Strategic Architecture & Comparative Analysis
+     Slide 9: Growth Projection
+     Slide 10: Final Authority Conclusion
+  
+  2. DATA DENSITY: Every slide must be "Dense". Use tables, metric grids, and detailed labels. NO wall of text.
+  
+  3. VISUAL LAYOUT:
+     - 'dense_table': Technical comparison with columns and rows.
+     - 'technical_drawing': Central masked image with floating annotations.
+     - 'grid': 4-6 distinct cards with icons and data.
+  
+  4. MOOD SELECTION: If "ai_orchestrator", choose the absolute best style for this topic.
+  
+  Return JSON: { "slides": [...], "finalMood": "style" }`;
 
   const payload = {
     model,
