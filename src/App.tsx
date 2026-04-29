@@ -684,7 +684,7 @@ export default function App() {
                     />
                     <div className="flex flex-wrap justify-center gap-x-12 gap-y-3 mt-6 text-[10px] font-black text-slate-400 px-10 uppercase tracking-[0.3em] text-center opacity-60">
                         <span className="flex items-center gap-2 text-emerald-500"><ShieldCheck size={12} /> NDA PROTECTION ACTIVE</span>
-                        <span className="flex items-center gap-2">ENGINE: <span className="text-blue-600">{currentModelData?.id.split('/')[0] || 'OR-AUTO'}</span></span>
+                        <span className="flex items-center gap-2">ENGINE: <span className="text-blue-600">{(currentModelData?.id.split('/')[0] === 'openrouter' || !currentModelData) ? 'AUTO ROUTER' : currentModelData.id.split('/')[0]}</span></span>
                         <span className="flex items-center gap-2">SECURE: <span className="text-emerald-500">QUANTUM-RESISTANT</span></span>
                         <span className="flex items-center gap-2">SESSION: <span className="text-amber-500">TLS 1.3</span></span>
                     </div>

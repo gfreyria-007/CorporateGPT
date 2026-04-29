@@ -149,7 +149,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                       
                       <div className="flex flex-wrap gap-1.5 mt-1">
                         <span className={`text-[9px] font-mono font-bold uppercase ${selectedModel === model.id ? 'text-white/60' : 'text-slate-400'}`}>
-                          {model.id === 'openrouter/auto' ? t.appName : model.id.split('/')[0]}
+                          {model.id === 'openrouter/auto' ? t.appName : (model.id.split('/')[0] === 'openrouter' ? 'Auto Router' : model.id.split('/')[0])}
                         </span>
                         
                         <div className="flex gap-1">
