@@ -1,10 +1,11 @@
 import React from 'react';
-import { HelpCircle, ChevronRight, MessageSquare, ShieldCheck, Zap, Gem, Palette, Coins } from 'lucide-react';
+import { HelpCircle, ChevronRight, MessageSquare, ShieldCheck, Zap, Gem, Palette, Coins, X } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface FAQProps {
   onClose: () => void;
   lang: 'en' | 'es';
+  theme: 'light' | 'dark';
 }
 
 const content = {
@@ -72,7 +73,7 @@ const content = {
   }
 };
 
-export function FAQ({ onClose, lang }: FAQProps) {
+export function FAQ({ onClose, lang, theme }: FAQProps) {
   const c = content[lang];
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4">
@@ -86,8 +87,8 @@ export function FAQ({ onClose, lang }: FAQProps) {
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{c.title}</h3>
             <p className="text-sm text-slate-500">{c.subtitle}</p>
           </div>
-          <button onClick={onClose} className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-400 hover:text-red-500">
-            <X size={24} />
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+            Close
           </button>
         </div>
         <div className="p-8 grid gap-6">
