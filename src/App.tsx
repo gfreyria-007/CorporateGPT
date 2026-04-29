@@ -152,13 +152,6 @@ export default function App() {
     }
   };
 
-  useEffect(() => {
-    if (isNDAProof) {
-      const timer = setTimeout(() => setIsNDAProof(false), 8000);
-      return () => clearTimeout(timer);
-    }
-  }, [isNDAProof]);
-
   const handleSendMessage = async (content: string, attachments?: File[]) => {
     if (!user) {
       signIn();
@@ -435,18 +428,6 @@ export default function App() {
                   lang={lang}
                   zdrOnly={zdrEnabled}
                  />
-                 <AnimatePresence>
-                   {isNDAProof && (
-                     <motion.div 
-                       initial={{ opacity: 0, x: -10 }}
-                       animate={{ opacity: 1, x: 0 }}
-                       className="flex items-center gap-2 p-3 bg-emerald-500/10 rounded-xl text-emerald-600 border border-emerald-500/20"
-                     >
-                        <ShieldCheck size={14} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">{t.ndaVerified}</span>
-                     </motion.div>
-                   )}
-                 </AnimatePresence>
               </div>
            </div>
 
@@ -551,11 +532,6 @@ export default function App() {
                               <X size={14} />
                             </button>
                           )}
-                        </div>
-                        <div className="flex items-center gap-3 mt-1.5">
-                           <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest leading-none">Security Pipeline Active</span>
-                           <div className="w-1 h-1 bg-slate-300 rounded-full" />
-                           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest opacity-60">TLS 1.3 Encryption</span>
                         </div>
                     </div>
 
@@ -707,43 +683,16 @@ export default function App() {
                       setInput={setChatInputValue}
                     />
                     <div className="flex flex-wrap justify-center gap-x-12 gap-y-3 mt-6 text-[10px] font-black text-slate-400 px-10 uppercase tracking-[0.3em] text-center opacity-60">
-                       <span className="flex items-center gap-2">ENGINE: <span className="text-blue-600">{currentModelData?.id.split('/')[0] || 'OR-AUTO'}</span></span>
-                       <span className="flex items-center gap-2">SECURE: <span className="text-emerald-500">QUANTUM-RESISTANT</span></span>
-                       <span className="flex items-center gap-2">SESSION: <span className="text-amber-500">TLS 1.3</span></span>
+                        <span className="flex items-center gap-2 text-emerald-500"><ShieldCheck size={12} /> NDA PROTECTION ACTIVE</span>
+                        <span className="flex items-center gap-2">ENGINE: <span className="text-blue-600">{currentModelData?.id.split('/')[0] || 'OR-AUTO'}</span></span>
+                        <span className="flex items-center gap-2">SECURE: <span className="text-emerald-500">QUANTUM-RESISTANT</span></span>
+                        <span className="flex items-center gap-2">SESSION: <span className="text-amber-500">TLS 1.3</span></span>
                     </div>
                  </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-        <AnimatePresence>
-          {isNDAProof && (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                className="fixed bottom-32 left-1/2 -translate-x-1/2 z-[100] w-full max-w-lg px-6 pointer-events-none"
-              >
-                <div className={cn("p-6 rounded-[2.5rem] border backdrop-blur-3xl shadow-2xl flex items-center gap-6 pointer-events-auto",
-                  theme === 'dark' ? 'bg-corporate-950/80 border-white/5' : 'bg-white/80 border-corporate-100'
-                )}>
-                   <div className="w-14 h-14 bg-emerald-500 rounded-3xl flex items-center justify-center text-white shadow-xl shadow-emerald-500/20 shrink-0">
-                      <ShieldCheck size={28} />
-                   </div>
-                   <div className="flex-1">
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-500 mb-1 leading-none">Security Pipeline Active</h4>
-                      <p className="text-[11px] font-bold text-slate-400 leading-tight">Your data is processed in a secure environment. Enterprise NDA protection is fully enforced.</p>
-                   </div>
-                   <button 
-                     onClick={() => setIsNDAProof(false)} 
-                     className="p-3 text-slate-400 hover:text-red-500 transition-colors"
-                   >
-                      <X size={20} />
-                   </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
 
         <AnimatePresence>
           {activePanel === 'admin' && (
