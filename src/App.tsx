@@ -34,7 +34,8 @@ import {
   Menu,
   CreditCard,
   Crown,
-  HelpCircle
+  HelpCircle,
+  Brain
 } from 'lucide-react';
 import { ModelSelector } from './components/ModelSelector';
 import { ChatMessage } from './components/ChatMessage';
@@ -90,7 +91,16 @@ export default function App() {
   const [chatInputValue, setChatInputValue] = useState('');
   const [showLanding, setShowLanding] = useState(false);
   const [trialEnded, setTrialEnded] = useState(false);
-  const [fontSize, setFontSize] = useState(14);
+  const [fontSize, setFontSize] = useState(16);
+  const [thinkingStep, setThinkingStep] = useState(0);
+
+  const thinkingSteps = [
+    t.thinking,
+    lang === 'en' ? 'Synthesizing Neural Pathways' : 'Sintetizando Caminos Neurales',
+    lang === 'en' ? 'Analyzing Corporate Directives' : 'Analizando Directivas Corporativas',
+    lang === 'en' ? 'Scanning Knowledge Bank' : 'Escaneando Banco de Conocimiento',
+    lang === 'en' ? 'Optimizing Output Efficiency' : 'Optimizando Eficiencia de Salida'
+  ];
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -135,6 +145,17 @@ export default function App() {
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
   }, [theme]);
+
+  useEffect(() => {
+    if (isChatLoading) {
+      const interval = setInterval(() => {
+        setThinkingStep(prev => (prev + 1) % thinkingSteps.length);
+      }, 2000);
+      return () => clearInterval(interval);
+    } else {
+      setThinkingStep(0);
+    }
+  }, [isChatLoading, thinkingSteps.length]);
 
   const fetchModels = async () => {
     try {
@@ -219,6 +240,7 @@ export default function App() {
           id: `${Date.now()}-${Math.random().toString(36).substr(2, 7)}`,
           role: 'assistant',
           content: data.choices[0].message.content,
+          reasoning: data.choices[0].message.reasoning_content,
           timestamp: Date.now()
         };
         setMessages(prev => [...prev, assistantMessage]);
@@ -657,13 +679,21 @@ export default function App() {
                         <ChatMessage key={m.id} message={m} lang={lang} />
                       ))}
                       {isChatLoading && (
-                        <div className="flex gap-6 max-w-3xl mx-auto w-full animate-pulse px-8 py-6 bg-slate-50 dark:bg-corporate-900 rounded-[2rem]">
-                           <div className="w-10 h-10 rounded-2xl bg-slate-200 dark:bg-corporate-800" />
-                           <div className="flex-1 space-y-4">
-                              <div className="h-2.5 w-1/4 bg-slate-200 dark:bg-corporate-800 rounded-full" />
-                              <div className="space-y-2">
-                                 <div className="h-5 bg-slate-200 dark:bg-corporate-800 rounded-xl w-full" />
-                                 <div className="h-5 bg-slate-200 dark:bg-corporate-800 rounded-xl w-5/6" />
+                        <div className="flex gap-6 max-w-4xl mx-auto w-full px-8 py-10 bg-slate-50 dark:bg-corporate-900/50 rounded-[3rem] border border-blue-500/10 mb-8">
+                           <div className="w-12 h-12 rounded-2xl bg-blue-600/10 flex items-center justify-center text-blue-600 animate-pulse shrink-0">
+                              <Brain size={20} />
+                           </div>
+                           <div className="flex-1 space-y-6">
+                              <div className="flex items-center gap-3">
+                                <div className="h-2 w-1/4 bg-blue-600/20 rounded-full animate-pulse" />
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600/50 animate-pulse">
+                                  {thinkingSteps[thinkingStep]}...
+                                </span>
+                              </div>
+                              <div className="space-y-3">
+                                 <div className="h-4 bg-slate-200 dark:bg-corporate-800 rounded-xl w-full animate-pulse" />
+                                 <div className="h-4 bg-slate-200 dark:bg-corporate-800 rounded-xl w-5/6 animate-pulse" />
+                                 <div className="h-4 bg-slate-200 dark:bg-corporate-800 rounded-xl w-4/6 animate-pulse" />
                               </div>
                            </div>
                         </div>
