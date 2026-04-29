@@ -571,19 +571,19 @@ export default function App() {
 
                     <div className="flex items-center gap-4">
                         <div className="flex items-center bg-slate-100 dark:bg-corporate-900 rounded-xl px-2 py-1 mr-2 border border-slate-200 dark:border-white/5">
-                           <button 
-                             onClick={() => setFontSize(prev => Math.max(10, prev - 1))}
-                             className="p-2 text-slate-500 hover:text-blue-600 font-bold transition-colors"
-                           >
-                             A-
-                           </button>
-                           <div className="w-1 h-4 border-r border-slate-200 dark:border-white/10 mx-1" />
-                           <button 
-                             onClick={() => setFontSize(prev => Math.min(24, prev + 1))}
-                             className="p-2 text-slate-500 hover:text-blue-600 font-bold transition-colors"
-                           >
-                             A+
-                           </button>
+                            <button 
+                              onClick={() => setFontSize(prev => Math.max(10, prev - 1))}
+                              className="p-2 text-slate-400 hover:text-blue-600 font-black transition-colors"
+                            >
+                              A-
+                            </button>
+                            <div className="w-1 h-4 border-r border-slate-200 dark:border-white/10 mx-1" />
+                            <button 
+                              onClick={() => setFontSize(prev => Math.min(24, prev + 1))}
+                              className="p-2 text-slate-400 hover:text-blue-600 font-black transition-colors"
+                            >
+                              A+
+                            </button>
                         </div>
                         <button 
                           onClick={() => setShowFAQ(true)}
