@@ -193,13 +193,11 @@ export function GPTsGenerator({ onClose, onSelect, theme }: { onClose: () => voi
           <button 
             type="button"
             id="close-knowledge-bank"
-            onClick={(e) => {
-              e.preventDefault();
-              onClose();
-            }} 
-            className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+            onClick={() => onClose()} 
+            className="absolute top-4 right-6 p-2 text-slate-400 hover:text-red-500 transition-colors z-[100] bg-white/5 rounded-full"
+            title="Return to Chat"
           >
-            <X size={20} />
+            <X size={24} />
           </button>
         </div>
       </header>
