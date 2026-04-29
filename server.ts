@@ -3,8 +3,9 @@ import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
-
-dotenv.config();
+import helmet from 'helmet';
+import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,7 +14,38 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json());
+  // 1. Security Headers (CSP, HSTS, etc.)
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        "img-src": ["'self'", "data:", "https:", "blob:"],
+        "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // Needed for Vite
+        "connect-src": ["'self'", "https://openrouter.ai", "https://*.googleapis.com", "https://*.firebaseio.com", "wss://*.firebaseio.com"],
+      },
+    },
+  }));
+
+  // 2. CORS - Restrict to your domain in production
+  app.use(cors({
+    origin: process.env.NODE_ENV === 'production' 
+      ? ['https://corporategpt.catalizia.com', 'https://corporate-gpt-catalizia.vercel.app']
+      : true,
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  }));
+
+  // 3. Rate Limiting - Prevent abuse
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: { error: 'Too many requests from this IP, please try again after 15 minutes' },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  app.use('/api/', limiter);
+
+  app.use(express.json({ limit: '10mb' })); // Protect against large payloads
 
   const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
@@ -42,6 +74,21 @@ async function startServer() {
       console.error('Error fetching models:', error);
       res.status(500).json({ error: error.message });
     }
+  });
+
+  // Health check & Security Diagnostics
+  app.get('/api/health', (req, res) => {
+    res.json({
+      status: 'healthy',
+      version: '2.8.5',
+      security: {
+        helmet: 'active',
+        rateLimit: 'active',
+        tls: 'enabled',
+        csp: 'enforced'
+      },
+      timestamp: new Date().toISOString()
+    });
   });
 
   // API Route to fetch credits

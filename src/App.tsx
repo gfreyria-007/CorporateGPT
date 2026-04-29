@@ -44,6 +44,7 @@ import { GPTsGenerator } from './components/GPTsGenerator';
 import { PromptGenie } from './components/PromptGenie';
 import { AdvancedPanel } from './components/AdvancedPanel';
 import { FAQ } from './components/FAQ';
+import { PrivacyPolicy } from './components/Compliance/PrivacyPolicy';
 import { LandingPage } from './components/LandingPage';
 import { SalesLanding } from './components/SalesLanding';
 import { Message, ModelMetadata } from './types';
@@ -89,6 +90,7 @@ export default function App() {
   const [showLanding, setShowLanding] = useState(false);
   const [trialEnded, setTrialEnded] = useState(false);
   const [fontSize, setFontSize] = useState(14);
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -456,22 +458,30 @@ export default function App() {
         </div>
 
         <div className="p-6 border-t border-inherit">
-           <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => setLang(lang === 'en' ? 'es' : 'en')}
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-corporate-900 transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10 shadow-sm"
-                >
-                  <span className="text-[10px] font-black uppercase">{lang}</span>
-                </button>
-                <button 
-                  onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-corporate-900 transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10 shadow-sm"
-                >
-                  {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-                </button>
-              </div>
-              <div className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em]">Build 2.8.4</div>
+           <div className="flex flex-col gap-4">
+             <button 
+               onClick={() => setShowPrivacyPolicy(true)}
+               className="flex items-center gap-3 px-3 py-2 text-[9px] font-black text-slate-400 hover:text-blue-600 uppercase tracking-widest transition-all"
+             >
+               <Shield size={14} /> Privacy & Compliance
+             </button>
+             <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => setLang(lang === 'en' ? 'es' : 'en')}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-corporate-900 transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10 shadow-sm"
+                  >
+                    <span className="text-[10px] font-black uppercase">{lang}</span>
+                  </button>
+                  <button 
+                    onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-corporate-900 transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10 shadow-sm"
+                  >
+                    {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+                  </button>
+                </div>
+                <div className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em]">Build 2.8.5</div>
+             </div>
            </div>
         </div>
       </aside>
@@ -742,9 +752,21 @@ export default function App() {
           onApply={(improved) => setChatInputValue(improved)}
           theme={theme}
         />
+        <AnimatePresence>
+          {showFAQ && (
+            <FAQ 
+              onClose={() => setShowFAQ(false)} 
+              theme={theme}
+            />
+          )}
+          {showPrivacyPolicy && (
+            <PrivacyPolicy 
+              onClose={() => setShowPrivacyPolicy(false)}
+              theme={theme}
+            />
+          )}
+        </AnimatePresence>
         
-        {showFAQ && <FAQ lang={lang} onClose={() => setShowFAQ(false)} />}
-
         <AnimatePresence>
           {safetyAlert && (
             <motion.div 
