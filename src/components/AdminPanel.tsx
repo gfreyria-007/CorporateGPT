@@ -253,7 +253,7 @@ export const AdminPanel: React.FC<{ onClose: () => void, theme: 'light' | 'dark'
                                     <div className="w-40 h-1.5 bg-white/5 rounded-full overflow-hidden">
                                        <div className="h-full bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,1)]" style={{ width: `${u.unlimitedUsage ? 100 : Math.min(100, ((u.queriesUsed || 0) / (u.maxQueries || 5)) * 100)}%` }}></div>
                                     </div>
-                                    <p className="text-[8px] font-bold text-slate-600 uppercase">Images: {u.imagesUsed || 0}/{u.unlimitedUsage ? '∞' : (u.maxImages || 10)}</p>
+                                    <p className="text-[8px] font-bold text-slate-600 uppercase">Images: {u.imagesUsed || 0}/{u.unlimitedUsage ? '∞' : (u.maxImages || 2)}</p>
                                  </div>
                               </td>
                               <td className="px-8 py-6">

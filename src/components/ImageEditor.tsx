@@ -381,7 +381,7 @@ export function ImageEditor({ onClose, theme, lang = 'en', appConfig, onTrialEnd
     const isProd = appConfig?.isProduction;
     if (!isSuperAdmin && !isProd) {
       if (!profile?.unlimitedUsage) {
-        const maxImages = profile?.maxImages || 5;
+        const maxImages = profile?.maxImages || 2;
         if ((profile?.imagesUsed || 0) >= maxImages) {
           if (onTrialEnd) onTrialEnd();
           else alert(`You have reached your limit of ${maxImages} images in this demo.`);
