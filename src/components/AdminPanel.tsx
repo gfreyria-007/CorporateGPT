@@ -28,7 +28,7 @@ import * as XLSX from 'xlsx';
 import { cn } from '../lib/utils';
 
 export const AdminPanel: React.FC<{ onClose: () => void, theme: 'light' | 'dark' }> = ({ onClose, theme }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'flagged' | 'license' | 'settings' | 'studio'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'flagged' | 'license' | 'settings' | 'studio' | 'branding'>('overview');
   const [users, setUsers] = useState<any[]>([]);
   const [credits, setCredits] = useState<any>(null);
   const [appConfig, setAppConfig] = useState<any>(null);
@@ -129,6 +129,7 @@ export const AdminPanel: React.FC<{ onClose: () => void, theme: 'light' | 'dark'
            <AdminTabButton active={activeTab === 'flagged'} onClick={() => setActiveTab('flagged')} icon={<ShieldAlert size={18} />} label="Security Flags" theme={theme} />
            <AdminTabButton active={activeTab === 'license'} onClick={() => setActiveTab('license')} icon={<CheckCircle2 size={18} />} label="Production" theme={theme} />
            <AdminTabButton active={activeTab === 'studio'} onClick={() => setActiveTab('studio')} icon={<Palette size={18} />} label="Studio Config" theme={theme} />
+           <AdminTabButton active={activeTab === 'branding'} onClick={() => setActiveTab('branding')} icon={<Monitor size={18} />} label="Brand Personalization" theme={theme} />
            <AdminTabButton active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} icon={<Settings size={18} />} label="Usage Rules" theme={theme} />
         </nav>
 
@@ -518,6 +519,89 @@ export const AdminPanel: React.FC<{ onClose: () => void, theme: 'light' | 'dark'
                       </div>
                    </div>
                 </div>
+              </div>
+            )}
+            
+            {activeTab === 'branding' && (
+              <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4">
+                 <div className="max-w-4xl space-y-10">
+                    <div>
+                       <h3 className="text-2xl font-black tracking-tight mb-2">Corporate Brand Personalization</h3>
+                       <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Update landing page identity and logo</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                       <div className="space-y-8">
+                          <div className="space-y-3">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Corporate Name</label>
+                             <input 
+                               type="text" 
+                               defaultValue={appConfig?.appName || 'Catalizia'} 
+                               onBlur={(e) => updateAppConfig({ appName: e.target.value })}
+                               className={cn("w-full p-6 rounded-[2rem] font-black text-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all", 
+                                 theme === 'dark' ? "bg-white/5 text-white" : "bg-white border-slate-200 shadow-sm"
+                               )} 
+                             />
+                          </div>
+                          <div className="space-y-3">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Logo Text / Identifier</label>
+                             <input 
+                               type="text" 
+                               defaultValue={appConfig?.appLogoText || 'C'} 
+                               onBlur={(e) => updateAppConfig({ appLogoText: e.target.value })}
+                               className={cn("w-full p-6 rounded-[2rem] font-black text-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all", 
+                                 theme === 'dark' ? "bg-white/5 text-white" : "bg-white border-slate-200 shadow-sm"
+                               )} 
+                             />
+                          </div>
+                       </div>
+
+                       <div className="space-y-8">
+                          <div className="space-y-3">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Landing Title</label>
+                             <textarea 
+                               defaultValue={appConfig?.landingTitle || 'COMMAND THE FUTURE'} 
+                               onBlur={(e) => updateAppConfig({ landingTitle: e.target.value })}
+                               className={cn("w-full p-6 rounded-[2rem] font-black text-lg outline-none focus:ring-2 focus:ring-blue-500 transition-all min-h-[120px]", 
+                                 theme === 'dark' ? "bg-white/5 text-white" : "bg-white border-slate-200 shadow-sm"
+                               )} 
+                             />
+                          </div>
+                          <div className="space-y-3">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Landing Subtitle</label>
+                             <textarea 
+                               defaultValue={appConfig?.landingSubtitle || 'El primer pipeline de IA para PyMEs que prioriza tus datos y tu bolsillo.'} 
+                               onBlur={(e) => updateAppConfig({ landingSubtitle: e.target.value })}
+                               className={cn("w-full p-6 rounded-[2rem] font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all min-h-[120px]", 
+                                 theme === 'dark' ? "bg-white/5 text-white" : "bg-white border-slate-200 shadow-sm"
+                               )} 
+                             />
+                          </div>
+                       </div>
+                    </div>
+
+                    <div className={cn("p-10 rounded-[3.5rem] border flex items-center justify-between gap-10",
+                      theme === 'dark' ? "bg-blue-600/10 border-blue-500/20" : "bg-blue-50 border-blue-200"
+                    )}>
+                       <div className="flex items-center gap-6">
+                          <div className="w-16 h-16 bg-blue-600 rounded-3xl flex items-center justify-center text-white font-black text-2xl shadow-xl">
+                             {appConfig?.appLogoText || 'C'}
+                          </div>
+                          <div>
+                             <h4 className={cn("text-xl font-black tracking-tight", theme === 'dark' ? "text-white" : "text-slate-900")}>
+                                {appConfig?.appName || 'Catalizia'}
+                             </h4>
+                             <p className="text-xs font-bold text-blue-500 uppercase tracking-widest">Live Brand Preview</p>
+                          </div>
+                       </div>
+                       <div className="text-right">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Sync Status</p>
+                          <span className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-500 rounded-full text-[9px] font-black tracking-widest border border-emerald-500/20">
+                             PROPAGATED TO PRODUCTION
+                          </span>
+                       </div>
+                    </div>
+                 </div>
               </div>
             )}
         </main>

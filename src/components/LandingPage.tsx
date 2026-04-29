@@ -98,9 +98,10 @@ interface LandingPageProps {
   showTrialModal?: boolean;
   lang: 'en' | 'es';
   setLang: (lang: 'en' | 'es') => void;
+  appConfig?: any;
 }
 
-export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = false, lang, setLang }: LandingPageProps) => {
+export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = false, lang, setLang, appConfig }: LandingPageProps) => {
   const [isModalOpen, setIsModalOpen] = useState(showTrialModal);
   const t = translations[lang];
   const featuresRef = useRef<HTMLDivElement>(null);
@@ -121,8 +122,12 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
       {/* Navigation */}
       <nav className="h-24 px-6 lg:px-12 flex items-center justify-between sticky top-0 z-[100] bg-white/90 dark:bg-black/90 backdrop-blur-2xl border-b border-corporate-100 dark:border-white/10">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-xl shadow-blue-500/20">C</div>
-          <h1 className="text-xl font-display font-black tracking-tight uppercase dark:text-white">Catalizia</h1>
+          <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-xl shadow-blue-500/20">
+             {appConfig?.appLogoText || 'C'}
+          </div>
+          <h1 className="text-xl font-display font-black tracking-tight uppercase dark:text-white">
+             {appConfig?.appName || 'Catalizia'}
+          </h1>
         </div>
         
         <div className="hidden lg:flex items-center gap-10 text-[10px] font-black uppercase tracking-[0.3em] text-corporate-900 dark:text-white/70">
@@ -180,7 +185,7 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
               transition={{ delay: 0.1 }}
               className="text-6xl md:text-8xl lg:text-[9rem] font-display font-black tracking-tighter leading-[0.85] uppercase max-w-6xl text-corporate-900 dark:text-white"
             >
-              {t.landingTitle.split(' ').map((word, i) => (
+              {(appConfig?.landingTitle || t.landingTitle).split(' ').map((word: string, i: number) => (
                 <span key={i} className={word.toLowerCase() === 'private' || word.toLowerCase() === 'privada' ? 'text-blue-600' : ''}>
                   {word}{' '}
                 </span>
@@ -193,7 +198,7 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
               transition={{ delay: 0.2 }}
               className="max-w-3xl text-lg md:text-xl font-medium text-slate-500 dark:text-white/60 leading-relaxed uppercase tracking-wider px-4"
             >
-              {t.landingSubtitle}
+              {appConfig?.landingSubtitle || t.landingSubtitle}
             </motion.p>
 
             <motion.div 

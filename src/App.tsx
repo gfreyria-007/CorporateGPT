@@ -330,6 +330,7 @@ export default function App() {
         showTrialModal={trialEnded}
         lang={lang}
         setLang={setLang}
+        appConfig={appConfig}
       />
     );
   }
@@ -355,9 +356,13 @@ export default function App() {
       )} id="main-nav">
         <div className="p-8 border-b border-inherit">
            <div className="flex items-center gap-4 lg:mb-12">
-              <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-blue-500/30 ring-4 ring-blue-600/10">C</div>
+              <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-blue-500/30 ring-4 ring-blue-600/10">
+                {appConfig?.appLogoText || 'C'}
+              </div>
               <div className="hidden lg:block">
-                <h1 className="text-xl font-display font-black tracking-tighter leading-none">{t.appName}</h1>
+                <h1 className="text-xl font-display font-black tracking-tighter leading-none">
+                  {appConfig?.appName || t.appName}
+                </h1>
                 <p className="text-[9px] font-black text-blue-600 uppercase tracking-[0.2em] mt-1">{t.slogan}</p>
               </div>
            </div>
