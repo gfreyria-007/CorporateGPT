@@ -25,6 +25,7 @@ import {
   LayoutDashboard,
   MessageSquare,
   Shield,
+  Presentation,
   Languages,
   Terminal,
   Cpu,
@@ -41,6 +42,7 @@ import { ChatMessage } from './components/ChatMessage';
 import { ChatInput } from './components/ChatInput';
 import { AdminPanel } from './components/AdminPanel';
 import { ImageEditor } from './components/ImageEditor';
+import { PPTStudio } from './components/PPTStudio';
 import { GPTsGenerator } from './components/GPTsGenerator';
 import { PromptGenie } from './components/PromptGenie';
 import { AdvancedPanel } from './components/AdvancedPanel';
@@ -72,7 +74,7 @@ export default function App() {
   
   // UI Panels
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activePanel, setActivePanel] = useState<'chat' | 'admin' | 'creative' | 'knowledge'>('chat');
+  const [activePanel, setActivePanel] = useState<'chat' | 'admin' | 'creative' | 'knowledge' | 'ppt'>('chat');
   const [showFAQ, setShowFAQ] = useState(false);
   const [safetyAlert, setSafetyAlert] = useState<string | null>(null);
   const [zdrEnabled, setZdrEnabled] = useState(false);
@@ -391,6 +393,14 @@ export default function App() {
               )}
              >
                 <Database size={18} /> Knowledge Bank
+             </button>
+             <button 
+              onClick={() => { setActivePanel('ppt'); setIsMobileMenuOpen(false); }}
+              className={cn("flex items-center gap-3 px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all",
+                activePanel === 'ppt' ? 'bg-blue-600 text-white shadow-2xl shadow-blue-500/40 translate-x-2' : 'text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-corporate-900'
+              )}
+             >
+                <Presentation size={18} /> {t.pptStudio}
              </button>
              <button 
               onClick={() => setShowLanding(true)}
@@ -742,6 +752,17 @@ export default function App() {
                 }}
                 theme={theme}
               />
+            </motion.div>
+          )}
+
+          {activePanel === 'ppt' && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="fixed inset-0 z-[150] bg-corporate-950 flex flex-col"
+            >
+              <PPTStudio theme={theme} lang={lang} user={user} onClose={() => setActivePanel('chat')} />
             </motion.div>
           )}
         </AnimatePresence>

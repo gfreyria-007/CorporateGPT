@@ -82,6 +82,11 @@ export const translations = {
     getStarted: 'Get Started',
     viewDemo: 'View Demo',
     language: 'Language',
+    pptStudio: 'Slide Studio',
+    pptDescription: 'Professional PPT Generation',
+    generatePpt: 'Generate High-End Slides',
+    downloadPpt: 'Download PPTX (Editable)',
+    exportPdf: 'Export to PDF',
   },
   es: {
     appName: 'CorporateGPT',
@@ -166,5 +171,10 @@ export const translations = {
     getStarted: 'Comenzar ahora',
     viewDemo: 'Ver Demo',
     language: 'Idioma',
+    pptStudio: 'Slide Studio',
+    pptDescription: 'Generación de PPT Profesional',
+    generatePpt: 'Generar Diapositivas Premium',
+    downloadPpt: 'Descargar PPTX (Editable)',
+    exportPdf: 'Exportar a PDF',
   }
 };
