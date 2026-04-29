@@ -399,7 +399,7 @@ export const PPTStudio: React.FC<{
                      <div className="mt-10 flex items-center justify-between">
                         <div className="flex items-center gap-4 text-white/20 text-[10px] font-black uppercase tracking-widest">
                            <Layout size={16} />
-                           <span>Build 5.0 • Cinematic Narrative</span>
+                           <span>Build 5.0.4 • Cinematic Narrative</span>
                         </div>
                         <button disabled={!topic} onClick={startSynthesis} className="bg-blue-600 hover:bg-blue-500 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.4em] transition-all flex items-center gap-4 shadow-2xl">
                            {lang === 'es' ? 'SINTETIZAR HISTORIA' : 'SYNTHESIZE STORY'}
