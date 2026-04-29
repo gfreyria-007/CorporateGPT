@@ -468,7 +468,20 @@ Make it look like a premium, professionally designed asset that could be used in
         imgElement.onerror = () => reject(new Error('Failed to load generated image'));
       });
 
-      // Clear canvas and place the full image
+      // Resize canvas to match the generated image's aspect ratio,
+      // then scale the image to fill the canvas exactly — no black gaps.
+      const imgW = imgElement.naturalWidth;
+      const imgH = imgElement.naturalHeight;
+
+      // Use the template's target width as our baseline, derive height from image ratio
+      const currentTemplate = TEMPLATES.find(t => t.id === selectedTemplate) || TEMPLATES[0];
+      const targetWidth = currentTemplate.width;
+      const targetHeight = Math.round(targetWidth * (imgH / imgW));
+
+      // Resize the Fabric canvas to perfectly fit the image
+      fabricCanvas.setDimensions({ width: targetWidth, height: targetHeight });
+      setCanvasSize({ width: targetWidth, height: targetHeight });
+
       fabricCanvas.clear();
       fabricCanvas.backgroundColor = '#000000';
 
@@ -477,17 +490,8 @@ Make it look like a premium, professionally designed asset that could be used in
         top: 0,
       });
 
-      // Scale image to fill the canvas while maintaining aspect ratio
-      const scaleX = fabricCanvas.width! / imgElement.naturalWidth;
-      const scaleY = fabricCanvas.height! / imgElement.naturalHeight;
-      const scale = Math.max(scaleX, scaleY);
-      fabImg.scale(scale);
-
-      // Center the image
-      fabImg.set({
-        left: (fabricCanvas.width! - imgElement.naturalWidth * scale) / 2,
-        top: (fabricCanvas.height! - imgElement.naturalHeight * scale) / 2,
-      });
+      // Scale image to fill the new canvas dimensions exactly
+      fabImg.scaleToWidth(targetWidth);
 
       (fabImg as any).data = { id: 'ai-generated', type: 'native-image' };
       fabricCanvas.add(fabImg);
