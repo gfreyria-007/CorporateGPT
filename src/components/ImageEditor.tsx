@@ -1632,20 +1632,6 @@ Make it look like a premium, professionally designed asset that could be used in
                  </div>
               </div>
            </div>
-
-           <div className={cn("p-8 rounded-t-[3rem] space-y-4 transition-all",
-             theme === 'dark' ? "bg-white/2" : "bg-blue-600 text-white shadow-2xl shadow-blue-600/30"
-           )}>
-              <div className="flex items-center gap-4">
-                 <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg", theme === 'dark' ? "bg-blue-600" : "bg-white text-blue-600")}>
-                    <Wind size={24} />
-                 </div>
-                 <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest leading-none">Studio Engine</p>
-                    <p className={cn("text-[9px] font-bold uppercase tracking-tighter mt-1", theme === 'dark' ? "text-slate-400" : "text-white/60")}>AI v4.2 - Multi-Modal</p>
-                 </div>
-              </div>
-           </div>
         </aside>
 
         <AnimatePresence>
