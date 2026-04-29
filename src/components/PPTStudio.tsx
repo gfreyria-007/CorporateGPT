@@ -1,4 +1,5 @@
 // Build 5.0.1 - Neural Synthesis Core - [2026-04-29T22:24:50]
+// Build Hash: 1777484400 (Forced Cache Purge 5.0.3)
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
