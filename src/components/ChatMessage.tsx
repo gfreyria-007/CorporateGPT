@@ -23,21 +23,33 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, lang }) => {
       id={`message-${message.id}`}
     >
       <div className={`w-12 h-12 rounded-2xl flex-shrink-0 flex items-center justify-center text-[11px] font-black shadow-lg transition-transform group-hover:rotate-6 ${
-        isUser ? 'bg-white border border-slate-200 text-slate-400' : 'bg-blue-600 text-white shadow-blue-500/30'
+        isUser ? 'bg-white border border-slate-200 text-slate-400' : 'bg-blue-600 text-white shadow-blue-500/30 ring-4 ring-blue-600/10'
       }`}>
-        {isUser ? 'USR' : 'AI'}
+        {isUser ? 'USR' : (
+          <div className="relative w-full h-full flex items-center justify-center">
+            <Sparkles size={18} className="animate-pulse" />
+          </div>
+        )}
       </div>
       
-      <div className={`flex-1 p-8 rounded-[2.5rem] rounded-tl-none shadow-sm border transition-all relative overflow-hidden backdrop-blur-sm ${
+      <div className={`flex-1 p-8 rounded-[2.5rem] rounded-tl-none border transition-all relative overflow-hidden ${
         isUser 
-          ? 'bg-white dark:bg-corporate-900 border-corporate-200 dark:border-white/10 text-corporate-900 dark:text-white' 
-          : 'bg-blue-600 border-blue-700 text-white shadow-2xl shadow-blue-500/20'
+          ? 'bg-white dark:bg-corporate-900 border-corporate-200 dark:border-white/10 text-corporate-900 dark:text-white shadow-sm' 
+          : 'bg-white dark:bg-corporate-900 border-blue-500/20 dark:border-blue-500/30 text-corporate-900 dark:text-white shadow-xl shadow-blue-500/5'
       }`}>
-        {!isUser && <div className="absolute top-0 right-0 p-4 opacity-10"><Sparkles size={48} /></div>}
-        <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-4 opacity-50 ${isUser ? 'text-blue-600' : 'text-white'}`}>
-          {isUser ? t.user : t.assistant} &bull; {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        {!isUser && (
+          <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none">
+            <Sparkles size={120} />
+          </div>
+        )}
+        <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-4 flex items-center gap-2 ${isUser ? 'text-blue-600' : 'text-blue-500'}`}>
+          {isUser ? t.user : t.assistant} 
+          <span className="w-1 h-1 bg-slate-300 rounded-full" />
+          <span className="opacity-50">{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
         </p>
-        <div className={`text-[16px] leading-relaxed prose prose-sm max-w-none ${isUser ? 'prose-slate dark:prose-invert font-medium' : 'prose-invert font-bold'}`}>
+        <div className={`text-[15px] leading-relaxed prose prose-sm max-w-none ${
+          isUser ? 'prose-slate dark:prose-invert font-medium' : 'prose-blue dark:prose-invert font-medium'
+        }`}>
           <Markdown>{message.content}</Markdown>
         </div>
       </div>

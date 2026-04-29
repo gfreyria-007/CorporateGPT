@@ -884,15 +884,13 @@ Make it look like a premium, professionally designed asset that could be used in
              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">TLS 1.3 Encryption Active</span>
            </div>
 
-           <button 
-               onClick={() => {
-                 console.log("NAV_TRIGGER");
-                 onClose();
-               }} 
-               className="flex items-center gap-2 px-4 py-2 text-white/70 hover:text-white font-black uppercase tracking-widest text-[9px] transition-all"
-            >
-             <ChevronLeft size={14} /> Volver
-            </button>
+            <button 
+                onClick={() => onClose()} 
+                className="flex items-center gap-2 px-4 py-2 text-white/70 hover:text-white font-black uppercase tracking-widest text-[9px] transition-all bg-white/5 rounded-xl border border-white/10 hover:bg-white/10"
+                title="Return to Chat"
+             >
+              <X size={14} /> Close Studio
+             </button>
            
            <button 
                onClick={downloadImage}
