@@ -848,22 +848,32 @@ Make it look like a premium, professionally designed asset that could be used in
   };
 
   return (
-    <div className={cn("flex-1 flex flex-col h-full font-sans transition-colors duration-500 relative z-50", 
+    <div className={cn("fixed inset-0 z-[9999] flex flex-col font-sans transition-colors duration-500", 
       theme === 'dark' ? "bg-corporate-950 text-white" : "bg-white text-corporate-900"
     )}>
-      <header className={cn("h-14 border-b flex items-center justify-between px-4 sm:px-6 shrink-0 backdrop-blur-xl z-30",
-        theme === 'dark' ? "bg-corporate-950/80 border-white/5" : "bg-white/80 border-corporate-200 shadow-sm"
+      <header className={cn("h-12 border-b flex items-center justify-between px-4 sm:px-6 shrink-0 z-30",
+        "bg-blue-600 border-blue-500 text-white shadow-lg"
       )}>
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 relative overflow-hidden group">
-                <Palette size={16} />
+              <div className="w-7 h-7 bg-white rounded-lg flex items-center justify-center text-blue-600 shadow-sm relative overflow-hidden group">
+                <motion.div 
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-0 bg-[conic-gradient(from_0deg,transparent,rgba(37,99,235,0.1),transparent)]"
+                />
+                <Zap size={14} className="relative z-10" />
               </div>
               <div>
-                 <h2 className="text-xs font-black uppercase tracking-widest leading-none flex items-center gap-1.5">
-                   STUDIO <span className="text-blue-500">ENGINE</span>
+                 <h2 className="text-[10px] font-black uppercase tracking-[0.2em] leading-none flex items-center gap-1.5">
+                   STUDIO <span className="opacity-70">ENGINE</span>
+                   <motion.span 
+                     animate={{ opacity: [0.4, 1, 0.4] }}
+                     transition={{ duration: 1, repeat: Infinity }}
+                     className="w-1 h-1 bg-white rounded-full"
+                   />
                  </h2>
-                 <p className="text-[8px] font-black opacity-30 uppercase tracking-[0.2em] mt-0.5">V3.5 LIVE</p>
+                 <p className="text-[7px] font-black opacity-60 uppercase tracking-[0.2em] mt-0.5">V4.2 MULTI-MODAL LIVE</p>
               </div>
           </div>
         </div>
@@ -875,30 +885,33 @@ Make it look like a premium, professionally designed asset that could be used in
            </div>
 
            <button 
-              onClick={() => {
-                console.log("Closing Asset Studio...");
-                onClose();
-              }}
-              className="flex items-center gap-2 px-5 py-3 text-slate-500 hover:text-blue-600 font-black uppercase tracking-widest text-[10px] transition-all"
-           >
-            <ChevronLeft size={16} /> Volver al Chat
-           </button>
+               onClick={() => {
+                 console.log("NAV_TRIGGER");
+                 onClose();
+               }} 
+               className="flex items-center gap-2 px-4 py-2 text-white/70 hover:text-white font-black uppercase tracking-widest text-[9px] transition-all"
+            >
+             <ChevronLeft size={14} /> Volver
+            </button>
            
            <button 
-              onClick={downloadImage}
-              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-xl shadow-blue-600/20"
-           >
-            <Download size={16} /> EXPORT ASSET
-           </button>
-           <button 
-              type="button"
-              id="close-asset-studio-top"
-              onClick={() => { console.log(\"NAV_TRIGGER\"); onClose(); }}
-              className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all relative z-[200] pointer-events-auto"
-              title="Close Asset Studio"
+               onClick={downloadImage}
+               className="flex items-center gap-2 px-4 py-2 bg-white text-blue-600 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-lg"
             >
-            <X size={24} />
-           </button>
+             <Download size={14} /> EXPORT
+            </button>
+            <button 
+               type="button"
+               id="close-asset-studio-top"
+               onClick={() => {
+                 console.log("NAV_TRIGGER");
+                 onClose();
+               }} 
+               className="p-2 text-white/50 hover:text-white hover:bg-white/10 rounded-lg transition-all relative z-[200] pointer-events-auto"
+               title="Close Asset Studio"
+             >
+             <X size={20} />
+            </button>
         </div>
       </header>
 
