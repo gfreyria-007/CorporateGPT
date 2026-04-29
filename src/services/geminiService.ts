@@ -173,3 +173,43 @@ export async function salesAgentChat(message: string, lang: 'en' | 'es'): Promis
   return result.text || "";
 }
 
+export async function generateInfographicContent(prompt: string, style: string): Promise<InfographicData> {
+  const payload = {
+    model: "gemini-1.5-flash",
+    contents: `Generate a structured infographic about: "${prompt}". Style: ${style}. 
+    Return JSON format only.`,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          title: { type: Type.STRING },
+          subtitle: { type: Type.STRING },
+          themeColor: { type: Type.STRING },
+          sections: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                title: { type: Type.STRING },
+                description: { type: Type.STRING },
+                value: { type: Type.NUMBER }
+              }
+            }
+          },
+          conclusions: { type: Type.ARRAY, items: { type: Type.STRING } }
+        },
+        required: ["title", "subtitle", "sections", "conclusions"]
+      }
+    }
+  };
+
+  const res = await fetch('/api/gemini', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'generateContent', payload })
+  });
+  const response = await res.json();
+  return JSON.parse(response.text || '{}');
+}
+
