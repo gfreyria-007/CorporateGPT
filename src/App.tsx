@@ -1,4 +1,4 @@
-// Build 2.9.3 Production Sync - QA Hardened Final
+// Build 5.0.0 Production Sync - Cinematic Storyteller Release
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -484,7 +484,7 @@ export default function App() {
                     {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
                   </button>
                 </div>
-                <div className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em]">Build 2.9.2</div>
+                <div className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em]">Build 5.0.0</div>
              </div>
            </div>
         </div>
