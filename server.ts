@@ -20,8 +20,9 @@ async function startServer() {
       directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
         "img-src": ["'self'", "data:", "https:", "blob:"],
-        "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // Needed for Vite
-        "connect-src": ["'self'", "https://openrouter.ai", "https://*.googleapis.com", "https://*.firebaseio.com", "wss://*.firebaseio.com"],
+        "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://*.googleapis.com", "https://apis.google.com"],
+        "connect-src": ["'self'", "https://openrouter.ai", "https://*.googleapis.com", "https://*.firebaseio.com", "wss://*.firebaseio.com", "https://*.firebaseapp.com"],
+        "frame-src": ["'self'", "https://*.firebaseapp.com", "https://*.googleapis.com"],
       },
     },
   }));
