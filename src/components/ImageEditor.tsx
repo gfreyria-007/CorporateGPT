@@ -36,7 +36,8 @@ import {
   ArrowDown,
   ChevronUp,
   ChevronDown,
-  TrendingUp
+  TrendingUp,
+  Eraser
 } from 'lucide-react';
 import { translations } from '../lib/translations';
 import { cn } from '../lib/utils';
@@ -92,6 +93,12 @@ export function ImageEditor({ onClose, theme, lang = 'en', appConfig, onTrialEnd
   const [genTemperature, setGenTemperature] = useState(1);
   const [genResolution, setGenResolution] = useState<'1K' | '2K'>('1K');
   const [genOutputFormat, setGenOutputFormat] = useState<'images_text' | 'images_only'>('images_text');
+  // Mask / Inpaint state
+  const [isMaskMode, setIsMaskMode] = useState(false);
+  const [maskBrushSize, setMaskBrushSize] = useState(40);
+  const [maskPrompt, setMaskPrompt] = useState('');
+  const [originalSnapshot, setOriginalSnapshot] = useState<string | null>(null);
+  const [premaskedObjects, setPremaskedObjects] = useState<number>(0);
   const isProduction = !!appConfig?.isProduction;
 
   // Filter visible visual styles based on admin config
@@ -625,6 +632,180 @@ Make it look like a premium, professionally designed asset that could be used in
     }
   };
 
+  // ── MASK / INPAINT SYSTEM ──────────────────────────────────────────────
+  const enterMaskMode = () => {
+    if (!fabricCanvas) return;
+    // Take a snapshot of the current canvas BEFORE any mask strokes
+    const snapshot = fabricCanvas.toDataURL({ format: 'png', quality: 1, multiplier: 2 });
+    setOriginalSnapshot(snapshot);
+    setPremaskedObjects(fabricCanvas.getObjects().length);
+
+    // Enable free drawing with a red semi-transparent brush
+    fabricCanvas.isDrawingMode = true;
+    fabricCanvas.freeDrawingBrush = new fabric.PencilBrush(fabricCanvas);
+    fabricCanvas.freeDrawingBrush.color = 'rgba(239, 68, 68, 0.45)';
+    fabricCanvas.freeDrawingBrush.width = maskBrushSize;
+    (fabricCanvas.freeDrawingBrush as any).strokeLineCap = 'round';
+
+    setIsMaskMode(true);
+    setMaskPrompt('');
+  };
+
+  const exitMaskMode = (clearStrokes = true) => {
+    if (!fabricCanvas) return;
+    fabricCanvas.isDrawingMode = false;
+
+    if (clearStrokes) {
+      // Remove all mask strokes (objects added after the snapshot)
+      const objects = fabricCanvas.getObjects();
+      const toRemove = objects.slice(premaskedObjects);
+      toRemove.forEach(obj => fabricCanvas.remove(obj));
+      fabricCanvas.renderAll();
+    }
+
+    setIsMaskMode(false);
+    setOriginalSnapshot(null);
+    setMaskPrompt('');
+  };
+
+  // Update brush size in real-time
+  useEffect(() => {
+    if (fabricCanvas && isMaskMode && fabricCanvas.freeDrawingBrush) {
+      fabricCanvas.freeDrawingBrush.width = maskBrushSize;
+    }
+  }, [maskBrushSize, fabricCanvas, isMaskMode]);
+
+  const handleInpaint = async () => {
+    if (!fabricCanvas || !user || !originalSnapshot || !maskPrompt.trim()) return;
+    if (!checkQuota()) return;
+
+    setIsGenerating(true);
+    try {
+      // 1) Build a black/white mask from the brush strokes
+      const allObjects = fabricCanvas.getObjects();
+      const maskStrokes = allObjects.slice(premaskedObjects);
+
+      if (maskStrokes.length === 0) {
+        alert('Please paint the area you want to edit first.');
+        setIsGenerating(false);
+        return;
+      }
+
+      // Create an off-screen canvas for the mask
+      const maskCanvas = document.createElement('canvas');
+      maskCanvas.width = fabricCanvas.width! * 2;
+      maskCanvas.height = fabricCanvas.height! * 2;
+      const maskCtx = maskCanvas.getContext('2d')!;
+      // Black background = keep, White strokes = edit
+      maskCtx.fillStyle = '#000000';
+      maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
+
+      // Create a temporary Fabric canvas to render only mask strokes
+      const tempFabric = new fabric.StaticCanvas(null, {
+        width: fabricCanvas.width! * 2,
+        height: fabricCanvas.height! * 2,
+        backgroundColor: '#000000',
+      } as any);
+
+      for (const stroke of maskStrokes) {
+        const cloned = await stroke.clone();
+        cloned.set({
+          stroke: '#ffffff',
+          fill: '',
+          scaleX: (stroke.scaleX || 1) * 2,
+          scaleY: (stroke.scaleY || 1) * 2,
+          left: (stroke.left || 0) * 2,
+          top: (stroke.top || 0) * 2,
+        });
+        if (cloned instanceof fabric.Path) {
+          cloned.set({ stroke: '#ffffff' });
+        }
+        tempFabric.add(cloned);
+      }
+      tempFabric.renderAll();
+      const maskDataUrl = tempFabric.toDataURL({ format: 'png', quality: 1 });
+      tempFabric.dispose();
+
+      // 2) Convert original snapshot and mask to base64 (strip data URI prefix)
+      const originalBase64 = originalSnapshot.split(',')[1];
+      const maskBase64 = maskDataUrl.split(',')[1];
+
+      // 3) Send to Gemini: original image + mask + text prompt
+      const payload = {
+        model: 'gemini-3.1-flash-image-preview',
+        contents: {
+          parts: [
+            {
+              text: `Edit this image. I am providing the original image and a mask image. The white areas in the mask indicate the zones that need to be edited. Replace ONLY the white-masked areas with: ${maskPrompt}. Keep everything outside the mask EXACTLY as it is. The result must be seamless and photorealistic.`
+            },
+            {
+              inlineData: { mimeType: 'image/png', data: originalBase64 }
+            },
+            {
+              inlineData: { mimeType: 'image/png', data: maskBase64 }
+            }
+          ]
+        },
+        config: {
+          temperature: genTemperature,
+          responseModalities: ['IMAGE'],
+          imageConfig: { aspectRatio: 'auto' }
+        }
+      };
+
+      const res = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'generateContent', payload })
+      });
+      const imgRes = await res.json();
+
+      if (imgRes.error) throw new Error(imgRes.error);
+
+      const imgPart = imgRes.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData);
+      if (!imgPart) throw new Error('No image returned from inpainting. Try a clearer prompt.');
+
+      // 4) Load result and replace canvas
+      const imgElement = new window.Image();
+      imgElement.crossOrigin = 'anonymous';
+      imgElement.src = `data:${imgPart.inlineData.mimeType || 'image/png'};base64,${imgPart.inlineData.data}`;
+
+      await new Promise<void>((resolve, reject) => {
+        imgElement.onload = () => resolve();
+        imgElement.onerror = () => reject(new Error('Failed to load inpainted image'));
+      });
+
+      // Exit mask mode, clear everything, and place the new image
+      fabricCanvas.isDrawingMode = false;
+      setIsMaskMode(false);
+
+      const imgW = imgElement.naturalWidth;
+      const imgH = imgElement.naturalHeight;
+      const targetWidth = fabricCanvas.width! || 1920;
+      const targetHeight = Math.round(targetWidth * (imgH / imgW));
+
+      fabricCanvas.setDimensions({ width: targetWidth, height: targetHeight });
+      setCanvasSize({ width: targetWidth, height: targetHeight });
+      fabricCanvas.clear();
+      fabricCanvas.backgroundColor = '#000000';
+
+      const fabImg = new fabric.Image(imgElement, { left: 0, top: 0 });
+      fabImg.scaleToWidth(targetWidth);
+      (fabImg as any).data = { id: 'ai-inpainted', type: 'native-image' };
+      fabricCanvas.add(fabImg);
+      fabricCanvas.renderAll();
+
+      setOriginalSnapshot(null);
+      setMaskPrompt('');
+      incrementImageCount(user.uid).catch(e => console.error(e));
+    } catch (error: any) {
+      console.error('Inpaint failed:', error);
+      alert(`Inpaint failed: ${error.message}`);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const addText = () => {
     if (!fabricCanvas) return;
     const text = new fabric.IText('New Component', {
@@ -717,6 +898,17 @@ Make it look like a premium, professionally designed asset that could be used in
            
            <ToolButton active={activePanel === 'themes'} onClick={() => setActivePanel('themes')} icon={<Palette size={22} />} label="Theming" theme={theme} />
 
+           <div className="hidden lg:block w-10 h-px bg-slate-500/10" />
+
+           {/* Mask / Inpaint Tool */}
+           <ToolButton 
+             active={isMaskMode} 
+             onClick={() => isMaskMode ? exitMaskMode() : enterMaskMode()} 
+             icon={<Eraser size={22} />} 
+             label={isMaskMode ? 'Exit Mask' : 'Inpaint'} 
+             theme={theme} 
+           />
+
            <div className="lg:mt-auto flex lg:flex-col gap-4">
               <label className="p-4 rounded-[1.8rem] transition-all text-slate-400 hover:text-blue-500 hover:bg-blue-500/10 cursor-pointer">
                  <ImageIcon size={22} />
@@ -808,6 +1000,21 @@ Make it look like a premium, professionally designed asset that could be used in
                 ) : (
                    <p className="text-[10px] font-bold italic text-slate-600">Select an object to modify properties</p>
                 )}
+
+                {/* Mask Mode Indicator */}
+                {isMaskMode && (
+                   <motion.div 
+                     initial={{ opacity: 0, x: 20 }}
+                     animate={{ opacity: 1, x: 0 }}
+                     className="ml-auto flex items-center gap-3 px-4 py-2 bg-red-500/10 border border-red-500/30 rounded-xl"
+                   >
+                     <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                     <span className="text-[9px] font-black text-red-400 uppercase tracking-widest">Mask Mode Active</span>
+                     <button onClick={() => exitMaskMode()} className="text-red-400 hover:text-red-300 transition-colors">
+                       <X size={14} />
+                     </button>
+                   </motion.div>
+                )}
              </div>
 
              <div className="flex-1 p-8 sm:p-20 overflow-auto flex items-center justify-center">
@@ -829,6 +1036,93 @@ Make it look like a premium, professionally designed asset that could be used in
              </div>
           </div>
         </div>
+
+           {/* Floating Inpaint Panel (appears over canvas when mask mode is active) */}
+           <AnimatePresence>
+              {isMaskMode && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                  className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-xl"
+                >
+                  <div className={cn("p-6 rounded-3xl border shadow-2xl backdrop-blur-xl",
+                    theme === 'dark' 
+                      ? "bg-corporate-950/95 border-red-500/20 shadow-red-500/10" 
+                      : "bg-white/95 border-red-200 shadow-red-100"
+                  )}>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-8 h-8 bg-red-500/10 rounded-xl flex items-center justify-center text-red-500">
+                        <Eraser size={16} />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest">Inpaint Zone Editor</p>
+                        <p className="text-[9px] font-bold text-slate-500">Paint over the area to edit, then describe what to generate</p>
+                      </div>
+                    </div>
+
+                    {/* Brush Size Slider */}
+                    <div className="flex items-center gap-4 mb-4">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Brush</label>
+                      <input
+                        type="range"
+                        min="10"
+                        max="120"
+                        value={maskBrushSize}
+                        onChange={(e) => setMaskBrushSize(parseInt(e.target.value))}
+                        className="flex-1 h-1.5 bg-slate-700 rounded-full appearance-none cursor-pointer accent-red-500"
+                      />
+                      <span className="text-[10px] font-black text-red-400 tabular-nums w-8 text-right">{maskBrushSize}px</span>
+                    </div>
+
+                    {/* Inpaint Prompt */}
+                    <div className="flex gap-3">
+                      <input
+                        type="text"
+                        value={maskPrompt}
+                        onChange={(e) => setMaskPrompt(e.target.value)}
+                        placeholder="What should appear in the masked area?"
+                        onKeyDown={(e) => e.key === 'Enter' && handleInpaint()}
+                        className={cn("flex-1 px-5 py-3.5 rounded-2xl text-xs font-bold outline-none transition-all",
+                          theme === 'dark' 
+                            ? "bg-white/5 border border-white/10 focus:border-red-500/50 text-white" 
+                            : "bg-slate-100 border border-slate-200 focus:border-red-500"
+                        )}
+                      />
+                      <button
+                        onClick={handleInpaint}
+                        disabled={isGenerating || !maskPrompt.trim()}
+                        className="px-6 py-3.5 bg-red-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        <Wand2 size={14} /> Inpaint
+                      </button>
+                    </div>
+
+                    {/* Quick Actions */}
+                    <div className="flex gap-2 mt-3">
+                      <button 
+                        onClick={() => {
+                          if (!fabricCanvas) return;
+                          const objects = fabricCanvas.getObjects();
+                          const toRemove = objects.slice(premaskedObjects);
+                          toRemove.forEach(obj => fabricCanvas.remove(obj));
+                          fabricCanvas.renderAll();
+                        }}
+                        className="flex-1 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest bg-slate-500/10 text-slate-400 hover:bg-slate-500/20 transition-all"
+                      >
+                        Clear Mask
+                      </button>
+                      <button 
+                        onClick={() => exitMaskMode()}
+                        className="flex-1 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest bg-slate-500/10 text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+           </AnimatePresence>
       </main>
 
         {/* Logic Sidebar */}
