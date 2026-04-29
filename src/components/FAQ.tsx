@@ -86,8 +86,8 @@ export function FAQ({ onClose, lang }: FAQProps) {
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{c.title}</h3>
             <p className="text-sm text-slate-500">{c.subtitle}</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
-            Close
+          <button onClick={onClose} className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-400 hover:text-red-500">
+            <X size={24} />
           </button>
         </div>
         <div className="p-8 grid gap-6">

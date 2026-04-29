@@ -113,7 +113,7 @@ export const AdminPanel: React.FC<{ onClose: () => void, theme: 'light' | 'dark'
             e.preventDefault();
             onClose();
           }} 
-          className="p-2 hover:bg-slate-500/10 rounded-full transition-all text-slate-400 hover:text-red-500"
+          className="p-3 hover:bg-red-500/10 rounded-2xl transition-all text-slate-400 hover:text-red-500 border border-transparent hover:border-red-500/20"
         >
            <X size={24} />
         </button>

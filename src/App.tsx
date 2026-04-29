@@ -1,4 +1,4 @@
-// Build 2.9.0 Production Sync
+// Build 2.9.1 Production Sync - Responsive Patch
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -348,6 +348,18 @@ export default function App() {
       </button>
 
       {/* Main Sidebar Navigation */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[80] lg:hidden"
+          />
+        )}
+      </AnimatePresence>
+
       <aside className={cn(
         "fixed lg:relative inset-y-0 left-0 z-[90] w-72 lg:w-80 flex flex-col border-r transition-transform duration-500 lg:translate-x-0 shrink-0",
         isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
@@ -447,9 +459,9 @@ export default function App() {
              <div className="space-y-3 pt-6 border-t border-slate-200 dark:border-white/5">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Management</label>
                 <button 
-                  onClick={() => { setActivePanel('admin'); setIsMobileMenuOpen(false); }}
+                  onClick={() => { setShowAdmin(true); setIsMobileMenuOpen(false); }}
                   className={cn("w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
-                    activePanel === 'admin' ? 'bg-corporate-900 shadow-xl text-white' : 'text-slate-500 hover:bg-white dark:hover:bg-corporate-900'
+                    showAdmin ? 'bg-corporate-900 shadow-xl text-white' : 'text-slate-500 hover:bg-white dark:hover:bg-corporate-900'
                   )}
                 >
                    <Terminal size={18} /> Console
@@ -481,7 +493,7 @@ export default function App() {
                     {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
                   </button>
                 </div>
-                <div className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em]">Build 2.9.0</div>
+                <div className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em]">Build 2.9.1</div>
              </div>
            </div>
         </div>
@@ -685,15 +697,15 @@ export default function App() {
             </motion.div>
           )}
 
-          {activePanel === 'admin' && (
+          {showAdmin && (
             <motion.div 
               key="admin"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="flex-1 flex flex-col h-full"
+              exit={{ opacity: 0, x: 20 }}
+              className="flex-1 flex flex-col h-full bg-slate-950 z-[100] fixed inset-0 lg:relative lg:z-auto"
             >
-              <AdminPanel theme={theme} onClose={() => setActivePanel('chat')} />
+              <AdminPanel onClose={() => setShowAdmin(false)} theme={theme} />
             </motion.div>
           )}
 
@@ -720,7 +732,7 @@ export default function App() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="flex-1 flex flex-col h-full"
+              className="flex-1 flex flex-col h-full relative z-[60]"
             >
               <GPTsGenerator 
                 theme={theme}

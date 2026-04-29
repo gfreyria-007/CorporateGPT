@@ -489,7 +489,6 @@ Make it look like a premium, professionally designed asset that could be used in
       const imgH = imgElement.naturalHeight;
 
       // Use the template's target width as our baseline, derive height from image ratio
-      const currentTemplate = TEMPLATES.find(t => t.id === selectedTemplate) || TEMPLATES[0];
       const targetWidth = currentTemplate.width;
       const targetHeight = Math.round(targetWidth * (imgH / imgW));
 
@@ -848,7 +847,7 @@ Make it look like a premium, professionally designed asset that could be used in
   };
 
   return (
-    <div className={cn("fixed inset-0 z-[9999] flex flex-col font-sans transition-colors duration-500", 
+    <div className={cn("fixed inset-0 z-[9999] flex flex-col font-sans transition-colors duration-500 overflow-hidden", 
       theme === 'dark' ? "bg-corporate-950 text-white" : "bg-white text-corporate-900"
     )}>
       <header className={cn("h-12 border-b flex items-center justify-between px-4 sm:px-6 shrink-0 z-30",
@@ -905,11 +904,11 @@ Make it look like a premium, professionally designed asset that could be used in
                  console.log("NAV_TRIGGER");
                  onClose();
                }} 
-               className="p-2 text-white/50 hover:text-white hover:bg-white/10 rounded-lg transition-all relative z-[200] pointer-events-auto"
+               className="p-3 text-white/70 hover:text-white hover:bg-white/20 rounded-2xl transition-all relative z-[200] pointer-events-auto border border-white/10"
                title="Close Asset Studio"
              >
-             <X size={20} />
-            </button>
+              <X size={24} />
+             </button>
         </div>
       </header>
 
@@ -982,16 +981,16 @@ Make it look like a premium, professionally designed asset that could be used in
             ))}
           </div>
 
-          <div className="flex-1 flex flex-col relative bg-slate-200/50 dark:bg-corporate-950/50">
+          <div className="flex-1 flex flex-col relative bg-slate-200/50 dark:bg-corporate-950/50 overflow-auto items-center justify-center p-4 sm:p-10">
              {/* Top Quick Bar */}
-             <div className={cn("h-16 border-b flex items-center px-10 gap-8 z-10",
-                theme === 'dark' ? "bg-corporate-950 border-white/5" : "bg-white border-corporate-100 shadow-sm"
+             <div className={cn("absolute top-6 left-1/2 -translate-x-1/2 flex items-center px-6 py-2 gap-4 z-10 rounded-2xl border backdrop-blur-md",
+                theme === 'dark' ? "bg-corporate-950/80 border-white/5" : "bg-white/80 border-corporate-100 shadow-xl"
              )}>
-                <div className="flex items-center gap-4 border-r border-white/5 pr-8">
-                   <div className="w-8 h-8 rounded-lg bg-blue-600/10 flex items-center justify-center text-blue-500">
-                      <LayoutGrid size={16} />
+                <div className="flex items-center gap-3">
+                   <div className="w-6 h-6 rounded-lg bg-blue-600/10 flex items-center justify-center text-blue-500">
+                      <LayoutGrid size={12} />
                    </div>
-                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Canvas Context</p>
+                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Workspace</p>
                 </div>
 
                 {activeObjectProps ? (
@@ -1324,7 +1323,7 @@ Make it look like a premium, professionally designed asset that could be used in
                         <div className="w-16 h-16 bg-blue-500/10 rounded-[2rem] flex items-center justify-center mx-auto text-blue-500">
                            <MousePointer2 size={24} />
                         </div>
-                        <div className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em]">Build 2.8.6</div>
+                        <div className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em]">Build 2.9.1</div>
                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Select an object<br/>to inspect properties</p>
                      </div>
                    )}

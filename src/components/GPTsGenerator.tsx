@@ -194,7 +194,7 @@ export function GPTsGenerator({ onClose, onSelect, theme }: { onClose: () => voi
             type="button"
             id="close-knowledge-bank"
             onClick={() => onClose()} 
-            className="absolute top-4 right-6 p-2 text-slate-400 hover:text-red-500 transition-colors z-[100] bg-white/5 rounded-full"
+            className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-all rounded-2xl border border-transparent hover:border-red-500/20"
             title="Return to Chat"
           >
             <X size={24} />
@@ -208,10 +208,9 @@ export function GPTsGenerator({ onClose, onSelect, theme }: { onClose: () => voi
           {showHistory && (
             <motion.div 
               initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 320, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              className={cn("border-r flex flex-col shrink-0 transition-all",
-                theme === 'dark' ? "bg-slate-950 border-white/5" : "bg-white border-slate-100 shadow-xl z-20"
+              animate={{ width: '100%', opacity: 1 }}
+              className={cn("absolute inset-0 lg:relative lg:w-80 flex flex-col shrink-0 transition-all z-30",
+                theme === 'dark' ? "bg-slate-950 border-r border-white/5" : "bg-white border-r border-slate-100 shadow-xl"
               )}
             >
               <div className="p-6 border-b border-inherit flex items-center justify-between">
@@ -394,8 +393,8 @@ export function GPTsGenerator({ onClose, onSelect, theme }: { onClose: () => voi
         </div>
 
         {/* Preview Side */}
-        <div className={cn("w-1/3 flex flex-col shrink-0 transition-all",
-          theme === 'dark' ? "bg-slate-950" : "bg-white shadow-[-10px_0_30px_rgba(0,0,0,0.02)]"
+        <div className={cn("hidden xl:flex xl:w-1/3 flex-col shrink-0 transition-all border-l",
+          theme === 'dark' ? "bg-slate-950 border-white/5" : "bg-white border-slate-100 shadow-[-10px_0_30px_rgba(0,0,0,0.02)]"
         )}>
            <header className={cn("h-14 border-b flex items-center px-8 transition-all",
              theme === 'dark' ? "bg-slate-950/50 border-white/5 text-slate-500" : "bg-slate-50/50 border-slate-100 text-slate-400"
