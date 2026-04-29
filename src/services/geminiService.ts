@@ -27,28 +27,28 @@ export interface StudioSlideData {
   badge?: string;
   imagePrompt?: string;
   visualStrategy: string;
+  aiSuggestedMood?: string; // AI decides the style
 }
 
-export async function generateStudioSlides(prompt: string, mood: string, lang: 'en' | 'es'): Promise<StudioSlideData[]> {
-  const model = "gemini-1.5-pro"; // Nano Banana 2 (High Intelligence)
+export async function generateStudioSlides(prompt: string, mood: string, lang: 'en' | 'es'): Promise<{ slides: StudioSlideData[], finalMood: string }> {
+  const model = "gemini-1.5-pro"; 
   
-  const systemInstruction = `You are the Neural Studio Engine 4.0. Your goal is to synthesize a set of 5-7 high-fidelity presentation slides.
+  const systemInstruction = `You are the Neural Studio Engine 4.2. Your goal is to synthesize a set of 5-7 high-fidelity presentation slides.
   Topic: "${prompt}"
-  Mood: "${mood}"
+  Requested Mood: "${mood}"
   Language: "${lang}"
 
   Instructions for High-Fidelity Results:
-  1. DO NOT return generic text. Provide deep, professional insights.
-  2. Map each slide to a specific 'type':
-     - 'hero': High-impact title with a dramatic badge and subtitle.
-     - 'infographic': 3-4 data points with specific metrics and labels.
-     - 'diagram': 3 interconnected concepts with a central visual theme.
-     - 'metric_focus': One large, dominating statistic with a detailed analysis paragraph.
-     - 'process_flow': A 4-step professional transition.
-  3. Visual Strategy: Describe how to integrate the data (e.g. "Use a vertical offset grid", "Floating glassmorphism labels").
-  4. Badge: Add an executive status like "STRATEGIC DEPLOYMENT" or "SYSTEM ARCHITECTURE".
+  1. If Mood is "ai_orchestrator", ANALYZE the context of the data and SELECT the best visual language from these styles: [corporativo, lego, boceto, laboratorio, brutalista, arcilla_3d, pizarron_blanco, pizarron_verde, pizarron_negro, plano_tecnico, cuantico, manuscrito, retro_80s, minimal_jp, ciberpunk].
+  2. DO NOT return generic text. Provide deep, professional insights.
+  3. Map each slide to a specific 'type':
+     - 'hero': High-impact title.
+     - 'infographic': 3-4 data points.
+     - 'diagram': 3 concepts with central visual.
+     - 'metric_focus': One large statistic.
+     - 'process_flow': 4-step transition.
   
-  Return a JSON array of slides.`;
+  Return a JSON object: { "slides": [...], "finalMood": "selected_style_name" }`;
 
   const payload = {
     model,
@@ -57,32 +57,39 @@ export async function generateStudioSlides(prompt: string, mood: string, lang: '
       systemInstruction,
       responseMimeType: "application/json",
       responseSchema: {
-        type: Type.ARRAY,
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            id: { type: Type.STRING },
-            type: { type: Type.STRING, enum: ["hero", "infographic", "diagram", "metric_focus", "process_flow"] },
-            title: { type: Type.STRING },
-            subtitle: { type: Type.STRING },
-            badge: { type: Type.STRING },
-            content: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  label: { type: Type.STRING },
-                  value: { type: Type.STRING },
-                  description: { type: Type.STRING },
-                  iconHint: { type: Type.STRING }
-                }
-              }
-            },
-            visualStrategy: { type: Type.STRING },
-            imagePrompt: { type: Type.STRING, description: "Detailed prompt for DALL-E/Midjourney style background" }
-          },
-          required: ["id", "type", "title", "subtitle", "content"]
-        }
+        type: Type.OBJECT,
+        properties: {
+          finalMood: { type: Type.STRING },
+          slides: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                id: { type: Type.STRING },
+                type: { type: Type.STRING, enum: ["hero", "infographic", "diagram", "metric_focus", "process_flow"] },
+                title: { type: Type.STRING },
+                subtitle: { type: Type.STRING },
+                badge: { type: Type.STRING },
+                content: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      label: { type: Type.STRING },
+                      value: { type: Type.STRING },
+                      description: { type: Type.STRING },
+                      iconHint: { type: Type.STRING }
+                    }
+                  }
+                },
+                visualStrategy: { type: Type.STRING },
+                imagePrompt: { type: Type.STRING }
+              },
+              required: ["id", "type", "title", "subtitle", "content"]
+            }
+          }
+        },
+        required: ["slides", "finalMood"]
       }
     }
   };
@@ -93,7 +100,7 @@ export async function generateStudioSlides(prompt: string, mood: string, lang: '
     body: JSON.stringify({ action: 'generateContent', payload })
   });
   const response = await res.json();
-  const text = response.text || "[]";
+  const text = response.text || '{"slides":[], "finalMood": "corporativo"}';
   return JSON.parse(text);
 }
 
