@@ -45,7 +45,7 @@ import { PromptGenie } from './PromptGenie';
 import { useAuth } from '../lib/AuthContext';
 import { incrementImageCount } from '../lib/db';
 import { generateInfographicContent, suggestBetterPrompt } from '../services/geminiService';
-import { GoogleGenAI } from "@google/genai";
+
 
 const VISUAL_STYLES = [
   { id: 'professional', name: 'Boardroom', icon: '🏢', primary: '#2563eb', bg: '#f8fafc', font: 'Space Grotesk' },
@@ -88,6 +88,7 @@ export function ImageEditor({ onClose, theme, lang = 'en', appConfig, onTrialEnd
   const [activeObjectId, setActiveObjectId] = useState<string | null>(null);
   const [activeObjectProps, setActiveObjectProps] = useState<any>(null);
   const [canvasObjects, setCanvasObjects] = useState<fabric.Object[]>([]);
+  const [generationMode, setGenerationMode] = useState<'native' | 'structured'>('native');
   const isProduction = !!appConfig?.isProduction;
 
   // Filter visible visual styles based on admin config
@@ -370,22 +371,134 @@ export function ImageEditor({ onClose, theme, lang = 'en', appConfig, onTrialEnd
     }
   };
 
-  const generateInfographic = async () => {
-    if (!fabricCanvas || !user) return;
-
-    const isProduction = appConfig?.isProduction;
+  // Quota check helper shared by both generation modes
+  const checkQuota = (): boolean => {
+    if (!user) return false;
     const isSuperAdmin = profile?.role === 'super-admin';
-
-    if (!isSuperAdmin && !isProduction) {
+    const isProd = appConfig?.isProduction;
+    if (!isSuperAdmin && !isProd) {
       if (!profile?.unlimitedUsage) {
         const maxImages = profile?.maxImages || 5;
         if ((profile?.imagesUsed || 0) >= maxImages) {
           if (onTrialEnd) onTrialEnd();
           else alert(`You have reached your limit of ${maxImages} images in this demo.`);
-          return;
+          return false;
         }
       }
     }
+    return true;
+  };
+
+  // ── NATIVE IMAGE GENERATION (matches Google AI Studio) ──────────────
+  // Sends the prompt directly to Gemini's native image model and renders
+  // the full AI-generated image onto the canvas as a single high-res asset.
+  const generateNativeImage = async () => {
+    if (!fabricCanvas || !user) return;
+    if (!checkQuota()) return;
+
+    setIsGenerating(true);
+    try {
+      const currentTemplate = TEMPLATES.find(t => t.id === selectedTemplate) || TEMPLATES[0];
+      const currentStyle = VISUAL_STYLES.find(s => s.id === selectedStyle) || VISUAL_STYLES[0];
+
+      // Build a rich prompt that tells the model to create a full visual asset
+      const aspectMap: Record<string, string> = {
+        ppt: '16:9',
+        infographic: '9:16',
+        social: '1:1'
+      };
+      const aspectRatio = aspectMap[selectedTemplate] || '16:9';
+
+      const styleHints: Record<string, string> = {
+        professional: 'Clean corporate design, modern minimalist, data-rich layout with charts and icons, dark blue and white color scheme, professional business presentation quality',
+        lego: 'Colorful LEGO brick style, playful 3D blocks, bold yellow and primary colors, toy-like aesthetic',
+        classic: 'Hand-drawn pencil sketch style, artistic sketchbook aesthetic, detailed technical drawings, minimal colors with ink accents',
+        scientific: 'Scientific data visualization, dark background, neon green accents, technical diagrams, lab-grade precision, futuristic HUD elements',
+        neubrutalist: 'Neo-brutalist design, bold black borders, raw typography, high contrast, stark geometric shapes, avant-garde',
+        clay: 'Soft 3D clay/plasticine render style, rounded organic shapes, pastel colors, cute and tactile feel'
+      };
+
+      const fullPrompt = `Create a high-quality, complete, ready-to-use ${currentTemplate.name} about: ${description}.
+
+Visual style: ${styleHints[selectedStyle] || 'professional corporate design'}.
+This must be a COMPLETE, FINISHED visual asset — not a wireframe or mockup.
+Include rich visual elements: icons, illustrations, data tables, charts, diagrams where appropriate.
+The image must fill the entire frame with no empty space.
+Text should be crisp and readable. Use a ${currentStyle.name} aesthetic.
+Make it look like a premium, professionally designed asset that could be used in a real corporate presentation.`;
+
+      const payload = {
+        model: 'gemini-3.1-flash-image-preview',
+        contents: { parts: [{ text: fullPrompt }] },
+        config: { imageConfig: { aspectRatio } }
+      };
+
+      const res = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'generateContent', payload })
+      });
+      const imgRes = await res.json();
+
+      if (imgRes.error) {
+        throw new Error(imgRes.error);
+      }
+
+      // Find the image part in the response
+      const imgPart = imgRes.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData);
+      if (!imgPart) {
+        // Fallback: maybe the response has text but no image
+        throw new Error('No image was generated. The model returned text only. Try a more visual prompt.');
+      }
+
+      // Load the generated image onto the canvas
+      const imgElement = new window.Image();
+      imgElement.crossOrigin = 'anonymous';
+      imgElement.src = `data:${imgPart.inlineData.mimeType || 'image/png'};base64,${imgPart.inlineData.data}`;
+
+      await new Promise<void>((resolve, reject) => {
+        imgElement.onload = () => resolve();
+        imgElement.onerror = () => reject(new Error('Failed to load generated image'));
+      });
+
+      // Clear canvas and place the full image
+      fabricCanvas.clear();
+      fabricCanvas.backgroundColor = '#000000';
+
+      const fabImg = new fabric.Image(imgElement, {
+        left: 0,
+        top: 0,
+      });
+
+      // Scale image to fill the canvas while maintaining aspect ratio
+      const scaleX = fabricCanvas.width! / imgElement.naturalWidth;
+      const scaleY = fabricCanvas.height! / imgElement.naturalHeight;
+      const scale = Math.max(scaleX, scaleY);
+      fabImg.scale(scale);
+
+      // Center the image
+      fabImg.set({
+        left: (fabricCanvas.width! - imgElement.naturalWidth * scale) / 2,
+        top: (fabricCanvas.height! - imgElement.naturalHeight * scale) / 2,
+      });
+
+      (fabImg as any).data = { id: 'ai-generated', type: 'native-image' };
+      fabricCanvas.add(fabImg);
+      fabricCanvas.renderAll();
+
+      incrementImageCount(user.uid).catch(e => console.error(e));
+    } catch (error: any) {
+      console.error('Native image generation failed:', error);
+      alert(`Image generation failed: ${error.message}`);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // ── STRUCTURED INFOGRAPHIC (text + shapes layout) ───────────────────
+  const generateInfographic = async () => {
+    if (!fabricCanvas || !user) return;
+    if (!checkQuota()) return;
 
     setIsGenerating(true);
     
@@ -403,7 +516,6 @@ export function ImageEditor({ onClose, theme, lang = 'en', appConfig, onTrialEnd
 
       fabricCanvas.backgroundColor = styleColors.bg;
 
-      // Background
       const bg = new fabric.Rect({
         left: 0,
         top: 0,
@@ -415,7 +527,6 @@ export function ImageEditor({ onClose, theme, lang = 'en', appConfig, onTrialEnd
       });
       fabricCanvas.add(bg);
 
-      // Title
       const title = new fabric.IText(data.title.toUpperCase(), {
         left: 50,
         top: 60,
@@ -441,49 +552,15 @@ export function ImageEditor({ onClose, theme, lang = 'en', appConfig, onTrialEnd
       });
       fabricCanvas.add(subtitle);
 
-      // Sections
       const startY = subtitle.top! + subtitle.height! + 60;
       const sectionHeight = (fabricCanvas.height! - startY - 100) / data.sections.length;
 
       for (let i = 0; i < data.sections.length; i++) {
         const section = data.sections[i];
         const y = startY + (i * sectionHeight);
-        
-        // If Sketchbook style, try to generate a real sketch via nano banana 2
-        if (selectedStyle === 'classic' && section.iconHint) {
-          try {
-            const payload = {
-              model: 'gemini-3.1-flash-image-preview',
-              contents: { parts: [{ text: `A highly detailed, professional hand-drawn pencil sketch of ${section.iconHint}, sketchbook style, minimal colors, white background, artistic and scientific feel.` }] },
-              config: { imageConfig: { aspectRatio: "1:1" } }
-            };
-
-            const res = await fetch('/api/gemini', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ action: 'generateContent', payload })
-            });
-            const imgRes = await res.json();
-
-            const imgPart = imgRes.candidates[0].content.parts.find(p => p.inlineData);
-            if (imgPart) {
-              const imgElement = new Image();
-              imgElement.src = `data:image/png;base64,${imgPart.inlineData.data}`;
-              await new Promise(resolve => imgElement.onload = resolve);
-              const fabImg = new fabric.Image(imgElement, {
-                left: 50,
-                top: y,
-              });
-              fabImg.scaleToHeight(sectionHeight * 0.8);
-              fabricCanvas.add(fabImg);
-            }
-          } catch (e) {
-            console.error("Sketch generation failed", e);
-          }
-        }
 
         const secTitle = new fabric.IText(section.title, {
-          left: selectedStyle === 'classic' ? 250 : 50,
+          left: 50,
           top: y + 10,
           fontSize: 18 * multiplier,
           fontFamily: styleColors.font,
@@ -493,7 +570,7 @@ export function ImageEditor({ onClose, theme, lang = 'en', appConfig, onTrialEnd
         });
 
         const secDesc = new fabric.IText(section.description, {
-          left: selectedStyle === 'classic' ? 250 : 50,
+          left: 50,
           top: secTitle.top! + secTitle.height! + 5,
           fontSize: 12 * multiplier,
           fontFamily: styleColors.font,
@@ -525,6 +602,15 @@ export function ImageEditor({ onClose, theme, lang = 'en', appConfig, onTrialEnd
       alert("Asset synthesis failed. Please try a more specific prompt.");
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  // Main dispatch: pick the right generation mode
+  const handleGenerate = () => {
+    if (generationMode === 'native') {
+      generateNativeImage();
+    } else {
+      generateInfographic();
     }
   };
 
@@ -1095,13 +1181,37 @@ export function ImageEditor({ onClose, theme, lang = 'en', appConfig, onTrialEnd
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="Describe your design vision..."
-                      className={cn("w-full rounded-[2rem] p-6 text-xs font-bold outline-none transition-all min-h-[140px] leading-relaxed shadow-inner",
+                      className={cn("w-full rounded-[2rem] p-6 text-xs font-bold outline-none transition-all min-h-[100px] leading-relaxed shadow-inner",
                         theme === 'dark' ? "bg-white/5 border border-white/5 focus:border-blue-500/50" : "bg-slate-100 border border-slate-200 focus:border-blue-600"
                       )}
                     />
 
+                    {/* Generation Mode Toggle */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setGenerationMode('native')}
+                        className={cn("flex-1 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest border transition-all",
+                          generationMode === 'native'
+                            ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20"
+                            : "bg-slate-500/5 border-transparent text-slate-400 hover:bg-slate-500/10"
+                        )}
+                      >
+                        ✨ AI Image
+                      </button>
+                      <button
+                        onClick={() => setGenerationMode('structured')}
+                        className={cn("flex-1 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest border transition-all",
+                          generationMode === 'structured'
+                            ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20"
+                            : "bg-slate-500/5 border-transparent text-slate-400 hover:bg-slate-500/10"
+                        )}
+                      >
+                        📊 Structured
+                      </button>
+                    </div>
+
                     <button 
-                      onClick={generateInfographic}
+                      onClick={handleGenerate}
                       disabled={isGenerating || !description.trim()}
                       className="w-full h-16 bg-blue-600 text-white rounded-3xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-blue-600/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:bg-slate-700 disabled:shadow-none"
                     >

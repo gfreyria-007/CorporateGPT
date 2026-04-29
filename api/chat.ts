@@ -52,7 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    let systemContent = `You are Catalizia CorporateGPT, a premium corporate AI assistant. Current time: ${currentTime}. Always prioritize data privacy and corporate security.`;
+    let systemContent = `You are Catalizia CorporateGPT, a premium corporate AI assistant. Current time: ${currentTime}. Always prioritize data privacy and corporate security. IMPORTANT: Always respond in the exact same language that the user uses in their prompt. If the user writes in Spanish, you MUST respond in Spanish.`;
     
     if (instructions) {
       systemContent += `\n\nSpecific Persona Instructions:\n${instructions}`;
