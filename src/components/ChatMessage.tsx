@@ -47,9 +47,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, lang }) => {
           <span className="w-1 h-1 bg-slate-300 rounded-full" />
           <span className="opacity-50">{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
         </p>
-        <div className={`text-[inherit] leading-relaxed prose prose-sm max-w-none ${
-          isUser ? 'prose-slate dark:prose-invert font-medium' : 'prose-blue dark:prose-invert font-medium'
-        }`}>
+        <div 
+          className={`leading-relaxed prose max-w-none ${isUser ? 'prose-slate dark:prose-invert font-medium' : 'prose-blue dark:prose-invert font-medium'}`}
+          style={{ fontSize: 'inherit' }}
+        >
           <Markdown>{message.content}</Markdown>
         </div>
       </div>

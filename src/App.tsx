@@ -1,4 +1,4 @@
-// Build 2.9.2 Production Sync - QA Hardened Final
+// Build 2.9.3 Production Sync - QA Hardened Final
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
