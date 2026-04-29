@@ -861,7 +861,7 @@ Make it look like a premium, professionally designed asset that could be used in
              </div>
              <div>
                 <h2 className="text-sm font-black uppercase tracking-widest leading-none">CorporateGPT <span className="text-blue-500">Studio</span></h2>
-                <p className="text-[10px] font-black opacity-40 uppercase tracking-[0.2em] mt-1">High-Density Asset Synthesis</p>
+                <p className="text-[10px] font-black opacity-40 uppercase tracking-[0.2em] mt-1">High-Density Asset Synthesis v3.5 - Live Mode</p>
              </div>
           </div>
         </div>
@@ -891,7 +891,7 @@ Make it look like a premium, professionally designed asset that could be used in
            <button 
               type="button"
               id="close-asset-studio-top"
-              onClick={() => onClose()} 
+              onClick={() => { console.log(\"NAV_TRIGGER\"); onClose(); }}
               className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all relative z-[200] pointer-events-auto"
               title="Close Asset Studio"
             >

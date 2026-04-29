@@ -482,7 +482,7 @@ export default function App() {
           theme === 'dark' ? 'invert' : ''
         )} />
         
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           {activePanel === 'chat' && (
             <motion.div 
               key="chat"
@@ -691,8 +691,8 @@ export default function App() {
               key="creative"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="flex-1 flex flex-col h-full"
+              exit={{ opacity: 0, scale: 1.05 }}
+              className="flex-1 flex flex-col h-full relative z-[60]"
             >
               <ImageEditor 
                 theme={theme} 
