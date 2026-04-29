@@ -674,17 +674,52 @@ export default function App() {
             </motion.div>
           )}
 
-          {activePanel === 'admin' && <AdminPanel theme={theme} onClose={() => setActivePanel('chat')} />}
-          {activePanel === 'creative' && <ImageEditor theme={theme} onClose={() => setActivePanel('chat')} appConfig={appConfig} onTrialEnd={() => setTrialEnded(true)} />}
+          {activePanel === 'admin' && (
+            <motion.div 
+              key="admin"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="flex-1 flex flex-col h-full"
+            >
+              <AdminPanel theme={theme} onClose={() => setActivePanel('chat')} />
+            </motion.div>
+          )}
+
+          {activePanel === 'creative' && (
+            <motion.div 
+              key="creative"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="flex-1 flex flex-col h-full"
+            >
+              <ImageEditor 
+                theme={theme} 
+                onClose={() => setActivePanel('chat')} 
+                appConfig={appConfig} 
+                onTrialEnd={() => setTrialEnded(true)} 
+              />
+            </motion.div>
+          )}
+
           {activePanel === 'knowledge' && (
-            <GPTsGenerator 
-              theme={theme}
-              onClose={() => setActivePanel('chat')} 
-              onSelect={(gpt) => {
-                setSelectedGPT(gpt);
-                setActivePanel('chat');
-              }}
-            />
+            <motion.div 
+              key="knowledge"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="flex-1 flex flex-col h-full"
+            >
+              <GPTsGenerator 
+                theme={theme}
+                onClose={() => setActivePanel('chat')} 
+                onSelect={(gpt) => {
+                  setSelectedGPT(gpt);
+                  setActivePanel('chat');
+                }}
+              />
+            </motion.div>
           )}
 
           <AnimatePresence>

@@ -49,12 +49,16 @@ import { generateInfographicContent, suggestBetterPrompt } from '../services/gem
 
 
 const VISUAL_STYLES = [
-  { id: 'professional', name: 'Boardroom', icon: '🏢', primary: '#2563eb', bg: '#f8fafc', font: 'Space Grotesk' },
-  { id: 'lego', name: 'Lego Style', icon: '🧱', primary: '#facc15', bg: '#1e293b', font: 'Inter' },
-  { id: 'classic', name: 'Sketchbook', icon: '🎨', primary: '#475569', bg: '#ffffff', font: 'Inter' },
-  { id: 'scientific', name: 'Data Lab', icon: '🔬', primary: '#10b981', bg: '#020617', font: 'JetBrains Mono' },
-  { id: 'neubrutalist', name: 'Brutalist', icon: '🏁', primary: '#000000', bg: '#ffffff', font: 'Space Grotesk' },
-  { id: 'clay', name: 'Clay / 3D', icon: '🏺', primary: '#ec4899', bg: '#f1f5f9', font: 'Inter' },
+  { id: 'professional', name: 'Corporativo', icon: '🏢', primary: '#2563eb', bg: '#f8fafc', font: 'Space Grotesk' },
+  { id: 'lego', name: 'Estilo Lego', icon: '🧱', primary: '#facc15', bg: '#1e293b', font: 'Inter' },
+  { id: 'classic', name: 'Boceto', icon: '🎨', primary: '#475569', bg: '#ffffff', font: 'Inter' },
+  { id: 'scientific', name: 'Laboratorio', icon: '🔬', primary: '#10b981', bg: '#020617', font: 'JetBrains Mono' },
+  { id: 'neubrutalist', name: 'Brutalista', icon: '🏁', primary: '#000000', bg: '#ffffff', font: 'Space Grotesk' },
+  { id: 'clay', name: 'Arcilla 3D', icon: '🏺', primary: '#ec4899', bg: '#f1f5f9', font: 'Inter' },
+  { id: 'whiteboard', name: 'Pizarrón Blanco', icon: '🖋️', primary: '#2563eb', bg: '#ffffff', font: 'Inter' },
+  { id: 'chalkboard', name: 'Pizarrón Verde', icon: '🖍️', primary: '#ffffff', bg: '#064e3b', font: 'Inter' },
+  { id: 'blackboard', name: 'Pizarrón Negro', icon: '⬛', primary: '#ffffff', bg: '#171717', font: 'Inter' },
+  { id: 'blueprint', name: 'Plano Técnico', icon: '📐', primary: '#ffffff', bg: '#1e3a8a', font: 'Courier New' },
 ];
 
 const LayoutGrid = ({ size }: { size: number }) => (
@@ -425,7 +429,11 @@ export function ImageEditor({ onClose, theme, lang = 'en', appConfig, onTrialEnd
         classic: 'Hand-drawn pencil sketch style, artistic sketchbook aesthetic, detailed technical drawings, minimal colors with ink accents',
         scientific: 'Scientific data visualization, dark background, neon green accents, technical diagrams, lab-grade precision, futuristic HUD elements',
         neubrutalist: 'Neo-brutalist design, bold black borders, raw typography, high contrast, stark geometric shapes, avant-garde',
-        clay: 'Soft 3D clay/plasticine render style, rounded organic shapes, pastel colors, cute and tactile feel'
+        clay: 'Soft 3D clay/plasticine render style, rounded organic shapes, pastel colors, cute and tactile feel',
+        whiteboard: 'Classroom whiteboard style, dry-erase marker aesthetic, colored markers (blue, red, black, green), clean white background, slightly informal hand-drawn diagrams',
+        chalkboard: 'Classic dark green chalkboard style, white and yellow chalk texture, dusty blackboard aesthetic, handwritten feel',
+        blackboard: 'Deep black chalkboard style, vibrant colored chalk (pink, cyan, lime, yellow), high contrast, artistic chalk drawings, classroom aesthetic',
+        blueprint: 'Architectural blueprint style, deep blue background with white grid lines, technical drawing aesthetic, cyanotype look, precise white lines and engineering typography'
       };
 
       const fullPrompt = `Create a high-quality, complete, ready-to-use ${currentTemplate.name} about: ${description}.
@@ -863,6 +871,16 @@ Make it look like a premium, professionally designed asset that could be used in
              <ShieldCheck size={12} className="text-emerald-500" />
              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">TLS 1.3 Encryption Active</span>
            </div>
+
+           <button 
+              onClick={() => {
+                console.log("Closing Asset Studio...");
+                onClose();
+              }}
+              className="flex items-center gap-2 px-5 py-3 text-slate-500 hover:text-blue-600 font-black uppercase tracking-widest text-[10px] transition-all"
+           >
+            <ChevronLeft size={16} /> Volver al Chat
+           </button>
            
            <button 
               onClick={downloadImage}
@@ -872,31 +890,35 @@ Make it look like a premium, professionally designed asset that could be used in
            </button>
            <button 
               type="button"
-              id="close-asset-studio"
-              onClick={(e) => {
-                e.preventDefault();
-                onClose();
-              }} 
-              className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+              id="close-asset-studio-top"
+              onClick={() => onClose()} 
+              className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all relative z-[200] pointer-events-auto"
+              title="Close Asset Studio"
             >
             <X size={24} />
            </button>
         </div>
       </header>
 
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden relative">
         {/* Left Toolbar */}
-        <aside className={cn("w-full lg:w-24 border-b lg:border-b-0 lg:border-r flex lg:flex-col items-center py-4 lg:py-10 gap-2 lg:gap-6 z-20 transition-all",
+        <aside className={cn("w-full lg:w-24 border-b lg:border-b-0 lg:border-r flex lg:flex-col items-center py-4 lg:py-10 gap-2 lg:gap-6 z-20 transition-all overflow-y-auto lg:overflow-y-auto no-scrollbar",
           theme === 'dark' ? "bg-corporate-950 border-white/5" : "bg-white border-corporate-200 shadow-sm"
         )}>
            <ToolButton active={activePanel === 'properties'} onClick={() => setActivePanel('properties')} icon={<Settings2 size={22} />} label="Inspector" theme={theme} />
-           <ToolButton active={activePanel === 'tools'} onClick={() => setActivePanel('tools')} icon={<MousePointer2 size={22} />} label="Toolbar" theme={theme} />
-           <ToolButton active={activePanel === 'charts'} onClick={() => setActivePanel('charts')} icon={<BarChart2 size={22} />} label="Charts" theme={theme} />
-           <ToolButton active={activePanel === 'layers'} onClick={() => setActivePanel('layers')} icon={<Layers size={22} />} label="Layers" theme={theme} />
+           <ToolButton active={activePanel === 'tools'} onClick={() => setActivePanel('tools')} icon={<MousePointer2 size={22} />} label="Herramientas" theme={theme} />
+           <ToolButton active={activePanel === 'charts'} onClick={() => setActivePanel('charts')} icon={<BarChart2 size={22} />} label="Gráficos" theme={theme} />
+           <ToolButton active={activePanel === 'layers'} onClick={() => setActivePanel('layers')} icon={<Layers size={22} />} label="Capas" theme={theme} />
+           
+           <ToolButton active={isMaskMode} onClick={() => isMaskMode ? exitMaskMode() : enterMaskMode()} icon={<Eraser size={22} />} label="Inpaint/Máscara" theme={theme} />
            
            <div className="hidden lg:block w-10 h-px bg-slate-500/10" />
            
-           <ToolButton active={activePanel === 'themes'} onClick={() => setActivePanel('themes')} icon={<Palette size={22} />} label="Theming" theme={theme} />
+           <ToolButton active={false} onClick={addText} icon={<Type size={22} />} label="Texto" theme={theme} />
+           <ToolButton active={false} onClick={() => addShape('rect')} icon={<Square size={22} />} label="Rectángulo" theme={theme} />
+           <ToolButton active={false} onClick={() => addShape('circle')} icon={<Circle size={22} />} label="Círculo" theme={theme} />
+           
+           <ToolButton active={activePanel === 'themes'} onClick={() => setActivePanel('themes')} icon={<Palette size={22} />} label="Temas" theme={theme} />
 
            <div className="hidden lg:block w-10 h-px bg-slate-500/10" />
 
@@ -1126,10 +1148,11 @@ Make it look like a premium, professionally designed asset that could be used in
       </main>
 
         {/* Logic Sidebar */}
-        <aside className={cn("w-full lg:w-96 border-l flex flex-col overflow-hidden z-20 transition-all",
-          theme === 'dark' ? "bg-corporate-950 border-white/5" : "bg-white border-corporate-100 shadow-xl"
+        <aside className={cn("w-full lg:w-96 border-l flex flex-col z-20 transition-all shrink-0",
+          theme === 'dark' ? "bg-corporate-950 border-white/5" : "bg-white border-corporate-100 shadow-xl",
+          activePanel === null ? "hidden lg:flex" : "flex"
         )}>
-           <div className="flex-1 flex flex-col p-8 overflow-y-auto custom-scrollbar gap-10">
+           <div className="flex-1 flex flex-col p-8 overflow-y-auto custom-scrollbar gap-10 pb-32">
               
               {activePanel === 'properties' && (
                 <div className="space-y-8 animate-in fade-in slide-in-from-right-4">
