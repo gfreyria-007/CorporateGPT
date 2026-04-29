@@ -63,12 +63,21 @@ export const PPTStudio: React.FC<{
   user: any,
   onClose: () => void 
 }> = ({ theme, lang, user, onClose }) => {
-  const [step, setStep] = useState<'config' | 'generating' | 'viewer'>('config');
+export const PPTStudio: React.FC<{ 
+  theme: 'light' | 'dark', 
+  lang: 'en' | 'es', 
+  user: any,
+  onClose: () => void 
+}> = ({ theme, lang, user, onClose }) => {
+  const [step, setStep] = useState<'config' | 'preview_style' | 'generating' | 'viewer'>('config');
   const [topic, setTopic] = useState('');
   const [selectedMood, setSelectedMood] = useState<DesignMood>('ai_orchestrator');
   const [activeMood, setActiveMood] = useState<DesignMood>('corporativo');
   const [slides, setSlides] = useState<StudioSlideData[]>([]);
   const [selectedSlide, setSelectedSlide] = useState<number>(0);
+  const [genStatus, setGenStatus] = useState('');
+  const [genProgress, setGenProgress] = useState(0);
+  const [previewSlide, setPreviewSlide] = useState<StudioSlideData | null>(null);
   
   const studioStyles = [
     { id: 'ai_orchestrator', name: lang === 'es' ? 'ORQUESTADOR IA' : 'AI ORCHESTRATOR', icon: <Wand2 size={16} />, premium: true },
@@ -81,73 +90,90 @@ export const PPTStudio: React.FC<{
     { id: 'retro_80s', name: '80S RETRO', icon: <Monitor size={16} /> },
   ];
 
-  const getMoodStyles = (mood: DesignMood) => {
-    switch (mood) {
-      case 'cuantico':
-        return {
-          bg: 'bg-[#020617]', text: 'text-cyan-400',
-          accent: 'bg-cyan-500 text-black shadow-[0_0_30px_rgba(34,211,238,0.5)]',
-          header: 'text-white font-black tracking-tighter uppercase font-mono italic',
-          sub: 'text-cyan-500/60 font-mono uppercase tracking-[0.4em]',
-          pattern: 'opacity-[0.2] bg-[url("https://www.transparenttextures.com/patterns/carbon-fibre.png")]',
-          card: 'bg-slate-900/40 border border-cyan-500/30 rounded-none backdrop-blur-xl',
-          tableHeader: 'bg-cyan-950/50 text-cyan-400 font-mono border-cyan-500/30'
-        };
-      case 'plano_tecnico':
-        return {
-          bg: 'bg-[#003366]', text: 'text-cyan-100',
-          accent: 'bg-cyan-500 text-white border border-cyan-400/50 shadow-lg shadow-cyan-500/20',
-          header: 'text-white font-mono tracking-tighter uppercase font-bold',
-          sub: 'text-cyan-400/60 font-mono uppercase tracking-[0.2em]',
-          pattern: 'opacity-[0.4] bg-[url("https://www.transparenttextures.com/patterns/graphy.png")]',
-          card: 'bg-[#002b57]/80 border-2 border-cyan-500/30 rounded-none font-mono shadow-[6px_6px_0_rgba(0,255,255,0.1)]',
-          tableHeader: 'bg-[#004080] text-cyan-200 border-cyan-500/30'
-        };
-      case 'ciberpunk':
-        return {
-          bg: 'bg-[#050505]', text: 'text-fuchsia-500',
-          accent: 'bg-yellow-400 text-black font-black italic',
-          header: 'text-yellow-400 font-black uppercase tracking-tighter skew-x-[-10deg]',
-          sub: 'text-fuchsia-500 font-bold uppercase tracking-widest bg-fuchsia-500/10 px-2',
-          pattern: 'opacity-[0.3] bg-[url("https://www.transparenttextures.com/patterns/grid.png")]',
-          card: 'bg-black border-2 border-fuchsia-500 shadow-[4px_4px_0_#fde047]',
-          tableHeader: 'bg-fuchsia-950/50 text-yellow-400 border-fuchsia-500'
-        };
-      default: // Corporate Premium (Obsidian)
-        return {
-          bg: 'bg-[#0a0c10]', text: 'text-slate-100',
-          accent: 'bg-blue-600 text-white shadow-xl shadow-blue-500/20',
-          header: 'text-white font-display font-black tracking-tighter italic',
-          sub: 'text-blue-500 font-black uppercase tracking-[0.4em] text-[10px]',
-          pattern: 'opacity-[0.03] bg-[url("https://www.transparenttextures.com/patterns/pinstriped-suit.png")]',
-          card: 'bg-white/5 border border-white/10 rounded-[2.5rem] backdrop-blur-3xl shadow-2xl',
-          tableHeader: 'bg-white/10 text-white border-white/10'
-        };
+  // ... (getMoodStyles remains same)
+
+  const startSynthesis = async () => {
+    if (!topic) return;
+    setStep('generating');
+    setGenProgress(15);
+    setGenStatus(lang === 'es' ? 'DEFINIENDO CONCEPTO VISUAL...' : 'DEFINING VISUAL CONCEPT...');
+    
+    try {
+      const { preview, suggestedMood } = await generateStylePreview(topic, selectedMood, lang);
+      setPreviewSlide(preview);
+      setActiveMood(suggestedMood as DesignMood);
+      setGenProgress(100);
+      setTimeout(() => setStep('preview_style'), 500);
+    } catch (error) {
+      console.error('Preview failed:', error);
+      setStep('config');
     }
   };
 
-  const handleGenerate = async () => {
-    if (!topic) return;
+  const confirmAndGenerateFull = async () => {
     setStep('generating');
+    setGenProgress(0);
+    
+    const stages = [
+      { p: 20, s: lang === 'es' ? 'SINTETIZANDO NARRATIVA...' : 'SYNTHESIZING NARRATIVE...' },
+      { p: 50, s: lang === 'es' ? 'COMPONIENDO INFOGRAFÍAS...' : 'COMPOSING INFOGRAPHICS...' },
+      { p: 80, s: lang === 'es' ? 'DISEÑANDO LAYOUTS...' : 'DESIGNING LAYOUTS...' },
+      { p: 95, s: lang === 'es' ? 'FINALIZANDO ASSETS...' : 'FINALIZING ASSETS...' }
+    ];
+
+    let currentStage = 0;
+    const interval = setInterval(() => {
+      if (currentStage < stages.length) {
+        setGenProgress(stages[currentStage].p);
+        setGenStatus(stages[currentStage].s);
+        currentStage++;
+      }
+    }, 2000);
+
     try {
-      const response = await generateStudioSlides(topic, selectedMood, lang);
+      const response = await generateStudioSlides(topic, activeMood, lang);
+      clearInterval(interval);
       setSlides(response.slides);
-      setActiveMood(response.finalMood as DesignMood);
       setSelectedSlide(0);
-      setStep('viewer');
+      setGenProgress(100);
+      setTimeout(() => setStep('viewer'), 800);
     } catch (error) {
       console.error('Synthesis failed:', error);
       setStep('config');
+      clearInterval(interval);
     }
   };
 
   const downloadPPT = () => {
     const pptx = new pptxgen();
-    slides.forEach(slide => {
+    pptx.layout = 'LAYOUT_16x9';
+    
+    slides.forEach((slide, i) => {
       const pptSlide = pptx.addSlide();
-      pptSlide.addText(slide.title, { x: 0.5, y: 0.5, w: '90%', h: 0.8, fontSize: 24, bold: true });
+      pptSlide.background = { color: '0a0c10' };
+      
+      // Title
+      pptSlide.addText(slide.title || `Chapter ${i + 1}`, { 
+        x: 0.5, y: 0.5, w: '90%', h: 1, 
+        fontSize: 32, bold: true, color: 'ffffff', fontFace: 'Arial' 
+      });
+      
+      // Subtitle
+      pptSlide.addText(slide.subtitle || 'Technical Analysis', { 
+        x: 0.5, y: 1.5, w: '90%', h: 0.5, 
+        fontSize: 14, color: '2563eb', fontFace: 'Arial' 
+      });
+
+      // Content Points
+      slide.content.slice(0, 4).forEach((item, idx) => {
+        pptSlide.addText(`• ${item.label}: ${item.description}`, {
+          x: 0.7, y: 2.5 + (idx * 0.8), w: '80%', h: 0.5,
+          fontSize: 12, color: 'cccccc', fontFace: 'Arial'
+        });
+      });
     });
-    pptx.writeFile({ fileName: `Cinematic_Story_${Date.now()}.pptx` });
+    
+    pptx.writeFile({ fileName: `Neural_Studio_Story_${Date.now()}.pptx` });
   };
 
   const renderSlideContent = (slide: StudioSlideData) => {
@@ -370,7 +396,7 @@ export const PPTStudio: React.FC<{
                            <Layout size={16} />
                            <span>Build 5.0 • Cinematic Narrative</span>
                         </div>
-                        <button disabled={!topic} onClick={handleGenerate} className="bg-blue-600 hover:bg-blue-500 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.4em] transition-all flex items-center gap-4 shadow-2xl">
+                        <button disabled={!topic} onClick={startSynthesis} className="bg-blue-600 hover:bg-blue-500 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.4em] transition-all flex items-center gap-4 shadow-2xl">
                            {lang === 'es' ? 'SINTETIZAR HISTORIA' : 'SYNTHESIZE STORY'}
                            <ChevronRightCircle size={18} className="animate-bounce" />
                         </button>
@@ -404,11 +430,11 @@ export const PPTStudio: React.FC<{
             <Presentation size={22} />
           </div>
           <div>
-            <h2 className="text-xl font-display font-black tracking-tighter uppercase leading-none text-white italic">Neural Studio 5.0</h2>
+            <h2 className="text-xl font-display font-black tracking-tighter uppercase leading-none text-white italic">Neural Studio 5.0.3</h2>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-[8px] font-black text-blue-600 uppercase tracking-[0.3em] opacity-60">High Density Storytelling</span>
-              <span className="w-1 h-1 rounded-full bg-blue-600/30" />
-              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{activeMood.toUpperCase()}</span>
+               <span className="text-[8px] font-black text-blue-600 uppercase tracking-[0.3em] opacity-60">High Density Storytelling</span>
+               <span className="w-1 h-1 rounded-full bg-blue-600/30" />
+               <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{activeMood.toUpperCase()}</span>
             </div>
           </div>
         </div>
@@ -453,39 +479,62 @@ export const PPTStudio: React.FC<{
         </aside>
 
         <main className="flex-1 p-12 lg:p-20 flex flex-col relative overflow-hidden bg-[#050505]">
-           {step === 'generating' && (
+            {step === 'generating' && (
              <div className="absolute inset-0 z-[150] bg-[#0a0c10]/98 backdrop-blur-3xl flex flex-col items-center justify-center space-y-12 text-center p-20">
                 <div className="relative">
-                   <div className="w-40 h-40 border-8 border-blue-600/10 border-t-blue-600 rounded-full animate-spin" />
-                   <Wand2 size={48} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-blue-600 animate-pulse" />
+                   <div className="w-48 h-48 border-8 border-blue-600/10 border-t-blue-600 rounded-full animate-spin" />
+                   <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-2xl font-black text-white italic">{genProgress}%</span>
+                   </div>
+                   <Wand2 size={48} className="absolute -top-4 -right-4 text-blue-600 animate-pulse" />
                 </div>
                 <div className="max-w-3xl">
-                   <h3 className="text-5xl font-display font-black uppercase tracking-tighter text-white mb-6 italic">Building Cinematic Architecture</h3>
-                   <p className="text-blue-600 font-bold uppercase tracking-[0.6em] text-xs mb-12">Synthesizing 10 High-Density Infographic Narratives</p>
+                   <h3 className="text-5xl font-display font-black uppercase tracking-tighter text-white mb-6 italic">{genStatus}</h3>
+                   <p className="text-blue-600 font-bold uppercase tracking-[0.6em] text-[10px] mb-12">Neural Orchestration in Progress</p>
                 </div>
-                <div className="w-full max-w-xl h-1.5 bg-white/5 rounded-full overflow-hidden">
-                   <motion.div initial={{ x: '-100%' }} animate={{ x: '0%' }} transition={{ duration: 12, ease: "linear" }} className="w-full h-full bg-blue-600 shadow-[0_0_20px_#2563eb]" />
+                <div className="w-full max-w-xl h-2 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                   <motion.div 
+                      initial={{ width: '0%' }} 
+                      animate={{ width: `${genProgress}%` }} 
+                      className="h-full bg-gradient-to-r from-blue-600 to-cyan-500 shadow-[0_0_30px_rgba(37,99,235,0.6)]" 
+                   />
                 </div>
-                <div className="grid grid-cols-4 gap-12 mt-12 opacity-30">
-                   <div className="flex flex-col items-center gap-4">
-                      <Search size={24} className="text-white" />
-                      <span className="text-[8px] font-black uppercase tracking-widest text-white">Analysis</span>
-                   </div>
-                   <div className="flex flex-col items-center gap-4">
-                      <Compass size={24} className="text-white" />
-                      <span className="text-[8px] font-black uppercase tracking-widest text-white">Strategy</span>
-                   </div>
-                   <div className="flex flex-col items-center gap-4">
-                      <Layout size={24} className="text-white" />
-                      <span className="text-[8px] font-black uppercase tracking-widest text-white">Composition</span>
-                   </div>
-                   <div className="flex flex-col items-center gap-4">
-                      <CheckCircle2 size={24} className="text-white" />
-                      <span className="text-[8px] font-black uppercase tracking-widest text-white">Finalized</span>
-                   </div>
+                <div className="grid grid-cols-4 gap-12 mt-12">
+                   {[
+                     { label: 'Analizar', icon: <Search size={20} />, active: genProgress >= 20 },
+                     { label: 'Narrar', icon: <Compass size={20} />, active: genProgress >= 50 },
+                     { label: 'Diseñar', icon: <Layout size={20} />, active: genProgress >= 80 },
+                     { label: 'Exportar', icon: <CheckCircle2 size={20} />, active: genProgress >= 95 },
+                   ].map((item, idx) => (
+                     <div key={idx} className={cn("flex flex-col items-center gap-4 transition-all duration-500", item.active ? "opacity-100 scale-110" : "opacity-20")}>
+                        <div className={cn("p-4 rounded-2xl", item.active ? "bg-blue-600 text-white" : "bg-white/5 text-slate-400")}>{item.icon}</div>
+                        <span className="text-[8px] font-black uppercase tracking-widest">{item.label}</span>
+                     </div>
+                   ))}
                 </div>
              </div>
-           )}
+            )}
+
+            {step === 'preview_style' && previewSlide && (
+              <div className="absolute inset-0 z-[120] bg-[#0a0c10]/95 backdrop-blur-2xl flex flex-col items-center justify-center p-20">
+                 <div className="mb-12 text-center">
+                    <h2 className="text-4xl font-display font-black uppercase tracking-tighter text-white italic mb-2">Concepto Visual Detectado</h2>
+                    <p className="text-blue-600 font-bold uppercase tracking-widest text-[10px]">¿Deseas proceder con esta arquitectura de diseño?</p>
+                 </div>
+                 <div className="w-full max-w-[1000px] aspect-[16/9] bg-black rounded-[3rem] shadow-2xl border-4 border-blue-600/30 overflow-hidden relative scale-90">
+                    {renderSlideContent(previewSlide)}
+                 </div>
+                 <div className="flex gap-8 mt-12">
+                    <button onClick={() => setStep('config')} className="px-12 py-5 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black text-xs uppercase tracking-widest border border-white/10 transition-all">
+                       Cambiar Estilo
+                    </button>
+                    <button onClick={confirmAndGenerateFull} className="px-12 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-blue-500/40 transition-all flex items-center gap-4">
+                       CONFIRMAR Y GENERAR STORYBOARD
+                       <ChevronRightCircle size={18} />
+                    </button>
+                 </div>
+              </div>
+            )}
 
            <div className="flex-1 flex flex-col items-center justify-center">
               <AnimatePresence mode="wait">

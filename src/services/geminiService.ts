@@ -33,36 +33,75 @@ export interface StudioSlideData {
   aiSuggestedMood?: string;
 }
 
+export async function generateStylePreview(prompt: string, mood: string, lang: 'en' | 'es'): Promise<{ preview: StudioSlideData, suggestedMood: string }> {
+  const systemInstruction = `You are the Creative Director for Neural Studio 5.0. 
+  Generate ONE preview slide that establishes the visual language for: "${prompt}".
+  Choose the best mood for the data.
+  Layouts: 'dense_table', 'technical_drawing', 'grid'.`;
+
+  const payload = {
+    model: "gemini-1.5-pro",
+    contents: `Establish the visual concept for: "${prompt}".`,
+    config: {
+      systemInstruction,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          suggestedMood: { type: Type.STRING },
+          preview: {
+            type: Type.OBJECT,
+            properties: {
+              id: { type: Type.STRING },
+              type: { type: Type.STRING },
+              title: { type: Type.STRING },
+              subtitle: { type: Type.STRING },
+              visualLayout: { type: Type.STRING, enum: ["split", "grid", "focal", "dense_table", "technical_drawing"] },
+              content: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    label: { type: Type.STRING },
+                    value: { type: Type.STRING },
+                    description: { type: Type.STRING }
+                  }
+                }
+              }
+            },
+            required: ["id", "type", "title", "visualLayout", "content"]
+          }
+        },
+        required: ["preview", "suggestedMood"]
+      }
+    }
+  };
+
+  const res = await fetch('/api/gemini', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'generateContent', payload })
+  });
+  const response = await res.json();
+  return JSON.parse(response.text || '{}');
+}
+
 export async function generateStudioSlides(prompt: string, mood: string, lang: 'en' | 'es'): Promise<{ slides: StudioSlideData[], finalMood: string }> {
   const model = "gemini-1.5-pro"; 
   
   const systemInstruction = `You are the Neural Studio Engine 5.0 (Cinematic Storyteller). 
   Goal: Synthesize a NON-EDITABLE 10-slide professional infographic narrative.
-  Reference Style: High-density, professional astrophysical data visuals (Solar System style).
+  Reference Style: High-density astrophysical data visuals.
   
-  Instructions:
-  1. NARRATIVE: Create a 10-slide arc: 
-     Slide 1: Executive Opening
-     Slide 2-3: Context & Challenges
-     Slide 4-6: Deep Data Breakdown (High Density)
-     Slide 7-8: Strategic Architecture & Comparative Analysis
-     Slide 9: Growth Projection
-     Slide 10: Final Authority Conclusion
-  
-  2. DATA DENSITY: Every slide must be "Dense". Use tables, metric grids, and detailed labels. NO wall of text.
-  
-  3. VISUAL LAYOUT:
-     - 'dense_table': Technical comparison with columns and rows.
-     - 'technical_drawing': Central masked image with floating annotations.
-     - 'grid': 4-6 distinct cards with icons and data.
-  
-  4. MOOD SELECTION: If "ai_orchestrator", choose the absolute best style for this topic.
+  MANDATORY: 
+  - Every slide MUST have a 'visualLayout' set to one of: 'dense_table', 'technical_drawing', 'grid', 'split', 'focal'.
+  - Narrative Arc: Intro -> Conflict -> 3 Data Deep-Dives -> Technical Solution -> Roadmap -> Conclusion.
   
   Return JSON: { "slides": [...], "finalMood": "style" }`;
 
   const payload = {
     model,
-    contents: `Generate 5 slides for: "${prompt}".`,
+    contents: `Synthesize the full 10-slide narrative for: "${prompt}". Ensure visualLayout is always present.`,
     config: {
       systemInstruction,
       responseMimeType: "application/json",
@@ -76,10 +115,11 @@ export async function generateStudioSlides(prompt: string, mood: string, lang: '
               type: Type.OBJECT,
               properties: {
                 id: { type: Type.STRING },
-                type: { type: Type.STRING, enum: ["hero", "infographic", "diagram", "metric_focus", "process_flow"] },
+                type: { type: Type.STRING },
                 title: { type: Type.STRING },
                 subtitle: { type: Type.STRING },
-                badge: { type: Type.STRING },
+                visualLayout: { type: Type.STRING, enum: ["split", "grid", "focal", "dense_table", "technical_drawing"] },
+                narrativePhase: { type: Type.STRING },
                 content: {
                   type: Type.ARRAY,
                   items: {
@@ -87,15 +127,12 @@ export async function generateStudioSlides(prompt: string, mood: string, lang: '
                     properties: {
                       label: { type: Type.STRING },
                       value: { type: Type.STRING },
-                      description: { type: Type.STRING },
-                      iconHint: { type: Type.STRING }
+                      description: { type: Type.STRING }
                     }
                   }
-                },
-                visualStrategy: { type: Type.STRING },
-                imagePrompt: { type: Type.STRING }
+                }
               },
-              required: ["id", "type", "title", "subtitle", "content"]
+              required: ["id", "type", "title", "visualLayout", "content"]
             }
           }
         },

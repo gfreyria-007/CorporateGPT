@@ -569,6 +569,10 @@ export default function App() {
 
                  <div className="flex items-center gap-8">
                     <div className="hidden md:flex items-center gap-4 pr-10 border-r border-slate-100 dark:border-white/5">
+                        <div className="flex flex-col">
+                          <span className="text-[8px] font-black tracking-widest text-slate-400">DEPLOYMENT STATUS</span>
+                          <span className="text-[10px] font-bold text-slate-500">BUILD 5.0.3 PREMIUM</span>
+                        </div>
                         <div className="text-right">
                            <p className="text-sm font-black tracking-tight">{user.displayName || 'Corporate User'}</p>
                            <p className="text-[10px] font-black text-blue-600 capitalize opacity-60 tracking-widest">{profile?.role || 'Basic Account'}</p>
