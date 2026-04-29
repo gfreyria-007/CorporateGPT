@@ -89,6 +89,9 @@ export function ImageEditor({ onClose, theme, lang = 'en', appConfig, onTrialEnd
   const [activeObjectProps, setActiveObjectProps] = useState<any>(null);
   const [canvasObjects, setCanvasObjects] = useState<fabric.Object[]>([]);
   const [generationMode, setGenerationMode] = useState<'native' | 'structured'>('native');
+  const [genTemperature, setGenTemperature] = useState(1);
+  const [genResolution, setGenResolution] = useState<'1K' | '2K'>('1K');
+  const [genOutputFormat, setGenOutputFormat] = useState<'images_text' | 'images_only'>('images_text');
   const isProduction = !!appConfig?.isProduction;
 
   // Filter visible visual styles based on admin config
@@ -430,7 +433,11 @@ Make it look like a premium, professionally designed asset that could be used in
       const payload = {
         model: 'gemini-3.1-flash-image-preview',
         contents: { parts: [{ text: fullPrompt }] },
-        config: { imageConfig: { aspectRatio } }
+        config: {
+          temperature: genTemperature,
+          responseModalities: genOutputFormat === 'images_only' ? ['IMAGE'] : ['TEXT', 'IMAGE'],
+          imageConfig: { aspectRatio }
+        }
       };
 
       const res = await fetch('/api/gemini', {
@@ -1210,12 +1217,81 @@ Make it look like a premium, professionally designed asset that could be used in
                       </button>
                     </div>
 
+                    {/* AI Studio-style Generation Controls */}
+                    {generationMode === 'native' && (
+                      <div className="space-y-4 p-4 rounded-2xl bg-slate-500/5 border border-slate-500/10">
+                        {/* Output Format */}
+                        <div className="space-y-2">
+                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Output Format</label>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setGenOutputFormat('images_text')}
+                              className={cn("flex-1 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-tight border transition-all",
+                                genOutputFormat === 'images_text'
+                                  ? "bg-blue-600/15 border-blue-500/40 text-blue-500"
+                                  : "bg-transparent border-transparent text-slate-500 hover:text-slate-300"
+                              )}
+                            >
+                              🖼 Images & Text
+                            </button>
+                            <button
+                              onClick={() => setGenOutputFormat('images_only')}
+                              className={cn("flex-1 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-tight border transition-all",
+                                genOutputFormat === 'images_only'
+                                  ? "bg-blue-600/15 border-blue-500/40 text-blue-500"
+                                  : "bg-transparent border-transparent text-slate-500 hover:text-slate-300"
+                              )}
+                            >
+                              🖼 Images Only
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Temperature */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Temperature</label>
+                            <span className="text-[10px] font-black text-blue-500 tabular-nums">{genTemperature.toFixed(2)}</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="2"
+                            step="0.05"
+                            value={genTemperature}
+                            onChange={(e) => setGenTemperature(parseFloat(e.target.value))}
+                            className="w-full h-1.5 bg-slate-700 rounded-full appearance-none cursor-pointer accent-blue-600"
+                          />
+                        </div>
+
+                        {/* Resolution */}
+                        <div className="space-y-2">
+                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Resolution</label>
+                          <div className="flex gap-2">
+                            {(['1K', '2K'] as const).map(r => (
+                              <button
+                                key={r}
+                                onClick={() => setGenResolution(r)}
+                                className={cn("flex-1 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-tight border transition-all",
+                                  genResolution === r
+                                    ? "bg-blue-600/15 border-blue-500/40 text-blue-500"
+                                    : "bg-transparent border-transparent text-slate-500 hover:text-slate-300"
+                                )}
+                              >
+                                {r}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <button 
                       onClick={handleGenerate}
                       disabled={isGenerating || !description.trim()}
                       className="w-full h-16 bg-blue-600 text-white rounded-3xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-blue-600/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:bg-slate-700 disabled:shadow-none"
                     >
-                       <Zap size={20} className={isGenerating ? "animate-spin" : ""} /> {isGenerating ? "SYNTHESIZING..." : "GENERATE ASSET"}
+                       <Zap size={20} className={isGenerating ? "animate-spin" : ""} /> {isGenerating ? "SYNTHESIZING..." : "GENERATE ASSET"}  
                     </button>
                  </div>
               </div>
