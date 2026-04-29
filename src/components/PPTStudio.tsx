@@ -168,7 +168,8 @@ export const PPTStudio: React.FC<{
           title: topic.toUpperCase(),
           subtitle: lang === 'en' ? 'Advanced Strategic Intelligence Portfolio' : 'Portafolio de Inteligencia Estratégica Avanzada',
           badge: 'PREMIUM EXECUTIVE RELEASE',
-          imageUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1200'
+          imageUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1200',
+          content: [] // Fixed missing property
         },
         {
           id: '2',
@@ -374,39 +375,64 @@ export const PPTStudio: React.FC<{
         )}
       </AnimatePresence>
 
-      <header className="h-24 border-b border-slate-100 dark:border-white/5 flex items-center justify-between px-12 shrink-0 bg-white/80 dark:bg-corporate-950/80 backdrop-blur-3xl">
-        <div className="flex items-center gap-6">
-          <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-2xl">
-            <Presentation size={30} />
+      <header className="h-20 border-b border-slate-100 dark:border-white/5 flex items-center justify-between px-10 shrink-0 bg-white/80 dark:bg-[#0a0c10]/80 backdrop-blur-3xl">
+        <div className="flex items-center gap-5">
+          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg">
+            <Presentation size={22} />
           </div>
           <div>
-            <h2 className="text-2xl font-display font-black tracking-tighter uppercase leading-none dark:text-white italic">Neural Studio 4.0</h2>
-            <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em] mt-1.5 opacity-60">Architectural Engine</p>
+            <h2 className="text-xl font-display font-black tracking-tighter uppercase leading-none dark:text-white italic">Neural Studio</h2>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-[8px] font-black text-blue-600 uppercase tracking-[0.3em] opacity-60">Architectural Engine</span>
+              <span className="w-1 h-1 rounded-full bg-blue-600/30" />
+              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{selectedMood.replace('_', ' ')}</span>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <button onClick={downloadPPT} className="px-8 py-3 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 flex items-center gap-3">
-            <Download size={18} /> PPTX
+        <div className="flex items-center gap-3">
+          <button onClick={downloadPPT} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-500/10 flex items-center gap-2">
+            <Download size={14} /> PPTX
           </button>
-          <button onClick={onClose} className="p-3 text-slate-400 hover:text-red-500 transition-colors"><X size={32} /></button>
+          <button onClick={onClose} className="p-2 text-slate-400 hover:text-white transition-colors bg-white/5 rounded-lg"><X size={20} /></button>
         </div>
       </header>
 
       <div className="flex-1 flex overflow-hidden">
-        <aside className="w-80 border-r border-slate-100 dark:border-white/5 flex flex-col shrink-0 bg-[#f9fafb] dark:bg-black/20 p-8 space-y-6 overflow-y-auto">
+        <aside className="w-80 border-r border-slate-100 dark:border-white/5 flex flex-col shrink-0 bg-[#f9fafb] dark:bg-[#0a0c10] p-6 space-y-6 overflow-y-auto">
+           <div className="flex items-center justify-between px-2 mb-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Project Timeline</span>
+              <div className="flex gap-1">
+                 <div className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                 <div className="w-1.5 h-1.5 rounded-full bg-slate-200 dark:bg-white/10" />
+              </div>
+           </div>
            {slides.map((slide, i) => (
-             <button key={slide.id} onClick={() => setSelectedSlide(i)} className={cn("w-full aspect-[16/10] rounded-[2rem] border-4 transition-all overflow-hidden relative group", selectedSlide === i ? "border-blue-600 shadow-2xl scale-105" : "border-transparent bg-white dark:bg-white/5 shadow-sm")}>
-                <div className="absolute top-4 left-4 w-8 h-8 rounded-lg bg-slate-900/10 dark:bg-white/10 flex items-center justify-center text-[10px] font-black">{i + 1}</div>
-                <div className="h-full flex flex-col items-center justify-center p-6 text-center">
-                   <span className="text-[8px] font-black uppercase tracking-tighter opacity-40 mb-2">{slide.type}</span>
-                   <span className="text-[10px] font-bold uppercase tracking-tight">{slide.title}</span>
+             <button 
+               key={slide.id} 
+               onClick={() => setSelectedSlide(i)} 
+               className={cn(
+                 "w-full aspect-[16/10] rounded-2xl border-2 transition-all overflow-hidden relative group p-1", 
+                 selectedSlide === i 
+                   ? "border-blue-600 shadow-2xl bg-blue-600/5 scale-[1.02]" 
+                   : "border-transparent bg-white dark:bg-white/5 shadow-sm hover:border-white/10"
+               )}
+             >
+                <div className="h-full rounded-xl overflow-hidden relative bg-slate-50 dark:bg-black/40 flex flex-col p-4 border border-black/5 dark:border-white/5">
+                   <div className="flex justify-between items-start mb-3">
+                      <div className="w-6 h-6 rounded-md bg-slate-900/10 dark:bg-white/10 flex items-center justify-center text-[8px] font-black">{i + 1}</div>
+                      <Layout size={12} className="opacity-20" />
+                   </div>
+                   <div className="flex-1 flex flex-col justify-end">
+                      <span className="text-[7px] font-black uppercase tracking-widest opacity-30 mb-1">{slide.type}</span>
+                      <span className="text-[9px] font-bold uppercase tracking-tight leading-tight line-clamp-2">{slide.title}</span>
+                   </div>
                 </div>
              </button>
            ))}
         </aside>
 
-        <main className="flex-1 p-16 flex flex-col relative overflow-hidden bg-[#eff1f4] dark:bg-corporate-950">
+        <main className="flex-1 p-12 lg:p-20 flex flex-col relative overflow-hidden bg-[#eff1f4] dark:bg-[#0a0c10]">
            {step === 'generating' && (
              <div className="absolute inset-0 z-50 bg-white/95 dark:bg-corporate-950/95 backdrop-blur-3xl flex flex-col items-center justify-center space-y-10 text-center">
                 <div className="relative">
