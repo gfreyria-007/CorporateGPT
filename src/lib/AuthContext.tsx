@@ -68,13 +68,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (isSigningIn) return;
     setIsSigningIn(true);
     try {
-      await signInWithPopup(auth, googleProvider);
+      console.log("Initializing Google Auth Synthesis...");
+      const result = await signInWithPopup(auth, googleProvider);
+      console.log("Auth Success:", result.user.email);
     } catch (error: any) {
+      console.error("Neural Auth Error Details:", {
+        code: error.code,
+        message: error.message,
+        custom: "If you see 'auth/unauthorized-domain', please add 'corporate-gpt.vercel.app' to Firebase Authorized Domains."
+      });
+      
       // Handle cancelled or closed popup gracefully
       if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
         console.log("Sign in cancelled by user or pending request.");
-      } else {
-        console.error("Sign in error:", error);
       }
     } finally {
       setIsSigningIn(false);
