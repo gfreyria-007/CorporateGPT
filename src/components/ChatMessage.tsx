@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import React from 'react';
+import { motion } from 'motion/react';
 import Markdown from 'react-markdown';
-import { Sparkles, Brain, ChevronDown, ChevronUp } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { Message } from '../types';
+
 import { translations } from '../lib/translations';
 
 interface ChatMessageProps {
@@ -12,7 +13,6 @@ interface ChatMessageProps {
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message, lang }) => {
   const isUser = message.role === 'user';
-  const [isReasoningExpanded, setIsReasoningExpanded] = useState(true);
   const t = translations[lang];
 
   return (
@@ -47,37 +47,6 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, lang }) => {
           <span className="w-1 h-1 bg-slate-300 rounded-full" />
           <span className="opacity-50">{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
         </p>
-
-        {/* Reasoning / Thought Process Block */}
-        {!isUser && message.reasoning && (
-          <div className="mb-6 border border-blue-500/10 dark:border-blue-500/20 rounded-2xl overflow-hidden bg-blue-50/30 dark:bg-blue-900/10">
-            <button 
-              onClick={() => setIsReasoningExpanded(!isReasoningExpanded)}
-              className="w-full px-5 py-3 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-            >
-              <span className="flex items-center gap-2">
-                <Brain size={14} className="animate-pulse" />
-                {isReasoningExpanded ? t.hideReasoning : t.viewReasoning}
-              </span>
-              {isReasoningExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            </button>
-            <AnimatePresence>
-              {isReasoningExpanded && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: 'easeInOut' }}
-                >
-                  <div className="px-6 pb-6 text-[13px] italic leading-relaxed text-slate-500 dark:text-slate-400 border-t border-blue-500/5 mt-2 pt-4">
-                    <Markdown>{message.reasoning}</Markdown>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
-
         <div className={`text-[15px] leading-relaxed prose prose-sm max-w-none ${
           isUser ? 'prose-slate dark:prose-invert font-medium' : 'prose-blue dark:prose-invert font-medium'
         }`}>

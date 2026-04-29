@@ -22,7 +22,6 @@ export interface ModelMetadata {
 export interface Message {
   role: 'user' | 'assistant' | 'system';
   content: string;
-  reasoning?: string;
   id: string;
   timestamp: number;
 }
