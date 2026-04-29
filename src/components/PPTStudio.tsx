@@ -1,3 +1,4 @@
+// Build 5.0.1 - Neural Synthesis Core - [2026-04-29T22:24:50]
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
