@@ -851,18 +851,20 @@ Make it look like a premium, professionally designed asset that could be used in
     <div className={cn("flex-1 flex flex-col h-full font-sans transition-colors duration-500 relative z-50", 
       theme === 'dark' ? "bg-corporate-950 text-white" : "bg-white text-corporate-900"
     )}>
-      <header className={cn("h-20 border-b flex items-center justify-between px-4 sm:px-8 shrink-0 backdrop-blur-xl z-30",
+      <header className={cn("h-14 border-b flex items-center justify-between px-4 sm:px-6 shrink-0 backdrop-blur-xl z-30",
         theme === 'dark' ? "bg-corporate-950/80 border-white/5" : "bg-white/80 border-corporate-200 shadow-sm"
       )}>
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-500/30">
-                <Palette size={20} />
-             </div>
-             <div>
-                <h2 className="text-sm font-black uppercase tracking-widest leading-none">CorporateGPT <span className="text-blue-500">Studio</span></h2>
-                <p className="text-[10px] font-black opacity-40 uppercase tracking-[0.2em] mt-1">High-Density Asset Synthesis v3.5 - Live Mode</p>
-             </div>
+              <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 relative overflow-hidden group">
+                <Palette size={16} />
+              </div>
+              <div>
+                 <h2 className="text-xs font-black uppercase tracking-widest leading-none flex items-center gap-1.5">
+                   STUDIO <span className="text-blue-500">ENGINE</span>
+                 </h2>
+                 <p className="text-[8px] font-black opacity-30 uppercase tracking-[0.2em] mt-0.5">V3.5 LIVE</p>
+              </div>
           </div>
         </div>
         
