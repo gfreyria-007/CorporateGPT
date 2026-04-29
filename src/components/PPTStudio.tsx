@@ -104,15 +104,19 @@ export const PPTStudio: React.FC<{
     setGenStatus(lang === 'es' ? 'DEFINIENDO CONCEPTO VISUAL...' : 'DEFINING VISUAL CONCEPT...');
     
     try {
-      const preview = await generateStylePreview(topic, selectedMood, lang);
-      if (preview.aiSuggestedMood) {
-        setActiveMood(preview.aiSuggestedMood as DesignMood);
-      }
-      setPreviewSlide(preview);
-      setStep('preview_style');
+       const preview = await generateStylePreview(topic, selectedMood, lang);
+       if (preview && preview.title) {
+         if (preview.aiSuggestedMood) {
+           setActiveMood(preview.aiSuggestedMood as DesignMood);
+         }
+         setPreviewSlide(preview);
+         setStep('preview_style');
+       } else {
+         throw new Error("Invalid preview data");
+       }
     } catch (error) {
-      console.error('Preview failed:', error);
-      setStep('config');
+       console.error("Preview failed, falling back to full generation:", error);
+       handleGenerate();
     }
   };
 
