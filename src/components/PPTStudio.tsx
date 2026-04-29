@@ -51,19 +51,13 @@ import {
 import { cn } from '../lib/utils';
 import { translations } from '../lib/translations';
 import pptxgen from 'pptxgenjs';
-import { generateStudioSlides, StudioSlideData } from '../services/geminiService';
+import { generateStudioSlides, generateStylePreview, StudioSlideData } from '../services/geminiService';
 
 type DesignMood = 
   | 'ai_orchestrator' | 'corporativo' | 'lego' | 'boceto' | 'laboratorio' | 'brutalista' 
   | 'arcilla_3d' | 'pizarron_blanco' | 'pizarron_verde' | 'pizarron_negro' | 'plano_tecnico'
   | 'cuantico' | 'manuscrito' | 'retro_80s' | 'minimal_jp' | 'ciberpunk';
 
-export const PPTStudio: React.FC<{ 
-  theme: 'light' | 'dark', 
-  lang: 'en' | 'es', 
-  user: any,
-  onClose: () => void 
-}> = ({ theme, lang, user, onClose }) => {
 export const PPTStudio: React.FC<{ 
   theme: 'light' | 'dark', 
   lang: 'en' | 'es', 
@@ -91,7 +85,17 @@ export const PPTStudio: React.FC<{
     { id: 'retro_80s', name: '80S RETRO', icon: <Monitor size={16} /> },
   ];
 
-  // ... (getMoodStyles remains same)
+  const getMoodStyles = (moodId: DesignMood) => {
+    switch (moodId) {
+      case 'cuantico': return { bg: 'bg-black', header: 'text-cyan-400 font-mono tracking-widest', sub: 'text-cyan-500/50', accent: 'bg-cyan-500/20 text-cyan-400', text: 'text-cyan-400', pattern: 'bg-[radial-gradient(circle_at_center,_#0891b210_0%,_transparent_70%)]', tableHeader: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' };
+      case 'minimal_jp': return { bg: 'bg-[#faf9f6]', header: 'text-stone-800 font-serif', sub: 'text-stone-400', accent: 'bg-stone-200 text-stone-600', text: 'text-stone-800', pattern: 'bg-[linear-gradient(45deg,_#f5f5f5_25%,_transparent_25%,_transparent_75%,_#f5f5f5_75%,_#f5f5f5),_linear-gradient(45deg,_#f5f5f5_25%,_transparent_25%,_transparent_75%,_#f5f5f5_75%,_#f5f5f5)] bg-[size:20px_20px]', tableHeader: 'bg-stone-100 text-stone-800 border-stone-200' };
+      case 'brutalista': return { bg: 'bg-white', header: 'text-black font-black uppercase italic', sub: 'text-black/40', accent: 'bg-yellow-400 text-black border-2 border-black', text: 'text-black', pattern: 'bg-[size:40px_40px] bg-[radial-gradient(circle,_#000_1px,_transparent_1px)]', tableHeader: 'bg-black text-white border-2 border-black' };
+      case 'plano_tecnico': return { bg: 'bg-[#002b36]', header: 'text-blue-300 font-mono', sub: 'text-blue-400/50', accent: 'bg-blue-400/10 text-blue-300 border border-blue-400/30', text: 'text-blue-300', pattern: 'bg-[size:50px_50px] bg-[linear-gradient(to_right,_#ffffff05_1px,_transparent_1px),_linear-gradient(to_bottom,_#ffffff05_1px,_transparent_1px)]', tableHeader: 'bg-blue-900/50 text-blue-300 border-blue-700' };
+      case 'ciberpunk': return { bg: 'bg-[#050505]', header: 'text-[#ff00ff] italic tracking-tighter drop-shadow-[0_0_10px_#ff00ff80]', sub: 'text-[#00ffff]/50', accent: 'bg-[#ff00ff]/10 text-[#ff00ff] border border-[#ff00ff]/50', text: 'text-[#00ffff]', pattern: 'bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[size:100%_2px,3px_100%]', tableHeader: 'bg-[#ff00ff]/20 text-[#ff00ff] border-[#ff00ff]/30' };
+      case 'retro_80s': return { bg: 'bg-[#2b0054]', header: 'text-[#ffcc00] font-black tracking-widest uppercase shadow-[#ff0080_5px_5px_0px]', sub: 'text-[#00d4ff]', accent: 'bg-[#ff0080] text-white', text: 'text-[#00d4ff]', pattern: 'bg-[linear-gradient(transparent_0%,_#ff008010_1%,_transparent_2%)] bg-[size:100%_40px]', tableHeader: 'bg-[#ff0080] text-white border-[#ffcc00]' };
+      default: return { bg: 'bg-[#0a0c10]', header: 'text-white font-display font-black tracking-tighter italic', sub: 'text-blue-600 font-bold', accent: 'bg-blue-600 text-white', text: 'text-white', pattern: 'bg-[radial-gradient(circle_at_20%_20%,_#2563eb08_0%,_transparent_50%)]', tableHeader: 'bg-blue-600/10 text-blue-600 border-blue-600/20' };
+    }
+  };
 
   const startSynthesis = async () => {
     if (!topic) return;
@@ -431,7 +435,7 @@ export const PPTStudio: React.FC<{
             <Presentation size={22} />
           </div>
           <div>
-            <h2 className="text-xl font-display font-black tracking-tighter uppercase leading-none text-white italic">Neural Studio 5.0.3</h2>
+            <h2 className="text-xl font-display font-black tracking-tighter uppercase leading-none text-white italic">Neural Studio 5.0.4</h2>
             <div className="flex items-center gap-2 mt-1">
                <span className="text-[8px] font-black text-blue-600 uppercase tracking-[0.3em] opacity-60">High Density Storytelling</span>
                <span className="w-1 h-1 rounded-full bg-blue-600/30" />
@@ -553,13 +557,13 @@ export const PPTStudio: React.FC<{
                               <Shield size={14} className="text-green-500/50" />
                               <span>Verified Output</span>
                            </div>
-                           <span className="text-blue-600/60 uppercase">{activeMood} architecture</span>
-                        </div>
-                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-           </div>
+                            <span className="text-blue-600/60 uppercase">{activeMood} architecture</span>
+                         </div>
+                      </div>
+                   </motion.div>
+                 )}
+               </AnimatePresence>
+            </div>
 
            {slides.length > 0 && (
              <div className="mt-12 flex items-center justify-center gap-12">
@@ -570,7 +574,7 @@ export const PPTStudio: React.FC<{
                 <button disabled={selectedSlide === slides.length - 1} onClick={() => setSelectedSlide(s => s + 1)} className="w-16 h-16 bg-white/5 rounded-2xl shadow-xl flex items-center justify-center text-slate-400 hover:text-blue-600 transition-all border border-white/5"><ChevronRight size={32} /></button>
              </div>
            )}
-        </main>
+         </main>
       </div>
     </div>
   );

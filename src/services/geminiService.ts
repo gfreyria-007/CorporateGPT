@@ -29,7 +29,7 @@ export interface StudioSlideData {
   badge?: string;
   imagePrompt?: string;
   visualStrategy: string;
-  visualLayout: 'split' | 'grid' | 'focal' | 'dense_table' | 'technical_drawing';
+  visualLayout: 'split' | 'grid' | 'dense_table' | 'technical_drawing' | 'focal' | 'hero';
   aiSuggestedMood?: string;
 }
 
