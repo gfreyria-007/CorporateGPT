@@ -13,41 +13,76 @@ export interface InfographicData {
   themeColor?: string;
 }
 
-export async function generateInfographicContent(prompt: string, style: string): Promise<InfographicData> {
-  const model = "gemini-3.1-pro-preview";
+export interface StudioSlideData {
+  id: string;
+  type: 'hero' | 'infographic' | 'diagram' | 'metric_focus' | 'process_flow';
+  title: string;
+  subtitle: string;
+  content: {
+    label?: string;
+    value?: string;
+    description?: string;
+    iconHint?: string;
+  }[];
+  badge?: string;
+  imagePrompt?: string;
+  visualStrategy: string;
+}
+
+export async function generateStudioSlides(prompt: string, mood: string, lang: 'en' | 'es'): Promise<StudioSlideData[]> {
+  const model = "gemini-1.5-pro"; // Nano Banana 2 (High Intelligence)
   
+  const systemInstruction = `You are the Neural Studio Engine 4.0. Your goal is to synthesize a set of 5-7 high-fidelity presentation slides.
+  Topic: "${prompt}"
+  Mood: "${mood}"
+  Language: "${lang}"
+
+  Instructions for High-Fidelity Results:
+  1. DO NOT return generic text. Provide deep, professional insights.
+  2. Map each slide to a specific 'type':
+     - 'hero': High-impact title with a dramatic badge and subtitle.
+     - 'infographic': 3-4 data points with specific metrics and labels.
+     - 'diagram': 3 interconnected concepts with a central visual theme.
+     - 'metric_focus': One large, dominating statistic with a detailed analysis paragraph.
+     - 'process_flow': A 4-step professional transition.
+  3. Visual Strategy: Describe how to integrate the data (e.g. "Use a vertical offset grid", "Floating glassmorphism labels").
+  4. Badge: Add an executive status like "STRATEGIC DEPLOYMENT" or "SYSTEM ARCHITECTURE".
+  
+  Return a JSON array of slides.`;
+
   const payload = {
     model,
-    contents: `Generate a detailed infographic structure for: "${prompt}". Style: ${style}. 
-    Focus on providing educational or professional content. 
-    If the style is "Sketchbook", describe elements with artistic flair.`,
+    contents: `Generate 5 slides for: "${prompt}".`,
     config: {
+      systemInstruction,
       responseMimeType: "application/json",
       responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          title: { type: Type.STRING },
-          subtitle: { type: Type.STRING },
-          themeColor: { type: Type.STRING, description: "Suggested primary hex color for this theme" },
-          sections: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                title: { type: Type.STRING },
-                description: { type: Type.STRING },
-                value: { type: Type.NUMBER, description: "Value from 0 to 100 representing importance or progress" },
-                iconHint: { type: Type.STRING, description: "One word emoji or icon name (e.g. apple, seed, sprout, tree)" }
-              },
-              required: ["title", "description"]
-            }
+        type: Type.ARRAY,
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            id: { type: Type.STRING },
+            type: { type: Type.STRING, enum: ["hero", "infographic", "diagram", "metric_focus", "process_flow"] },
+            title: { type: Type.STRING },
+            subtitle: { type: Type.STRING },
+            badge: { type: Type.STRING },
+            content: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  label: { type: Type.STRING },
+                  value: { type: Type.STRING },
+                  description: { type: Type.STRING },
+                  iconHint: { type: Type.STRING }
+                }
+              }
+            },
+            visualStrategy: { type: Type.STRING },
+            imagePrompt: { type: Type.STRING, description: "Detailed prompt for DALL-E/Midjourney style background" }
           },
-          conclusions: {
-            type: Type.ARRAY,
-            items: { type: Type.STRING }
-          }
-        },
-        required: ["title", "subtitle", "sections"]
+          required: ["id", "type", "title", "subtitle", "content"]
+        }
       }
     }
   };
@@ -58,7 +93,7 @@ export async function generateInfographicContent(prompt: string, style: string):
     body: JSON.stringify({ action: 'generateContent', payload })
   });
   const response = await res.json();
-  const text = response.text || "{}";
+  const text = response.text || "[]";
   return JSON.parse(text);
 }
 

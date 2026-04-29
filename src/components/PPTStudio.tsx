@@ -1,38 +1,19 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, 
   Presentation, 
   Download,
-  Sparkles, 
   ChevronLeft,
   ChevronRight,
   Cpu,
-  History,
-  Globe,
-  Binary,
-  School,
   Cloud,
-  ArrowUpRight,
-  ArrowDownRight,
-  Users,
-  GlassWater,
   FileText,
-  Wand2,
-  Rocket,
   Gamepad2,
-  Table,
   Orbit,
-  Star,
-  Info,
-  Layers,
   Activity,
-  BarChart2,
   Trophy,
-  Dna,
-  ShieldAlert,
   Palette,
-  CheckCircle2,
   ChevronRightCircle,
   Building2,
   PenTool,
@@ -43,43 +24,27 @@ import {
   Pencil,
   Compass,
   Layout,
-  CircleDot,
-  Check,
   Zap,
   TrendingUp,
   BrainCircuit,
-  Boxes,
-  Microscope,
-  Network
+  Atom,
+  ScrollText,
+  Monitor,
+  ZapOff,
+  Dna,
+  Infinity,
+  Layers,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { translations } from '../lib/translations';
 import pptxgen from 'pptxgenjs';
-import { jsPDF } from 'jspdf';
+import { generateStudioSlides, StudioSlideData } from '../services/geminiService';
 
 type DesignMood = 
-  | 'corporativo' 
-  | 'lego' 
-  | 'boceto' 
-  | 'laboratorio' 
-  | 'brutalista' 
-  | 'arcilla_3d' 
-  | 'pizarron_blanco' 
-  | 'pizarron_verde' 
-  | 'pizarron_negro' 
-  | 'plano_tecnico';
-
-interface Slide {
-  id: string;
-  title: string;
-  subtitle?: string;
-  type: 'hero' | 'infographic' | 'data_grid' | 'diagram' | 'process_flow';
-  mood: DesignMood;
-  content: any[];
-  badge?: string;
-  imageUrl?: string;
-  metric?: string;
-}
+  | 'corporativo' | 'lego' | 'boceto' | 'laboratorio' | 'brutalista' 
+  | 'arcilla_3d' | 'pizarron_blanco' | 'pizarron_verde' | 'pizarron_negro' | 'plano_tecnico'
+  | 'cuantico' | 'manuscrito' | 'retro_80s' | 'minimal_jp' | 'ciberpunk';
 
 export const PPTStudio: React.FC<{ 
   theme: 'light' | 'dark', 
@@ -87,63 +52,77 @@ export const PPTStudio: React.FC<{
   user: any,
   onClose: () => void 
 }> = ({ theme, lang, user, onClose }) => {
-  const [step, setStep] = useState<'config' | 'mood_selection' | 'generating' | 'viewer'>('config');
+  const [step, setStep] = useState<'config' | 'generating' | 'viewer'>('config');
   const [topic, setTopic] = useState('');
   const [selectedMood, setSelectedMood] = useState<DesignMood>('corporativo');
-  const [slides, setSlides] = useState<Slide[]>([]);
+  const [slides, setSlides] = useState<StudioSlideData[]>([]);
   const [selectedSlide, setSelectedSlide] = useState<number>(0);
   
   const t = translations[lang];
 
   const studioStyles = [
     { id: 'corporativo', name: lang === 'es' ? 'CORPORATIVO' : 'CORPORATE', icon: <Building2 size={16} /> },
-    { id: 'lego', name: lang === 'es' ? 'ESTILO LEGO' : 'LEGO STYLE', icon: <Gamepad2 size={16} /> },
-    { id: 'boceto', name: lang === 'es' ? 'BOCETO' : 'SKETCH', icon: <PenTool size={16} /> },
-    { id: 'laboratorio', name: lang === 'es' ? 'LABORATORIO' : 'LABORATORY', icon: <FlaskConical size={16} /> },
-    { id: 'brutalista', name: lang === 'es' ? 'BRUTALISTA' : 'BRUTALIST', icon: <Grid3X3 size={16} /> },
-    { id: 'arcilla_3d', name: lang === 'es' ? 'ARCILLA 3D' : '3D CLAY', icon: <Box size={16} /> },
-    { id: 'pizarron_blanco', name: lang === 'es' ? 'PIZARRÓN BLANCO' : 'WHITEBOARD', icon: <Eraser size={16} /> },
-    { id: 'pizarron_verde', name: lang === 'es' ? 'PIZARRÓN VERDE' : 'GREEN BOARD', icon: <Pencil size={16} /> },
-    { id: 'pizarron_negro', name: lang === 'es' ? 'PIZARRÓN NEGRO' : 'BLACK BOARD', icon: <Pencil size={16} /> },
-    { id: 'plano_tecnico', name: lang === 'es' ? 'PLANO TÉCNICO' : 'TECHNICAL BLUEPRINT', icon: <Compass size={16} /> },
+    { id: 'minimal_jp', name: 'ZEN MINIMAL', icon: <Infinity size={16} /> },
+    { id: 'cuantico', name: 'CUÁNTICO', icon: <Atom size={16} /> },
+    { id: 'lego', name: 'LEGO', icon: <Gamepad2 size={16} /> },
+    { id: 'arcilla_3d', name: '3D CLAY', icon: <Box size={16} /> },
+    { id: 'brutalista', name: 'BRUTALISTA', icon: <Grid3X3 size={16} /> },
+    { id: 'plano_tecnico', name: 'PLANOS', icon: <Compass size={16} /> },
+    { id: 'manuscrito', name: 'MANUSCRITO', icon: <ScrollText size={16} /> },
+    { id: 'retro_80s', name: 'RETRO 80S', icon: <Monitor size={16} /> },
+    { id: 'ciberpunk', name: 'CIBERPUNK', icon: <Zap size={16} /> },
   ];
 
   const getMoodStyles = (mood: DesignMood) => {
     switch (mood) {
+      case 'cuantico':
+        return {
+          bg: 'bg-black', text: 'text-cyan-400',
+          accent: 'bg-cyan-500 text-black shadow-[0_0_30px_rgba(34,211,238,0.5)]',
+          header: 'text-white font-black tracking-tighter uppercase font-mono italic',
+          sub: 'text-cyan-500/60 font-mono uppercase tracking-[0.4em]',
+          pattern: 'opacity-[0.2] bg-[url("https://www.transparenttextures.com/patterns/carbon-fibre.png")]',
+          card: 'bg-cyan-950/20 border border-cyan-500/30 rounded-none backdrop-blur-xl'
+        };
+      case 'minimal_jp':
+        return {
+          bg: 'bg-[#fafafa]', text: 'text-slate-900',
+          accent: 'bg-red-600 text-white',
+          header: 'text-slate-900 font-light tracking-widest uppercase',
+          sub: 'text-red-600 font-bold uppercase tracking-[0.5em] border-l-4 border-red-600 pl-4',
+          pattern: 'opacity-[0.05] bg-[url("https://www.transparenttextures.com/patterns/natural-paper.png")]',
+          card: 'bg-white rounded-none shadow-[20px_20px_0_rgba(0,0,0,0.03)] border border-slate-100'
+        };
+      case 'ciberpunk':
+        return {
+          bg: 'bg-[#050505]', text: 'text-fuchsia-500',
+          accent: 'bg-yellow-400 text-black font-black italic',
+          header: 'text-yellow-400 font-black uppercase tracking-tighter skew-x-[-10deg]',
+          sub: 'text-fuchsia-500 font-bold uppercase tracking-widest bg-fuchsia-500/10 px-2',
+          pattern: 'opacity-[0.3] bg-[url("https://www.transparenttextures.com/patterns/grid.png")]',
+          card: 'bg-black border-2 border-fuchsia-500 shadow-[4px_4px_0_#fde047]'
+        };
+      case 'manuscrito':
+        return {
+          bg: 'bg-[#f4ead5]', text: 'text-[#5d4037]',
+          accent: 'bg-[#5d4037] text-[#f4ead5]',
+          header: 'text-[#5d4037] font-serif italic font-light tracking-tight',
+          sub: 'text-[#8d6e63] font-serif italic tracking-widest border-b border-[#8d6e63]',
+          pattern: 'opacity-[0.8] bg-[url("https://www.transparenttextures.com/patterns/old-paper.png")]',
+          card: 'bg-white/40 border border-[#8d6e63]/20 rounded-sm'
+        };
       case 'lego':
         return {
-          bg: 'bg-[#005596]', 
-          text: 'text-white',
-          accent: 'bg-[#FFD500] text-black border-b-4 border-black/20', 
-          header: 'text-[#FFD500] font-black uppercase tracking-tight font-sans',
+          bg: 'bg-[#005596]', text: 'text-white',
+          accent: 'bg-[#FFD500] text-black border-b-4 border-black/20',
+          header: 'text-[#FFD500] font-black uppercase tracking-tight',
           sub: 'text-white/80 font-bold uppercase tracking-widest',
           pattern: 'opacity-[0.1] bg-[url("https://www.transparenttextures.com/patterns/cubes.png")]',
           card: 'bg-white rounded-[1.5rem] border-b-8 border-r-8 border-black/20 text-slate-900 shadow-xl'
         };
-      case 'plano_tecnico':
-        return {
-          bg: 'bg-[#003366]', 
-          text: 'text-cyan-100',
-          accent: 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30',
-          header: 'text-white font-mono tracking-tighter uppercase',
-          sub: 'text-cyan-400/60 font-mono uppercase tracking-[0.2em]',
-          pattern: 'opacity-[0.4] bg-[url("https://www.transparenttextures.com/patterns/graphy.png")]',
-          card: 'bg-[#002b57] border-2 border-cyan-500/20 rounded-none font-mono shadow-[4px_4px_0_rgba(0,255,255,0.1)]'
-        };
-      case 'brutalista':
-        return {
-          bg: 'bg-[#f0f0f0]',
-          text: 'text-black',
-          accent: 'bg-black text-white',
-          header: 'text-black font-black uppercase tracking-tighter leading-[0.85]',
-          sub: 'text-black font-black uppercase tracking-widest border-b-4 border-black pb-2 inline-block',
-          pattern: 'opacity-[0.03] bg-[url("https://www.transparenttextures.com/patterns/carbon-fibre.png")]',
-          card: 'bg-white border-4 border-black rounded-none shadow-[12px_12px_0_0_rgba(0,0,0,1)]'
-        };
       default: // Corporate Premium
         return {
-          bg: 'bg-slate-50',
-          text: 'text-slate-900',
+          bg: 'bg-slate-50', text: 'text-slate-900',
           accent: 'bg-[#166534] text-white shadow-xl shadow-green-500/10',
           header: 'text-[#166534] font-serif italic font-black tracking-tight',
           sub: 'text-slate-400 font-bold uppercase tracking-[0.3em]',
@@ -153,71 +132,31 @@ export const PPTStudio: React.FC<{
     }
   };
 
-  const generateWithStyle = async () => {
+  const handleGenerate = async () => {
     if (!topic) return;
     setStep('generating');
-    
     try {
-      await new Promise(resolve => setTimeout(resolve, 4500));
-      
-      const mockSlides: Slide[] = [
-        {
-          id: '1',
-          type: 'hero',
-          mood: selectedMood,
-          title: topic.toUpperCase(),
-          subtitle: lang === 'en' ? 'Advanced Strategic Intelligence Portfolio' : 'Portafolio de Inteligencia Estratégica Avanzada',
-          badge: 'PREMIUM EXECUTIVE RELEASE',
-          imageUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1200',
-          content: [] // Fixed missing property
-        },
-        {
-          id: '2',
-          type: 'infographic',
-          mood: selectedMood,
-          title: lang === 'en' ? 'Core Performance Architecture' : 'Arquitectura de Rendimiento Core',
-          subtitle: lang === 'en' ? 'Data integration and structural mapping' : 'Integración de datos y mapeo estructural',
-          content: [
-             { title: 'Neural Engine', val: '4.2ms', desc: 'Real-time response latency', icon: <BrainCircuit /> },
-             { title: 'Data Flow', val: '128GB/s', desc: 'Throughput optimization', icon: <Zap /> },
-             { title: 'Accuracy', val: '99.9%', desc: 'Verified synthesis precision', icon: <TrendingUp /> }
-          ]
-        },
-        {
-          id: '3',
-          type: 'diagram',
-          mood: selectedMood,
-          title: lang === 'en' ? 'Integrated Solution Ecosystem' : 'Ecosistema de Solución Integrada',
-          subtitle: lang === 'en' ? 'Bridging intelligence with action' : 'Conectando inteligencia con acción',
-          content: [
-             { label: 'Cloud Infrastructure', icon: <Cloud /> },
-             { label: 'Local Processing', icon: <Cpu /> },
-             { label: 'Strategic Output', icon: <FileText /> }
-          ],
-          imageUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=800'
-        }
-      ];
-      
-      setSlides(mockSlides);
+      const generatedSlides = await generateStudioSlides(topic, selectedMood, lang);
+      setSlides(generatedSlides);
       setSelectedSlide(0);
       setStep('viewer');
     } catch (error) {
-      console.error('Failed to generate:', error);
+      console.error('Synthesis failed:', error);
+      setStep('config');
     }
   };
 
   const downloadPPT = () => {
     const pptx = new pptxgen();
-    pptx.layout = 'LAYOUT_16x9';
     slides.forEach(slide => {
       const pptSlide = pptx.addSlide();
       pptSlide.addText(slide.title, { x: 0.5, y: 0.5, w: '90%', h: 1, fontSize: 32, bold: true });
     });
-    pptx.writeFile({ fileName: `Premium_Report_${Date.now()}.pptx` });
+    pptx.writeFile({ fileName: `Studio_Synthesis_${Date.now()}.pptx` });
   };
 
-  const renderSlideContent = (slide: Slide) => {
-    const mood = getMoodStyles(slide.mood);
+  const renderSlideContent = (slide: StudioSlideData) => {
+    const mood = getMoodStyles(selectedMood);
     
     switch (slide.type) {
       case 'hero':
@@ -227,9 +166,9 @@ export const PPTStudio: React.FC<{
             <div className="flex-1 flex flex-col justify-center px-24 z-10 relative">
                <motion.div initial={{ x: -40, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
                   <div className={cn("px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.4em] mb-10 inline-block", mood.accent)}>
-                    {slide.badge}
+                    {slide.badge || 'STRATEGIC SYNTHESIS'}
                   </div>
-                  <h1 className={cn("text-7xl max-w-3xl mb-8 leading-[1.05]", mood.header)}>
+                  <h1 className={cn("text-8xl max-w-4xl mb-8 leading-[0.95] tracking-tighter", mood.header)}>
                     {slide.title}
                   </h1>
                   <p className={cn("text-2xl max-w-xl leading-relaxed opacity-60 font-medium", mood.sub)}>
@@ -237,12 +176,30 @@ export const PPTStudio: React.FC<{
                   </p>
                </motion.div>
             </div>
-            {slide.imageUrl && (
-              <div className="w-[45%] relative">
-                 <img src={slide.imageUrl} className="absolute inset-0 w-full h-full object-cover" />
+            {slide.imagePrompt && (
+              <div className="w-[40%] relative">
+                 <div className="absolute inset-0 bg-slate-800 animate-pulse" />
                  <div className={cn("absolute inset-0 bg-gradient-to-r", mood.bg, "via-transparent to-transparent")} />
               </div>
             )}
+          </div>
+        );
+
+      case 'metric_focus':
+        return (
+          <div className={cn("flex-1 p-24 flex flex-col items-center justify-center text-center relative", mood.bg)}>
+             <div className={cn("absolute inset-0 z-0", mood.pattern)} />
+             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative z-10 max-w-4xl">
+                <span className={cn("text-[10px] font-black uppercase tracking-[0.5em] mb-12 block opacity-40", mood.sub)}>{slide.subtitle}</span>
+                <h2 className={cn("text-[12rem] font-black leading-none mb-10 tracking-tighter", mood.header)}>
+                   {slide.content[0]?.value || '100%'}
+                </h2>
+                <div className={cn("w-32 h-2 mx-auto mb-12", mood.accent)} />
+                <h3 className="text-4xl font-black uppercase tracking-tight mb-8">{slide.title}</h3>
+                <p className="text-xl opacity-60 leading-relaxed max-w-2xl mx-auto font-medium">
+                   {slide.content[0]?.description}
+                </p>
+             </motion.div>
           </div>
         );
 
@@ -250,22 +207,20 @@ export const PPTStudio: React.FC<{
         return (
           <div className={cn("flex-1 p-24 flex flex-col relative", mood.bg)}>
              <div className={cn("absolute inset-0 z-0", mood.pattern)} />
-             <div className="relative z-10 mb-20">
-                <h2 className={cn("text-5xl mb-4 leading-tight", mood.header)}>{slide.title}</h2>
-                <div className={cn("w-24 h-2 mb-6", mood.accent)} />
-                <p className={cn("text-sm uppercase tracking-widest", mood.sub)}>{slide.subtitle}</p>
+             <div className="relative z-10 mb-24">
+                <h2 className={cn("text-6xl mb-6 leading-tight max-w-3xl", mood.header)}>{slide.title}</h2>
+                <p className={cn("text-sm uppercase tracking-[0.3em] opacity-40", mood.sub)}>{slide.subtitle}</p>
              </div>
-
-             <div className="flex-1 grid grid-cols-3 gap-10 relative z-10">
+             <div className="flex-1 grid grid-cols-3 gap-12 relative z-10">
                 {slide.content.map((item, i) => (
-                  <motion.div key={i} initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: i * 0.1 }} className={cn("p-12 flex flex-col justify-between", mood.card)}>
-                     <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center mb-8", mood.accent)}>
-                        {item.icon}
+                  <motion.div key={i} initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: i * 0.1 }} className={cn("p-12 flex flex-col justify-between group", mood.card)}>
+                     <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center mb-10 transition-transform group-hover:scale-110", mood.accent)}>
+                        <Layers size={24} />
                      </div>
                      <div>
-                        <span className={cn("text-5xl font-black block mb-4", mood.header)}>{item.val}</span>
-                        <h4 className="text-lg font-black uppercase tracking-tight mb-2 opacity-80">{item.title}</h4>
-                        <p className="text-xs opacity-50 font-medium leading-relaxed">{item.desc}</p>
+                        <span className={cn("text-5xl font-black block mb-6", mood.header)}>{item.value}</span>
+                        <h4 className="text-xl font-black uppercase tracking-tight mb-4 opacity-80">{item.label}</h4>
+                        <p className="text-sm opacity-50 font-medium leading-relaxed">{item.description}</p>
                      </div>
                   </motion.div>
                 ))}
@@ -277,31 +232,31 @@ export const PPTStudio: React.FC<{
         return (
           <div className={cn("flex-1 p-24 flex flex-col relative", mood.bg)}>
              <div className={cn("absolute inset-0 z-0", mood.pattern)} />
-             <div className="flex-1 flex gap-20">
-                <div className="w-1/2 flex flex-col justify-center gap-10 relative z-10">
-                   <h2 className={cn("text-5xl leading-tight mb-6", mood.header)}>{slide.title}</h2>
+             <div className="flex-1 flex gap-24">
+                <div className="w-1/2 flex flex-col justify-center gap-12 relative z-10">
+                   <div className={cn("px-6 py-2 rounded-full text-[8px] font-black uppercase tracking-widest inline-block w-fit mb-4", mood.accent)}>
+                      STRUCTURAL MAPPING
+                   </div>
+                   <h2 className={cn("text-6xl leading-[1.1] tracking-tighter mb-8", mood.header)}>{slide.title}</h2>
                    <div className="space-y-6">
                       {slide.content.map((item, i) => (
-                        <div key={i} className={cn("p-8 flex items-center gap-8 transition-all hover:translate-x-4", mood.card)}>
-                           <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", mood.accent)}>
-                              {item.icon}
+                        <div key={i} className={cn("p-8 flex items-center gap-8 transition-all hover:translate-x-6", mood.card)}>
+                           <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", mood.accent)}>
+                              <Infinity size={20} />
                            </div>
-                           <span className="text-xl font-bold uppercase tracking-tight opacity-80">{item.label}</span>
+                           <div>
+                              <span className="text-lg font-black uppercase tracking-tight block mb-1">{item.label}</span>
+                              <p className="text-xs opacity-40 uppercase tracking-widest font-bold">{item.description}</p>
+                           </div>
                         </div>
                       ))}
                    </div>
                 </div>
-
-                <div className="w-1/2 relative group">
-                   <div className={cn("absolute inset-0 rounded-[4rem] overflow-hidden", mood.card)}>
-                      <img src={slide.imageUrl} className="w-full h-full object-cover grayscale opacity-30 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-1000" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                      <div className="absolute bottom-12 left-12 right-12">
-                         <div className={cn("px-8 py-4 rounded-2xl bg-white/10 backdrop-blur-3xl border border-white/20 text-white")}>
-                            <p className="text-sm font-bold uppercase tracking-widest leading-relaxed">
-                               {lang === 'es' ? 'La arquitectura definitiva que acelerará el descubrimiento mediante IA.' : 'The definitive architecture accelerating discovery via AI.'}
-                            </p>
-                         </div>
+                <div className="w-1/2 relative flex items-center justify-center">
+                   <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-[4rem] animate-pulse" />
+                   <div className="relative z-10 w-full aspect-square border-4 border-dashed border-white/10 rounded-full flex items-center justify-center">
+                      <div className={cn("w-48 h-48 rounded-full flex items-center justify-center shadow-2xl animate-bounce", mood.accent)}>
+                         <Sparkles size={64} />
                       </div>
                    </div>
                 </div>
@@ -310,24 +265,31 @@ export const PPTStudio: React.FC<{
         );
 
       default:
-        return null;
+        return (
+          <div className={cn("flex-1 flex items-center justify-center p-24", mood.bg)}>
+             <div className={cn("p-20 text-center max-w-3xl", mood.card)}>
+                <h2 className={cn("text-5xl mb-8", mood.header)}>{slide.title}</h2>
+                <p className="text-xl opacity-60 leading-relaxed font-medium">{slide.subtitle}</p>
+             </div>
+          </div>
+        );
     }
   };
 
   return (
-    <div className={cn("flex-1 flex flex-col h-full overflow-hidden relative", theme === 'dark' ? 'bg-corporate-950' : 'bg-white')}>
+    <div className={cn("flex-1 flex flex-col h-full overflow-hidden relative", theme === 'dark' ? 'bg-[#0a0c10]' : 'bg-white')}>
       <AnimatePresence>
         {step === 'config' && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-black/98 backdrop-blur-3xl flex flex-col items-center justify-center p-12">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-[#0a0c10] flex flex-col items-center justify-center p-12">
             
             <div className="w-full max-w-6xl mb-16 flex flex-col items-center">
                <div className="flex items-center gap-4 mb-10">
-                  <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-2xl">
-                     <Palette size={24} />
+                  <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-2xl animate-pulse">
+                     <BrainCircuit size={24} />
                   </div>
-                  <h3 className="text-white/40 text-[10px] font-black uppercase tracking-[0.5em]">Premium Style Selector</h3>
+                  <h3 className="text-white/40 text-[10px] font-black uppercase tracking-[0.5em]">Nano Banana 2 Synthesis</h3>
                </div>
-               <div className="flex flex-wrap justify-center gap-3 bg-white/5 p-4 rounded-[2.5rem] border border-white/10">
+               <div className="flex flex-wrap justify-center gap-3 bg-white/5 p-4 rounded-[2.5rem] border border-white/10 backdrop-blur-3xl">
                   {studioStyles.map((style) => (
                     <button 
                       key={style.id}
@@ -348,22 +310,22 @@ export const PPTStudio: React.FC<{
 
             <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="w-full max-w-3xl">
                <div className="relative group">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-green-600 rounded-[3.5rem] blur opacity-20 group-hover:opacity-40 transition duration-1000" />
-                  <div className="relative bg-[#0a0c10] rounded-[3.5rem] border border-white/10 p-12 overflow-hidden">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-fuchsia-600 to-green-600 rounded-[3.5rem] blur opacity-20 group-hover:opacity-60 transition duration-1000 animate-pulse" />
+                  <div className="relative bg-[#050505] rounded-[3.5rem] border border-white/10 p-12 overflow-hidden shadow-2xl">
                      <textarea 
                         value={topic}
                         onChange={(e) => setTopic(e.target.value)}
-                        placeholder={lang === 'es' ? "¿Qué historia quieres contar hoy?" : "What story do you want to tell today?"}
-                        className="w-full h-48 bg-transparent text-white text-3xl font-black outline-none resize-none italic tracking-tighter leading-tight placeholder:text-white/10"
+                        placeholder={lang === 'es' ? "Ingresa el tema para la síntesis de alto nivel..." : "Enter the topic for high-level synthesis..."}
+                        className="w-full h-48 bg-transparent text-white text-3xl font-black outline-none resize-none italic tracking-tighter leading-tight placeholder:text-white/5"
                      />
                      <div className="mt-10 flex items-center justify-between">
                         <div className="flex items-center gap-4 text-white/20 text-[10px] font-black uppercase tracking-widest">
-                           <Layout size={16} />
-                           <span>Build 4.0 Premium</span>
+                           <Zap size={16} />
+                           <span>Build 4.2 • Cinematic Output</span>
                         </div>
-                        <button disabled={!topic} onClick={generateWithStyle} className="bg-blue-600 hover:bg-blue-500 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.4em] transition-all flex items-center gap-4 shadow-2xl">
-                           {lang === 'es' ? 'ORQUESTAR SÍNTESIS' : 'ORCHESTRATE SYNTHESIS'}
-                           <ChevronRightCircle size={18} />
+                        <button disabled={!topic} onClick={handleGenerate} className="bg-blue-600 hover:bg-blue-500 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.4em] transition-all flex items-center gap-4 shadow-2xl">
+                           {lang === 'es' ? 'SINTETIZAR AHORA' : 'SYNTHESIZE NOW'}
+                           <ChevronRightCircle size={18} className="animate-bounce" />
                         </button>
                      </div>
                   </div>
@@ -383,7 +345,7 @@ export const PPTStudio: React.FC<{
           <div>
             <h2 className="text-xl font-display font-black tracking-tighter uppercase leading-none dark:text-white italic">Neural Studio</h2>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-[8px] font-black text-blue-600 uppercase tracking-[0.3em] opacity-60">Architectural Engine</span>
+              <span className="text-[8px] font-black text-blue-600 uppercase tracking-[0.3em] opacity-60">Nanobannana 2 Architecture</span>
               <span className="w-1 h-1 rounded-full bg-blue-600/30" />
               <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{selectedMood.replace('_', ' ')}</span>
             </div>
@@ -392,7 +354,7 @@ export const PPTStudio: React.FC<{
 
         <div className="flex items-center gap-3">
           <button onClick={downloadPPT} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-500/10 flex items-center gap-2">
-            <Download size={14} /> PPTX
+            <Download size={14} /> EXPORT PPTX
           </button>
           <button onClick={onClose} className="p-2 text-slate-400 hover:text-white transition-colors bg-white/5 rounded-lg"><X size={20} /></button>
         </div>
@@ -401,7 +363,7 @@ export const PPTStudio: React.FC<{
       <div className="flex-1 flex overflow-hidden">
         <aside className="w-80 border-r border-slate-100 dark:border-white/5 flex flex-col shrink-0 bg-[#f9fafb] dark:bg-[#0a0c10] p-6 space-y-6 overflow-y-auto">
            <div className="flex items-center justify-between px-2 mb-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Project Timeline</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Cinematic View</span>
               <div className="flex gap-1">
                  <div className="w-1.5 h-1.5 rounded-full bg-blue-600" />
                  <div className="w-1.5 h-1.5 rounded-full bg-slate-200 dark:bg-white/10" />
@@ -434,24 +396,33 @@ export const PPTStudio: React.FC<{
 
         <main className="flex-1 p-12 lg:p-20 flex flex-col relative overflow-hidden bg-[#eff1f4] dark:bg-[#0a0c10]">
            {step === 'generating' && (
-             <div className="absolute inset-0 z-50 bg-white/95 dark:bg-corporate-950/95 backdrop-blur-3xl flex flex-col items-center justify-center space-y-10 text-center">
+             <div className="absolute inset-0 z-50 bg-white/95 dark:bg-[#0a0c10]/95 backdrop-blur-3xl flex flex-col items-center justify-center space-y-10 text-center p-20">
                 <div className="relative">
                    <div className="w-32 h-32 border-8 border-blue-600/10 border-t-blue-600 rounded-full animate-spin" />
                    <BrainCircuit size={40} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-blue-600 animate-pulse" />
                 </div>
-                <h3 className="text-4xl font-display font-black uppercase tracking-tighter text-blue-600">Building High-Fidelity Infrastructure</h3>
-                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Orchestrating Composition Mood: {selectedMood.replace('_', ' ')}</p>
+                <h3 className="text-5xl font-display font-black uppercase tracking-tighter text-white">Nano Banana 2: High Intelligence Synthesis</h3>
+                <p className="text-blue-600 font-bold uppercase tracking-[0.5em] text-xs">Architecting Mood: {selectedMood.toUpperCase()}</p>
+                <div className="w-full max-w-md h-1 bg-white/10 rounded-full overflow-hidden">
+                   <motion.div initial={{ x: '-100%' }} animate={{ x: '0%' }} transition={{ duration: 15, ease: "linear" }} className="w-full h-full bg-blue-600" />
+                </div>
              </div>
            )}
 
            <div className="flex-1 flex flex-col items-center justify-center">
               <AnimatePresence mode="wait">
                 {slides.length > 0 && (
-                  <motion.div key={selectedSlide} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="w-full max-w-[1300px] aspect-[16/9] bg-white dark:bg-corporate-900 rounded-[3.5rem] shadow-[0_60px_150px_rgba(0,0,0,0.15)] border border-slate-200 dark:border-white/10 overflow-hidden flex flex-col relative">
+                  <motion.div key={selectedSlide} initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.02 }} className="w-full max-w-[1300px] aspect-[16/9] bg-white dark:bg-[#0a0c10] rounded-[3.5rem] shadow-[0_80px_200px_rgba(0,0,0,0.3)] border border-slate-200 dark:border-white/5 overflow-hidden flex flex-col relative group">
                      {renderSlideContent(slides[selectedSlide])}
-                     <div className="h-16 bg-[#f9fafb] dark:bg-black/20 px-16 flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">
-                        <span>Neural Studio • Architectural View</span>
-                        <span className="text-blue-600 font-black">Slide {selectedSlide + 1} of {slides.length}</span>
+                     <div className="h-16 bg-[#f9fafb] dark:bg-black/40 px-16 flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] shrink-0 border-t border-black/5 dark:border-white/5">
+                        <div className="flex items-center gap-4">
+                           <span className="opacity-40">System Architecture 4.2</span>
+                           <span className="w-1 h-1 rounded-full bg-blue-600" />
+                           <span className="text-blue-600">Slide {selectedSlide + 1} of {slides.length}</span>
+                        </div>
+                        <div className="flex items-center gap-6">
+                           <span>{slides[selectedSlide].visualStrategy || 'Standard Optimization'}</span>
+                        </div>
                      </div>
                   </motion.div>
                 )}
@@ -460,11 +431,11 @@ export const PPTStudio: React.FC<{
 
            {slides.length > 0 && (
              <div className="mt-12 flex items-center justify-center gap-12">
-                <button disabled={selectedSlide === 0} onClick={() => setSelectedSlide(s => s - 1)} className="w-16 h-16 bg-white dark:bg-corporate-800 rounded-2xl shadow-xl flex items-center justify-center text-slate-400 hover:text-blue-600 transition-all border border-slate-200"><ChevronLeft size={32} /></button>
+                <button disabled={selectedSlide === 0} onClick={() => setSelectedSlide(s => s - 1)} className="w-16 h-16 bg-white dark:bg-white/5 rounded-2xl shadow-xl flex items-center justify-center text-slate-400 hover:text-blue-600 transition-all border border-slate-200 dark:border-white/5"><ChevronLeft size={32} /></button>
                 <div className="flex gap-4">
                    {slides.map((_, i) => <div key={i} className={cn("w-3 h-3 rounded-full transition-all duration-700", selectedSlide === i ? "w-12 bg-blue-600 shadow-[0_0_20px_rgba(37,99,235,0.4)]" : "bg-slate-200 dark:bg-white/10")} />)}
                 </div>
-                <button disabled={selectedSlide === slides.length - 1} onClick={() => setSelectedSlide(s => s + 1)} className="w-16 h-16 bg-white dark:bg-corporate-800 rounded-2xl shadow-xl flex items-center justify-center text-slate-400 hover:text-blue-600 transition-all border border-slate-200"><ChevronRight size={32} /></button>
+                <button disabled={selectedSlide === slides.length - 1} onClick={() => setSelectedSlide(s => s + 1)} className="w-16 h-16 bg-white dark:bg-white/5 rounded-2xl shadow-xl flex items-center justify-center text-slate-400 hover:text-blue-600 transition-all border border-slate-200 dark:border-white/5"><ChevronRight size={32} /></button>
              </div>
            )}
         </main>
