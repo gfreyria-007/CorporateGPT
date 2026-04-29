@@ -1004,31 +1004,58 @@ Make it look like a premium, professionally designed asset that could be used in
                    >
                       <div className="flex items-center gap-3">
                          <div className="w-6 h-6 rounded-full border border-white/10" style={{ backgroundColor: activeObjectProps.fill as string }} />
-                         <span className="text-[10px] font-black uppercase text-slate-500">{activeObjectProps.type}</span>
-                      </div>
-                      <div className="h-6 w-px bg-white/5" />
-                      <div className="flex items-center gap-4">
-                         {['#2563eb', '#ef4444', '#10b981', '#f59e0b', '#ffffff', '#000000'].map(c => (
+                         <div className="flex items-center gap-4">
+                          {['#2563eb', '#ef4444', '#10b981', '#f59e0b', '#ffffff', '#000000'].map(c => (
+                             <button 
+                               key={c}
+                               onClick={() => updateProperty('fill', c)}
+                               style={{ backgroundColor: c }}
+                               className={cn("w-4 h-4 rounded-full border border-white/10 hover:scale-125 transition-all", 
+                                 activeObjectProps.fill === c && "ring-2 ring-blue-500 ring-offset-2 ring-offset-slate-950"
+                               )}
+                             />
+                          ))}
+                          <div className="w-px h-4 bg-white/10 mx-1" />
+                          <div className="relative group">
                             <button 
-                              key={c}
-                              onClick={() => updateProperty('fill', c)}
-                              style={{ backgroundColor: c }}
-                              className={cn("w-4 h-4 rounded-full border border-white/10 hover:scale-125 transition-all", 
-                                activeObjectProps.fill === c && "ring-2 ring-blue-500 ring-offset-2 ring-offset-slate-950"
-                              )}
-                            />
-                         ))}
+                              className="w-6 h-6 rounded-lg bg-gradient-to-br from-red-500 via-green-500 to-blue-500 p-[1px] hover:scale-110 transition-all shadow-lg"
+                              title="Full Color Picker"
+                            >
+                              <div className="w-full h-full rounded-[7px] bg-slate-900 flex items-center justify-center">
+                                <input 
+                                  type="color" 
+                                  value={typeof activeObjectProps.fill === 'string' ? activeObjectProps.fill : '#ffffff'}
+                                  onChange={(e) => updateProperty('fill', e.target.value)}
+                                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                />
+                                <div className="w-2 h-2 rounded-full bg-white shadow-sm" />
+                              </div>
+                            </button>
+                          </div>
+                       </div>
                       </div>
+                      
                       {activeObjectProps.type === 'i-text' && (
-                         <>
-                            <div className="h-6 w-px bg-white/5" />
-                            <div className="flex items-center gap-2">
-                               <button onClick={() => updateProperty('fontSize', (activeObjectProps.fontSize || 24) + 2)} className="p-2 bg-white/5 rounded-lg text-white hover:bg-blue-600 transition-all"><Plus size={10} /></button>
-                               <span className="text-[10px] font-black text-blue-500 min-w-[20px] text-center">{activeObjectProps.fontSize}</span>
-                               <button onClick={() => updateProperty('fontSize', Math.max(8, (activeObjectProps.fontSize || 24) - 2))} className="p-2 bg-white/5 rounded-lg text-white hover:bg-blue-600 transition-all"><Minus size={10} /></button>
-                            </div>
-                         </>
-                      )}
+                          <>
+                             <div className="h-6 w-px bg-white/5" />
+                             <div className="flex items-center bg-slate-900 border border-white/5 rounded-xl px-1 py-1">
+                                <button 
+                                  onClick={() => updateProperty('fontSize', Math.max(8, (activeObjectProps.fontSize || 24) - 2))} 
+                                  className="px-3 py-1.5 hover:bg-white/5 rounded-lg text-[11px] font-black text-slate-400 hover:text-white transition-all"
+                                >
+                                  A-
+                                </button>
+                                <div className="w-px h-4 bg-white/10 mx-1" />
+                                <button 
+                                  onClick={() => updateProperty('fontSize', (activeObjectProps.fontSize || 24) + 2)} 
+                                  className="px-3 py-1.5 hover:bg-white/5 rounded-lg text-[11px] font-black text-slate-400 hover:text-white transition-all"
+                                >
+                                  A+
+                                </button>
+                             </div>
+                             <span className="text-[10px] font-black text-blue-500 min-w-[20px] text-center ml-2">{activeObjectProps.fontSize}px</span>
+                          </>
+                       )}
                       <div className="h-6 w-px bg-white/5" />
                       <button onClick={deleteSelected} className="flex items-center gap-2 px-3 py-1.5 bg-red-600/10 text-red-500 rounded-lg text-[9px] font-black uppercase hover:bg-red-600 hover:text-white transition-all">
                          <Trash2 size={12} /> Clear
@@ -1299,6 +1326,7 @@ Make it look like a premium, professionally designed asset that could be used in
                         <div className="w-16 h-16 bg-blue-500/10 rounded-[2rem] flex items-center justify-center mx-auto text-blue-500">
                            <MousePointer2 size={24} />
                         </div>
+                        <div className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em]">Build 2.8.6</div>
                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Select an object<br/>to inspect properties</p>
                      </div>
                    )}
