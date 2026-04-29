@@ -152,6 +152,13 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    if (isNDAProof) {
+      const timer = setTimeout(() => setIsNDAProof(false), 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [isNDAProof]);
+
   const handleSendMessage = async (content: string, attachments?: File[]) => {
     if (!user) {
       signIn();
@@ -728,8 +735,8 @@ export default function App() {
                       <p className="text-[11px] font-bold text-slate-400 leading-tight">Your data is processed in a secure environment. Enterprise NDA protection is fully enforced.</p>
                    </div>
                    <button 
-                     onClick={() => (selectedModel.includes('gpt') ? null : null)} 
-                     className="p-3 text-slate-400 hover:text-emerald-500 transition-colors"
+                     onClick={() => setIsNDAProof(false)} 
+                     className="p-3 text-slate-400 hover:text-red-500 transition-colors"
                    >
                       <X size={20} />
                    </button>
