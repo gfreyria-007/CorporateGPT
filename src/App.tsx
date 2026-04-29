@@ -91,16 +91,8 @@ export default function App() {
   const [chatInputValue, setChatInputValue] = useState('');
   const [showLanding, setShowLanding] = useState(false);
   const [trialEnded, setTrialEnded] = useState(false);
-  const [fontSize, setFontSize] = useState(16);
+  const [fontSize, setFontSize] = useState(14);
   const [thinkingStep, setThinkingStep] = useState(0);
-
-  const thinkingSteps = [
-    t.thinking,
-    lang === 'en' ? 'Synthesizing Neural Pathways' : 'Sintetizando Caminos Neurales',
-    lang === 'en' ? 'Analyzing Corporate Directives' : 'Analizando Directivas Corporativas',
-    lang === 'en' ? 'Scanning Knowledge Bank' : 'Escaneando Banco de Conocimiento',
-    lang === 'en' ? 'Optimizing Output Efficiency' : 'Optimizando Eficiencia de Salida'
-  ];
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -284,6 +276,14 @@ export default function App() {
                      selectedModel.includes('gemini-1.5') ||
                      selectedModel === 'openrouter/auto';
   const t = translations[lang];
+
+  const thinkingSteps = [
+    t.thinking,
+    lang === 'en' ? 'Synthesizing Neural Pathways' : 'Sintetizando Caminos Neurales',
+    lang === 'en' ? 'Analyzing Corporate Directives' : 'Analizando Directivas Corporativas',
+    lang === 'en' ? 'Scanning Knowledge Bank' : 'Escaneando Banco de Conocimiento',
+    lang === 'en' ? 'Optimizing Output Efficiency' : 'Optimizando Eficiencia de Salida'
+  ];
 
   const isSuperAdmin = user?.email === SUPER_ADMIN_EMAIL || profile?.role === 'admin' || profile?.role === 'super-admin';
 
