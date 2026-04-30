@@ -13,12 +13,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (action === 'generateContent') {
       const result = await ai.models.generateContent(payload);
-      // Ensure we extract the text correctly from the new SDK response
-      const responseText = typeof result.text === 'function' ? await result.text() : result.text;
-      return res.status(200).json({ 
-        text: responseText, 
-        slides: JSON.parse(responseText || '{}').slides || [] 
-      });
+      const rawText = typeof result.text === 'function' ? await result.text() : result.text;
+      
+      // CRITICAL: Clean markdown and backticks
+      const cleanJson = rawText?.replace(/```json/g, '').replace(/```/g, '').trim();
+      
+      let slides = [];
+      try {
+        const parsed = JSON.parse(cleanJson || '{}');
+        slides = parsed.slides || [];
+      } catch (e) {
+        console.error("JSON Clean/Parse Error:", e);
+      }
+
+      return res.status(200).json({ text: rawText, slides });
     } else if (action === 'chat') {
       const chat = ai.chats.create({ model: payload.model, config: payload.config });
       const result = await chat.sendMessage({ message: payload.message });
@@ -28,15 +36,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Unknown action' });
   } catch (error: any) {
     console.error('--- GEMINI PROXY ERROR ---');
-    console.error('Message:', error.message);
-    console.error('Stack:', error.stack);
-    if (error.response) {
-      console.error('Response Data:', error.response.data);
-    }
     return res.status(500).json({ 
       error: 'Gemini Execution Error', 
-      details: error.message,
-      checkVercelLogs: true 
+      details: error.message 
     });
   }
 }
