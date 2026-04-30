@@ -87,24 +87,36 @@ export const PricingSection = () => {
   const [isRedirecting, setIsRedirecting] = React.useState<string | null>(null);
   const [showSecureMessage, setShowSecureMessage] = React.useState(false);
   
-  const handleBuy = (plan: string) => {
+  const handleBuy = async (plan: string) => {
     setIsRedirecting(plan);
-    console.log(`Contacting Secure Gateway for ${plan}...`);
+    console.log(`Creating Secure Checkout Session for ${plan}...`);
     
-    // Simulate a secure API call to generate a Stripe session
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan,
+          qty: plan === 'Professional' ? professionalUsers : 1
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to create checkout session');
+      
+      const { url } = await response.json();
+      
       setShowSecureMessage(true);
       
-      // Since we don't have production Stripe IDs yet, we show a professional fallback
-      // instead of redirecting to a broken URL that triggers Access Denied.
+      // Delay slightly for UX before redirecting
       setTimeout(() => {
-        setIsRedirecting(null);
-        setShowSecureMessage(false);
-        
-        const details = plan === 'Professional' ? ` (${professionalUsers} usuarios)` : '';
-        alert(`CATALIZIA SECURE GATEWAY:\n\nSe está procesando tu solicitud para el plan ${plan}${details}.\n\nPara finalizar la suscripción de forma segura en este entorno de pruebas, contacta a contacto@catalizia.com o usa el panel de Super Admin.`);
-      }, 2000);
-    }, 1000);
+        window.location.href = url;
+      }, 1500);
+
+    } catch (error: any) {
+      console.error('Stripe Error:', error);
+      alert(`Error de conexión con la pasarela: ${error.message}`);
+      setIsRedirecting(null);
+    }
   };
 
   return (

@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import helmet from 'helmet';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
+import Stripe from 'stripe';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -51,6 +52,9 @@ async function startServer() {
   app.use(express.json({ limit: '10mb' })); // Protect against large payloads
 
   const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+    apiVersion: '2025-02-24-preview',
+  });
 
   // API Route to fetch models
   app.get('/api/models', async (req, res) => {
@@ -119,6 +123,44 @@ async function startServer() {
     }
   });
 
+  // Stripe Checkout Session Route
+  app.post('/api/create-checkout-session', async (req, res) => {
+    try {
+      const { plan, qty, priceId } = req.body;
+      
+      // Map plan names to real Price IDs from Stripe Dashboard
+      // These should be set in .env in production
+      const planPrices: Record<string, string> = {
+        'Starter': process.env.STRIPE_PRICE_STARTER || 'price_starter_placeholder',
+        'Professional': process.env.STRIPE_PRICE_PROFESSIONAL || 'price_professional_placeholder',
+        'Top-Up': process.env.STRIPE_PRICE_TOPUP || 'price_topup_placeholder'
+      };
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price: planPrices[plan] || priceId,
+            quantity: qty || 1,
+          },
+        ],
+        mode: 'subscription',
+        success_url: `${process.env.APP_URL || 'http://localhost:3000'}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.APP_URL || 'http://localhost:3000'}/pricing`,
+        metadata: {
+          plan: plan,
+          qty: qty?.toString() || '1',
+          role: plan === 'Professional' ? 'admin' : 'user'
+        }
+      });
+
+      res.json({ url: session.url });
+    } catch (error: any) {
+      console.error('Stripe error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
   // API Route for chat completions
   app.post('/api/chat', async (req, res) => {
     try {
