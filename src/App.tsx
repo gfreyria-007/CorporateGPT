@@ -32,11 +32,12 @@ import {
   Fingerprint,
   Activity,
   History,
-  Menu,
+  Users,
   CreditCard,
   Crown,
   HelpCircle,
-  RefreshCw
+  RefreshCw,
+  Menu
 } from 'lucide-react';
 import { ModelSelector } from './components/ModelSelector';
 import { ChatMessage } from './components/ChatMessage';
@@ -47,6 +48,7 @@ import PPTStudio from './components/PPTStudio';
 import { GPTsGenerator } from './components/GPTsGenerator';
 import { MobileWorkspace } from './components/MobileWorkspace';
 import { PromptGenie } from './components/PromptGenie';
+import { CompanyPanel } from './components/CompanyPanel';
 import { AdvancedPanel } from './components/AdvancedPanel';
 import { FAQ } from './components/FAQ';
 import { PrivacyPolicy } from './components/Compliance/PrivacyPolicy';
@@ -64,6 +66,7 @@ import { useQuota } from './lib/useQuota';
 import { EcoModeBanner } from './components/EcoModeBanner';
 import { SuperAdminPanel } from './components/SuperAdminPanel';
 import { UpgradePlanPage } from './components/UpgradePlanPage';
+import { TechieWorkspace } from './components/TechieWorkspace';
 import { translations } from './lib/translations';
 
 export default function App() {
@@ -81,7 +84,9 @@ export default function App() {
   const [isChatLoading, setIsChatLoading] = useState(false);
   
   // UI Panels
-  const [activePanel, setActivePanel] = useState<'chat' | 'admin' | 'creative' | 'knowledge' | 'ppt'>('chat');
+
+
+  const [activePanel, setActivePanel] = useState<'chat' | 'admin' | 'creative' | 'knowledge' | 'ppt' | 'team'>('chat');
   const [showFAQ, setShowFAQ] = useState(false);
   const [safetyAlert, setSafetyAlert] = useState<string | null>(null);
   const [zdrEnabled, setZdrEnabled] = useState(false);
@@ -102,7 +107,12 @@ export default function App() {
   const [trialEnded, setTrialEnded] = useState(false);
   const [fontSize, setFontSize] = useState(14);
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [appMode, setAppMode] = useState<'corporate' | 'junior'>('corporate');
+
+  // Permissions block removed to allow free switching between apps
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  const isSuperAdmin = user?.email === SUPER_ADMIN_EMAIL || profile?.role === 'admin' || profile?.role === 'super-admin' || (profile as any)?.role === 'owner';
 
   // V2 Version Gatekeeper — reads appVersion from company tenant
   const { appVersion, engineStatus, setEngineStatus } = useVersionGatekeeper(
@@ -130,6 +140,15 @@ export default function App() {
       setTrialEnded(true);
       setShowLanding(true);
     }
+
+    // Auto-detect App Mode based on Subdomain
+    const hostname = window.location.hostname;
+    if (hostname.includes('techie') || hostname.includes('junior')) {
+      setAppMode('junior');
+    } else {
+      setAppMode('corporate');
+    }
+
     fetchModels();
   }, []);
 
@@ -230,14 +249,18 @@ export default function App() {
     setMessages(prev => [...prev, userMessage]);
     setChatInputValue('');
     setIsChatLoading(true);
-
     try {
       const fileContext = selectedGPT?.files
         ?.filter((f: any) => f.content)
         ?.map((f: any) => `--- ${f.name} ---\n${f.content}`)
         ?.join('\n\n');
+
+      let juniorContext = "";
+      if (appMode === 'junior') {
+        juniorContext = "\n\n[PERSONA: JUNIOR TUTOR]\nActúa como un tutor educativo amigable, paciente y alentador para niños. Utiliza lenguaje sencillo, ejemplos creativos y evita temas complejos o inapropiados para menores. Fomenta la curiosidad y explica conceptos paso a paso.";
+      }
       
-      const fullInstructions = [selectedGPT?.instructions, fileContext]
+      const fullInstructions = [selectedGPT?.instructions, fileContext, juniorContext]
         .filter(Boolean)
         .join('\n\n[KNOWLEDGE_BASE_ATTACHMENT]\n');
 
@@ -245,10 +268,12 @@ export default function App() {
       // Routes through failsafeRouter: primary (6s timeout) → Gemini 1.5 Flash
       let result;
       try {
+        const idToken = await user.getIdToken();
         result = await failsafeChat({
           model: selectedModel,
           messages: [...messages, userMessage].map(({ role, content }) => ({ role, content })),
           userId: user.uid,
+          idToken: idToken,
           instructions: fullInstructions || null,
           temperature: advancedSettings.temperature,
           maxTokens: advancedSettings.maxTokens,
@@ -296,7 +321,7 @@ export default function App() {
   };
 
   const t = translations[lang];
-  const isSuperAdmin = user?.email === SUPER_ADMIN_EMAIL || profile?.role === 'admin' || profile?.role === 'super-admin';
+
   const currentModelData = models.find(m => m.id === selectedModel);
 
   if (loading) {
@@ -328,6 +353,7 @@ export default function App() {
         lang={lang}
         setLang={setLang}
         appConfig={appConfig}
+        appMode={appMode}
       />
     );
   }
@@ -357,6 +383,7 @@ export default function App() {
         tokenPercent={tokenPercent}
         multimediaRemaining={multimediaRemaining}
         isSuperAdmin={isSuperAdmin}
+        appMode={appMode}
       />
     );
   }
@@ -392,22 +419,50 @@ export default function App() {
                </div>
 
                <div className="flex flex-col gap-1.5">
+                 {/* Persona Switcher - Only show if user has both permissions */}
+                 {((profile as any)?.permissions?.junior === true && (profile as any)?.permissions?.corporate !== false) && (
+                   <div className="mb-6 p-1 bg-slate-100 dark:bg-white/5 rounded-2xl flex gap-1 border border-corporate-200 dark:border-white/10">
+                      <button 
+                        onClick={() => setAppMode('corporate')}
+                        className={cn("flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2", appMode === 'corporate' ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" : "text-slate-500")}
+                      >
+                        <Shield size={12} /> Corporate
+                      </button>
+                      <button 
+                        onClick={() => setAppMode('junior')}
+                        className={cn("flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2", appMode === 'junior' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-slate-500 hover:text-emerald-500")}
+                      >
+                        <Zap size={12} /> Techie
+                      </button>
+                   </div>
+                 )}
+
                  {[
-                   { id: 'chat', label: t.intelligentChat, icon: <MessageSquare size={18} /> },
-                   { id: 'creative', label: 'Asset Studio', icon: <Palette size={18} /> },
-                   { id: 'knowledge', label: 'Knowledge Bank', icon: <Database size={18} /> },
-                   { id: 'ppt', label: t.pptStudio, icon: <Presentation size={18} /> }
+                   { id: 'chat', label: appMode === 'corporate' ? t.intelligentChat : 'Techie Tutor', icon: <MessageSquare size={18} /> },
+                   { id: 'creative', label: appMode === 'corporate' ? 'Asset Studio' : 'Taller de Arte', icon: <Palette size={18} /> },
+                   { id: 'knowledge', label: appMode === 'corporate' ? 'Knowledge Bank' : 'Biblioteca', icon: <Database size={18} /> },
+                   { id: 'ppt', label: appMode === 'corporate' ? t.pptStudio : 'Presentaciones', icon: <Presentation size={18} /> }
                  ].map(item => (
                    <button 
                     key={item.id}
                     onClick={() => setActivePanel(item.id as any)}
                     className={cn("flex items-center gap-3 px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all",
-                      activePanel === item.id ? 'bg-blue-600 text-white shadow-2xl shadow-blue-500/40 translate-x-2' : 'text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-corporate-900'
+                      activePanel === item.id ? (appMode === 'corporate' ? 'bg-blue-600 text-white shadow-2xl shadow-blue-500/40 translate-x-2' : 'bg-emerald-500 text-white shadow-2xl shadow-emerald-500/40 translate-x-2') : 'text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-corporate-900'
                     )}
                    >
                       {item.icon} {item.label}
                    </button>
                  ))}
+                 
+                 {isSuperAdmin && (
+                   <button 
+                    onClick={() => setActivePanel('team')}
+                    className="flex items-center gap-3 px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-corporate-900 transition-all"
+                   >
+                      <Users size={18} /> Team Management
+                   </button>
+                 )}
+
                  <button 
                   onClick={() => setShowUpgradePlan(true)}
                   className="flex items-center gap-3 px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-corporate-900 transition-all"
@@ -545,7 +600,13 @@ export default function App() {
               </motion.div>
             )}
 
-            {activePanel === 'chat' && (
+            {activePanel === 'chat' && appMode === 'junior' && (
+               <motion.div key="junior" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0">
+                  <TechieWorkspace />
+               </motion.div>
+            )}
+
+            {activePanel === 'chat' && appMode === 'corporate' && (
               <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-10 max-w-5xl mx-auto space-y-6 pb-32">
                 {messages.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center py-12 lg:py-20 space-y-12 lg:space-y-16">
@@ -611,6 +672,7 @@ export default function App() {
                               </div>
                            </div>
                         ))}
+
                      </div>
                   </div>
                 ) : (
@@ -673,8 +735,28 @@ export default function App() {
           {activePanel === 'ppt' && (
             <motion.div key="ppt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-white"><PPTStudio theme={theme} lang={lang} user={user} onClose={() => setActivePanel('chat')} /></motion.div>
           )}
+          {activePanel === 'team' && (
+            <motion.div key="team" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-white dark:bg-corporate-950"><CompanyPanel onClose={() => setActivePanel('chat')} theme={theme} lang={lang} /></motion.div>
+          )}
         </AnimatePresence>
       </main>
+
+      {/* Floating Environment Switcher */}
+      <div className="fixed bottom-6 right-6 z-[9999]">
+         <button 
+           onClick={() => setAppMode(appMode === 'corporate' ? 'junior' : 'corporate')}
+           className={cn("flex items-center gap-3 px-5 py-4 rounded-full shadow-2xl transition-all hover:scale-105 border",
+              appMode === 'corporate' 
+                ? "bg-emerald-500 text-white border-emerald-400 shadow-emerald-500/30" 
+                : "bg-blue-600 text-white border-blue-500 shadow-blue-600/30"
+           )}
+         >
+            {appMode === 'corporate' ? <Zap size={18} /> : <Shield size={18} />}
+            <span className="text-xs font-black uppercase tracking-widest">
+              {appMode === 'corporate' ? 'Ir a Techie Tutor' : 'Ir a Corporate'}
+            </span>
+         </button>
+      </div>
 
       <PromptGenie isOpen={isPromptGenieOpen} onClose={() => setIsPromptGenieOpen(false)} onApply={setChatInputValue} theme={theme} />
       <AnimatePresence>
