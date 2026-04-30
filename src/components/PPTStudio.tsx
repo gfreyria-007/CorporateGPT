@@ -10,11 +10,6 @@ import {
   generateSkeleton, regenerateSlideSkeleton, renderSlideVisual, SlideSkeleton 
 } from '@/services/geminiService';
 
-interface PPTStudioProps {
-  onClose: () => void;
-  isOpen: boolean;
-}
-
 type StudioStep = 'config' | 'skeleton';
 
 const studioStyles = [
@@ -24,7 +19,7 @@ const studioStyles = [
   { id: 'glass', name: 'Glass', icon: <Palette size={14} />, color: 'bg-purple-600' }
 ];
 
-const PPTStudio: React.FC<PPTStudioProps> = ({ onClose, isOpen }) => {
+const PPTStudio: React.FC<any> = ({ onClose }) => {
   const [step, setStep] = useState<StudioStep>('config');
   const [prompt, setPrompt] = useState('');
   const [slideCount, setSlideCount] = useState(10);
@@ -37,8 +32,6 @@ const PPTStudio: React.FC<PPTStudioProps> = ({ onClose, isOpen }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
   const [selectedStyle, setSelectedStyle] = useState('minimal');
-
-  if (!isOpen) return null;
 
   const startGeneration = async () => {
     setIsGenerating(true);
@@ -114,7 +107,7 @@ const PPTStudio: React.FC<PPTStudioProps> = ({ onClose, isOpen }) => {
             <BrainCircuit size={20} />
           </div>
           <div>
-            <h1 className="text-sm font-black uppercase tracking-widest italic text-slate-900">Neural Studio 6.2</h1>
+            <h1 className="text-sm font-black uppercase tracking-widest italic text-slate-900">Neural Studio 6.5</h1>
             <div className="flex items-center gap-2">
               <div className={cn("w-1.5 h-1.5 rounded-full", isGenerating ? "bg-yellow-500 animate-pulse" : "bg-green-500")} />
               <span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">

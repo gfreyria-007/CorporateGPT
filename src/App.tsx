@@ -484,7 +484,7 @@ export default function App() {
                     {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
                   </button>
                 </div>
-                <div className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em]">Build 5.0.0</div>
+                <div className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em]">Build 6.5.1</div>
              </div>
            </div>
         </div>
@@ -764,7 +764,7 @@ export default function App() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="fixed inset-0 z-[150] bg-corporate-950 flex flex-col"
+              className="fixed inset-0 z-[150] bg-white flex flex-col"
             >
               <PPTStudio theme={theme} lang={lang} user={user} onClose={() => setActivePanel('chat')} />
             </motion.div>
