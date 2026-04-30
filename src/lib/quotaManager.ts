@@ -88,6 +88,7 @@ export interface DailyQuota {
   multimediaUsed: number;
   multimediaLimit: number;
   ecoModeActive: boolean;
+  purchased_credits: number; // NEVER EXPIRES. Used when daily tokens = 0
   lastReset: any;            // Firestore Timestamp
 }
 
@@ -109,18 +110,19 @@ export async function getDailyQuota(
     const snap = await getDoc(ref);
 
     if (!snap.exists() || snap.data()?.date !== todayMX) {
-      // New day — reset counters
+      // New day — reset counters but PRESERVE purchased_credits
       const fresh: DailyQuota = {
         date: todayMX,
         tokensUsed: 0,
         tokensLimit: limits.tokens,
         multimediaUsed: 0,
         multimediaLimit: limits.multimedia,
-        ecoModeActive: false,
+        ecoModeActive: (snap.exists() ? (snap.data().purchased_credits || 0) : 0) === 0 && limits.tokens === 0,
+        purchased_credits: snap.exists() ? (snap.data().purchased_credits || 0) : 0,
         lastReset: serverTimestamp(),
       };
       await setDoc(ref, fresh);
-      console.info(`[Quota] Daily reset for ${uid} — date: ${todayMX}`);
+      console.info(`[Quota] Daily reset for ${uid} — date: ${todayMX}. Preserved credits: ${fresh.purchased_credits}`);
       return fresh;
     }
 
@@ -135,6 +137,7 @@ export async function getDailyQuota(
       multimediaUsed: 0,
       multimediaLimit: limits.multimedia,
       ecoModeActive: false,
+      purchased_credits: 0,
       lastReset: null,
     };
   }
@@ -153,23 +156,65 @@ export async function consumeTokens(
   const ref = quotaRef(uid);
   const quota = await getDailyQuota(uid, tier);
 
-  const newTokensUsed = Math.min(quota.tokensUsed + tokensConsumed, quota.tokensLimit);
-  const ecoModeActive = newTokensUsed >= quota.tokensLimit;
+  let newTokensUsed = quota.tokensUsed + tokensConsumed;
+  let remainingToConsume = 0;
+
+  if (newTokensUsed > quota.tokensLimit) {
+    remainingToConsume = newTokensUsed - quota.tokensLimit;
+    newTokensUsed = quota.tokensLimit;
+  }
+
+  let newPurchasedCredits = quota.purchased_credits || 0;
+  if (remainingToConsume > 0) {
+    if (newPurchasedCredits >= remainingToConsume) {
+      newPurchasedCredits -= remainingToConsume;
+      remainingToConsume = 0;
+    } else {
+      remainingToConsume -= newPurchasedCredits;
+      newPurchasedCredits = 0;
+    }
+  }
+
+  const ecoModeActive = (newTokensUsed >= quota.tokensLimit) && (newPurchasedCredits === 0);
 
   try {
     await updateDoc(ref, {
       tokensUsed: newTokensUsed,
+      purchased_credits: newPurchasedCredits,
       ecoModeActive,
     });
 
     if (ecoModeActive && !quota.ecoModeActive) {
-      console.warn(`[Quota] ♻️ Eco Mode ACTIVATED for ${uid} — tokens exhausted`);
+      console.warn(`[Quota] ♻️ Eco Mode ACTIVATED for ${uid} — daily quota & purchased credits exhausted`);
     }
 
-    return { ...quota, tokensUsed: newTokensUsed, ecoModeActive };
+    return { ...quota, tokensUsed: newTokensUsed, purchased_credits: newPurchasedCredits, ecoModeActive };
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, `users/${uid}/quota/daily`);
     return quota;
+  }
+}
+
+/**
+ * Top-Up $50 MXN logic: adds 50,000 purchased credits that never expire.
+ */
+export async function purchaseTopUp(uid: string, amountMXN: number = 50): Promise<void> {
+  // $50 MXN = 50,000 credits
+  const creditsToAdd = (amountMXN / 50) * 50_000;
+  const ref = quotaRef(uid);
+  
+  try {
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      const current = snap.data().purchased_credits || 0;
+      await updateDoc(ref, { 
+        purchased_credits: current + creditsToAdd,
+        ecoModeActive: false // automatically breaks out of eco mode
+      });
+      console.info(`[Quota] 💰 Top-up successful: +${creditsToAdd} credits for ${uid}`);
+    }
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, `users/${uid}/quota/daily/topup`);
   }
 }
 
