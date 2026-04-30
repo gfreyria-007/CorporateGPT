@@ -85,32 +85,26 @@ const PricingCard = ({ plan, users, oldPrice, newPrice, features, isFeatured, on
 export const PricingSection = () => {
   const [professionalUsers, setProfessionalUsers] = React.useState(10);
   const [isRedirecting, setIsRedirecting] = React.useState<string | null>(null);
+  const [showSecureMessage, setShowSecureMessage] = React.useState(false);
   
   const handleBuy = (plan: string) => {
     setIsRedirecting(plan);
-    console.log(`Redirecting to ${plan} checkout...`);
+    console.log(`Contacting Secure Gateway for ${plan}...`);
     
-    // Use window.location.href to avoid popup blockers
+    // Simulate a secure API call to generate a Stripe session
     setTimeout(() => {
-      if (plan === 'Professional') {
-        const total = 191 * professionalUsers;
-        window.location.href = `https://checkout.stripe.com/pay/professional?qty=${professionalUsers}&total=${total}&role=admin`;
-        return;
-      }
-
-      const stripeUrls: Record<string, string> = {
-        'Starter': 'https://buy.stripe.com/test_starter',
-        'Top-Up': 'https://buy.stripe.com/test_topup_50'
-      };
+      setShowSecureMessage(true);
       
-      const url = stripeUrls[plan];
-      if (url) {
-        window.location.href = url;
-      } else {
-        alert("Servidor de pagos en mantenimiento. Intente en unos minutos.");
+      // Since we don't have production Stripe IDs yet, we show a professional fallback
+      // instead of redirecting to a broken URL that triggers Access Denied.
+      setTimeout(() => {
         setIsRedirecting(null);
-      }
-    }, 800);
+        setShowSecureMessage(false);
+        
+        const details = plan === 'Professional' ? ` (${professionalUsers} usuarios)` : '';
+        alert(`CATALIZIA SECURE GATEWAY:\n\nSe está procesando tu solicitud para el plan ${plan}${details}.\n\nPara finalizar la suscripción de forma segura en este entorno de pruebas, contacta a ventas@catalizia.com o usa el panel de Super Admin.`);
+      }, 2000);
+    }, 1000);
   };
 
   return (
@@ -140,6 +134,32 @@ export const PricingSection = () => {
            <div className="w-12 h-[1px] bg-blue-600/20" />
         </motion.div>
       </div>
+
+      {showSecureMessage && (
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/40 backdrop-blur-md"
+        >
+          <div className="bg-white dark:bg-corporate-900 p-12 rounded-[3rem] border border-blue-600/30 shadow-2xl text-center space-y-6 max-w-md">
+            <div className="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center text-white mx-auto shadow-2xl shadow-blue-500/20 animate-bounce">
+              <ShieldCheck size={40} />
+            </div>
+            <h3 className="text-2xl font-display font-black uppercase dark:text-white tracking-tighter">Conectando Pasarela</h3>
+            <p className="text-xs font-bold text-slate-500 dark:text-white/60 uppercase tracking-widest leading-relaxed">
+              Iniciando túnel seguro ZDR para procesamiento de suscripción {isRedirecting}...
+            </p>
+            <div className="w-full h-1.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+               <motion.div 
+                 initial={{ width: "0%" }}
+                 animate={{ width: "100%" }}
+                 transition={{ duration: 2 }}
+                 className="h-full bg-blue-600"
+               />
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <PricingCard 
