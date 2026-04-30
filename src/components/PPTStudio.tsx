@@ -104,7 +104,14 @@ export const PPTStudio: React.FC<{
     setGenStatus(lang === 'es' ? 'DEFINIENDO CONCEPTO VISUAL...' : 'DEFINING VISUAL CONCEPT...');
     
     try {
-       const preview = await generateStylePreview(topic, selectedMood, lang);
+       // Timeout protection: if preview takes > 10s, fallback to full gen
+       const previewPromise = generateStylePreview(topic, selectedMood, lang);
+       const timeoutPromise = new Promise((_, reject) => 
+         setTimeout(() => reject(new Error("Preview Timeout")), 10000)
+       );
+
+       const preview = await Promise.race([previewPromise, timeoutPromise]) as StudioSlideData;
+       
        if (preview && preview.title) {
          if (preview.aiSuggestedMood) {
            setActiveMood(preview.aiSuggestedMood as DesignMood);
@@ -115,7 +122,7 @@ export const PPTStudio: React.FC<{
          throw new Error("Invalid preview data");
        }
     } catch (error) {
-       console.error("Preview failed, falling back to full generation:", error);
+       console.warn("Preview failed or timed out, skipping to full generation:", error);
        handleGenerate();
     }
   };
