@@ -13,20 +13,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (action === 'generateContent') {
       const result = await ai.models.generateContent(payload);
-      const rawText = typeof result.text === 'function' ? await result.text() : result.text;
+      const rawText = typeof result.text === 'function' ? await (result.text as any)() : result.text;
       
-      // CRITICAL: Clean markdown and backticks
-      const cleanJson = rawText?.replace(/```json/g, '').replace(/```/g, '').trim();
+      // Clean markdown fences if model returned them
+      const cleanJson = (rawText || '').replace(/```json/g, '').replace(/```/g, '').trim();
       
-      let slides = [];
+      // Parse and spread ALL top-level keys so any response shape works
+      // (slides, questions, preview, suggestedMood, finalMood, etc.)
+      let parsedFields: Record<string, any> = {};
       try {
         const parsed = JSON.parse(cleanJson || '{}');
-        slides = parsed.slides || [];
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          parsedFields = parsed;
+        }
       } catch (e) {
-        console.error("JSON Clean/Parse Error:", e);
+        console.error("JSON Parse Error in gemini proxy:", e);
       }
 
-      return res.status(200).json({ text: rawText, slides });
+      return res.status(200).json({ text: rawText, ...parsedFields });
+
     } else if (action === 'chat') {
       const chat = ai.chats.create({ model: payload.model, config: payload.config });
       const result = await chat.sendMessage({ message: payload.message });
@@ -35,10 +40,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     return res.status(400).json({ error: 'Unknown action' });
   } catch (error: any) {
-    console.error('--- GEMINI PROXY ERROR ---');
+    console.error('--- GEMINI PROXY ERROR ---', error.message);
     return res.status(500).json({ 
       error: 'Gemini Execution Error', 
       details: error.message 
     });
   }
 }
+
