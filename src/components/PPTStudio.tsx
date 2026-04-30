@@ -7,10 +7,11 @@ import {
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  generateSkeleton, regenerateSlideSkeleton, renderSlideVisual, SlideSkeleton 
+  generateSkeleton, renderSlideVisual, SlideSkeleton,
+  generateClarifyingQuestions, ClarifyingQuestion
 } from '@/services/geminiService';
 
-type StudioStep = 'config' | 'skeleton';
+type StudioStep = 'config' | 'clarify' | 'skeleton';
 
 const studioStyles = [
   { id: 'cyber', name: 'Cyberpunk', icon: <Zap size={14} />, color: 'bg-blue-600' },
@@ -32,17 +33,46 @@ const PPTStudio: React.FC<any> = ({ onClose, theme }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
   const [selectedStyle, setSelectedStyle] = useState('minimal');
+  const [genError, setGenError] = useState<string | null>(null);
+  const [clarifyQuestions, setClarifyQuestions] = useState<ClarifyingQuestion[]>([]);
+  const [clarifyAnswers, setClarifyAnswers] = useState<Record<string, string>>({});
 
   const isDark = theme === 'dark';
 
-  const startGeneration = async () => {
+  // Step 1: fetch clarifying questions
+  const startClarify = async () => {
     setIsGenerating(true);
+    setGenError(null);
     try {
-      const skeleton = await generateSkeleton(prompt, slideCount);
+      const qs = await generateClarifyingQuestions(prompt);
+      setClarifyQuestions(qs);
+      setClarifyAnswers({});
+      setStep('clarify');
+    } catch {
+      await generateWithContext('');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Step 2: generate slides with enriched context
+  const generateWithContext = async (extraContext: string) => {
+    setIsGenerating(true);
+    setGenError(null);
+    const enrichedPrompt = extraContext
+      ? `${prompt}\n\nContexto adicional del usuario:\n${extraContext}`
+      : prompt;
+    try {
+      const skeleton = await generateSkeleton(enrichedPrompt, slideCount);
+      if (!skeleton || skeleton.length === 0) {
+        setGenError('No se pudo generar contenido. Intenta con un prompt más específico o verifica tu API key de Gemini.');
+        return;
+      }
       setSlides(skeleton.map(s => ({ ...s, rendered: false, visualLayout: 'split' })));
       setStep('skeleton');
     } catch (error) {
       console.error("Error:", error);
+      setGenError('Error al conectar con el motor de IA. Verifica tu conexión.');
     } finally {
       setIsGenerating(false);
     }
@@ -201,9 +231,9 @@ const PPTStudio: React.FC<any> = ({ onClose, theme }) => {
                   <textarea 
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
-                    placeholder="Describe tu presentación..."
+                    placeholder={`Describe tu presentación en lenguaje natural...\n\nEjemplos:\n• "La historia de Tarzán en 3 slides"\n• "Estrategia de ventas Q3 2025"\n• "Resumen ejecutivo del mercado de IA"`}
                     className={cn(
-                      "w-full h-48 border-none rounded-[2.5rem] p-10 text-2xl font-medium focus:ring-0 outline-none resize-none placeholder:opacity-30",
+                      "w-full h-48 border-none rounded-[2.5rem] p-10 text-xl font-medium focus:ring-0 outline-none resize-none placeholder:opacity-30 placeholder:text-sm leading-relaxed",
                       isDark
                         ? "bg-white/5 text-white placeholder:text-white"
                         : "bg-slate-50 text-slate-800"
@@ -226,14 +256,127 @@ const PPTStudio: React.FC<any> = ({ onClose, theme }) => {
                       />
                     </div>
                     <button 
-                      onClick={startGeneration}
+                      onClick={startClarify}
                       disabled={!prompt || isGenerating}
                       className="px-10 py-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white rounded-2xl flex items-center gap-3 font-black uppercase tracking-widest text-sm transition-all shadow-xl shadow-blue-600/20 active:scale-95"
                     >
-                      Generar Esqueleto <ChevronRight size={18} />
+                      {isGenerating ? (
+                        <><RefreshCw size={18} className="animate-spin" /> Analizando...</>
+                      ) : (
+                        <>Continuar <ChevronRight size={18} /></>
+                      )}
                     </button>
                   </div>
                 </div>
+                {genError && (
+                  <div className="mt-4 px-6 py-4 bg-red-50 border border-red-200 rounded-2xl text-red-600 text-sm font-bold text-center">
+                    ⚠️ {genError}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {step === 'clarify' && (
+            <motion.div
+              key="clarify"
+              initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}
+              className="flex-1 flex flex-col items-center justify-center p-16"
+            >
+              <div className="max-w-2xl w-full space-y-10">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center">
+                      <BrainCircuit size={16} className="text-white" />
+                    </div>
+                    <span className={cn("text-[10px] font-black uppercase tracking-widest", isDark ? "text-blue-400" : "text-blue-600")}>
+                      Neural Interview — Para generar el mejor resultado posible
+                    </span>
+                  </div>
+                  <h2 className={cn("text-4xl font-black tracking-tighter italic", isDark ? "text-white" : "text-slate-900")}>
+                    Cuéntame más
+                  </h2>
+                  <p className={cn("text-sm font-medium opacity-50", isDark ? "text-white" : "text-slate-900")}>
+                    &ldquo;{prompt}&rdquo;
+                  </p>
+                </div>
+
+                <div className="space-y-6">
+                  {clarifyQuestions.map((q, i) => (
+                    <div key={q.id} className={cn(
+                      "p-6 rounded-[1.5rem] border space-y-4",
+                      isDark ? "bg-white/5 border-white/10" : "bg-white border-slate-200 shadow-sm"
+                    )}>
+                      <div className="flex items-start gap-3">
+                        <span className={cn("text-[10px] font-black opacity-30 mt-0.5 uppercase tracking-widest shrink-0", isDark ? "text-white" : "text-slate-900")}>0{i+1}</span>
+                        <div className="space-y-1">
+                          <p className={cn("text-sm font-black", isDark ? "text-white" : "text-slate-900")}>{q.question}</p>
+                          <p className={cn("text-[10px] font-medium opacity-40", isDark ? "text-white" : "text-slate-500")}>{q.hint}</p>
+                        </div>
+                      </div>
+                      {q.type === 'choice' && q.choices ? (
+                        <div className="flex flex-wrap gap-2 pl-6">
+                          {q.choices.map(c => (
+                            <button
+                              key={c}
+                              onClick={() => setClarifyAnswers(prev => ({ ...prev, [q.id]: c }))}
+                              className={cn(
+                                "px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all border",
+                                clarifyAnswers[q.id] === c
+                                  ? "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20"
+                                  : isDark
+                                    ? "bg-white/5 border-white/10 text-slate-300 hover:border-blue-500"
+                                    : "bg-slate-50 border-slate-200 text-slate-600 hover:border-blue-500"
+                              )}
+                            >{c}</button>
+                          ))}
+                        </div>
+                      ) : (
+                        <input
+                          type="text"
+                          placeholder="Tu respuesta..."
+                          value={clarifyAnswers[q.id] || ''}
+                          onChange={e => setClarifyAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
+                          className={cn(
+                            "w-full pl-6 py-3 text-sm font-medium rounded-xl border outline-none transition-all bg-transparent",
+                            isDark
+                              ? "border-white/10 text-white placeholder:text-white/30 focus:border-blue-500"
+                              : "border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-600"
+                          )}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    onClick={() => setStep('config')}
+                    className={cn("text-[11px] font-black uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity", isDark ? "text-white" : "text-slate-900")}
+                  >
+                    ← Volver
+                  </button>
+                  <button
+                    onClick={() => {
+                      const ctx = clarifyQuestions
+                        .filter(q => clarifyAnswers[q.id])
+                        .map(q => `${q.question}: ${clarifyAnswers[q.id]}`)
+                        .join('\n');
+                      generateWithContext(ctx);
+                    }}
+                    disabled={isGenerating}
+                    className="px-10 py-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-2xl flex items-center gap-3 font-black uppercase tracking-widest text-sm transition-all shadow-xl shadow-blue-600/20 active:scale-95"
+                  >
+                    {isGenerating
+                      ? <><RefreshCw size={16} className="animate-spin" /> Generando...</>
+                      : <>Generar Presentación <Sparkles size={16} /></>}
+                  </button>
+                </div>
+                {genError && (
+                  <div className="px-6 py-4 bg-red-50 border border-red-200 rounded-2xl text-red-600 text-sm font-bold text-center">
+                    ⚠️ {genError}
+                  </div>
+                )}
               </div>
             </motion.div>
           )}

@@ -45,6 +45,74 @@ export interface SlideSkeleton {
   chartType?: string;
 }
 
+export interface ClarifyingQuestion {
+  id: string;
+  question: string;
+  hint: string;
+  type: 'open' | 'choice';
+  choices?: string[];
+}
+
+export async function generateClarifyingQuestions(prompt: string): Promise<ClarifyingQuestion[]> {
+  const systemInstruction = `You are a smart Presentation Consultant AI.
+  The user wants to create a presentation but their prompt might be ambiguous or underspecified.
+  Analyze the prompt and generate 2-3 SHORT, SMART clarifying questions to get the best possible result.
+  
+  RULES:
+  - Ask ONLY what's truly ambiguous or missing (version, audience, language, depth, focus, tone, data needs).
+  - Keep questions SHORT and conversational, like a colleague asking.
+  - If the topic is well-known (like Tarzan), ask: original/Disney/other version? audience? narrative focus?
+  - If it's a business topic: ask about industry, audience, objective.
+  - Provide 2-4 specific choices when possible (type: 'choice'), otherwise use open text (type: 'open').
+  - Respond in the SAME language as the user's prompt.
+  - Return ONLY the JSON.`;
+
+  const payload = {
+    model: "gemini-1.5-flash",
+    contents: [{ role: "user", parts: [{ text: `Analyze this presentation prompt and generate clarifying questions: "${prompt}"` }] }],
+    config: {
+      systemInstruction,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          questions: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                id: { type: Type.STRING },
+                question: { type: Type.STRING },
+                hint: { type: Type.STRING },
+                type: { type: Type.STRING, enum: ["open", "choice"] },
+                choices: { type: Type.ARRAY, items: { type: Type.STRING } }
+              },
+              required: ["id", "question", "hint", "type"]
+            }
+          }
+        },
+        required: ["questions"]
+      }
+    }
+  };
+
+  const res = await fetch('/api/gemini', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'generateContent', payload })
+  });
+
+  const response = await res.json();
+  if (response.questions) return response.questions;
+  if (response.text) {
+    try {
+      const parsed = JSON.parse(response.text);
+      return parsed.questions || [];
+    } catch { return []; }
+  }
+  return [];
+}
+
 export async function generateStylePreview(prompt: string, mood: string, lang: 'en' | 'es'): Promise<{ preview: StudioSlideData, suggestedMood: string }> {
   const systemInstruction = `You are the Creative Director for Neural Studio 5.0. 
   Generate ONE preview slide that establishes the visual language for: "${prompt}".
@@ -271,18 +339,46 @@ export async function generateInfographicContent(prompt: string, style: string):
 }
 
 export async function generateSkeleton(prompt: string, count: number = 10): Promise<SlideSkeleton[]> {
-  const systemInstruction = `You are a Narrative Architect. 
-  Create a ${count}-slide presentation skeleton for: "${prompt}".
-  Focus ONLY on the story and data points. 
-  Return a JSON array of slides.`;
+  const systemInstruction = `You are an expert Presentation Architect with deep knowledge across all topics.
+  The user has given you a topic or request: "${prompt}".
+  Your job is to generate EXACTLY ${count} slides with REAL, SPECIFIC, RICH content — not placeholder text.
+  
+  CRITICAL RULES:
+  - Use your own knowledge to generate ACCURATE and INFORMATIVE content about the topic.
+  - Every title must be specific and descriptive (NOT "Slide 1" or "Introduction").
+  - Every subtitle must add context and depth.
+  - content array: 3-5 concrete, specific bullet points with REAL facts, dates, names, or data points.
+  - If the prompt is vague (like "tell me about X"), you MUST research your knowledge and fill slides with real information.
+  - Language: respond in the SAME language as the prompt.
+  - Return ONLY the JSON object, nothing else.`;
 
   const payload = {
     model: "gemini-1.5-flash",
-    contents: [{ role: "user", parts: [{ text: `Generate ${count} slides for: "${prompt}". 
-    Format: { "slides": [{ "id": "1", "title": "...", "subtitle": "...", "content": ["point 1", "point 2"] }] }` }] }],
+    contents: [{ role: "user", parts: [{ text: `Generate EXACTLY ${count} content-rich slides for this topic: "${prompt}".
+    IMPORTANT: Fill each slide with REAL, SPECIFIC information. No placeholder text.
+    Return as JSON: { "slides": [{ "id": "1", "title": "Specific Title", "subtitle": "Descriptive subtitle", "content": ["Concrete fact 1", "Specific data point 2", "Real insight 3"] }] }` }] }],
     config: {
       systemInstruction,
-      responseMimeType: "application/json"
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          slides: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                id: { type: Type.STRING },
+                title: { type: Type.STRING },
+                subtitle: { type: Type.STRING },
+                content: { type: Type.ARRAY, items: { type: Type.STRING } }
+              },
+              required: ["id", "title", "subtitle", "content"]
+            }
+          }
+        },
+        required: ["slides"]
+      }
     }
   };
 
@@ -293,7 +389,26 @@ export async function generateSkeleton(prompt: string, count: number = 10): Prom
   });
   
   const response = await res.json();
-  return response.slides || [];
+
+  // Multi-path parsing for maximum reliability
+  if (response.slides && response.slides.length > 0) return response.slides;
+  if (response.text) {
+    try {
+      const parsed = JSON.parse(response.text);
+      if (parsed.slides && parsed.slides.length > 0) return parsed.slides;
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      // Try to extract JSON from text
+      const match = response.text.match(/\{[\s\S]*\}/);
+      if (match) {
+        try {
+          const extracted = JSON.parse(match[0]);
+          if (extracted.slides) return extracted.slides;
+        } catch { /* ignore */ }
+      }
+    }
+  }
+  return [];
 }
 
 export async function regenerateSlideSkeleton(slideIndex: number, fullContext: string): Promise<SlideSkeleton> {
