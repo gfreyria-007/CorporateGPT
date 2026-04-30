@@ -35,7 +35,8 @@ import {
   Menu,
   CreditCard,
   Crown,
-  HelpCircle
+  HelpCircle,
+  RefreshCw
 } from 'lucide-react';
 import { ModelSelector } from './components/ModelSelector';
 import { ChatMessage } from './components/ChatMessage';

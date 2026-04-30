@@ -3,7 +3,7 @@ import { motion, AnimatePresence, useScroll, useTransform } from 'motion/react';
 import { PricingSection } from './PricingSection';
 import { SupportFooter } from './SupportFooter';
 import { TrialEndedModal } from './TrialEndedModal';
-import { ShieldCheck, ChevronRight, Zap, Globe, Sparkles, Coins, Cpu, Lock, MousePointer2 } from 'lucide-react';
+import { ShieldCheck, ChevronRight, Zap, Globe, Sparkles, Coins, Cpu, Lock, MousePointer2, MessageSquare, Presentation, Palette, Database } from 'lucide-react';
 import { translations } from '../lib/translations';
 
 const NeuralBackground = () => {
@@ -120,12 +120,12 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
     <div className="min-h-screen bg-white dark:bg-black font-sans selection:bg-blue-600 selection:text-white relative">
       <NeuralBackground />
       {/* Navigation */}
-      <nav className="h-24 px-6 lg:px-12 flex items-center justify-between sticky top-0 z-[100] bg-white/90 dark:bg-black/90 backdrop-blur-2xl border-b border-corporate-100 dark:border-white/10">
-        <div className="flex items-center gap-4">
+      <nav className="h-20 lg:h-24 px-6 lg:px-12 flex items-center justify-between sticky top-0 z-[100] bg-white/90 dark:bg-black/90 backdrop-blur-2xl border-b border-corporate-100 dark:border-white/10">
+        <div className="flex items-center gap-3 lg:gap-4">
           <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-xl shadow-blue-500/20">
              {appConfig?.appLogoText || 'C'}
           </div>
-          <h1 className="text-xl font-display font-black tracking-tight uppercase dark:text-white">
+          <h1 className="text-lg lg:text-xl font-display font-black tracking-tight uppercase dark:text-white">
              {appConfig?.appName || 'Catalizia'}
           </h1>
         </div>
@@ -136,17 +136,17 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
           <a href="#support" className="hover:text-blue-600 dark:hover:text-white transition-colors">{lang === 'en' ? 'Support' : 'Soporte'}</a>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex items-center bg-slate-100 dark:bg-white/5 p-1 rounded-xl border border-corporate-200 dark:border-white/10">
+        <div className="flex items-center gap-3 lg:gap-4">
+          <div className="hidden sm:flex items-center bg-slate-100 dark:bg-white/5 p-1 rounded-xl border border-corporate-200 dark:border-white/10">
             <button 
               onClick={() => setLang('en')}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${lang === 'en' ? 'bg-white dark:bg-white/10 text-blue-600 shadow-sm' : 'text-slate-400'}`}
+              className={`px-2 lg:px-3 py-1 lg:py-1.5 rounded-lg text-[9px] lg:text-[10px] font-black transition-all ${lang === 'en' ? 'bg-white dark:bg-white/10 text-blue-600 shadow-sm' : 'text-slate-400'}`}
             >
               EN
             </button>
             <button 
               onClick={() => setLang('es')}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${lang === 'es' ? 'bg-white dark:bg-white/10 text-blue-600 shadow-sm' : 'text-slate-400'}`}
+              className={`px-2 lg:px-3 py-1 lg:py-1.5 rounded-lg text-[9px] lg:text-[10px] font-black transition-all ${lang === 'es' ? 'bg-white dark:bg-white/10 text-blue-600 shadow-sm' : 'text-slate-400'}`}
             >
               ES
             </button>
@@ -154,9 +154,9 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
           <button 
             onClick={onStartSession}
             disabled={isSigningIn}
-            className="px-6 h-12 bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 lg:px-6 h-10 lg:h-12 bg-blue-600 text-white rounded-xl font-black text-[9px] lg:text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSigningIn ? (lang === 'en' ? 'Verifying...' : 'Verificando...') : (lang === 'en' ? 'Client Access' : 'Acceso Clientes')}
+            {isSigningIn ? (lang === 'en' ? '...' : '...') : (lang === 'en' ? 'Client Access' : 'Acceso')}
           </button>
         </div>
       </nav>
@@ -174,19 +174,20 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
             <motion.div 
                initial={{ opacity: 0, y: 20 }}
                animate={{ opacity: 1, y: 0 }}
-               className="inline-flex items-center gap-2 px-6 py-2 bg-blue-600/5 dark:bg-blue-600/10 text-blue-600 dark:text-blue-400 rounded-full text-[10px] font-bold uppercase tracking-[0.4em] border border-blue-600/20"
+               className="inline-flex items-center gap-3 px-6 py-3 bg-blue-600/5 dark:bg-blue-600/10 text-blue-600 dark:text-blue-400 rounded-full text-[9px] font-black uppercase tracking-[0.4em] border border-blue-600/20 backdrop-blur-xl shadow-[0_0_20px_rgba(37,99,235,0.1)] relative overflow-hidden"
             >
-              <Lock size={14} /> {lang === 'en' ? 'Certified AI Pipeline' : 'IA Certificada para PyMEs'}
+              <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[linear-gradient(to_right,transparent_0%,#2563eb_50%,transparent_100%)] [background-size:200%_100%] animate-[shimmer_3s_infinite]" />
+              <Lock size={14} className="animate-pulse" /> {lang === 'en' ? 'Certified AI Pipeline' : 'IA Certificada para PyMEs'}
             </motion.div>
 
             <motion.h1 
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="text-6xl md:text-8xl lg:text-[9rem] font-display font-black tracking-tighter leading-[0.85] uppercase max-w-6xl text-corporate-900 dark:text-white"
+              className="text-5xl md:text-8xl lg:text-[9rem] font-display font-black tracking-tighter leading-[0.9] uppercase max-w-6xl text-corporate-900 dark:text-white"
             >
               {(appConfig?.landingTitle || t.landingTitle).split(' ').map((word: string, i: number) => (
-                <span key={i} className={word.toLowerCase() === 'private' || word.toLowerCase() === 'privada' ? 'text-blue-600' : ''}>
+                <span key={i} className={cn("inline-block", (word.toLowerCase() === 'private' || word.toLowerCase() === 'privada') ? 'text-blue-600' : '')}>
                   {word}{' '}
                 </span>
               ))}
@@ -196,7 +197,7 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="max-w-3xl text-lg md:text-xl font-medium text-slate-500 dark:text-white/60 leading-relaxed uppercase tracking-wider px-4"
+              className="max-w-3xl text-base md:text-xl font-medium text-slate-500 dark:text-white/60 leading-relaxed uppercase tracking-wider px-4"
             >
               {appConfig?.landingSubtitle || t.landingSubtitle}
             </motion.p>
@@ -205,7 +206,7 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="flex flex-col sm:flex-row gap-6 w-full max-w-xl pt-4"
+              className="flex flex-col md:flex-row gap-4 lg:gap-6 w-full max-w-xl pt-4 px-6 md:px-0"
             >
               <motion.button 
                 animate={{ 
@@ -215,17 +216,87 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
                 transition={{ duration: 2, repeat: Infinity }}
                 onClick={onStartSession}
                 disabled={isSigningIn}
-                className="flex-1 h-20 bg-blue-600 text-white rounded-[2rem] flex items-center justify-center gap-4 font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition-all hover:-translate-y-1 group disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 h-16 lg:h-20 bg-blue-600 text-white rounded-[2rem] flex items-center justify-center gap-4 font-black text-[10px] lg:text-xs uppercase tracking-widest hover:bg-blue-700 transition-all hover:-translate-y-1 group disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl shadow-blue-600/20"
               >
-                {isSigningIn ? (lang === 'en' ? 'Authenticating...' : 'Autenticando...') : t.getStarted} 
+                {isSigningIn ? (lang === 'en' ? '...' : '...') : t.getStarted} 
                 {!isSigningIn && <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />}
               </motion.button>
               <button 
                 onClick={scrollToFeatures}
-                className="flex-1 h-20 bg-slate-50 dark:bg-white/5 text-corporate-900 dark:text-white border border-corporate-200 dark:border-white/10 rounded-[2rem] flex items-center justify-center gap-4 font-black text-xs uppercase tracking-widest hover:bg-white dark:hover:bg-white/10 transition-all shadow-sm group"
+                className="flex-1 h-16 lg:h-20 bg-slate-50 dark:bg-white/5 text-corporate-900 dark:text-white border border-corporate-200 dark:border-white/10 rounded-[2rem] flex items-center justify-center gap-4 font-black text-[10px] lg:text-xs uppercase tracking-widest hover:bg-white dark:hover:bg-white/10 transition-all shadow-sm group"
               >
                 {t.viewDemo} <MousePointer2 size={18} className="text-blue-600 group-hover:scale-125 transition-transform" />
               </button>
+            </motion.div>
+            {/* Platform Showcase - What the app can do */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.4 }}
+              className="w-full mt-24 grid grid-cols-2 md:grid-cols-4 gap-4 px-4"
+            >
+              {[
+                { icon: <MessageSquare size={20} />, label: t.intelligentChat, color: 'text-blue-500' },
+                { icon: <Presentation size={20} />, label: t.pptStudio, color: 'text-emerald-500' },
+                { icon: <Palette size={20} />, label: 'Asset Studio', color: 'text-purple-500' },
+                { icon: <Database size={20} />, label: 'Knowledge Bank', color: 'text-amber-500' }
+              ].map((item, i) => (
+                <div key={i} className="p-6 rounded-[2rem] bg-slate-50 dark:bg-white/5 border border-corporate-100 dark:border-white/5 flex flex-col items-center gap-4 transition-all hover:bg-white dark:hover:bg-white/10 group">
+                   <div className={cn("w-12 h-12 rounded-2xl bg-white dark:bg-white/5 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform", item.color.replace('text', 'bg').replace('500', '500/10'))}>
+                      <div className={item.color}>{item.icon}</div>
+                   </div>
+                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-white/60">{item.label}</span>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+
+          {/* Neural Preview - Visualizing the App */}
+          <div className="mt-48 relative">
+            <div className="absolute inset-0 bg-blue-600/20 blur-[150px] rounded-full scale-150 opacity-20" />
+            <motion.div 
+              initial={{ opacity: 0, y: 100 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              className="relative z-10 p-4 lg:p-8 rounded-[4rem] bg-corporate-900 border border-white/10 shadow-3xl overflow-hidden aspect-[16/9] lg:aspect-auto lg:h-[600px]"
+            >
+               {/* Mock UI for "What the app can do" */}
+               <div className="h-full w-full flex gap-4">
+                  <div className="w-64 hidden lg:flex flex-col gap-3 p-6 border-r border-white/5">
+                     <div className="w-full h-12 bg-white/5 rounded-xl animate-pulse" />
+                     <div className="space-y-2">
+                        {[1,2,3,4].map(i => <div key={i} className="h-10 w-full bg-white/[0.02] rounded-lg" />)}
+                     </div>
+                  </div>
+                  <div className="flex-1 flex flex-col p-6 space-y-6">
+                     <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                        <div className="flex items-center gap-3">
+                           <div className="w-8 h-8 bg-blue-600 rounded-lg" />
+                           <div className="h-4 w-32 bg-white/10 rounded-full" />
+                        </div>
+                        <div className="flex gap-2">
+                           <div className="w-8 h-8 bg-white/5 rounded-lg" />
+                           <div className="w-8 h-8 bg-white/5 rounded-lg" />
+                        </div>
+                     </div>
+                     <div className="flex-1 space-y-4">
+                        <div className="max-w-md bg-white/5 p-4 rounded-2xl rounded-tl-none mr-auto">
+                           <div className="h-3 w-full bg-white/10 rounded-full mb-2" />
+                           <div className="h-3 w-3/4 bg-white/10 rounded-full" />
+                        </div>
+                        <div className="max-w-md bg-blue-600 p-4 rounded-2xl rounded-tr-none ml-auto">
+                           <div className="h-3 w-full bg-white/20 rounded-full mb-2" />
+                           <div className="h-3 w-1/2 bg-white/20 rounded-full" />
+                        </div>
+                     </div>
+                     <div className="h-16 bg-white/5 rounded-2xl border border-white/10 flex items-center px-6 gap-4">
+                        <div className="h-3 flex-1 bg-white/10 rounded-full" />
+                        <div className="w-10 h-10 bg-blue-600 rounded-full shadow-lg" />
+                     </div>
+                  </div>
+               </div>
+               
+               {/* Holographic Overlay on the mock UI */}
+               <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_bottom,transparent_0%,#2563eb_50%,transparent_100%)] [background-size:100%_400%] opacity-[0.05] animate-holographic-scan" />
             </motion.div>
           </div>
 

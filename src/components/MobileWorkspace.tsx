@@ -17,7 +17,8 @@ import {
   History,
   LayoutGrid,
   CreditCard,
-  Plus
+  Plus,
+  Palette
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
@@ -123,13 +124,29 @@ export function MobileWorkspace({
                     >
                       <Zap size={40} />
                     </motion.div>
-                    <div className="space-y-3">
-                      <h2 className="text-2xl font-black tracking-tighter leading-tight uppercase">
-                        Enterprise <br/><span className="text-blue-600">Intelligence</span>
+                    <div className="space-y-4">
+                      <h2 className="text-4xl font-display font-black tracking-tighter leading-tight uppercase">
+                        {appConfig?.appName || t.welcomeTitle}
                       </h2>
-                      <p className="text-xs text-slate-400 font-bold leading-relaxed max-w-[240px] mx-auto uppercase tracking-widest">
-                        Ready for strategic execution.
+                      <p className="text-[10px] text-slate-400 font-black leading-relaxed max-w-[240px] mx-auto uppercase tracking-[0.2em]">
+                        {t.lobbySubtitle}
                       </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 w-full">
+                      {[
+                        { icon: <MessageSquare size={16} />, label: t.intelligentChat, color: 'text-blue-500' },
+                        { icon: <Presentation size={16} />, label: t.pptStudio, color: 'text-emerald-500' },
+                        { icon: <Palette size={16} />, label: 'Asset Studio', color: 'text-purple-500' },
+                        { icon: <Database size={16} />, label: 'Knowledge Bank', color: 'text-amber-500' }
+                      ].map((item, i) => (
+                        <div key={i} className={cn("p-4 rounded-3xl border flex flex-col items-center gap-2", 
+                          isDark ? "bg-white/5 border-white/5" : "bg-white border-slate-100"
+                        )}>
+                           <div className={item.color}>{item.icon}</div>
+                           <span className="text-[8px] font-black uppercase tracking-widest opacity-60">{item.label}</span>
+                        </div>
+                      ))}
                     </div>
                     
                     <div className="grid grid-cols-1 gap-3 w-full max-w-[280px]">
