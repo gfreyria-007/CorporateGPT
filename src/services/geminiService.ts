@@ -54,46 +54,35 @@ export interface ClarifyingQuestion {
 }
 
 export async function generateClarifyingQuestions(prompt: string): Promise<ClarifyingQuestion[]> {
-  const systemInstruction = `You are a smart Presentation Consultant AI.
-  The user wants to create a presentation but their prompt might be ambiguous or underspecified.
-  Analyze the prompt and generate 2-3 SHORT, SMART clarifying questions to get the best possible result.
-  
-  RULES:
-  - Ask ONLY what's truly ambiguous or missing (version, audience, language, depth, focus, tone, data needs).
-  - Keep questions SHORT and conversational, like a colleague asking.
-  - If the topic is well-known (like Tarzan), ask: original/Disney/other version? audience? narrative focus?
-  - If it's a business topic: ask about industry, audience, objective.
-  - Provide 2-4 specific choices when possible (type: 'choice'), otherwise use open text (type: 'open').
-  - Respond in the SAME language as the user's prompt.
-  - Return ONLY the JSON.`;
-
   const payload = {
     model: "gemini-1.5-flash",
-    contents: [{ role: "user", parts: [{ text: `Analyze this presentation prompt and generate clarifying questions: "${prompt}"` }] }],
-    config: {
-      systemInstruction,
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          questions: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                id: { type: Type.STRING },
-                question: { type: Type.STRING },
-                hint: { type: Type.STRING },
-                type: { type: Type.STRING, enum: ["open", "choice"] },
-                choices: { type: Type.ARRAY, items: { type: Type.STRING } }
-              },
-              required: ["id", "question", "hint", "type"]
-            }
-          }
-        },
-        required: ["questions"]
-      }
+    contents: [{ role: "user", parts: [{ text: 
+`You are a presentation consultant. The user wants to create slides about: "${prompt}"
+
+Generate 2-3 smart clarifying questions to produce the best possible presentation.
+Respond in the SAME language as the user's prompt.
+
+Return ONLY this JSON structure, nothing else:
+{
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Short question here?",
+      "hint": "Why this matters",
+      "questionType": "choice",
+      "choices": ["Option A", "Option B", "Option C"]
+    },
+    {
+      "id": "q2", 
+      "question": "Another question?",
+      "hint": "Context for this question",
+      "questionType": "open",
+      "choices": []
     }
+  ]
+}`
+    }] }],
+    config: { responseMimeType: "application/json" }
   };
 
   const res = await fetch('/api/gemini', {
@@ -103,15 +92,26 @@ export async function generateClarifyingQuestions(prompt: string): Promise<Clari
   });
 
   const response = await res.json();
-  if (response.questions) return response.questions;
-  if (response.text) {
+  
+  const raw = response.questions || (response.text ? (() => {
     try {
-      const parsed = JSON.parse(response.text);
-      return parsed.questions || [];
-    } catch { return []; }
-  }
-  return [];
+      const t = response.text.replace(/```json/g,'').replace(/```/g,'').trim();
+      return JSON.parse(t).questions;
+    } catch { return null; }
+  })() : null);
+
+  if (!raw || !Array.isArray(raw)) return [];
+
+  // Normalize: map questionType → type for the interface
+  return raw.map((q: any, i: number) => ({
+    id: q.id || `q${i+1}`,
+    question: q.question || '',
+    hint: q.hint || '',
+    type: (q.questionType === 'choice' || q.type === 'choice') ? 'choice' : 'open',
+    choices: Array.isArray(q.choices) && q.choices.length > 0 ? q.choices : undefined
+  }));
 }
+
 
 export async function generateStylePreview(prompt: string, mood: string, lang: 'en' | 'es'): Promise<{ preview: StudioSlideData, suggestedMood: string }> {
   const systemInstruction = `You are the Creative Director for Neural Studio 5.0. 
