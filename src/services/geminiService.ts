@@ -44,7 +44,7 @@ export async function generateStylePreview(prompt: string, mood: string, lang: '
 
   const payload = {
     model: "gemini-1.5-flash",
-    contents: `Establish the visual concept for: "${prompt}".`,
+    contents: [{ role: "user", parts: [{ text: `Establish the visual concept for: "${prompt}".` }] }],
     config: {
       systemInstruction,
       responseMimeType: "application/json",
@@ -104,7 +104,7 @@ export async function generateStudioSlides(prompt: string, mood: string, lang: '
 
   const payload = {
     model,
-    contents: `Synthesize the full 10-slide narrative for: "${prompt}". Ensure visualLayout is always present.`,
+    contents: [{ role: "user", parts: [{ text: `Synthesize the full 10-slide narrative for: "${prompt}". Ensure visualLayout is always present.` }] }],
     config: {
       systemInstruction,
       responseMimeType: "application/json",
@@ -166,13 +166,13 @@ export async function generateStudioSlides(prompt: string, mood: string, lang: '
 export async function suggestBetterPrompt(currentPrompt: string): Promise<string> {
   const payload = {
     model: "gemini-1.5-pro",
-    contents: `The user wants to generate an AMAZING infographic or visual asset with this prompt: "${currentPrompt}".
+    contents: [{ role: "user", parts: [{ text: `The user wants to generate an AMAZING infographic or visual asset with this prompt: "${currentPrompt}".
     Improve this prompt to be high-density, professional, and visually stunning.
     Instructions:
     - Add specific artistic directions (e.g. "detailed hand-drawn pencil sketches with color accents", "clean minimalist Bauhaus style", "vibrant 3D clay illustrations").
     - Specify composition (e.g. "centered focal point", "balanced multi-step flow").
     - If it's about a life cycle (like an apple tree), ensure it mentions stages like seed, sprout, sapling, blossom, and fruit.
-    - Return ONLY the improved prompt text. No quotes.`,
+    - Return ONLY the improved prompt text. No quotes.` }] }],
   };
 
   const res = await fetch('/api/gemini', {
@@ -225,8 +225,7 @@ export async function salesAgentChat(message: string, lang: 'en' | 'es'): Promis
 export async function generateInfographicContent(prompt: string, style: string): Promise<InfographicData> {
   const payload = {
     model: "gemini-1.5-flash",
-    contents: `Generate a structured infographic about: "${prompt}". Style: ${style}. 
-    Return JSON format only.`,
+    contents: [{ role: "user", parts: [{ text: `Generate a structured infographic about: "${prompt}". Style: ${style}. Return JSON format only.` }] }],
     config: {
       responseMimeType: "application/json",
       responseSchema: {

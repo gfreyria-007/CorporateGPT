@@ -244,7 +244,7 @@ export const PPTStudio: React.FC<{
                      </div>
                   </div>
                   <div className="col-span-4 flex flex-col gap-6">
-                     {slide.content.slice(1).map((item, i) => (
+                     {slide.content?.slice(1).map((item, i) => (
                        <div key={i} className="p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl">
                           <p className="text-[10px] font-black text-blue-600 uppercase mb-3 tracking-widest">{item.label}</p>
                           <p className="text-white font-bold leading-relaxed">{item.description}</p>
