@@ -250,7 +250,8 @@ async function startServer() {
               ...restConfig,
               responseMimeType: restConfig.responseMimeType || "application/json"
             },
-            systemInstruction: payload.systemInstruction || systemInstruction ? { role: 'user', parts: [{ text: payload.systemInstruction || systemInstruction }] } : undefined
+            systemInstruction: payload.systemInstruction || systemInstruction ? { role: 'user', parts: [{ text: payload.systemInstruction || systemInstruction }] } : undefined,
+            tools: payload.tools || [{ googleSearch: {} }]
           })
         });
 
