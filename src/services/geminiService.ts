@@ -126,6 +126,7 @@ Return ONLY this JSON structure, nothing else:
 
 export async function generateStylePreview(prompt: string, mood: string, lang: 'en' | 'es'): Promise<{ preview: StudioSlideData, suggestedMood: string }> {
   const systemInstruction = `You are the Creative Director for Neural Studio 5.0. 
+  Current Date context: ${new Date().toISOString().split('T')[0]}. The current year is 2026.
   Generate ONE preview slide that establishes the visual language for: "${prompt}".
   Choose the best mood for the data.
   Layouts: 'dense_table', 'technical_drawing', 'grid'.`;
@@ -184,6 +185,7 @@ export async function generateStudioSlides(prompt: string, mood: string, lang: '
   const model = "gemini-3.1-pro-preview"; 
   
   const systemInstruction = `You are the Neural Studio Engine 5.0 (Cinematic Storyteller). 
+  Current Date context: ${new Date().toISOString().split('T')[0]}. The current year is 2026.
   Goal: Synthesize a NON-EDITABLE 10-slide professional infographic narrative.
   Reference Style: High-density astrophysical data visuals.
   
@@ -286,6 +288,7 @@ export async function salesAgentChat(message: string, lang: 'en' | 'es'): Promis
   
   const systemInstruction = lang === 'es' ? 
     `ERES EL ASESOR CORPORATIVO DE CORPORATEGPT. 
+    Contexto de fecha actual: ${new Date().toISOString().split('T')[0]}. El año actual es 2026.
     REGLA DE ORO: Solo hablas de CorporateGPT, seguridad, privacidad, costos por tokens vs suscripciones y beneficios para PyMEs.
     OBJETIVO: Convertir al usuario en cliente pago.
     Puntos Clave:
@@ -295,6 +298,7 @@ export async function salesAgentChat(message: string, lang: 'en' | 'es'): Promis
     - Control: El empresario pone las reglas.
     Si te preguntan algo ajeno a ventas o al producto, responde amablemente que tu especialidad es asesorar en la implementación de IA Privada para empresas.` : 
     `YOU ARE THE CORPORATE ADVISOR FOR CORPORATEGPT.
+    Current Date context: ${new Date().toISOString().split('T')[0]}. The current year is 2026.
     GOLDEN RULE: Only talk about CorporateGPT, security, privacy, token costs vs subscriptions, and benefits for SMEs.
     OBJECTIVE: Convert the user into a paying client.
     Key Points:
@@ -363,6 +367,7 @@ export async function generateInfographicContent(prompt: string, style: string):
 
 export async function generateSkeleton(prompt: string, count: number = 10): Promise<SlideSkeleton[]> {
   const systemInstruction = `You are a high-level Presentation Architect at Catalizia. 
+  Current Date context: ${new Date().toISOString().split('T')[0]}. The current year is 2026.
   The user is creating a presentation on: "${prompt}".
   
   CONTEXTUAL INTELLIGENCE:
@@ -471,6 +476,7 @@ export async function renderSlideVisual(
   hasLogo: boolean = false
 ): Promise<{ visualLayout: string, badge: string, narrativePhase: string, visualInstruction?: string }> {
   const systemInstruction = `You are a Visual Architect using the NANOBANANA 2 ENGINE. 
+  Current Date context: ${new Date().toISOString().split('T')[0]}. The current year is 2026.
   Generate a high-fidelity visual configuration for this slide.
   NANOBANANA 2 RULES:
   - Maximize visual density and data clarity.
