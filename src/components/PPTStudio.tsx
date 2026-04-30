@@ -785,9 +785,10 @@ const PPTStudio: React.FC<{
                               <div className="flex items-center gap-3">
                                 <span className={cn(
                                   "text-[10px] font-black uppercase tracking-[0.3em] italic",
+                                  selectedStyle === 'auto' ? "text-purple-400 animate-pulse" :
                                   selectedStyle === 'scientific' ? "text-cyan-400" : "text-blue-500"
                                 )}>
-                                  {selectedStyle} // L0{activeSlide+1} // INFOGRAPHIC_CORE
+                                  {selectedStyle === 'auto' ? "Neural Auto-Select // Contextual Intelligence" : `${selectedStyle} // L0${activeSlide+1} // INFOGRAPHIC_CORE`}
                                 </span>
                               </div>
                               {logoUrl ? (

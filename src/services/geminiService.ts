@@ -493,7 +493,7 @@ export async function renderSlideVisual(
   NANOBANANA 2 RULES:
   - Maximize visual density and data clarity.
   - Layouts: 'hero', 'split', 'grid', 'focal', 'technical_drawing', 'dense_table', 'chart_focused'.
-  - Style: ${style}.
+  - Style: ${style === 'auto' ? 'SURPRISE ME: Analyze the content and choose the most impactful visual metaphor, layout, and style from the dictionary or invent a superior one.' : style}.
   - Logo: ${hasLogo ? 'A company logo is available. Suggest a placeholder or coordinate for it.' : 'No logo.'}
   - If a chartType is specified (not 'none'), prioritize the 'chart_focused' layout and provide specific drawing instructions.`;
 
