@@ -5,7 +5,7 @@ import {
   Zap, Database, BarChart3, Presentation, Image as ImageIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   generateSkeleton, regenerateSlideSkeleton, renderSlideVisual, SlideSkeleton 
 } from '@/services/geminiService';
@@ -28,7 +28,12 @@ const PPTStudio: React.FC<PPTStudioProps> = ({ onClose, isOpen }) => {
   const [step, setStep] = useState<StudioStep>('config');
   const [prompt, setPrompt] = useState('');
   const [slideCount, setSlideCount] = useState(10);
-  const [slides, setSlides] = useState<(SlideSkeleton & { rendered?: boolean, visualLayout?: string })[]>([]);
+  const [slides, setSlides] = useState<(SlideSkeleton & { 
+    rendered?: boolean, 
+    visualLayout?: string, 
+    badge?: string, 
+    narrativePhase?: string 
+  })[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
   const [selectedStyle, setSelectedStyle] = useState('minimal');
@@ -74,6 +79,30 @@ const PPTStudio: React.FC<PPTStudioProps> = ({ onClose, isOpen }) => {
     const newSlides = [...slides];
     (newSlides[index] as any)[field] = value;
     setSlides(newSlides);
+  };
+
+  const addSlide = () => {
+    const newSlide: any = {
+      id: Date.now().toString(),
+      title: 'Nueva Diapositiva',
+      subtitle: 'Añade un subtítulo aquí',
+      content: ['Punto clave 1'],
+      tableData: '',
+      chartType: 'none',
+      rendered: false,
+      visualLayout: 'split'
+    };
+    setSlides([...slides, newSlide]);
+    setActiveSlide(slides.length);
+  };
+
+  const removeSlide = (index: number) => {
+    if (slides.length <= 1) return;
+    const newSlides = slides.filter((_, i) => i !== index);
+    setSlides(newSlides);
+    if (activeSlide >= newSlides.length) {
+      setActiveSlide(Math.max(0, newSlides.length - 1));
+    }
   };
 
   return (

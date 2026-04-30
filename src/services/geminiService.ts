@@ -40,7 +40,9 @@ export interface SlideSkeleton {
   id: string;
   title: string;
   subtitle: string;
-  content: string[]; // Bloques de texto simples
+  content: string[];
+  tableData?: string;
+  chartType?: string;
 }
 
 export async function generateStylePreview(prompt: string, mood: string, lang: 'en' | 'es'): Promise<{ preview: StudioSlideData, suggestedMood: string }> {

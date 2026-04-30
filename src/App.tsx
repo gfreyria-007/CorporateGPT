@@ -42,7 +42,7 @@ import { ChatMessage } from './components/ChatMessage';
 import { ChatInput } from './components/ChatInput';
 import { AdminPanel } from './components/AdminPanel';
 import { ImageEditor } from './components/ImageEditor';
-import { PPTStudio } from './components/PPTStudio';
+import PPTStudio from './components/PPTStudio';
 import { GPTsGenerator } from './components/GPTsGenerator';
 import { PromptGenie } from './components/PromptGenie';
 import { AdvancedPanel } from './components/AdvancedPanel';
