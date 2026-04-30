@@ -1,21 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
-  Search, 
   Trash2, 
   ShieldCheck, 
   Database, 
-  Eye, 
   Save, 
   Sparkles,
   Info,
-  ChevronDown,
   Wand2,
   FileText,
-  MessageSquare,
-  FileCode,
   X,
-  History
+  History,
+  Send,
+  Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
@@ -33,8 +30,11 @@ export function GPTsGenerator({ onClose, onSelect, theme }: { onClose: () => voi
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [previewInput, setPreviewInput] = useState('');
+  const [previewResponse, setPreviewResponse] = useState('');
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [savedGPTs, setSavedGPTs] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(true);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
 
   const isAdmin = profile?.role === 'admin' || profile?.role === 'super-admin';
 
@@ -51,6 +51,7 @@ export function GPTsGenerator({ onClose, onSelect, theme }: { onClose: () => voi
   const handleSave = async () => {
     if (!user || !name) return;
     setIsSaving(true);
+    setSaveStatus('idle');
     try {
       const gptData = {
         id: currentGptId,
@@ -58,14 +59,16 @@ export function GPTsGenerator({ onClose, onSelect, theme }: { onClose: () => voi
         description,
         instructions,
         isPublic: isAdmin ? isPublic : false,
-        files: files.map(f => ({ name: f.name, size: f.size, type: f.type })) // Simplified for metadata
+        files: files.map(f => ({ name: f.name, size: f.size, type: f.type }))
       };
       const id = await saveGPT(user.uid, gptData);
-      if (id) setCurrentGptId(id);
+      if (id) { setCurrentGptId(id); setSaveStatus('saved'); }
     } catch (error) {
       console.error("Save error:", error);
+      setSaveStatus('error');
     } finally {
       setIsSaving(false);
+      setTimeout(() => setSaveStatus('idle'), 3000);
     }
   };
 
@@ -139,20 +142,69 @@ export function GPTsGenerator({ onClose, onSelect, theme }: { onClose: () => voi
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFiles = Array.from(e.target.files || []);
+    if (uploadedFiles.length === 0) return;
     setIsProcessing(true);
     
-    // Simulate parsing
-    setTimeout(() => {
-      const newFiles = uploadedFiles.map(f => ({
-        id: Math.random().toString(36).substr(2, 9),
-        name: f.name,
-        type: f.type,
-        size: (f.size / 1024 / 1024).toFixed(2) + ' MB',
-        date: new Date().toLocaleDateString()
-      }));
-      setFiles(prev => [...prev, ...newFiles]);
-      setIsProcessing(false);
-    }, 1500);
+    let processed = 0;
+    const newFiles: any[] = [];
+
+    uploadedFiles.forEach(f => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        newFiles.push({
+          id: Math.random().toString(36).substr(2, 9),
+          name: f.name,
+          type: f.type,
+          size: (f.size / 1024 / 1024).toFixed(2) + ' MB',
+          date: new Date().toLocaleDateString(),
+          // Read text content for text-based files so it can be injected into instructions
+          content: (f.type === 'text/plain' || f.name.endsWith('.txt') || f.name.endsWith('.md'))
+            ? (ev.target?.result as string || '').slice(0, 8000)
+            : undefined
+        });
+        processed++;
+        if (processed === uploadedFiles.length) {
+          setFiles(prev => [...prev, ...newFiles]);
+          setIsProcessing(false);
+        }
+      };
+      reader.onerror = () => { processed++; if (processed === uploadedFiles.length) setIsProcessing(false); };
+      reader.readAsText(f);
+    });
+  };
+
+  const handlePreviewSend = async () => {
+    if (!previewInput.trim() || isPreviewLoading) return;
+    setIsPreviewLoading(true);
+    setPreviewResponse('');
+    const userMsg = previewInput;
+    setPreviewInput('');
+    try {
+      // Build instructions from GPT config + any text file content
+      const fileContext = files
+        .filter(f => f.content)
+        .map(f => `--- ${f.name} ---\n${f.content}`)
+        .join('\n\n');
+      const fullInstructions = [instructions, fileContext].filter(Boolean).join('\n\n---\n');
+
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'openrouter/auto',
+          messages: [{ role: 'user', content: userMsg }],
+          instructions: fullInstructions || null,
+          temperature: 0.7,
+          maxTokens: 800,
+        })
+      });
+      const data = await res.json();
+      setPreviewResponse(data.choices?.[0]?.message?.content || data.error || 'Sin respuesta');
+    } catch (e: any) {
+      setPreviewResponse('Error al conectar: ' + e.message);
+    } finally {
+      setIsPreviewLoading(false);
+    }
   };
 
   return (
@@ -184,11 +236,13 @@ export function GPTsGenerator({ onClose, onSelect, theme }: { onClose: () => voi
             onClick={handleSave}
             className={cn(
               "px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 shadow-xl",
+              saveStatus === 'saved' ? "bg-emerald-500 text-white shadow-emerald-500/20" :
+              saveStatus === 'error' ? "bg-red-500 text-white shadow-red-500/20" :
               name ? "bg-blue-600 text-white hover:bg-blue-700 shadow-blue-600/20" : "bg-slate-500/10 text-slate-500 cursor-not-allowed shadow-none"
             )}
           >
             {isSaving ? <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Save size={14} />}
-            {currentGptId ? 'Update GPT' : 'Save GPT'}
+            {isSaving ? 'Guardando...' : saveStatus === 'saved' ? '✓ Guardado' : saveStatus === 'error' ? '✗ Error' : (currentGptId ? 'Update GPT' : 'Save GPT')}
           </button>
           <button 
             type="button"

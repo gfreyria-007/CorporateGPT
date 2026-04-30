@@ -45,10 +45,18 @@ const PPTStudio: React.FC<any> = ({ onClose, theme }) => {
     setGenError(null);
     try {
       const qs = await generateClarifyingQuestions(prompt);
+      // If AI returns no questions, skip directly to generation
+      if (!qs || qs.length === 0) {
+        await generateWithContext('');
+        return;
+      }
       setClarifyQuestions(qs);
       setClarifyAnswers({});
       setStep('clarify');
     } catch {
+      // On any error, skip clarify and generate directly
+      setGenError('Neural Interview no disponible, generando directamente...');
+      setTimeout(() => setGenError(null), 3000);
       await generateWithContext('');
     } finally {
       setIsGenerating(false);
@@ -157,7 +165,7 @@ const PPTStudio: React.FC<any> = ({ onClose, theme }) => {
                 "text-[10px] uppercase tracking-widest font-bold",
                 isDark ? "text-slate-400" : "text-slate-400"
               )}>
-                {step === 'config' ? 'Setup' : 'Skeleton Editor'}
+                {step === 'config' ? 'Setup' : step === 'clarify' ? 'Neural Interview' : 'Skeleton Editor'}
               </span>
             </div>
           </div>
@@ -246,7 +254,9 @@ const PPTStudio: React.FC<any> = ({ onClose, theme }) => {
                     <div className="flex items-center gap-4">
                       <span className={cn("text-[10px] font-black uppercase tracking-widest", isDark ? "text-slate-400" : "text-slate-400")}>DIAPOSITIVAS</span>
                       <input 
-                        type="number" value={slideCount} onChange={(e) => setSlideCount(Number(e.target.value))}
+                        min={1}
+                        max={20}
+                        type="number" value={slideCount} onChange={(e) => setSlideCount(Math.min(20, Math.max(1, Number(e.target.value))))}
                         className={cn(
                           "px-4 py-2 rounded-xl text-sm font-bold w-16 text-center outline-none border",
                           isDark
@@ -511,12 +521,18 @@ const PPTStudio: React.FC<any> = ({ onClose, theme }) => {
                               )}
                             >
                               <option value="none">Sin Gráfica</option>
-                              <option value="bar_2d">Barras 2D</option>
-                              <option value="bar_3d">Barras 3D</option>
-                              <option value="pie_2d">Circular 2D</option>
-                              <option value="pie_3d">Circular 3D</option>
+                              <option value="bar">Barras</option>
+                              <option value="bar_horizontal">Barras Horizontales</option>
+                              <option value="bar_grouped">Barras Agrupadas</option>
                               <option value="line">Líneas</option>
                               <option value="area">Área</option>
+                              <option value="pie">Circular (Pie)</option>
+                              <option value="donut">Dona (Donut)</option>
+                              <option value="radar">Radar</option>
+                              <option value="scatter">Dispersión</option>
+                              <option value="bubble">Burbuja</option>
+                              <option value="waterfall">Cascada</option>
+                              <option value="pyramid">Pirámide</option>
                             </select>
                           </div>
                           <textarea 

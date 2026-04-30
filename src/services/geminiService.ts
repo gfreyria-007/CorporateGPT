@@ -1,7 +1,5 @@
 import { Type } from "@google/genai";
 
-// Use VITE_ prefix for client-side (if needed) and non-prefix for server-side/backend compatibility
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.GEMINI_API_KEY || "";
 
 export interface InfographicData {
   title: string;
@@ -163,7 +161,10 @@ export async function generateStylePreview(prompt: string, mood: string, lang: '
     body: JSON.stringify({ action: 'generateContent', payload })
   });
   const response = await res.json();
-  return JSON.parse(response.text || '{}');
+  // Proxy spreads all JSON fields at top level — use them directly with fallback
+  if (response.preview) return { preview: response.preview, suggestedMood: response.suggestedMood || mood };
+  try { return JSON.parse((response.text || '{}').replace(/```json/g,'').replace(/```/g,'').trim()); }
+  catch { return { preview: null, suggestedMood: mood }; }
 }
 
 export async function generateStudioSlides(prompt: string, mood: string, lang: 'en' | 'es'): Promise<{ slides: StudioSlideData[], finalMood: string }> {
@@ -335,7 +336,10 @@ export async function generateInfographicContent(prompt: string, style: string):
     body: JSON.stringify({ action: 'generateContent', payload })
   });
   const response = await res.json();
-  return JSON.parse(response.text || '{}');
+  // Proxy spreads all JSON fields — use them directly
+  if (response.title) return response as InfographicData;
+  try { return JSON.parse((response.text || '{}').replace(/```json/g,'').replace(/```/g,'').trim()); }
+  catch { return { title: '', subtitle: '', sections: [], conclusions: [] }; }
 }
 
 export async function generateSkeleton(prompt: string, count: number = 10): Promise<SlideSkeleton[]> {
@@ -456,6 +460,19 @@ export async function renderSlideVisual(title: string, subtitle: string, content
   });
   
   const response = await res.json();
-  const slides = response.slides || [];
-  return slides[0] || response;
+  // Proxy now spreads all top-level JSON fields — {visualLayout, badge, narrativePhase} are directly on response
+  if (response.visualLayout) {
+    return {
+      visualLayout: response.visualLayout || 'split',
+      badge: response.badge || 'PHASE',
+      narrativePhase: response.narrativePhase || 'ANALYSIS'
+    };
+  }
+  // Fallback: try response.text
+  try {
+    const parsed = JSON.parse((response.text || '{}').replace(/```json/g,'').replace(/```/g,'').trim());
+    return { visualLayout: parsed.visualLayout || 'split', badge: parsed.badge || 'PHASE', narrativePhase: parsed.narrativePhase || 'ANALYSIS' };
+  } catch {
+    return { visualLayout: 'split', badge: 'PHASE', narrativePhase: 'ANALYSIS' };
+  }
 }
