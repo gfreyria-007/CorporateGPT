@@ -49,16 +49,23 @@ import { generateInfographicContent, suggestBetterPrompt } from '../services/gem
 
 
 const VISUAL_STYLES = [
-  { id: 'professional', name: 'Corporativo', icon: '🏢', primary: '#2563eb', bg: '#f8fafc', font: 'Space Grotesk' },
-  { id: 'lego', name: 'Estilo Lego', icon: '🧱', primary: '#facc15', bg: '#1e293b', font: 'Inter' },
-  { id: 'classic', name: 'Boceto', icon: '🎨', primary: '#475569', bg: '#ffffff', font: 'Inter' },
-  { id: 'scientific', name: 'Laboratorio', icon: '🔬', primary: '#10b981', bg: '#020617', font: 'JetBrains Mono' },
-  { id: 'neubrutalist', name: 'Brutalista', icon: '🏁', primary: '#000000', bg: '#ffffff', font: 'Space Grotesk' },
-  { id: 'clay', name: 'Arcilla 3D', icon: '🏺', primary: '#ec4899', bg: '#f1f5f9', font: 'Inter' },
-  { id: 'whiteboard', name: 'Pizarrón Blanco', icon: '🖋️', primary: '#2563eb', bg: '#ffffff', font: 'Inter' },
-  { id: 'chalkboard', name: 'Pizarrón Verde', icon: '🖍️', primary: '#ffffff', bg: '#064e3b', font: 'Inter' },
-  { id: 'blackboard', name: 'Pizarrón Negro', icon: '⬛', primary: '#ffffff', bg: '#171717', font: 'Inter' },
-  { id: 'blueprint', name: 'Plano Técnico', icon: '📐', primary: '#ffffff', bg: '#1e3a8a', font: 'Courier New' },
+  { id: 'professional', name: 'Corporativo',     icon: '🏢', primary: '#2563eb', bg: '#f8fafc',  font: 'Space Grotesk' },
+  { id: 'sketch_note', name: 'Sketch Note',       icon: '✏️', primary: '#1e293b', bg: '#fffef9',  font: 'Inter' },
+  { id: 'kawaii',      name: 'Kawaii',            icon: '🌸', primary: '#f472b6', bg: '#fdf2f8',  font: 'Inter' },
+  { id: 'scientific',  name: 'Científico',        icon: '🔬', primary: '#10b981', bg: '#020617',  font: 'JetBrains Mono' },
+  { id: 'anime',       name: 'Anime',             icon: '⚡', primary: '#6366f1', bg: '#0c0a1e',  font: 'Inter' },
+  { id: 'clay',        name: 'Arcilla 3D',        icon: '🏺', primary: '#ec4899', bg: '#f1f5f9',  font: 'Inter' },
+  { id: 'editorial',   name: 'Editorial',         icon: '📰', primary: '#b45309', bg: '#fffbeb',  font: 'Georgia' },
+  { id: 'instructional', name: 'Instructional',   icon: '📋', primary: '#0369a1', bg: '#f0f9ff',  font: 'Inter' },
+  { id: 'bento_grid',  name: 'Bento Grid',        icon: '🗂️', primary: '#6366f1', bg: '#f1f5f9',  font: 'Inter' },
+  { id: 'bricks',      name: 'Bricks',            icon: '🧱', primary: '#facc15', bg: '#1e293b',  font: 'Inter' },
+  { id: 'whiteboard',  name: 'Pizarrón Blanco',   icon: '🖊️', primary: '#2563eb', bg: '#ffffff',  font: 'Inter' },
+  { id: 'blackboard',  name: 'Pizarrón Negro',    icon: '🎨', primary: '#f0f0f0', bg: '#111111',  font: 'Inter' },
+  { id: 'neubrutalist',name: 'Brutalista',        icon: '🏁', primary: '#000000', bg: '#ffffff',  font: 'Space Grotesk' },
+  { id: 'classic',     name: 'Boceto Clásico',    icon: '🖌️', primary: '#475569', bg: '#ffffff',  font: 'Inter' },
+  { id: 'chalkboard',  name: 'Pizarrón Verde',    icon: '🖍️', primary: '#ffffff', bg: '#064e3b',  font: 'Inter' },
+  { id: 'blueprint',   name: 'Plano Técnico',     icon: '📐', primary: '#ffffff', bg: '#1e3a8a',  font: 'Courier New' },
+  { id: 'lego',        name: 'Estilo Lego',       icon: '🟡', primary: '#facc15', bg: '#1e293b',  font: 'Inter' },
 ];
 
 const LayoutGrid = ({ size }: { size: number }) => (
@@ -424,16 +431,23 @@ export function ImageEditor({ onClose, theme, lang = 'en', appConfig, onTrialEnd
       const aspectRatio = aspectMap[selectedTemplate] || '16:9';
 
       const styleHints: Record<string, string> = {
-        professional: 'Clean corporate design, modern minimalist, data-rich layout with charts and icons, dark blue and white color scheme, professional business presentation quality',
-        lego: 'Colorful LEGO brick style, playful 3D blocks, bold yellow and primary colors, toy-like aesthetic',
-        classic: 'Hand-drawn pencil sketch style, artistic sketchbook aesthetic, detailed technical drawings, minimal colors with ink accents',
-        scientific: 'Scientific data visualization, dark background, neon green accents, technical diagrams, lab-grade precision, futuristic HUD elements',
-        neubrutalist: 'Neo-brutalist design, bold black borders, raw typography, high contrast, stark geometric shapes, avant-garde',
-        clay: 'Soft 3D clay/plasticine render style, rounded organic shapes, pastel colors, cute and tactile feel',
-        whiteboard: 'Classroom whiteboard style, dry-erase marker aesthetic, colored markers (blue, red, black, green), clean white background, slightly informal hand-drawn diagrams',
-        chalkboard: 'Classic dark green chalkboard style, white and yellow chalk texture, dusty blackboard aesthetic, handwritten feel',
-        blackboard: 'Deep black chalkboard style, vibrant colored chalk (pink, cyan, lime, yellow), high contrast, artistic chalk drawings, classroom aesthetic',
-        blueprint: 'Architectural blueprint style, deep blue background with white grid lines, technical drawing aesthetic, cyanotype look, precise white lines and engineering typography'
+        professional:  'Clean corporate design, modern minimalist, data-rich with charts and icons, dark blue and white color scheme, premium business presentation quality',
+        sketch_note:   'Hand-drawn black marker sketch note style, sketchbook aesthetic, detailed line art, ink outlines, minimal spot color highlights, clean white background, confident marker strokes, design-thinking workshop aesthetic',
+        kawaii:        'Cute Japanese kawaii illustration style, pastel pink and purple palette, sparkles, hearts, stars, chibi-style characters, bubbly fonts, adorable rounded shapes, playful and joyful aesthetic',
+        scientific:    'Scientific data visualization, dark background, neon green and cyan accents, technical HUD diagrams, lab-grade precision, futuristic data readouts, infographic clarity',
+        anime:         'High-quality anime/manga illustration style, dynamic speed lines, vibrant cel-shading, dramatic lighting with lens flares, bold outlines, cinematic widescreen composition, Studio Ghibli meets cyberpunk',
+        clay:          'Soft 3D clay/plasticine render, rounded organic shapes, pastel colors, cute and tactile material feel, glossy highlights, Blender-style clay render',
+        editorial:     'Editorial magazine watercolor illustration style, aged paper texture, warm sepia and ochre tones, detailed painterly strokes, vintage poster aesthetic, sophisticated and cultured',
+        instructional: 'Clean educational instructional diagram style, bold flat icons, numbered steps, speech bubbles, comic-panel layout, clear sans-serif typography, bright primary colors on white, textbook quality',
+        bento_grid:    'Modern bento box grid layout, clean compartmentalized sections, each cell with its own icon or illustration, flat design, soft gradients, minimalist Japanese aesthetic, app-icon quality',
+        bricks:        'LEGO/plastic construction brick building style, colorful 3D blocks, playful primary colors, stud texture on top, toy-box aesthetic, vibrant and energetic',
+        whiteboard:    'Premium whiteboard illustration, clean white surface, multi-color dry-erase markers (blue, orange, green, pink), elegant hand-lettered titles, futuristic mind-map layout, professional ideation session aesthetic, crisp and elegant',
+        blackboard:    'Elegant black chalkboard with vibrant colored chalk art (coral pink, electric cyan, lime green, warm yellow), vintage-meets-futuristic aesthetic, sophisticated chalk lettering, artistic diagrams, classic academic elegance with a modern twist',
+        neubrutalist:  'Neo-brutalist graphic design, bold black borders, raw expressive typography, high contrast black and yellow, stark geometric shapes, avant-garde editorial feel',
+        classic:       'Classic hand-drawn pencil and ink sketch, detailed crosshatching, artist sketchbook page, subtle watercolor washes, refined vintage illustration aesthetic',
+        chalkboard:    'Classic dark green chalkboard, white and yellow chalk texture, dusty matte blackboard surface, hand-lettered school aesthetic, warm nostalgia',
+        blueprint:     'Architectural engineering blueprint, deep navy blue background, white grid lines, cyanotype aesthetic, precise white technical drawings, engineering typography',
+        lego:          'Colorful LEGO brick construction style, 3D plastic blocks, bold yellow and primary colors, stud detail on surfaces, toy-like playful energy'
       };
 
       const fullPrompt = `Create a high-quality, complete, ready-to-use ${currentTemplate.name} about: ${description}.
