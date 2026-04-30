@@ -20,7 +20,13 @@ const studioStyles = [
   { id: 'glass', name: 'Glass', icon: <Palette size={14} />, color: 'bg-purple-600' }
 ];
 
-const PPTStudio: React.FC<any> = ({ onClose, theme }) => {
+const PPTStudio: React.FC<{ 
+  onClose: () => void, 
+  theme: string, 
+  lang: string, 
+  user: any, 
+  isMobile?: boolean 
+}> = ({ onClose, theme, lang, user, isMobile = false }) => {
   const [step, setStep] = useState<StudioStep>('config');
   const [prompt, setPrompt] = useState('');
   const [slideCount, setSlideCount] = useState(10);
