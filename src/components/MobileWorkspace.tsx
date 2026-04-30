@@ -18,7 +18,9 @@ import {
   LayoutGrid,
   CreditCard,
   Plus,
-  Palette
+  Palette,
+  TrendingUp,
+  Shield
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
@@ -116,38 +118,37 @@ export function MobileWorkspace({
               {/* Chat Body */}
               <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
                 {messages.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-8">
-                    <motion.div 
-                      animate={{ rotate: [0, 5, -5, 0] }}
-                      transition={{ repeat: Infinity, duration: 4 }}
-                      className="w-20 h-20 bg-blue-600 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl shadow-blue-600/30"
-                    >
-                      <Zap size={40} />
-                    </motion.div>
-                    <div className="space-y-4">
-                      <h2 className="text-4xl font-display font-black tracking-tighter leading-tight uppercase">
-                        {appConfig?.appName || t.welcomeTitle}
-                      </h2>
-                      <p className="text-[10px] text-slate-400 font-black leading-relaxed max-w-[240px] mx-auto uppercase tracking-[0.2em]">
-                        {t.lobbySubtitle}
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 w-full">
-                      {[
-                        { icon: <MessageSquare size={16} />, label: t.intelligentChat, color: 'text-blue-500' },
-                        { icon: <Presentation size={16} />, label: t.pptStudio, color: 'text-emerald-500' },
-                        { icon: <Palette size={16} />, label: 'Asset Studio', color: 'text-purple-500' },
-                        { icon: <Database size={16} />, label: 'Knowledge Bank', color: 'text-amber-500' }
-                      ].map((item, i) => (
-                        <div key={i} className={cn("p-4 rounded-3xl border flex flex-col items-center gap-2", 
-                          isDark ? "bg-white/5 border-white/5" : "bg-white border-slate-100"
-                        )}>
-                           <div className={item.color}>{item.icon}</div>
-                           <span className="text-[8px] font-black uppercase tracking-widest opacity-60">{item.label}</span>
+                    <div className="flex-1 flex flex-col items-center justify-center text-center p-6 space-y-8">
+                      <div className="space-y-4">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600/10 text-blue-600 rounded-full text-[8px] font-black uppercase tracking-[0.2em] border border-blue-600/20">
+                           <Shield size={10} /> ENTERPRISE PIPELINE
                         </div>
-                      ))}
-                    </div>
+                        <h2 className="text-5xl font-display font-black tracking-tighter leading-[0.9] uppercase">
+                           <span className={isDark ? "text-white" : "text-corporate-900"}>Command</span><br/>
+                           <span className="text-blue-600">The Future</span>
+                        </h2>
+                        <p className="text-[10px] text-slate-400 font-black leading-relaxed max-w-[240px] mx-auto uppercase tracking-[0.1em]">
+                           {appConfig?.landingSubtitle || 'El primer pipeline de IA para PyMEs que prioriza tus datos y tu bolsillo.'}
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 w-full">
+                        {[
+                           { title: 'Privacidad', icon: <Lock size={16} />, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+                           { title: 'Costo', icon: <TrendingUp size={16} />, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+                           { title: 'Valores', icon: <Shield size={16} />, color: 'text-orange-500', bg: 'bg-orange-500/10' },
+                           { title: 'AI-First', icon: <LayoutGrid size={16} />, color: 'text-purple-500', bg: 'bg-purple-500/10' }
+                        ].map((item, i) => (
+                           <div key={i} className={cn("p-4 rounded-3xl border flex flex-col items-center gap-2", 
+                             isDark ? "bg-white/5 border-white/5" : "bg-white border-slate-100 shadow-lg shadow-slate-200/30"
+                           )}>
+                              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", item.bg, item.color)}>
+                                 {item.icon}
+                              </div>
+                              <span className="text-[8px] font-black uppercase tracking-widest opacity-60">{item.title}</span>
+                           </div>
+                        ))}
+                      </div>
                     
                     <div className="grid grid-cols-1 gap-3 w-full max-w-[280px]">
                       <button 
