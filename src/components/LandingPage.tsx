@@ -3,11 +3,9 @@ import { motion, AnimatePresence, useScroll, useTransform } from 'motion/react';
 import { PricingSection } from './PricingSection';
 import { SupportFooter } from './SupportFooter';
 import { TrialEndedModal } from './TrialEndedModal';
-import { ShieldCheck, ChevronRight, Zap, Globe, Sparkles, Coins, Cpu, Lock, MousePointer2, MessageSquare, Presentation, Palette, Database } from 'lucide-react';
+import { ShieldCheck, Shield, CheckCircle2, ChevronRight, Zap, Globe, Sparkles, Coins, Cpu, Lock, MousePointer2, MessageSquare, Presentation, Palette, Database } from 'lucide-react';
 import { translations } from '../lib/translations';
 import { cn } from '../lib/utils';
-
-const NeuralBackground = () => null;
 
 interface LandingPageProps {
   onStartSession: () => void;
@@ -16,9 +14,10 @@ interface LandingPageProps {
   lang: 'en' | 'es';
   setLang: (lang: 'en' | 'es') => void;
   appConfig?: any;
+  appMode?: 'corporate' | 'junior';
 }
 
-export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = false, lang, setLang, appConfig }: LandingPageProps) => {
+export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = false, lang, setLang, appConfig, appMode = 'corporate' }: LandingPageProps) => {
   const t = translations[lang] || translations.es;
   const [isModalOpen, setIsModalOpen] = useState(showTrialModal);
   const featuresRef = useRef<HTMLDivElement>(null);
@@ -34,36 +33,39 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black font-sans selection:bg-blue-600 selection:text-white relative">
-      {/* <NeuralBackground /> */}
+    <div className="min-h-screen bg-black font-sans selection:bg-blue-600 selection:text-white relative">
       {/* Navigation */}
-      <nav className="h-20 lg:h-24 px-6 lg:px-12 flex items-center justify-between sticky top-0 z-[100] bg-white/90 dark:bg-black/90 backdrop-blur-2xl border-b border-corporate-100 dark:border-white/10">
+      <nav className="h-20 lg:h-24 px-6 lg:px-12 flex items-center justify-between sticky top-0 z-[100] bg-black/80 backdrop-blur-3xl border-b border-white/[0.05]">
         <div className="flex items-center gap-3 lg:gap-4">
-          <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-xl shadow-blue-500/20">
-             {appConfig?.appLogoText || 'C'}
+          <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-[0_0_20px_rgba(255,255,255,0.1)] bg-white/10 backdrop-blur-md border border-white/20 transition-all">
+             C
           </div>
-          <h1 className="text-lg lg:text-xl font-display font-black tracking-tight uppercase dark:text-white">
-             {appConfig?.appName || 'Catalizia'}
+          <h1 className="text-lg lg:text-xl font-display font-black tracking-tight uppercase text-white">
+             Catalizia
           </h1>
         </div>
         
-        <div className="hidden lg:flex items-center gap-10 text-[10px] font-black uppercase tracking-[0.3em] text-corporate-900 dark:text-white/70">
-          <a href="#solutions" onClick={(e) => { e.preventDefault(); scrollToFeatures(); }} className="hover:text-blue-600 dark:hover:text-white transition-colors">{lang === 'en' ? 'Solutions' : 'Soluciones'}</a>
-          <a href="#economics" className="hover:text-blue-600 dark:hover:text-white transition-colors">{lang === 'en' ? 'Efficiency' : 'Eficiencia'}</a>
-          <a href="#support" className="hover:text-blue-600 dark:hover:text-white transition-colors">{lang === 'en' ? 'Support' : 'Soporte'}</a>
+        <div className="hidden lg:flex items-center gap-10 text-[10px] font-black uppercase tracking-[0.3em] text-white/70">
+          <a href="#solutions" onClick={(e) => { e.preventDefault(); scrollToFeatures(); }} className="hover:text-white transition-colors">{lang === 'en' ? 'Solutions' : 'Soluciones'}</a>
+          <a href="#economics" className="hover:text-white transition-colors">{lang === 'en' ? 'Efficiency' : 'Eficiencia'}</a>
+          <a href="#support" className="hover:text-white transition-colors">{lang === 'en' ? 'Support' : 'Soporte'}</a>
         </div>
 
         <div className="flex items-center gap-3 lg:gap-4">
-          <div className="hidden sm:flex items-center bg-slate-100 dark:bg-white/5 p-1 rounded-xl border border-corporate-200 dark:border-white/10">
+          <div className="hidden sm:flex items-center bg-white/5 p-1 rounded-xl border border-white/10">
             <button 
               onClick={() => setLang('en')}
-              className={`px-2 lg:px-3 py-1 lg:py-1.5 rounded-lg text-[9px] lg:text-[10px] font-black transition-all ${lang === 'en' ? 'bg-white dark:bg-white/10 text-blue-600 shadow-sm' : 'text-slate-400'}`}
+              className={cn("px-2 lg:px-3 py-1 lg:py-1.5 rounded-lg text-[9px] lg:text-[10px] font-black transition-all", 
+                lang === 'en' ? 'bg-white/10 text-white shadow-sm' : 'text-slate-500'
+              )}
             >
               EN
             </button>
             <button 
               onClick={() => setLang('es')}
-              className={`px-2 lg:px-3 py-1 lg:py-1.5 rounded-lg text-[9px] lg:text-[10px] font-black transition-all ${lang === 'es' ? 'bg-white dark:bg-white/10 text-blue-600 shadow-sm' : 'text-slate-400'}`}
+              className={cn("px-2 lg:px-3 py-1 lg:py-1.5 rounded-lg text-[9px] lg:text-[10px] font-black transition-all", 
+                lang === 'es' ? 'bg-white/10 text-white shadow-sm' : 'text-slate-500'
+              )}
             >
               ES
             </button>
@@ -71,228 +73,189 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
           <button 
             onClick={onStartSession}
             disabled={isSigningIn}
-            className="px-4 lg:px-6 h-10 lg:h-12 bg-blue-600 text-white rounded-xl font-black text-[9px] lg:text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 lg:px-6 h-10 lg:h-12 bg-white text-black rounded-xl font-black text-[9px] lg:text-[10px] uppercase tracking-widest transition-all hover:scale-105 shadow-[0_0_20px_rgba(255,255,255,0.2)] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSigningIn ? (lang === 'en' ? '...' : '...') : (lang === 'en' ? 'Client Access' : 'Acceso')}
+            {isSigningIn ? '...' : (lang === 'en' ? 'Client Access' : 'Acceso')}
           </button>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-48 px-6 lg:px-12 overflow-hidden bg-white dark:bg-black">
-        {/* Sharper Gradients for better visibility */}
+      <section className="relative pt-32 pb-24 px-6 lg:px-12 overflow-hidden bg-[#020205]">
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-           <div className="absolute top-0 right-0 w-[60vw] h-[60vw] bg-blue-600/10 dark:bg-blue-600/20 blur-[120px] rounded-full -mr-[20vw] -mt-[20vw]" />
-           <div className="absolute bottom-0 left-0 w-[50vw] h-[50vw] bg-amber-500/5 dark:bg-blue-400/5 blur-[120px] rounded-full -ml-[15vw] -mb-[15vw]" />
+           <div className="absolute top-[-20%] right-[-10%] w-[70vw] h-[70vw] bg-blue-600/10 blur-[150px] rounded-full" />
+           <div className="absolute bottom-[-20%] left-[-10%] w-[70vw] h-[70vw] bg-emerald-500/10 blur-[150px] rounded-full" />
+           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>
         </div>
 
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="flex flex-col items-center text-center space-y-12">
+          <div className="flex flex-col items-center text-center space-y-8 mb-24">
             <motion.div 
-               initial={{ opacity: 0, y: 20 }}
-               animate={{ opacity: 1, y: 0 }}
-               className="inline-flex items-center gap-3 px-6 py-3 bg-blue-600/5 dark:bg-blue-600/10 text-blue-600 dark:text-blue-400 rounded-full text-[9px] font-black uppercase tracking-[0.4em] border border-blue-600/20 backdrop-blur-xl shadow-[0_0_20px_rgba(37,99,235,0.1)] relative overflow-hidden"
+               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+               className="inline-flex items-center gap-3 px-6 py-3 bg-white/[0.03] text-white rounded-full text-[10px] font-black uppercase tracking-[0.4em] border border-white/[0.08] backdrop-blur-3xl shadow-2xl"
             >
-
-              <Lock size={14} /> {lang === 'en' ? 'Certified AI Pipeline' : 'IA Certificada para PyMEs'}
+              <Sparkles size={14} className="text-blue-400" /> ECOSISTEMA DE IA DEFINITIVO
             </motion.div>
-
             <motion.h1 
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="text-5xl md:text-8xl lg:text-[9rem] font-display font-black tracking-tight leading-[0.9] uppercase max-w-6xl text-corporate-900 dark:text-white flex flex-wrap justify-center gap-x-[0.3em]"
+              initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+              className="text-5xl md:text-7xl lg:text-[7rem] font-display font-black tracking-tighter leading-[0.85] text-white uppercase"
             >
-              {(appConfig?.landingTitle || t.landingTitle).split(' ').map((word: string, i: number) => (
-                <span key={i} className={cn((word.toLowerCase() === 'private' || word.toLowerCase() === 'privada') ? 'text-blue-600' : '')}>
-                  {word}
-                </span>
-              ))}
+              Inteligencia <br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-emerald-400">Sin Filtros</span>
             </motion.h1>
-
             <motion.p 
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="max-w-3xl text-base md:text-xl font-medium text-slate-500 dark:text-white/60 leading-relaxed uppercase tracking-wider px-4"
+              initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+              className="max-w-3xl text-sm md:text-lg text-slate-400 font-medium uppercase tracking-widest leading-relaxed"
             >
-              {appConfig?.landingSubtitle || t.landingSubtitle}
+              Dos universos separados. Un motor unificado. Elige tu entorno y experimenta el poder de la IA con privacidad y seguridad absoluta.
             </motion.p>
+          </div>
 
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
+            {/* Corporate Card */}
             <motion.div 
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="flex flex-col md:flex-row gap-4 lg:gap-6 w-full max-w-xl pt-4 px-6 md:px-0"
+              initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+              className="group relative rounded-[2.5rem] bg-white/[0.02] border border-white/[0.05] overflow-hidden hover:bg-white/[0.04] transition-all duration-500 flex flex-col backdrop-blur-xl"
             >
-              <button 
-                onClick={onStartSession}
-                disabled={isSigningIn}
-                className="flex-1 h-16 lg:h-20 bg-blue-600 text-white rounded-[2rem] flex items-center justify-center gap-4 font-black text-[10px] lg:text-xs uppercase tracking-widest hover:bg-blue-700 transition-all hover:-translate-y-1 group disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl shadow-blue-600/20"
-              >
-                {isSigningIn ? (lang === 'en' ? '...' : '...') : t.getStarted} 
-                {!isSigningIn && <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />}
-              </button>
-              <button 
-                onClick={scrollToFeatures}
-                className="flex-1 h-16 lg:h-20 bg-slate-50 dark:bg-white/5 text-corporate-900 dark:text-white border border-corporate-200 dark:border-white/10 rounded-[2rem] flex items-center justify-center gap-4 font-black text-[10px] lg:text-xs uppercase tracking-widest hover:bg-white dark:hover:bg-white/10 transition-all shadow-sm group"
-              >
-                {t.viewDemo} <MousePointer2 size={18} className="text-blue-600 group-hover:scale-125 transition-transform" />
-              </button>
-            </motion.div>
-            {/* Platform Showcase - What the app can do */}
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.4 }}
-              className="w-full mt-24 grid grid-cols-2 md:grid-cols-4 gap-4 px-4"
-            >
-              {[
-                { icon: <MessageSquare size={20} />, label: t.intelligentChat, color: 'text-blue-500' },
-                { icon: <Presentation size={20} />, label: t.pptStudio, color: 'text-emerald-500' },
-                { icon: <Palette size={20} />, label: 'Asset Studio', color: 'text-purple-500' },
-                { icon: <Database size={20} />, label: 'Knowledge Bank', color: 'text-amber-500' }
-              ].map((item, i) => (
-                <div key={i} className="p-6 rounded-[2rem] bg-slate-50 dark:bg-white/5 border border-corporate-100 dark:border-white/5 flex flex-col items-center gap-4 transition-all hover:bg-white dark:hover:bg-white/10 group">
-                   <div className={cn("w-12 h-12 rounded-2xl bg-white dark:bg-white/5 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform", item.color.replace('text', 'bg').replace('500', '500/10'))}>
-                      <div className={item.color}>{item.icon}</div>
-                   </div>
-                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-white/60">{item.label}</span>
-                </div>
-              ))}
-            </motion.div>
-          </div>
-
-          {/* Neural Preview - Visualizing the App */}
-          <div className="mt-48 relative">
-            <div className="absolute inset-0 bg-blue-600/20 blur-[150px] rounded-full scale-150 opacity-20" />
-            <motion.div 
-              initial={{ opacity: 0, y: 100 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              className="relative z-10 p-4 lg:p-8 rounded-[4rem] bg-corporate-900 border border-white/10 shadow-3xl overflow-hidden aspect-[16/9] lg:aspect-auto lg:h-[600px]"
-            >
-               {/* Mock UI for "What the app can do" */}
-               <div className="h-full w-full flex gap-4">
-                  <div className="w-64 hidden lg:flex flex-col gap-3 p-6 border-r border-white/5">
-                     <div className="w-full h-12 bg-white/5 rounded-xl" />
-                     <div className="space-y-2">
-                        {[1,2,3,4].map(i => <div key={i} className="h-10 w-full bg-white/[0.02] rounded-lg" />)}
-                     </div>
-                  </div>
-                  <div className="flex-1 flex flex-col p-6 space-y-6">
-                     <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                        <div className="flex items-center gap-3">
-                           <div className="w-8 h-8 bg-blue-600 rounded-lg" />
-                           <div className="h-4 w-32 bg-white/10 rounded-full" />
-                        </div>
-                        <div className="flex gap-2">
-                           <div className="w-8 h-8 bg-white/5 rounded-lg" />
-                           <div className="w-8 h-8 bg-white/5 rounded-lg" />
-                        </div>
-                     </div>
-                     <div className="flex-1 space-y-4">
-                        <div className="max-w-md bg-white/5 p-4 rounded-2xl rounded-tl-none mr-auto">
-                           <div className="h-3 w-full bg-white/10 rounded-full mb-2" />
-                           <div className="h-3 w-3/4 bg-white/10 rounded-full" />
-                        </div>
-                        <div className="max-w-md bg-blue-600 p-4 rounded-2xl rounded-tr-none ml-auto">
-                           <div className="h-3 w-full bg-white/20 rounded-full mb-2" />
-                           <div className="h-3 w-1/2 bg-white/20 rounded-full" />
-                        </div>
-                     </div>
-                     <div className="h-16 bg-white/5 rounded-2xl border border-white/10 flex items-center px-6 gap-4">
-                        <div className="h-3 flex-1 bg-white/10 rounded-full" />
-                        <div className="w-10 h-10 bg-blue-600 rounded-full shadow-lg" />
-                     </div>
-                  </div>
-               </div>
-               
-             </motion.div>
-          </div>
-
-          {/* High Contrast Feature Grid */}
-          <div ref={featuresRef} className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-48">
-            <div className="p-10 lg:p-14 rounded-[3.5rem] bg-slate-50 dark:bg-white/5 border border-corporate-200 dark:border-white/10 space-y-8 group hover:bg-white dark:hover:bg-white/[0.08] transition-all">
-               <div className="w-16 h-16 bg-blue-600 rounded-3xl flex items-center justify-center text-white shadow-xl">
-                 <ShieldCheck size={32} />
-               </div>
-               <div className="space-y-4">
-                 <h3 className="font-display font-black text-2xl tracking-tight uppercase leading-none text-corporate-900 dark:text-white">{t.highlightSafetyTitle}</h3>
-                 <p className="text-xs font-bold leading-relaxed text-slate-500 dark:text-white/50 uppercase tracking-widest">
-                    {t.highlightSafetyDesc}
-                 </p>
-               </div>
-            </div>
-            
-            <div id="economics" className="p-10 lg:p-14 rounded-[3.5rem] bg-corporate-900 dark:bg-blue-600 border border-transparent text-white space-y-8 shadow-2xl shadow-blue-600/30 md:translate-y-12">
-               <div className="w-16 h-16 bg-white text-blue-600 rounded-3xl flex items-center justify-center shadow-xl">
-                 <Coins size={32} />
-               </div>
-               <div className="space-y-4">
-                 <h3 className="font-display font-black text-2xl tracking-tight uppercase leading-none">{t.highlightEfficiencyTitle}</h3>
-                 <p className="text-xs font-bold leading-relaxed text-white/80 uppercase tracking-widest">
-                    {t.highlightEfficiencyDesc}
-                 </p>
-               </div>
-            </div>
-
-            <div className="p-10 lg:p-14 rounded-[3.5rem] bg-slate-50 dark:bg-white/5 border border-corporate-200 dark:border-white/10 space-y-8 group hover:bg-white dark:hover:bg-white/[0.08] transition-all">
-               <div className="w-16 h-16 bg-blue-900 rounded-3xl flex items-center justify-center text-white shadow-xl">
-                 <Cpu size={32} />
-               </div>
-               <div className="space-y-4">
-                 <h3 className="font-display font-black text-2xl tracking-tight uppercase leading-none text-corporate-900 dark:text-white">{t.tokenRouterTitle}</h3>
-                 <p className="text-xs font-bold leading-relaxed text-slate-500 dark:text-white/50 uppercase tracking-widest">
-                    {t.tokenRouterDesc}
-                 </p>
-               </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Security Proof Section */}
-      <section className="py-32 px-6 lg:px-12 bg-slate-50 dark:bg-white/[0.02] border-y border-corporate-100 dark:border-white/5">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16 md:gap-32">
-          <div className="flex-1 space-y-8">
-            <h2 className="text-4xl md:text-6xl font-display font-black tracking-tighter uppercase leading-[0.9] dark:text-white">
-              {lang === 'en' ? 'Data Privacy as a' : 'Privacidad de Datos como una'} <br />
-              <span className="text-blue-600">{lang === 'en' ? 'Non-Negotiable' : 'Innegociable'}</span>
-            </h2>
-            <p className="text-lg font-medium text-slate-500 dark:text-white/60 uppercase tracking-wider">
-              {lang === 'en' 
-                ? 'Your proprietary logic and corporate documents never touch the public internet. We implement a Zero Data Retention (ZDR) infrastructure for all Mexico-based SMEs.'
-                : 'Tu lógica propietaria y documentos corporativos nunca tocan el internet público. Implementamos una infraestructura de Retención de Datos Cero (ZDR) para todas las PyMEs.'}
-            </p>
-            <ul className="space-y-4 pt-4">
-               {[
-                 lang === 'en' ? 'End-to-End Encryption' : 'Encriptación de Punto a Punto',
-                 lang === 'en' ? 'ISO 27001 Certified Nodes' : 'Nodos Certificados ISO 27001',
-                 lang === 'en' ? 'Local Mexican Compliance' : 'Cumplimiento Local Mexicano'
-               ].map((item, i) => (
-                 <li key={i} className="flex items-center gap-4 text-xs font-black uppercase tracking-widest dark:text-white">
-                   <div className="w-8 h-8 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-600">
-                     <ShieldCheck size={16} />
-                   </div>
-                   {item}
-                 </li>
-               ))}
-            </ul>
-          </div>
-          <div className="flex-1 w-full flex justify-center">
-            <div className="relative w-full aspect-square max-w-md">
-              <div className="absolute inset-0 bg-blue-600/10 blur-[100px] rounded-full" />
-              <div className="relative z-10 w-full h-full bg-white dark:bg-corporate-900 rounded-[4rem] border border-corporate-200 dark:border-white/10 shadow-2xl flex items-center justify-center p-12">
-                 <motion.div 
-                   transition={{ duration: 0 }}
-                   className="absolute inset-0 border-4 border-dashed border-blue-600/20 rounded-[4rem]" 
-                 />
-                 <Lock size={120} className="text-blue-600 drop-shadow-2xl" />
+              {/* Fake UI Screenshot */}
+              <div className="relative h-72 w-full bg-black/40 border-b border-white/[0.05] overflow-hidden flex items-end justify-center px-8 pt-12">
+                 <div className="w-full h-full bg-[#0a0a0f] rounded-t-2xl border-x border-t border-white/10 shadow-[0_-20px_50px_rgba(37,99,235,0.1)] relative overflow-hidden flex transform group-hover:translate-y-[-8px] transition-transform duration-500">
+                    <div className="w-20 lg:w-24 h-full border-r border-white/5 p-4 flex flex-col gap-4 bg-white/[0.02]">
+                       <div className="w-full h-12 bg-blue-500/20 rounded-xl flex items-center justify-center border border-blue-500/30"><Shield size={20} className="text-blue-400"/></div>
+                       <div className="w-full h-12 bg-white/5 rounded-xl flex items-center justify-center"><Database size={20} className="text-white/20"/></div>
+                       <div className="w-full h-12 bg-white/5 rounded-xl flex items-center justify-center"><Presentation size={20} className="text-white/20"/></div>
+                    </div>
+                    <div className="flex-1 p-6 space-y-6">
+                       <div className="flex gap-4 items-start">
+                          <div className="w-10 h-10 rounded-xl bg-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center justify-center"><Cpu size={18} className="text-white"/></div>
+                          <div className="flex-1 space-y-3 pt-1">
+                             <div className="h-4 w-1/3 bg-white/10 rounded-md" />
+                             <div className="h-24 w-full bg-white/[0.03] rounded-xl border border-white/5 p-4 flex flex-col justify-between">
+                                <div className="h-2 w-full bg-white/10 rounded-full"/>
+                                <div className="h-2 w-3/4 bg-white/10 rounded-full"/>
+                                <div className="h-2 w-5/6 bg-white/10 rounded-full"/>
+                             </div>
+                          </div>
+                       </div>
+                       <div className="flex gap-4 flex-row-reverse items-start">
+                          <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center"><div className="w-4 h-4 bg-white/50 rounded-sm"/></div>
+                          <div className="h-12 w-2/3 bg-blue-500/10 rounded-xl border border-blue-500/20 p-3">
+                             <div className="h-2 w-1/2 bg-blue-400/50 rounded-full"/>
+                          </div>
+                       </div>
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-transparent to-transparent z-10" />
+                 </div>
               </div>
-            </div>
+
+              <div className="relative p-10 lg:p-12 z-20 space-y-8 flex-1 flex flex-col justify-between">
+                <div>
+                  <h3 className="text-3xl font-display font-black text-white uppercase tracking-tight mb-2">Corporate GPT</h3>
+                  <p className="text-xs font-black text-blue-400 uppercase tracking-widest">Privacidad ZDR • Modelos Enterprise</p>
+                </div>
+                <p className="text-slate-400 text-sm leading-relaxed font-medium">
+                  El pipeline definitivo para PyMEs. Analiza documentos, genera reportes y automatiza tareas sin que tus datos confidenciales toquen el internet público.
+                </p>
+                <button 
+                  onClick={() => { window.location.href = 'https://corporategpt.catalizia.com'; }}
+                  className="w-full py-4 rounded-xl bg-white text-black font-black uppercase tracking-widest text-xs hover:scale-[1.02] transition-all shadow-[0_0_30px_rgba(255,255,255,0.1)] flex items-center justify-center gap-3"
+                >
+                  Entrar a Corporate <ChevronRight size={16} />
+                </button>
+              </div>
+            </motion.div>
+
+            {/* Techie Card */}
+            <motion.div 
+              initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
+              className="group relative rounded-[2.5rem] bg-white/[0.02] border border-white/[0.05] overflow-hidden hover:bg-white/[0.04] transition-all duration-500 flex flex-col backdrop-blur-xl"
+            >
+              {/* Fake UI Screenshot */}
+              <div className="relative h-72 w-full bg-black/40 border-b border-white/[0.05] overflow-hidden flex items-end justify-center px-8 pt-12">
+                 <div className="w-full h-full bg-[#0a0f0d] rounded-t-2xl border-x border-t border-white/10 shadow-[0_-20px_50px_rgba(16,185,129,0.1)] relative overflow-hidden transform group-hover:translate-y-[-8px] transition-transform duration-500">
+                    <div className="w-full h-20 bg-emerald-950/20 border-b border-emerald-500/10 p-4 flex items-center justify-between">
+                       <div className="flex gap-3">
+                          <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center"><Sparkles size={20} className="text-emerald-400"/></div>
+                          <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center"><Lock size={16} className="text-white/20"/></div>
+                       </div>
+                       <div className="h-8 w-28 bg-amber-500/10 border border-amber-500/30 rounded-full flex items-center px-3 gap-2">
+                          <div className="w-4 h-4 rounded-full bg-amber-400"/>
+                          <div className="h-2 w-10 bg-amber-400/50 rounded-full"/>
+                       </div>
+                    </div>
+                    <div className="p-6 space-y-6">
+                       <div className="flex gap-4 items-start">
+                          <div className="w-12 h-12 rounded-xl bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center justify-center"><Zap size={24} className="text-white"/></div>
+                          <div className="h-20 w-3/4 bg-emerald-500/10 rounded-2xl rounded-tl-sm border border-emerald-500/20 p-5 flex flex-col justify-center gap-3">
+                             <div className="h-2 w-full bg-emerald-400/40 rounded-full" />
+                             <div className="h-2 w-2/3 bg-emerald-400/40 rounded-full" />
+                          </div>
+                       </div>
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f0d] via-transparent to-transparent z-10" />
+                 </div>
+              </div>
+
+              <div className="relative p-10 lg:p-12 z-20 space-y-8 flex-1 flex flex-col justify-between">
+                <div>
+                  <h3 className="text-3xl font-display font-black text-white uppercase tracking-tight mb-2">Techie Tutor</h3>
+                  <p className="text-xs font-black text-emerald-400 uppercase tracking-widest">Pedagogía Socrática • Sandbox Seguro</p>
+                </div>
+                <p className="text-slate-400 text-sm leading-relaxed font-medium">
+                  El compañero de estudio perfecto para tus hijos. Gamificación avanzada, explicaciones paso a paso y filtros de seguridad impenetrables para su aprendizaje.
+                </p>
+                <button 
+                  onClick={() => { window.location.href = 'https://techie.catalizia.com'; }}
+                  className="w-full py-4 rounded-xl bg-emerald-500 text-white font-black uppercase tracking-widest text-xs hover:bg-emerald-400 hover:scale-[1.02] transition-all shadow-[0_0_30px_rgba(16,185,129,0.3)] flex items-center justify-center gap-3"
+                >
+                  Entrar a Techie Tutor <ChevronRight size={16} />
+                </button>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
+
+      {/* Bento Grid Features */}
+      <section className="py-24 px-6 lg:px-12 bg-[#020205] border-b border-white/[0.05]">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+             <div className="md:col-span-2 p-10 rounded-[2.5rem] bg-white/[0.02] border border-white/[0.05] space-y-6 hover:bg-white/[0.04] transition-colors relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform"><ShieldCheck size={150} /></div>
+                <div className="relative z-10">
+                   <div className="w-14 h-14 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-400 border border-blue-500/20 mb-6"><Lock size={24} /></div>
+                   <h4 className="text-2xl font-black text-white uppercase tracking-wide mb-3">Arquitectura Zero-Data</h4>
+                   <p className="text-slate-400 text-sm leading-relaxed font-medium max-w-lg">Implementamos un pipeline de seguridad impenetrable. Tus prompts, documentos y conversaciones jamás tocan el internet público ni se usan para entrenar IAs.</p>
+                </div>
+             </div>
+             
+             <div className="p-10 rounded-[2.5rem] bg-white/[0.02] border border-white/[0.05] space-y-6 hover:bg-white/[0.04] transition-colors flex flex-col justify-between">
+                <div className="w-14 h-14 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-400 border border-emerald-500/20"><ShieldCheck size={24} /></div>
+                <div>
+                   <h4 className="text-xl font-black text-white uppercase tracking-wide mb-2">Sandbox Infantil</h4>
+                   <p className="text-slate-400 text-sm leading-relaxed font-medium">Contenido 100% filtrado. Cero riesgos, cero sesgos para niños.</p>
+                </div>
+             </div>
+
+             <div className="p-10 rounded-[2.5rem] bg-white/[0.02] border border-white/[0.05] space-y-6 hover:bg-white/[0.04] transition-colors">
+                <div className="w-14 h-14 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-400 border border-amber-500/20"><Coins size={24} /></div>
+                <h4 className="text-xl font-black text-white uppercase tracking-wide">Router Económico</h4>
+                <p className="text-slate-400 text-sm leading-relaxed font-medium">Auto-selección del modelo más barato según la tarea. Ahorra hasta 80% en costos.</p>
+             </div>
+
+             <div className="md:col-span-2 p-10 rounded-[2.5rem] bg-gradient-to-br from-blue-900/20 to-purple-900/20 border border-white/[0.05] space-y-6 hover:bg-white/[0.04] transition-colors relative overflow-hidden group">
+                <div className="absolute right-0 top-0 w-64 h-64 bg-blue-500/10 blur-[100px] rounded-full group-hover:bg-purple-500/20 transition-colors duration-700" />
+                <div className="relative z-10">
+                   <div className="w-14 h-14 bg-white/10 rounded-xl flex items-center justify-center text-white border border-white/20 mb-6"><Globe size={24} /></div>
+                   <h4 className="text-2xl font-black text-white uppercase tracking-wide mb-3">Modelos Universales</h4>
+                   <p className="text-slate-400 text-sm leading-relaxed font-medium max-w-lg">Acceso instantáneo a GPT-4, Claude 3.5, Gemini Pro y Llama 3 desde una misma interfaz unificada. Olvídate de pagar suscripciones separadas a cada proveedor.</p>
+                </div>
+             </div>
+          </div>
+        </div>
+      </section>
+
+      <PricingSection />
 
       <div id="support">
         <SupportFooter />
@@ -301,7 +264,7 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
       <TrialEndedModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        onViewPricing={onStartSession} // Redirect to app session
+        onViewPricing={onStartSession} 
       />
     </div>
   );
