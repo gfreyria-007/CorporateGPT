@@ -10,6 +10,8 @@ import rateLimit from 'express-rate-limit';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+dotenv.config();
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -216,6 +218,88 @@ async function startServer() {
       res.json(data);
     } catch (error: any) {
       console.error('Chat error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // API Route for Google Gemini Direct Proxy (Local Dev)
+  app.post('/api/gemini', async (req, res) => {
+    try {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({ error: 'GEMINI_API_KEY is missing in local server' });
+      }
+
+      const { action, payload } = req.body;
+      if (!action || !payload) {
+        return res.status(400).json({ error: 'Missing action or payload' });
+      }
+
+      console.log(`[GEMINI PROXY] Action: ${action}, Model: ${payload.model}`);
+
+      if (action === 'generateContent') {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || 'gemini-flash-latest'}:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: payload.contents,
+            generationConfig: {
+              ...payload.config,
+              responseMimeType: payload.config?.responseMimeType || "application/json"
+            },
+            systemInstruction: payload.systemInstruction || undefined
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("[GEMINI PROXY] Gemini Error:", JSON.stringify(errorData));
+          throw new Error(errorData.error?.message || 'Gemini generation failed');
+        }
+
+        const result = await response.json();
+        
+        // Extract text and parse JSON if needed
+        let rawText = '';
+        if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
+          rawText = result.candidates[0].content.parts[0].text;
+        }
+
+        const cleanJson = (rawText || '').replace(/```json/g, '').replace(/```/g, '').trim();
+        let parsedFields = {};
+        try {
+          if (cleanJson) parsedFields = JSON.parse(cleanJson);
+        } catch (e) {
+          console.warn("[GEMINI PROXY] JSON Parse warning:", e);
+        }
+
+        return res.status(200).json({ text: rawText, ...parsedFields });
+
+      } else if (action === 'chat') {
+         // Simplified chat for local proxy
+         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || 'gemini-flash-latest'}:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: payload.message }] }],
+            systemInstruction: payload.config?.systemInstruction || undefined
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("[GEMINI PROXY] Chat Error:", JSON.stringify(errorData));
+          throw new Error(errorData.error?.message || 'Chat generation failed');
+        }
+
+        const result = await response.json();
+        const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        return res.status(200).json({ text });
+      }
+
+      return res.status(400).json({ error: 'Unknown action' });
+    } catch (error: any) {
+      console.error('Gemini proxy error:', error);
       res.status(500).json({ error: error.message });
     }
   });

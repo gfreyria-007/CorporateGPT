@@ -27,7 +27,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, lang }) => {
       }`}>
         {isUser ? 'USR' : (
           <div className="relative w-full h-full flex items-center justify-center">
-            <Sparkles size={18} className="animate-pulse" />
+            <Sparkles size={18} />
           </div>
         )}
       </div>

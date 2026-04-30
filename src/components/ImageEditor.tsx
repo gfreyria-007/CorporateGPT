@@ -86,12 +86,14 @@ const TEMPLATES = [
 export function ImageEditor({ 
   onClose, 
   theme, 
+  lang = 'es',
   appConfig, 
   onTrialEnd,
   isMobile = false 
 }: { 
   onClose: () => void, 
-  theme: string, 
+  theme: 'dark' | 'light', 
+  lang?: 'en' | 'es',
   appConfig: any, 
   onTrialEnd?: () => void,
   isMobile?: boolean
@@ -137,7 +139,7 @@ export function ImageEditor({
     { name: 'Vibrant Orange', hex: '#f97316' },
   ];
 
-  const t = translations[lang];
+  const t = translations[lang || 'es'];
 
   useEffect(() => {
     if (!canvasRef.current) return;

@@ -20,6 +20,7 @@ import {
   Plus,
   Palette,
   TrendingUp,
+  Lock,
   Shield
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';

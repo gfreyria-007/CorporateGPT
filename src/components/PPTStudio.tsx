@@ -5,12 +5,12 @@ import {
   Zap, Database, BarChart3, Presentation, Image as ImageIcon
 } from 'lucide-react';
 import { NeuralOverlay } from './NeuralOverlay';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   generateSkeleton, renderSlideVisual, SlideSkeleton,
   generateClarifyingQuestions, ClarifyingQuestion
-} from '@/services/geminiService';
+} from '../services/geminiService';
 
 type StudioStep = 'config' | 'clarify' | 'skeleton';
 
@@ -87,9 +87,9 @@ const PPTStudio: React.FC<{
       }
       setSlides(skeleton.map(s => ({ ...s, rendered: false, visualLayout: 'split' })));
       setStep('skeleton');
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error:", error);
-      setGenError('Error al conectar con el motor de IA. Verifica tu conexión.');
+      setGenError(`Error: ${error.message || 'Error al conectar con el motor de IA'}`);
     } finally {
       setIsGenerating(false);
     }
@@ -171,7 +171,7 @@ const PPTStudio: React.FC<{
       )}>
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-xl shadow-blue-600/30 ring-1 ring-white/20">
-            <BrainCircuit size={20} className="animate-pulse" />
+            <BrainCircuit size={20} />
           </div>
           <div>
             <h1 className={cn(
@@ -179,7 +179,7 @@ const PPTStudio: React.FC<{
               isDark ? "text-white" : "text-slate-900"
             )}>Neural Studio 6.5</h1>
             <div className="flex items-center gap-2">
-              <div className={cn("w-1.5 h-1.5 rounded-full", isGenerating ? "bg-yellow-500 animate-pulse" : "bg-green-500")} />
+              <div className={cn("w-1.5 h-1.5 rounded-full", isGenerating ? "bg-yellow-500" : "bg-green-500")} />
               <span className={cn(
                 "text-[10px] uppercase tracking-widest font-bold",
                 isDark ? "text-slate-400" : "text-slate-400"
@@ -259,8 +259,7 @@ const PPTStudio: React.FC<{
                     ? "bg-white/[0.03] border-white/20 shadow-2xl backdrop-blur-2xl"
                     : "bg-white border-slate-300 shadow-2xl shadow-slate-200"
                 )}>
-                  <div className="absolute inset-0 opacity-[0.08] pointer-events-none bg-[linear-gradient(to_bottom,transparent_0%,#2563eb_50%,transparent_100%)] [background-size:100%_400%] animate-holographic-scan" />
-                  <div className="flex flex-col relative z-10">
+                    <div className="flex flex-col relative z-10">
                     <textarea 
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
@@ -348,7 +347,7 @@ const PPTStudio: React.FC<{
                   </div>
                 </div>
                 {genError && (
-                  <div className="mt-8 px-8 py-5 bg-red-600/10 border border-red-500/30 rounded-[2rem] text-red-600 text-xs font-black uppercase tracking-[0.2em] text-center animate-pulse">
+                  <div className="mt-8 px-8 py-5 bg-red-600/10 border border-red-500/30 rounded-[2rem] text-red-600 text-xs font-black uppercase tracking-[0.2em] text-center">
                     ⚠️ {genError}
                   </div>
                 )}
@@ -372,7 +371,7 @@ const PPTStudio: React.FC<{
                       Neural Interview — {isGenerating ? 'Sincronizando...' : 'Define tu visión'}
                     </span>
                     {isGenerating && (
-                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-full text-white text-[10px] font-black uppercase tracking-widest animate-bounce shadow-xl shadow-blue-600/30">
+                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-full text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-600/30">
                         <Sparkles size={12} /> Procesando Insights...
                       </div>
                     )}

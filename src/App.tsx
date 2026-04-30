@@ -442,8 +442,8 @@ export default function App() {
         )}>
           {/* Neural Processing Bar */}
           {isChatLoading && (
-            <div className="absolute bottom-0 left-0 right-0 h-[2px] overflow-hidden bg-blue-600/10">
-              <div className="h-full bg-blue-600 w-1/3 animate-[shimmer_1.5s_infinite]" />
+            <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-600/20">
+               <div className="h-full bg-blue-600 w-1/3" />
             </div>
           )}
 
@@ -455,10 +455,7 @@ export default function App() {
                <Menu size={20} />
              </button>
              <div className="flex items-center gap-3 relative">
-                 {isChatLoading && (
-                   <div className="absolute -inset-1 bg-amber-500/20 rounded-full animate-ping" />
-                 )}
-                 <div className={cn("w-3 h-3 rounded-full relative z-10", isChatLoading ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500')} />
+                 <div className={cn("w-3 h-3 rounded-full relative z-10", isChatLoading ? 'bg-amber-500' : 'bg-emerald-500')} />
                 <h2 className="text-xl font-display font-black tracking-tight uppercase">
                   {selectedGPT ? selectedGPT.name : (selectedModel === 'openrouter/auto' ? t.autoRouter : currentModelData?.name || 'Corporate Pipeline')}
                 </h2>
@@ -560,15 +557,14 @@ export default function App() {
                 )}
                 {isChatLoading && (
                   <div className="flex gap-4 max-w-3xl mx-auto w-full px-4 py-3 bg-blue-600/[0.03] dark:bg-blue-600/[0.05] rounded-xl border border-blue-500/10 relative overflow-hidden">
-                     <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[linear-gradient(to_bottom,transparent_0%,#2563eb_50%,transparent_100%)] [background-size:100%_400%] animate-holographic-scan" />
                      <div className="flex flex-col relative z-10 w-10 h-10 rounded-xl bg-blue-600 items-center justify-center text-white shadow-xl shadow-blue-600/20">
                         <RefreshCw size={18} className="animate-spin" />
                      </div>
                      <div className="flex-1 space-y-2 relative z-10 pt-1">
                         <div className="flex items-center gap-3">
-                           <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest animate-pulse">Neural Scan...</span>
+                           <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Neural Scan...</span>
                            <div className="h-0.5 flex-1 bg-blue-500/10 rounded-full overflow-hidden">
-                              <div className="h-full bg-blue-600 w-1/3 animate-[shimmer_2s_infinite]" />
+                              <div className="h-full bg-blue-600 w-1/3" />
                            </div>
                         </div>
                         <div className="space-y-2">
@@ -608,7 +604,7 @@ export default function App() {
             <motion.div key="admin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-corporate-950"><AdminPanel onClose={() => setActivePanel('chat')} theme={theme} /></motion.div>
           )}
           {activePanel === 'creative' && (
-            <motion.div key="creative" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-corporate-950"><ImageEditor onClose={() => setActivePanel('chat')} theme={theme} appConfig={appConfig} onTrialEnd={() => setTrialEnded(true)} /></motion.div>
+            <motion.div key="creative" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-corporate-950"><ImageEditor onClose={() => setActivePanel('chat')} theme={theme} lang={lang} appConfig={appConfig} onTrialEnd={() => setTrialEnded(true)} /></motion.div>
           )}
           {activePanel === 'knowledge' && (
             <motion.div key="knowledge" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-corporate-950"><GPTsGenerator onClose={() => setActivePanel('chat')} onSelect={(gpt: any) => { setSelectedGPT(gpt); setActivePanel('chat'); }} theme={theme} /></motion.div>

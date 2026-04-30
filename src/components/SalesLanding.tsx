@@ -153,7 +153,6 @@ export const SalesLanding = ({ lang, onContact }: SalesLandingProps) => {
                 <div>
                   <h3 className="font-bold text-sm tracking-tight">{t.salesAgentTitle}</h3>
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                     <span className="text-[10px] text-green-500 font-black uppercase tracking-widest">Online Now</span>
                   </div>
                 </div>

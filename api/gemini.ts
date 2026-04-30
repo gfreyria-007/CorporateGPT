@@ -1,4 +1,3 @@
-import { GoogleGenAI } from "@google/genai";
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -11,7 +10,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'GEMINI_API_KEY is missing in backend' });
     }
 
-    const ai = new GoogleGenAI({ apiKey });
     const { action, payload } = req.body;
 
     if (!action || !payload) {
@@ -22,31 +20,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (action === 'generateContent') {
       try {
-        // Map 'config' to 'generationConfig' for SDK compatibility
         const generationConfig = payload.config || payload.generationConfig || {};
         
-        const result = await ai.models.generateContent({
-          model: payload.model || "gemini-1.5-flash",
-          contents: payload.contents,
-          generationConfig: {
-            ...generationConfig,
-            // Ensure responseMimeType is respected if provided
-            responseMimeType: generationConfig.responseMimeType || "application/json"
-          },
-          systemInstruction: payload.systemInstruction || undefined
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || "gemini-1.5-flash"}:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: payload.contents,
+            generationConfig: {
+              ...generationConfig,
+              responseMimeType: generationConfig.responseMimeType || "application/json"
+            },
+            systemInstruction: payload.systemInstruction || undefined
+          })
         });
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error?.message || 'Gemini API Error');
+        }
+
+        const result = await response.json();
         
         let rawText = '';
-        // Extract text safely from the result
         if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
           rawText = result.candidates[0].content.parts[0].text;
-        } else if (typeof result.text === 'function') {
-          rawText = await (result.text as any)();
-        } else if (typeof result.text === 'string') {
-          rawText = result.text;
         }
         
-        // Robust JSON extraction
         const cleanJson = (rawText || '').replace(/```json/g, '').replace(/```/g, '').trim();
         
         let parsedFields: Record<string, any> = {};
@@ -73,12 +73,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     } else if (action === 'chat') {
       try {
-        const chat = ai.chats.create({ 
-          model: payload.model || "gemini-1.5-flash",
-          config: payload.config || {}
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || "gemini-1.5-flash"}:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: payload.message }] }],
+            systemInstruction: payload.config?.systemInstruction ? {
+              parts: [{ text: payload.config.systemInstruction }]
+            } : undefined
+          })
         });
-        const result = await chat.sendMessage({ message: payload.message });
-        return res.status(200).json({ text: result.text });
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error?.message || 'Chat API Error');
+        }
+
+        const result = await response.json();
+        const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        return res.status(200).json({ text });
       } catch (chatError: any) {
         console.error('--- GEMINI CHAT ERROR ---', chatError);
         return res.status(500).json({ error: 'Chat failure', details: chatError.message });

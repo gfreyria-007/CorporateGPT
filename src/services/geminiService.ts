@@ -96,6 +96,12 @@ Return ONLY this JSON structure, nothing else:
     body: JSON.stringify({ action: 'generateContent', payload })
   });
 
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    console.error("[GEMINI SERVICE] Clarify Error:", res.status, errorData);
+    throw new Error(errorData.error || `HTTP ${res.status}`);
+  }
+
   const response = await res.json();
   
   const raw = response.questions || (response.text ? (() => {
@@ -234,6 +240,12 @@ export async function generateStudioSlides(prompt: string, mood: string, lang: '
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action: 'generateContent', payload })
   });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    console.error("[GEMINI SERVICE] Studio Gen Error:", res.status, errorData);
+    throw new Error(errorData.error || `HTTP ${res.status}`);
+  }
+
   const response = await res.json();
   
   // High-reliability parsing: find slides in either 'slides' or 'text'
@@ -400,6 +412,12 @@ export async function generateSkeleton(prompt: string, count: number = 10): Prom
     body: JSON.stringify({ action: 'generateContent', payload })
   });
   
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    console.error("[GEMINI SERVICE] Skeleton Gen Error:", res.status, errorData);
+    throw new Error(errorData.error || `HTTP ${res.status}`);
+  }
+
   const response = await res.json();
 
   // Multi-path parsing for maximum reliability
