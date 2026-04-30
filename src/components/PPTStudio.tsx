@@ -36,6 +36,7 @@ const PPTStudio: React.FC<any> = ({ onClose, theme }) => {
   const [genError, setGenError] = useState<string | null>(null);
   const [clarifyQuestions, setClarifyQuestions] = useState<ClarifyingQuestion[]>([]);
   const [clarifyAnswers, setClarifyAnswers] = useState<Record<string, string>>({});
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   const isDark = theme === 'dark';
 
@@ -90,7 +91,15 @@ const PPTStudio: React.FC<any> = ({ onClose, theme }) => {
     setIsGenerating(true);
     try {
       const slide = slides[index];
-      const design = await renderSlideVisual(slide.title, slide.subtitle, slide.content, selectedStyle);
+      const design = await renderSlideVisual(
+        slide.title, 
+        slide.subtitle, 
+        slide.content, 
+        selectedStyle,
+        (slide as any).chartType,
+        (slide as any).tableData,
+        !!logoUrl
+      );
       
       const newSlides = [...slides];
       newSlides[index] = { 
@@ -98,8 +107,9 @@ const PPTStudio: React.FC<any> = ({ onClose, theme }) => {
         rendered: true, 
         visualLayout: design.visualLayout || 'split',
         badge: design.badge || 'PHASE',
-        narrativePhase: design.narrativePhase || 'ANALYSIS'
-      };
+        narrativePhase: design.narrativePhase || 'ANALYSIS',
+        visualInstruction: design.visualInstruction || ''
+      } as any;
       setSlides(newSlides);
     } catch (e) {
       console.error("Render Error:", e);
@@ -236,17 +246,62 @@ const PPTStudio: React.FC<any> = ({ onClose, theme }) => {
                     ? "bg-white/5 border-white/10 shadow-black/40"
                     : "bg-white border-slate-200 shadow-slate-200"
                 )}>
-                  <textarea 
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    placeholder={`Describe tu presentación en lenguaje natural...\n\nEjemplos:\n• "La historia de Tarzán en 3 slides"\n• "Estrategia de ventas Q3 2025"\n• "Resumen ejecutivo del mercado de IA"`}
-                    className={cn(
-                      "w-full h-48 border-none rounded-[2.5rem] p-10 text-xl font-medium focus:ring-0 outline-none resize-none placeholder:opacity-30 placeholder:text-sm leading-relaxed",
-                      isDark
-                        ? "bg-white/5 text-white placeholder:text-white"
-                        : "bg-slate-50 text-slate-800"
-                    )}
-                  />
+                  <div className="flex flex-col items-center gap-6">
+                    <textarea 
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      placeholder={`Describe tu presentación en lenguaje natural...\n\nEjemplos:\n• "La historia de Tarzán en 3 slides"\n• "Estrategia de ventas Q3 2025"\n• "Resumen ejecutivo del mercado de IA"`}
+                      className={cn(
+                        "w-full h-48 border-none rounded-[2.5rem] p-10 text-xl font-medium focus:ring-0 outline-none resize-none placeholder:opacity-30 placeholder:text-sm leading-relaxed",
+                        isDark
+                          ? "bg-white/5 text-white placeholder:text-white"
+                          : "bg-slate-50 text-slate-800"
+                      )}
+                    />
+                    
+                    <div className="w-full px-10 pb-6 flex items-center justify-between border-t border-inherit pt-6">
+                       <div className="flex items-center gap-4">
+                          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Logo Corporativo</label>
+                          <div className="flex items-center gap-3">
+                             {logoUrl ? (
+                               <div className="relative group">
+                                  <img src={logoUrl} className="h-8 object-contain" alt="Logo" />
+                                  <button onClick={() => setLogoUrl(null)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <X size={10} />
+                                  </button>
+                               </div>
+                             ) : (
+                               <label className="flex items-center gap-2 px-4 py-2 bg-blue-600/10 text-blue-500 rounded-xl text-[9px] font-black uppercase tracking-widest cursor-pointer hover:bg-blue-600/20 transition-all">
+                                  <ImageIcon size={12} /> Importar Logo
+                                  <input 
+                                    type="file" accept="image/*" className="hidden" 
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) {
+                                        const reader = new FileReader();
+                                        reader.onload = (ev) => setLogoUrl(ev.target?.result as string);
+                                        reader.readAsDataURL(file);
+                                      }
+                                    }} 
+                                  />
+                               </label>
+                             )}
+                          </div>
+                       </div>
+                       
+                       <div className="flex items-center gap-3">
+                          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Slides</label>
+                          <input 
+                            type="number" min={1} max={25} value={slideCount}
+                            onChange={(e) => setSlideCount(Math.min(25, Math.max(1, parseInt(e.target.value) || 1)))}
+                            className={cn(
+                              "w-16 py-2 px-3 rounded-xl text-xs font-black text-center outline-none border transition-all",
+                              isDark ? "bg-white/5 border-white/10 text-white" : "bg-white border-slate-200"
+                            )}
+                          />
+                       </div>
+                    </div>
+                  </div>
                   <div className={cn(
                     "p-6 flex items-center justify-between border-t",
                     isDark ? "border-white/5" : "border-slate-100"
@@ -580,10 +635,14 @@ const PPTStudio: React.FC<any> = ({ onClose, theme }) => {
                           )}>Vista previa no generada</p>
                         </div>
                       ) : (
-                        <div className="w-full h-full p-12 flex flex-col bg-slate-950 text-white">
+                        <div className="w-full h-full p-12 flex flex-col bg-slate-950 text-white relative">
                           <div className="mb-8 flex items-center justify-between">
                             <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest italic">{selectedStyle} // L0{activeSlide+1}</span>
-                            <BarChart3 size={20} className="text-white/20" />
+                            {logoUrl ? (
+                              <img src={logoUrl} className="h-6 object-contain" alt="Branding" />
+                            ) : (
+                              <BarChart3 size={20} className="text-white/20" />
+                            )}
                           </div>
                           <h3 className="text-4xl font-black mb-4 italic tracking-tighter uppercase">{slides[activeSlide].title}</h3>
                           <p className="text-lg text-white/40 font-medium mb-10">{slides[activeSlide].subtitle}</p>

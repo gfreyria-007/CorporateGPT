@@ -435,18 +435,32 @@ export async function regenerateSlideSkeleton(slideIndex: number, fullContext: s
   return (response.slides && response.slides[0]) || response;
 }
 
-export async function renderSlideVisual(title: string, subtitle: string, content: string[], style: string): Promise<{ visualLayout: string, badge: string, narrativePhase: string }> {
+export async function renderSlideVisual(
+  title: string, 
+  subtitle: string, 
+  content: string[], 
+  style: string,
+  chartType: string = 'none',
+  tableData: string = '',
+  hasLogo: boolean = false
+): Promise<{ visualLayout: string, badge: string, narrativePhase: string, visualInstruction?: string }> {
   const systemInstruction = `You are a Visual Architect using the NANOBANANA 2 ENGINE. 
   Generate a high-fidelity visual configuration for this slide.
   NANOBANANA 2 RULES:
   - Maximize visual density and data clarity.
-  - Layouts: 'hero', 'split', 'grid', 'focal', 'technical_drawing', 'dense_table'.
-  - Style: ${style}.`;
+  - Layouts: 'hero', 'split', 'grid', 'focal', 'technical_drawing', 'dense_table', 'chart_focused'.
+  - Style: ${style}.
+  - Logo: ${hasLogo ? 'A company logo is available. Suggest a placeholder or coordinate for it.' : 'No logo.'}
+  - If a chartType is specified (not 'none'), prioritize the 'chart_focused' layout and provide specific drawing instructions.`;
+
+  const chartContext = chartType !== 'none' 
+    ? `\nCHART REQUESTED: ${chartType}\nDATA: ${tableData}`
+    : '';
 
   const payload = {
     model: "gemini-1.5-flash",
-    contents: [{ role: "user", parts: [{ text: `Title: ${title}. Content: ${content.join(' | ')}. Style: ${style}. 
-    Return JSON: { "visualLayout": "...", "badge": "...", "narrativePhase": "..." }` }] }],
+    contents: [{ role: "user", parts: [{ text: `Title: ${title}. Content: ${content.join(' | ')}. Style: ${style}. ${chartContext}
+    Return JSON: { "visualLayout": "...", "badge": "...", "narrativePhase": "...", "visualInstruction": "detailed instructions for the UI to render the visual or chart" }` }] }],
     config: {
       systemInstruction,
       responseMimeType: "application/json"
@@ -460,19 +474,19 @@ export async function renderSlideVisual(title: string, subtitle: string, content
   });
   
   const response = await res.json();
-  // Proxy now spreads all top-level JSON fields — {visualLayout, badge, narrativePhase} are directly on response
-  if (response.visualLayout) {
-    return {
-      visualLayout: response.visualLayout || 'split',
-      badge: response.badge || 'PHASE',
-      narrativePhase: response.narrativePhase || 'ANALYSIS'
-    };
+  
+  // Robust parsing
+  let result = response;
+  if (response.text) {
+    try {
+      result = JSON.parse(response.text.replace(/```json/g,'').replace(/```/g,'').trim());
+    } catch { /* fallback */ }
   }
-  // Fallback: try response.text
-  try {
-    const parsed = JSON.parse((response.text || '{}').replace(/```json/g,'').replace(/```/g,'').trim());
-    return { visualLayout: parsed.visualLayout || 'split', badge: parsed.badge || 'PHASE', narrativePhase: parsed.narrativePhase || 'ANALYSIS' };
-  } catch {
-    return { visualLayout: 'split', badge: 'PHASE', narrativePhase: 'ANALYSIS' };
-  }
+
+  return {
+    visualLayout: result.visualLayout || 'split',
+    badge: result.badge || 'PHASE',
+    narrativePhase: result.narrativePhase || 'ANALYSIS',
+    visualInstruction: result.visualInstruction || ''
+  };
 }

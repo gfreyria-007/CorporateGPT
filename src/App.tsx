@@ -191,6 +191,15 @@ export default function App() {
     setIsChatLoading(true);
 
     try {
+      const fileContext = selectedGPT?.files
+        ?.filter((f: any) => f.content)
+        ?.map((f: any) => `--- ${f.name} ---\n${f.content}`)
+        ?.join('\n\n');
+      
+      const fullInstructions = [selectedGPT?.instructions, fileContext]
+        .filter(Boolean)
+        .join('\n\n[KNOWLEDGE_BASE_ATTACHMENT]\n');
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -198,7 +207,7 @@ export default function App() {
           model: selectedModel,
           messages: [...messages, userMessage].map(({ role, content }) => ({ role, content })),
           userId: user.uid,
-          instructions: selectedGPT?.instructions || null,
+          instructions: fullInstructions || null,
           temperature: advancedSettings.temperature,
           maxTokens: advancedSettings.maxTokens,
           deepThink: advancedSettings.deepThink,
@@ -508,8 +517,88 @@ export default function App() {
                 theme === 'dark' ? "bg-corporate-950 border-r border-white/5" : "bg-white border-r border-slate-100 shadow-2xl"
               )}
             >
-              {/* Sidebar Content same as desktop aside */}
+              <div className="h-16 flex items-center px-6 border-b border-inherit justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
+                    <Zap size={16} />
+                  </div>
+                  <h1 className="text-xs font-black uppercase tracking-[0.2em]">CORPORATE <span className="text-blue-600">GPT</span></h1>
+                </div>
+                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                <div className="space-y-3">
+                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Navigation</label>
+                   <div className="flex flex-col gap-1">
+                      <button 
+                        onClick={() => { setActivePanel('chat'); setIsMobileMenuOpen(false); }}
+                        className={cn("flex items-center gap-3 px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all",
+                          activePanel === 'chat' ? 'bg-blue-600 text-white shadow-2xl shadow-blue-500/40 translate-x-2' : 'text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-corporate-900'
+                        )}
+                      >
+                         <Sparkles size={18} /> GPTs Studio
+                      </button>
+                      <button 
+                        onClick={() => { setActivePanel('creative'); setIsMobileMenuOpen(false); }}
+                        className={cn("flex items-center gap-3 px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all",
+                          activePanel === 'creative' ? 'bg-blue-600 text-white shadow-2xl shadow-blue-500/40 translate-x-2' : 'text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-corporate-900'
+                        )}
+                      >
+                         <Palette size={18} /> Asset Studio
+                      </button>
+                      <button 
+                        onClick={() => { setActivePanel('knowledge'); setIsMobileMenuOpen(false); }}
+                        className={cn("flex items-center gap-3 px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all",
+                          activePanel === 'knowledge' ? 'bg-blue-600 text-white shadow-2xl shadow-blue-500/40 translate-x-2' : 'text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-corporate-900'
+                        )}
+                      >
+                         <Database size={18} /> Knowledge Bank
+                      </button>
+                      <button 
+                        onClick={() => { setActivePanel('ppt'); setIsMobileMenuOpen(false); }}
+                        className={cn("flex items-center gap-3 px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all",
+                          activePanel === 'ppt' ? 'bg-blue-600 text-white shadow-2xl shadow-blue-500/40 translate-x-2' : 'text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-corporate-900'
+                        )}
+                      >
+                         <Presentation size={18} /> {t.pptStudio}
+                      </button>
+                   </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="px-2 flex items-center justify-between">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Security Pipeline</label>
+                    <div className="flex items-center gap-2">
+                       <span className={cn("text-[9px] font-black uppercase tracking-tighter", zdrEnabled ? "text-emerald-500" : "text-slate-400")}>ZDR</span>
+                       <button onClick={() => setZdrEnabled(!zdrEnabled)} className={cn("w-10 h-5 rounded-full transition-all relative shrink-0", zdrEnabled ? "bg-emerald-500 shadow-lg shadow-emerald-500/20" : "bg-slate-300 dark:bg-corporate-800")}>
+                          <div className={cn("absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all shadow-md", zdrEnabled ? "right-0.5" : "left-0.5")} />
+                       </button>
+                    </div>
+                  </div>
+                  <ModelSelector 
+                    models={models} 
+                    selectedModel={selectedModel} 
+                    onSelect={(m) => { setSelectedModel(m); setIsMobileMenuOpen(false); }} 
+                    isLoading={isLoadingModels} 
+                    lang={lang}
+                    zdrOnly={zdrEnabled}
+                  />
+                </div>
+              </div>
+
+              <div className="p-6 border-t border-inherit space-y-4">
+                 <button onClick={() => { setLang(lang === 'en' ? 'es' : 'en'); setIsMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 dark:hover:bg-corporate-900 transition-all border border-transparent hover:border-slate-200">
+                   <span className="w-5 h-5 flex items-center justify-center bg-blue-500/10 rounded-lg text-blue-500">{lang}</span> Language: {lang === 'en' ? 'English' : 'Español'}
+                 </button>
+                 <button onClick={() => { setTheme(theme === 'light' ? 'dark' : 'light'); setIsMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 dark:hover:bg-corporate-900 transition-all border border-transparent hover:border-slate-200">
+                   <span className="w-5 h-5 flex items-center justify-center bg-blue-500/10 rounded-lg text-blue-500">{theme === 'light' ? <Moon size={14} /> : <Sun size={14} />}</span> Mode: {theme === 'light' ? 'Light' : 'Dark'}
+                 </button>
+              </div>
             </motion.aside>
+
           </>
         )}
       </AnimatePresence>

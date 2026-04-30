@@ -459,13 +459,20 @@ The image must fill the entire frame with no empty space.
 Text should be crisp and readable. Use a ${currentStyle.name} aesthetic.
 Make it look like a premium, professionally designed asset that could be used in a real corporate presentation.`;
 
+      const resValue = genResolution === '2K' ? 2048 : 1024;
+      
       const payload = {
         model: 'gemini-3.1-flash-image-preview',
         contents: { parts: [{ text: fullPrompt }] },
         config: {
           temperature: genTemperature,
           responseModalities: genOutputFormat === 'images_only' ? ['IMAGE'] : ['TEXT', 'IMAGE'],
-          imageConfig: { aspectRatio }
+          imageConfig: { 
+            aspectRatio,
+            // Use high res if selected
+            width: resValue,
+            height: Math.round(resValue * (currentTemplate.height / currentTemplate.width))
+          }
         }
       };
 
@@ -483,8 +490,7 @@ Make it look like a premium, professionally designed asset that could be used in
       // Find the image part in the response
       const imgPart = imgRes.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData);
       if (!imgPart) {
-        // Fallback: maybe the response has text but no image
-        throw new Error('No image was generated. The model returned text only. Try a more visual prompt.');
+        throw new Error('No image was generated. The model returned text only.');
       }
 
       // Load the generated image onto the canvas
@@ -494,19 +500,13 @@ Make it look like a premium, professionally designed asset that could be used in
 
       await new Promise<void>((resolve, reject) => {
         imgElement.onload = () => resolve();
-        imgElement.onerror = () => reject(new Error('Failed to load generated image'));
+        imgElement.onerror = () => reject(new Error('Failed to load image'));
       });
 
-      // Resize canvas to match the generated image's aspect ratio,
-      // then scale the image to fill the canvas exactly — no black gaps.
-      const imgW = imgElement.naturalWidth;
-      const imgH = imgElement.naturalHeight;
-
-      // Resize the Fabric canvas to perfectly fit the image
+      // Match canvas to selected template exactly
       const targetWidth = currentTemplate.width;
-      const targetHeight = Math.round(targetWidth * (imgH / imgW));
+      const targetHeight = currentTemplate.height;
 
-      // Resize the Fabric canvas to perfectly fit the image
       fabricCanvas.setDimensions({ width: targetWidth, height: targetHeight });
       setCanvasSize({ width: targetWidth, height: targetHeight });
 
@@ -518,8 +518,9 @@ Make it look like a premium, professionally designed asset that could be used in
         top: 0,
       });
 
-      // Scale image to fill the new canvas dimensions exactly
-      fabImg.scaleToWidth(targetWidth);
+      // Scale image to fill the canvas dimensions exactly
+      fabImg.scaleX = targetWidth / imgElement.naturalWidth;
+      fabImg.scaleY = targetHeight / imgElement.naturalHeight;
 
       (fabImg as any).data = { id: 'ai-generated', type: 'native-image' };
       fabricCanvas.add(fabImg);
