@@ -110,13 +110,13 @@ export const PPTStudio: React.FC<{
          setTimeout(() => reject(new Error("Preview Timeout")), 10000)
        );
 
-       const preview = await Promise.race([previewPromise, timeoutPromise]) as StudioSlideData;
+       const result = await Promise.race([previewPromise, timeoutPromise]) as any;
        
-       if (preview && preview.title) {
-         if (preview.aiSuggestedMood) {
-           setActiveMood(preview.aiSuggestedMood as DesignMood);
+       if (result && result.preview) {
+         if (result.suggestedMood) {
+           setActiveMood(result.suggestedMood as DesignMood);
          }
-         setPreviewSlide(preview);
+         setPreviewSlide(result.preview);
          setStep('preview_style');
        } else {
          throw new Error("Invalid preview data");
