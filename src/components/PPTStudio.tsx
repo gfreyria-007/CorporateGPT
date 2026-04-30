@@ -224,10 +224,13 @@ const PPTStudio: React.FC<any> = ({ onClose, theme }) => {
             <motion.div 
               key="config"
               initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.05 }}
-              className="flex-1 flex flex-col items-center justify-center p-20"
+              className={cn(
+                "flex-1 flex flex-col items-center justify-center",
+                isMobile ? "p-6" : "p-20"
+              )}
             >
-              <div className="max-w-2xl w-full space-y-12">
-                <div className="text-center space-y-6">
+              <div className={cn("w-full space-y-8", isMobile ? "max-w-full" : "max-w-3xl")}>
+                <div className="text-center space-y-4">
                   <div className={cn(
                     "inline-block px-4 py-1.5 rounded-full border",
                     isDark ? "bg-blue-600/10 border-blue-500/20" : "bg-blue-50 border-blue-100"
@@ -235,44 +238,69 @@ const PPTStudio: React.FC<any> = ({ onClose, theme }) => {
                     <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">NUEVA ARQUITECTURA</span>
                   </div>
                   <h2 className={cn(
-                    "text-7xl font-black tracking-tighter leading-none italic",
+                    "font-black tracking-tighter leading-none italic",
+                    isMobile ? "text-4xl" : "text-7xl",
                     isDark ? "text-white" : "text-slate-900"
                   )}>Estructura primero. Diseño después.</h2>
                 </div>
 
                 <div className={cn(
-                  "p-2 rounded-[3rem] shadow-2xl border",
+                  "rounded-[2.5rem] shadow-2xl border overflow-hidden",
                   isDark
                     ? "bg-white/5 border-white/10 shadow-black/40"
                     : "bg-white border-slate-200 shadow-slate-200"
                 )}>
-                  <div className="flex flex-col items-center gap-6">
+                  <div className="flex flex-col">
                     <textarea 
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
-                      placeholder={`Describe tu presentación en lenguaje natural...\n\nEjemplos:\n• "La historia de Tarzán en 3 slides"\n• "Estrategia de ventas Q3 2025"\n• "Resumen ejecutivo del mercado de IA"`}
+                      placeholder={isMobile 
+                        ? "¿De qué trata tu presentación?" 
+                        : `Describe tu presentación en lenguaje natural...\n\nEjemplos:\n• "La historia de Tarzán en 3 slides"\n• "Estrategia de ventas Q3 2025"\n• "Resumen ejecutivo del mercado de IA"`
+                      }
                       className={cn(
-                        "w-full h-48 border-none rounded-[2.5rem] p-10 text-xl font-medium focus:ring-0 outline-none resize-none placeholder:opacity-30 placeholder:text-sm leading-relaxed",
-                        isDark
-                          ? "bg-white/5 text-white placeholder:text-white"
-                          : "bg-slate-50 text-slate-800"
+                        "w-full border-none p-10 font-medium focus:ring-0 outline-none resize-none placeholder:opacity-20 leading-relaxed bg-transparent",
+                        isMobile ? "h-64 text-lg" : "h-56 text-2xl",
+                        isDark ? "text-white" : "text-slate-800"
                       )}
                     />
-                    
-                    <div className="w-full px-10 pb-6 flex items-center justify-between border-t border-inherit pt-6">
-                       <div className="flex items-center gap-4">
-                          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Logo Corporativo</label>
+                      <div className={cn(
+                      "w-full px-8 py-8 flex border-t border-inherit",
+                      isMobile ? "flex-col gap-6" : "items-center justify-between",
+                      isDark ? "bg-white/2" : "bg-slate-50/50"
+                    )}>
+                       <div className={cn(
+                         "flex items-center",
+                         isMobile ? "justify-between w-full" : "gap-10"
+                       )}>
+                          <div className="flex items-center gap-3">
+                             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Slides</span>
+                             <input 
+                               min={1} max={25} type="number" value={slideCount}
+                               onChange={(e) => setSlideCount(Math.min(25, Math.max(1, Number(e.target.value))))}
+                               className={cn(
+                                 "w-16 py-2 px-3 rounded-xl text-xs font-black text-center outline-none border transition-all",
+                                 isDark ? "bg-white/5 border-white/10 text-white" : "bg-white border-slate-200"
+                               )}
+                             />
+                          </div>
+
+                          {!isMobile && <div className="h-8 w-px bg-slate-400/20" />}
+
                           <div className="flex items-center gap-3">
                              {logoUrl ? (
-                               <div className="relative group">
-                                  <img src={logoUrl} className="h-8 object-contain" alt="Logo" />
-                                  <button onClick={() => setLogoUrl(null)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <X size={10} />
+                               <div className="relative group flex items-center gap-3">
+                                  <img src={logoUrl} className="h-10 object-contain rounded-lg" alt="Logo" />
+                                  <button onClick={() => setLogoUrl(null)} className="p-1.5 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all">
+                                    <X size={14} />
                                   </button>
                                </div>
                              ) : (
-                               <label className="flex items-center gap-2 px-4 py-2 bg-blue-600/10 text-blue-500 rounded-xl text-[9px] font-black uppercase tracking-widest cursor-pointer hover:bg-blue-600/20 transition-all">
-                                  <ImageIcon size={12} /> Importar Logo
+                               <label className={cn(
+                                 "flex items-center gap-2 px-5 py-2.5 bg-blue-600/10 text-blue-500 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-blue-600/20 transition-all border border-blue-600/20",
+                                 isMobile && "flex-1 justify-center"
+                               )}>
+                                  <ImageIcon size={14} /> {isMobile ? 'LOGO' : 'IMPORTAR LOGO'}
                                   <input 
                                     type="file" accept="image/*" className="hidden" 
                                     onChange={(e) => {
@@ -288,53 +316,29 @@ const PPTStudio: React.FC<any> = ({ onClose, theme }) => {
                              )}
                           </div>
                        </div>
-                       
-                       <div className="flex items-center gap-3">
-                          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Slides</label>
-                          <input 
-                            type="number" min={1} max={25} value={slideCount}
-                            onChange={(e) => setSlideCount(Math.min(25, Math.max(1, parseInt(e.target.value) || 1)))}
-                            className={cn(
-                              "w-16 py-2 px-3 rounded-xl text-xs font-black text-center outline-none border transition-all",
-                              isDark ? "bg-white/5 border-white/10 text-white" : "bg-white border-slate-200"
-                            )}
-                          />
-                       </div>
+
+                       <button 
+                         onClick={(e) => {
+                           e.preventDefault();
+                           startClarify();
+                         }}
+                         disabled={!prompt.trim() || isGenerating}
+                         className={cn(
+                           "bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white rounded-2xl flex items-center justify-center gap-4 font-black uppercase tracking-widest transition-all shadow-2xl shadow-blue-600/30 active:scale-95",
+                           isMobile ? "w-full py-6 text-base" : "px-12 py-5 text-sm"
+                         )}
+                       >
+                         {isGenerating ? (
+                           <><RefreshCw size={18} className="animate-spin" /> {isMobile ? 'Procesando...' : 'Analizando...'}</>
+                         ) : (
+                           <>Continuar <ChevronRight size={18} /></>
+                         )}
+                       </button>
                     </div>
-                  </div>
-                  <div className={cn(
-                    "p-6 flex items-center justify-between border-t",
-                    isDark ? "border-white/5" : "border-slate-100"
-                  )}>
-                    <div className="flex items-center gap-4">
-                      <span className={cn("text-[10px] font-black uppercase tracking-widest", isDark ? "text-slate-400" : "text-slate-400")}>DIAPOSITIVAS</span>
-                      <input 
-                        min={1}
-                        max={20}
-                        type="number" value={slideCount} onChange={(e) => setSlideCount(Math.min(20, Math.max(1, Number(e.target.value))))}
-                        className={cn(
-                          "px-4 py-2 rounded-xl text-sm font-bold w-16 text-center outline-none border",
-                          isDark
-                            ? "bg-white/10 border-white/10 text-white"
-                            : "bg-slate-100 border-slate-200 text-slate-900"
-                        )}
-                      />
-                    </div>
-                    <button 
-                      onClick={startClarify}
-                      disabled={!prompt || isGenerating}
-                      className="px-10 py-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white rounded-2xl flex items-center gap-3 font-black uppercase tracking-widest text-sm transition-all shadow-xl shadow-blue-600/20 active:scale-95"
-                    >
-                      {isGenerating ? (
-                        <><RefreshCw size={18} className="animate-spin" /> Analizando...</>
-                      ) : (
-                        <>Continuar <ChevronRight size={18} /></>
-                      )}
-                    </button>
                   </div>
                 </div>
                 {genError && (
-                  <div className="mt-4 px-6 py-4 bg-red-50 border border-red-200 rounded-2xl text-red-600 text-sm font-bold text-center">
+                  <div className="mt-8 px-8 py-5 bg-red-500/10 border border-red-500/20 rounded-[2rem] text-red-500 text-xs font-black uppercase tracking-[0.2em] text-center animate-pulse">
                     ⚠️ {genError}
                   </div>
                 )}
