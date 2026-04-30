@@ -146,20 +146,19 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
             
             <motion.h1 
               initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-              className="text-4xl md:text-6xl lg:text-[5.5rem] font-display font-black tracking-tighter leading-[0.95] text-white"
+              className="text-4xl md:text-5xl lg:text-[4.5rem] font-display font-black tracking-tighter leading-[1.05] text-white"
             >
-              Controla toda tu IA desde<br/>un solo lugar.
-              <span className="block mt-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-emerald-400">
-                Sin riesgos. Sin desperdicio.
-              </span>
+              Control Total: Inteligencia Segura <br className="hidden md:block" />
+              para tu <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Negocio</span> y tu <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">Hogar</span>
             </motion.h1>
             
-            <motion.p 
+            <motion.div 
               initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-              className="max-w-3xl text-sm md:text-lg text-slate-400 font-medium leading-relaxed"
+              className="max-w-4xl text-sm md:text-base lg:text-lg text-slate-400 font-medium leading-relaxed space-y-4 text-left md:text-center"
             >
-              Unifica GPT, Claude y más en una plataforma segura que protege tus datos sensibles, optimiza costos automáticamente y escala con tu empresa.
-            </motion.p>
+              <p>¿Sabes qué herramientas de IA utilizan realmente tus empleados? Hoy en día, el uso de modelos comerciales abiertos para agilizar tareas está exponiendo datos sensibles y acuerdos de confidencialidad (NDA) de tu empresa sin que te des cuenta.</p>
+              <p>Al mismo tiempo, la falta de filtros en el hogar permite que los menores interactúen con IAs diseñadas para adultos, exponiéndolos a respuestas o contenidos no adecuados para su edad.</p>
+            </motion.div>
 
             <motion.div 
               initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
