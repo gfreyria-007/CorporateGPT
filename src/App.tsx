@@ -713,12 +713,14 @@ export default function App() {
           )}
         </AnimatePresence>
 
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {activePanel === 'admin' && (
             <motion.div 
+              key="panel-admin"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
               className="fixed inset-0 z-[150] bg-corporate-950 flex flex-col"
             >
               <AdminPanel onClose={() => setActivePanel('chat')} theme={theme} />
@@ -727,9 +729,11 @@ export default function App() {
 
           {activePanel === 'creative' && (
             <motion.div 
-              initial={{ opacity: 0, x: 100 }}
+              key="panel-creative"
+              initial={{ opacity: 0, x: 60 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 100 }}
+              exit={{ opacity: 0, x: 60 }}
+              transition={{ duration: 0.2 }}
               className="fixed inset-0 z-[150] bg-corporate-950 flex flex-col"
             >
               <ImageEditor 
@@ -743,9 +747,11 @@ export default function App() {
 
           {activePanel === 'knowledge' && (
             <motion.div 
-              initial={{ opacity: 0, y: 100 }}
+              key="panel-knowledge"
+              initial={{ opacity: 0, y: 60 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 100 }}
+              exit={{ opacity: 0, y: 60 }}
+              transition={{ duration: 0.2 }}
               className="fixed inset-0 z-[150] bg-corporate-950 flex flex-col"
             >
               <GPTsGenerator 
@@ -761,9 +767,11 @@ export default function App() {
 
           {activePanel === 'ppt' && (
             <motion.div 
+              key="panel-ppt"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
               className="fixed inset-0 z-[150] bg-white flex flex-col"
             >
               <PPTStudio theme={theme} lang={lang} user={user} onClose={() => setActivePanel('chat')} />
