@@ -375,9 +375,9 @@ export default function App() {
                <div className="space-y-4">
                   <div className="px-2 space-y-3">
                      <div className="flex items-center justify-between">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none">Security Pipeline</label>
+                        <label className="text-[10px] font-black text-slate-300 dark:text-slate-300 uppercase tracking-[0.2em] leading-none">Security Pipeline</label>
                         <div className="flex items-center gap-2">
-                           <span className={cn("text-[9px] font-black uppercase tracking-tighter", zdrEnabled ? "text-emerald-500" : "text-slate-400")}>ZDR</span>
+                           <span className={cn("text-[9px] font-black uppercase tracking-tighter", zdrEnabled ? "text-emerald-500" : "text-slate-300")}>ZDR</span>
                            <button onClick={() => setZdrEnabled(!zdrEnabled)} className={cn("w-10 h-5 rounded-full transition-all relative shrink-0", zdrEnabled ? "bg-emerald-500 shadow-lg shadow-emerald-500/20" : "bg-slate-300 dark:bg-corporate-800")}>
                               <div className={cn("absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all shadow-md", zdrEnabled ? "right-0.5" : "left-0.5")} />
                            </button>
@@ -439,6 +439,13 @@ export default function App() {
         <header className={cn("h-24 border-b flex items-center justify-between px-12 shrink-0 relative z-50",
           theme === 'dark' ? 'border-white/5 bg-corporate-950/80 backdrop-blur-xl' : 'border-corporate-100 bg-white/90 backdrop-blur-xl'
         )}>
+          {/* Neural Processing Bar */}
+          {isChatLoading && (
+            <div className="absolute bottom-0 left-0 right-0 h-[2px] overflow-hidden bg-blue-600/10">
+              <div className="h-full bg-blue-600 w-1/3 animate-[shimmer_1.5s_infinite]" />
+            </div>
+          )}
+
           <div className="flex items-center gap-6">
              <button 
                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -446,8 +453,11 @@ export default function App() {
              >
                <Menu size={20} />
              </button>
-             <div className="flex items-center gap-3">
-                <div className={cn("w-3 h-3 rounded-full", isChatLoading ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500')} />
+             <div className="flex items-center gap-3 relative">
+                 {isChatLoading && (
+                   <div className="absolute -inset-1 bg-amber-500/20 rounded-full animate-ping" />
+                 )}
+                 <div className={cn("w-3 h-3 rounded-full relative z-10", isChatLoading ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500')} />
                 <h2 className="text-xl font-display font-black tracking-tight uppercase">
                   {selectedGPT ? selectedGPT.name : (selectedModel === 'openrouter/auto' ? t.autoRouter : currentModelData?.name || 'Corporate Pipeline')}
                 </h2>
@@ -492,9 +502,23 @@ export default function App() {
                   messages.map(m => <ChatMessage key={m.id} message={m} lang={lang} />)
                 )}
                 {isChatLoading && (
-                  <div className="flex gap-6 max-w-3xl mx-auto w-full animate-pulse px-8 py-6 bg-slate-50 dark:bg-corporate-900 rounded-[2rem]">
-                     <div className="w-10 h-10 rounded-2xl bg-slate-200 dark:bg-corporate-800" />
-                     <div className="flex-1 space-y-3"><div className="h-3 w-1/4 bg-slate-200 dark:bg-corporate-800 rounded-full" /><div className="h-4 bg-slate-200 dark:bg-corporate-800 rounded-xl w-full" /></div>
+                  <div className="flex gap-4 max-w-3xl mx-auto w-full px-4 py-3 bg-blue-600/[0.03] dark:bg-blue-600/[0.05] rounded-xl border border-blue-500/10 relative overflow-hidden">
+                     <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[linear-gradient(to_bottom,transparent_0%,#2563eb_50%,transparent_100%)] [background-size:100%_400%] animate-holographic-scan" />
+                     <div className="flex flex-col relative z-10 w-10 h-10 rounded-xl bg-blue-600 items-center justify-center text-white shadow-xl shadow-blue-600/20">
+                        <RefreshCw size={18} className="animate-spin" />
+                     </div>
+                     <div className="flex-1 space-y-2 relative z-10 pt-1">
+                        <div className="flex items-center gap-3">
+                           <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest animate-pulse">Neural Scan...</span>
+                           <div className="h-0.5 flex-1 bg-blue-500/10 rounded-full overflow-hidden">
+                              <div className="h-full bg-blue-600 w-1/3 animate-[shimmer_2s_infinite]" />
+                           </div>
+                        </div>
+                        <div className="space-y-2">
+                           <div className="h-3 bg-slate-200 dark:bg-corporate-800 rounded-full w-full opacity-40" />
+                           <div className="h-3 bg-slate-200 dark:bg-corporate-800 rounded-full w-3/4 opacity-20" />
+                        </div>
+                     </div>
                   </div>
                 )}
               </motion.div>

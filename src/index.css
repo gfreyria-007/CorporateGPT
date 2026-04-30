@@ -80,4 +80,21 @@
     border: 1px solid #e2e8f0;
     border-radius: 0.75rem;
   }
+
+  @keyframes holographic-scan {
+    0% { transform: translateY(-100%) skewY(-5deg); opacity: 0; }
+    20% { opacity: 0.5; }
+    50% { opacity: 0.8; filter: hue-rotate(90deg); }
+    80% { opacity: 0.5; }
+    100% { transform: translateY(400%) skewY(5deg); opacity: 0; }
+  }
+
+  .animate-holographic-scan {
+    animation: holographic-scan 4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(300%); }
+  }
 }

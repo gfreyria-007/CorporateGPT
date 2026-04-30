@@ -19,10 +19,10 @@ async function startServer() {
     contentSecurityPolicy: {
       directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-        "img-src": ["'self'", "data:", "https:", "blob:"],
-        "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://*.googleapis.com", "https://apis.google.com"],
-        "connect-src": ["'self'", "https://openrouter.ai", "https://*.googleapis.com", "https://*.firebaseio.com", "wss://*.firebaseio.com", "https://*.firebaseapp.com"],
-        "frame-src": ["'self'", "https://*.firebaseapp.com", "https://*.googleapis.com"],
+        "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://*.googleapis.com", "https://apis.google.com", "https://*.firebaseapp.com", "https://www.googletagmanager.com"],
+        "connect-src": ["'self'", "https://openrouter.ai", "https://*.googleapis.com", "https://*.firebaseio.com", "wss://*.firebaseio.com", "https://*.firebaseapp.com", "https://*.google-analytics.com"],
+        "frame-src": ["'self'", "https://*.firebaseapp.com", "https://*.googleapis.com", "https://*.firebase.com"],
+        "img-src": ["'self'", "data:", "https:", "blob:", "https://*.googleusercontent.com"],
       },
     },
   }));

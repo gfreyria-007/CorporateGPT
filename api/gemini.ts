@@ -6,7 +6,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY is missing in backend' });
+    if (!apiKey) {
+      console.error("[GEMINI] CRITICAL: GEMINI_API_KEY is missing from environment variables.");
+      return res.status(500).json({ error: 'GEMINI_API_KEY is missing in backend' });
+    }
 
     const ai = new GoogleGenAI({ apiKey });
     const { action, payload } = req.body;
@@ -15,33 +18,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Missing action or payload' });
     }
 
+    console.log(`[GEMINI] Action: ${action}, Model: ${payload.model}`);
+
     if (action === 'generateContent') {
-      // Ensure the payload structure is what the SDK expects
-      // The new unified SDK expects: { model, contents, config }
       try {
-        const result = await ai.models.generateContent(payload);
+        // Map 'config' to 'generationConfig' for SDK compatibility
+        const generationConfig = payload.config || payload.generationConfig || {};
         
-        // Handle different response formats (SDK versions)
+        const result = await ai.models.generateContent({
+          model: payload.model || "gemini-1.5-flash",
+          contents: payload.contents,
+          generationConfig: {
+            ...generationConfig,
+            // Ensure responseMimeType is respected if provided
+            responseMimeType: generationConfig.responseMimeType || "application/json"
+          },
+          systemInstruction: payload.systemInstruction || undefined
+        });
+        
         let rawText = '';
-        if (typeof result.text === 'function') {
+        // Extract text safely from the result
+        if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
+          rawText = result.candidates[0].content.parts[0].text;
+        } else if (typeof result.text === 'function') {
           rawText = await (result.text as any)();
         } else if (typeof result.text === 'string') {
           rawText = result.text;
-        } else if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
-          rawText = result.candidates[0].content.parts[0].text;
         }
         
-        // Clean markdown fences
+        // Robust JSON extraction
         const cleanJson = (rawText || '').replace(/```json/g, '').replace(/```/g, '').trim();
         
         let parsedFields: Record<string, any> = {};
         try {
-          const parsed = JSON.parse(cleanJson || '{}');
-          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-            parsedFields = parsed;
+          if (cleanJson) {
+            const parsed = JSON.parse(cleanJson);
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+              parsedFields = parsed;
+            }
           }
         } catch (e) {
-          console.error("JSON Parse Error in gemini proxy:", e);
+          console.warn("[GEMINI] JSON Parse warning (may be plain text):", e);
         }
 
         return res.status(200).json({ text: rawText, ...parsedFields });
@@ -50,14 +67,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(500).json({ 
           error: 'Gemini SDK Execution Failure', 
           details: genError.message,
-          payloadSent: payload 
+          code: genError.code || 'UNKNOWN'
         });
       }
 
     } else if (action === 'chat') {
-      const chat = ai.chats.create({ model: payload.model, config: payload.config });
-      const result = await chat.sendMessage({ message: payload.message });
-      return res.status(200).json({ text: result.text });
+      try {
+        const chat = ai.chats.create({ 
+          model: payload.model || "gemini-1.5-flash",
+          config: payload.config || {}
+        });
+        const result = await chat.sendMessage({ message: payload.message });
+        return res.status(200).json({ text: result.text });
+      } catch (chatError: any) {
+        console.error('--- GEMINI CHAT ERROR ---', chatError);
+        return res.status(500).json({ error: 'Chat failure', details: chatError.message });
+      }
     }
     
     return res.status(400).json({ error: 'Unknown action' });

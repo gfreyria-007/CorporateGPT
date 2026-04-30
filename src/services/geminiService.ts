@@ -55,9 +55,16 @@ export async function generateClarifyingQuestions(prompt: string): Promise<Clari
   const payload = {
     model: "gemini-1.5-flash",
     contents: [{ role: "user", parts: [{ text: 
-`You are a presentation consultant. The user wants to create slides about: "${prompt}"
+`You are a premium corporate presentation architect. The user wants to generate a high-impact presentation about: "${prompt}"
 
-Generate 2-3 smart clarifying questions to produce the best possible presentation.
+To create an exceptional deck, you must first clarify the vision. 
+Generate 2-3 strategic, high-value questions that help define the audience, objective, and desired outcome.
+
+CRITICAL: 
+- One question should be about the TARGET AUDIENCE or STAKEHOLDERS (choice).
+- One question should be about the DESIRED EMOTION or KEY TAKEAWAY (choice).
+- One question (optional) should be about specific technical data or context (open).
+
 Respond in the SAME language as the user's prompt.
 
 Return ONLY this JSON structure, nothing else:
@@ -65,15 +72,15 @@ Return ONLY this JSON structure, nothing else:
   "questions": [
     {
       "id": "q1",
-      "question": "Short question here?",
-      "hint": "Why this matters",
+      "question": "Smart strategic question?",
+      "hint": "Brief explanation of why this matters for the slides",
       "questionType": "choice",
-      "choices": ["Option A", "Option B", "Option C"]
+      "choices": ["Option 1", "Option 2", "Option 3"]
     },
     {
       "id": "q2", 
-      "question": "Another question?",
-      "hint": "Context for this question",
+      "question": "Another strategic question?", 
+      "hint": "Context for the user",
       "questionType": "open",
       "choices": []
     }
@@ -343,17 +350,18 @@ export async function generateInfographicContent(prompt: string, style: string):
 }
 
 export async function generateSkeleton(prompt: string, count: number = 10): Promise<SlideSkeleton[]> {
-  const systemInstruction = `You are an expert Presentation Architect with deep knowledge across all topics.
-  The user has given you a topic or request: "${prompt}".
-  Your job is to generate EXACTLY ${count} slides with REAL, SPECIFIC, RICH content — not placeholder text.
+  const systemInstruction = `You are a high-level Presentation Architect at Catalizia. 
+  The user is creating a presentation on: "${prompt}".
   
-  CRITICAL RULES:
-  - Use your own knowledge to generate ACCURATE and INFORMATIVE content about the topic.
-  - Every title must be specific and descriptive (NOT "Slide 1" or "Introduction").
-  - Every subtitle must add context and depth.
-  - content array: 3-5 concrete, specific bullet points with REAL facts, dates, names, or data points.
-  - If the prompt is vague (like "tell me about X"), you MUST research your knowledge and fill slides with real information.
-  - Language: respond in the SAME language as the prompt.
+  CONTEXTUAL INTELLIGENCE:
+  - If additional context from a "Neural Interview" is provided, you MUST synthesize and prioritize it.
+  - Generate EXACTLY ${count} slides that form a cohesive, strategic narrative.
+  - content array: 3-5 high-density, professional bullet points. Use specific data, names, and industry-standard insights.
+  - Each slide MUST have a distinct, high-impact title and a context-setting subtitle.
+  
+  STYLE & TONE:
+  - Corporate, sophisticated, and data-driven.
+  - Respond in the SAME language as the prompt.
   - Return ONLY the JSON object, nothing else.`;
 
   const payload = {

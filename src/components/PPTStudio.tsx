@@ -4,6 +4,7 @@ import {
   ChevronRight, Sparkles, Layout, Type, Palette, 
   Zap, Database, BarChart3, Presentation, Image as ImageIcon
 } from 'lucide-react';
+import { NeuralOverlay } from './NeuralOverlay';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -60,6 +61,7 @@ const PPTStudio: React.FC<{
       setClarifyQuestions(qs);
       setClarifyAnswers({});
       setStep('clarify');
+      setIsGenerating(false); // Stop main loading to show questions
     } catch {
       // On any error, skip clarify and generate directly
       setGenError('Neural Interview no disponible, generando directamente...');
@@ -159,6 +161,7 @@ const PPTStudio: React.FC<{
       "fixed inset-0 z-[100] flex flex-col font-sans overflow-hidden transition-colors duration-300",
       isDark ? "bg-corporate-950 text-white" : "bg-slate-50 text-slate-900"
     )}>
+      <NeuralOverlay isLoading={isGenerating} theme={isDark ? 'dark' : 'light'} />
       {/* Header */}
       <div className={cn(
         "h-20 border-b flex items-center justify-between px-10 backdrop-blur-xl z-50",
@@ -167,8 +170,8 @@ const PPTStudio: React.FC<{
           : "border-slate-200 bg-white/80"
       )}>
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
-            <BrainCircuit size={20} />
+          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-xl shadow-blue-600/30 ring-1 ring-white/20">
+            <BrainCircuit size={20} className="animate-pulse" />
           </div>
           <div>
             <h1 className={cn(
@@ -245,18 +248,19 @@ const PPTStudio: React.FC<{
                   </div>
                   <h2 className={cn(
                     "font-black tracking-tighter leading-none italic",
-                    isMobile ? "text-4xl" : "text-7xl",
-                    isDark ? "text-white" : "text-slate-900"
-                  )}>Estructura primero. Diseño después.</h2>
+                    isMobile ? "text-5xl" : "text-8xl",
+                    isDark ? "text-white" : "text-slate-950"
+                  )}>Estructura primero. <br className={isMobile ? "" : "hidden"} /> Diseño después.</h2>
                 </div>
 
                 <div className={cn(
                   "rounded-[2.5rem] shadow-2xl border overflow-hidden",
                   isDark
-                    ? "bg-white/5 border-white/10 shadow-black/40"
-                    : "bg-white border-slate-200 shadow-slate-200"
+                    ? "bg-white/[0.03] border-white/20 shadow-2xl backdrop-blur-2xl"
+                    : "bg-white border-slate-300 shadow-2xl shadow-slate-200"
                 )}>
-                  <div className="flex flex-col">
+                  <div className="absolute inset-0 opacity-[0.08] pointer-events-none bg-[linear-gradient(to_bottom,transparent_0%,#2563eb_50%,transparent_100%)] [background-size:100%_400%] animate-holographic-scan" />
+                  <div className="flex flex-col relative z-10">
                     <textarea 
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
@@ -265,9 +269,9 @@ const PPTStudio: React.FC<{
                         : `Describe tu presentación en lenguaje natural...\n\nEjemplos:\n• "La historia de Tarzán en 3 slides"\n• "Estrategia de ventas Q3 2025"\n• "Resumen ejecutivo del mercado de IA"`
                       }
                       className={cn(
-                        "w-full border-none p-10 font-medium focus:ring-0 outline-none resize-none placeholder:opacity-20 leading-relaxed bg-transparent",
+                        "w-full border-none p-10 font-medium focus:ring-0 outline-none resize-none placeholder:text-slate-500 placeholder:opacity-70 leading-relaxed bg-transparent",
                         isMobile ? "h-64 text-lg" : "h-56 text-2xl",
-                        isDark ? "text-white" : "text-slate-800"
+                        isDark ? "text-white placeholder:text-white/50" : "text-slate-800"
                       )}
                     />
                       <div className={cn(
@@ -286,7 +290,7 @@ const PPTStudio: React.FC<{
                                onChange={(e) => setSlideCount(Math.min(25, Math.max(1, Number(e.target.value))))}
                                className={cn(
                                  "w-16 py-2 px-3 rounded-xl text-xs font-black text-center outline-none border transition-all",
-                                 isDark ? "bg-white/5 border-white/10 text-white" : "bg-white border-slate-200"
+                                 isDark ? "bg-white/10 border-white/20 text-white" : "bg-white border-slate-300 text-slate-900"
                                )}
                              />
                           </div>
@@ -335,16 +339,16 @@ const PPTStudio: React.FC<{
                          )}
                        >
                          {isGenerating ? (
-                           <><RefreshCw size={18} className="animate-spin" /> {isMobile ? 'Procesando...' : 'Analizando...'}</>
+                           <><RefreshCw size={18} className="animate-spin" /> {isMobile ? 'ANALIZANDO...' : 'EJECUTANDO NEURAL SCAN...'}</>
                          ) : (
-                           <>Continuar <ChevronRight size={18} /></>
+                           <>Continuar <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" /></>
                          )}
                        </button>
                     </div>
                   </div>
                 </div>
                 {genError && (
-                  <div className="mt-8 px-8 py-5 bg-red-500/10 border border-red-500/20 rounded-[2rem] text-red-500 text-xs font-black uppercase tracking-[0.2em] text-center animate-pulse">
+                  <div className="mt-8 px-8 py-5 bg-red-600/10 border border-red-500/30 rounded-[2rem] text-red-600 text-xs font-black uppercase tracking-[0.2em] text-center animate-pulse">
                     ⚠️ {genError}
                   </div>
                 )}
@@ -360,13 +364,18 @@ const PPTStudio: React.FC<{
             >
               <div className="max-w-2xl w-full space-y-10">
                 <div className="space-y-3">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 relative">
                     <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center">
                       <BrainCircuit size={16} className="text-white" />
                     </div>
                     <span className={cn("text-[10px] font-black uppercase tracking-widest", isDark ? "text-blue-400" : "text-blue-600")}>
-                      Neural Interview — Para generar el mejor resultado posible
+                      Neural Interview — {isGenerating ? 'Sincronizando...' : 'Define tu visión'}
                     </span>
+                    {isGenerating && (
+                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-full text-white text-[10px] font-black uppercase tracking-widest animate-bounce shadow-xl shadow-blue-600/30">
+                        <Sparkles size={12} /> Procesando Insights...
+                      </div>
+                    )}
                   </div>
                   <h2 className={cn("text-4xl font-black tracking-tighter italic", isDark ? "text-white" : "text-slate-900")}>
                     Cuéntame más
@@ -415,8 +424,8 @@ const PPTStudio: React.FC<{
                           className={cn(
                             "w-full pl-6 py-3 text-sm font-medium rounded-xl border outline-none transition-all bg-transparent",
                             isDark
-                              ? "border-white/10 text-white placeholder:text-white/30 focus:border-blue-500"
-                              : "border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-600"
+                              ? "border-white/20 text-white placeholder:text-white/60 focus:border-blue-500"
+                              : "border-slate-300 text-slate-900 placeholder:text-slate-600 focus:border-blue-600"
                           )}
                         />
                       )}
@@ -424,10 +433,13 @@ const PPTStudio: React.FC<{
                   ))}
                 </div>
 
-                <div className="flex items-center justify-between pt-2">
+                <div className="flex items-center justify-between pt-6 border-t border-white/5">
                   <button
                     onClick={() => setStep('config')}
-                    className={cn("text-[11px] font-black uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity", isDark ? "text-white" : "text-slate-900")}
+                    className={cn(
+                      "px-6 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all",
+                      isDark ? "text-slate-400 hover:text-white hover:bg-white/5" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                    )}
                   >
                     ← Volver
                   </button>
@@ -440,15 +452,15 @@ const PPTStudio: React.FC<{
                       generateWithContext(ctx);
                     }}
                     disabled={isGenerating}
-                    className="px-10 py-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-2xl flex items-center gap-3 font-black uppercase tracking-widest text-sm transition-all shadow-xl shadow-blue-600/20 active:scale-95"
+                    className="px-10 py-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-2xl flex items-center gap-3 font-black uppercase tracking-widest text-sm transition-all shadow-2xl shadow-blue-600/40 active:scale-95 group"
                   >
                     {isGenerating
-                      ? <><RefreshCw size={16} className="animate-spin" /> Generando...</>
-                      : <>Generar Presentación <Sparkles size={16} /></>}
+                      ? <><RefreshCw size={16} className="animate-spin" /> Sintetizando...</>
+                      : <>Generar Presentación <Sparkles size={16} className="group-hover:rotate-12 transition-transform" /></>}
                   </button>
                 </div>
                 {genError && (
-                  <div className="px-6 py-4 bg-red-50 border border-red-200 rounded-2xl text-red-600 text-sm font-bold text-center">
+                  <div className="px-6 py-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-sm font-bold text-center animate-shake">
                     ⚠️ {genError}
                   </div>
                 )}
@@ -536,8 +548,8 @@ const PPTStudio: React.FC<{
                           value={slides[activeSlide]?.subtitle}
                           onChange={(e) => handleUpdateSlide(activeSlide, 'subtitle', e.target.value)}
                           className={cn(
-                            "w-full text-sm font-medium outline-none resize-none h-20 placeholder:opacity-20 bg-transparent",
-                            isDark ? "text-slate-400" : "text-slate-500"
+                            "w-full text-sm font-medium outline-none resize-none h-20 placeholder:text-slate-500 placeholder:opacity-60 bg-transparent",
+                            isDark ? "text-slate-300 placeholder:text-white/40" : "text-slate-600"
                           )}
                           placeholder="Contexto o subtítulo..."
                         />
