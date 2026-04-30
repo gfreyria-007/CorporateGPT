@@ -1,5 +1,8 @@
 import { Type } from "@google/genai";
 
+// Use VITE_ prefix for client-side (if needed) and non-prefix for server-side/backend compatibility
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.GEMINI_API_KEY || "";
+
 export interface InfographicData {
   title: string;
   subtitle: string;

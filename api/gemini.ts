@@ -22,7 +22,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     return res.status(400).json({ error: 'Unknown action' });
   } catch (error: any) {
-    console.error('Gemini proxy error:', error);
-    return res.status(500).json({ error: error.message });
+    console.error('--- GEMINI PROXY ERROR ---');
+    console.error('Message:', error.message);
+    console.error('Stack:', error.stack);
+    if (error.response) {
+      console.error('Response Data:', error.response.data);
+    }
+    return res.status(500).json({ 
+      error: 'Gemini Execution Error', 
+      details: error.message,
+      checkVercelLogs: true 
+    });
   }
 }
