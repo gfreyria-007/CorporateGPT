@@ -19,7 +19,7 @@ import { cn } from '../lib/utils';
 import { useAuth } from '../lib/AuthContext';
 import { saveGPT, subscribeToGPTs, deleteGPT } from '../lib/db';
 
-export function GPTsGenerator({ onClose, onSelect, theme }: { onClose: () => void, onSelect: (gpt: any) => void, theme: 'light' | 'dark' }) {
+export function GPTsGenerator({ onClose, onSelect, theme, isMobile = false }: { onClose: () => void, onSelect: (gpt: any) => void, theme: 'light' | 'dark', isMobile?: boolean }) {
   const { user, profile } = useAuth();
   const [currentGptId, setCurrentGptId] = useState<string | null>(null);
   const [name, setName] = useState('');

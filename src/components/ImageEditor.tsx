@@ -83,7 +83,19 @@ const TEMPLATES = [
   { id: 'social', name: 'Square Asset', width: 1080, height: 1080, icon: <Square size={16} /> },
 ];
 
-export function ImageEditor({ onClose, theme, lang = 'en', appConfig, onTrialEnd }: { onClose: () => void, theme: 'light' | 'dark', lang?: 'en' | 'es', appConfig?: any, onTrialEnd?: () => void }) {
+export function ImageEditor({ 
+  onClose, 
+  theme, 
+  appConfig, 
+  onTrialEnd,
+  isMobile = false 
+}: { 
+  onClose: () => void, 
+  theme: string, 
+  appConfig: any, 
+  onTrialEnd?: () => void,
+  isMobile?: boolean
+}) {
   const { user, profile } = useAuth();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas | null>(null);
