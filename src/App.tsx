@@ -58,6 +58,8 @@ import { incrementQueryCount, flagUser, SUPER_ADMIN_EMAIL } from './lib/db';
 import { db } from './lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { cn } from './lib/utils';
+import { failsafeChat } from './lib/failsafeRouter';
+import { useVersionGatekeeper } from './lib/useVersionGatekeeper';
 import { translations } from './lib/translations';
 
 export default function App() {
@@ -96,6 +98,11 @@ export default function App() {
   const [fontSize, setFontSize] = useState(14);
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // V2 Version Gatekeeper — reads appVersion from company tenant
+  const { appVersion, engineStatus, setEngineStatus } = useVersionGatekeeper(
+    (profile as any)?.companyId ?? null
+  );
   
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -223,10 +230,11 @@ export default function App() {
         .filter(Boolean)
         .join('\n\n[KNOWLEDGE_BASE_ATTACHMENT]\n');
 
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      // ─── Gateway of Immortality ───────────────────────────────────────────
+      // Routes through failsafeRouter: primary (6s timeout) → Gemini 1.5 Flash
+      let result;
+      try {
+        result = await failsafeChat({
           model: selectedModel,
           messages: [...messages, userMessage].map(({ role, content }) => ({ role, content })),
           userId: user.uid,
@@ -235,31 +243,31 @@ export default function App() {
           maxTokens: advancedSettings.maxTokens,
           deepThink: advancedSettings.deepThink,
           webSearch: advancedSettings.webSearch,
-          docsOnly: advancedSettings.docsOnly
-        })
-      });
+          docsOnly: advancedSettings.docsOnly,
+        });
 
-      if (response.status === 403) {
-        setSafetyAlert(t.safetyWarning);
-        await flagUser(user.uid, "Safety Violation: Forbidden subjects or injection attempt.");
-        setIsChatLoading(false);
-        return;
+        // Track engine health for Super Admin diagnostics
+        setEngineStatus(result.usedFallback ? 'fallback' : 'primary', result.fallbackReason);
+      } catch (routerErr: any) {
+        // 403 safety violations bubble up cleanly
+        if (routerErr.status === 403) {
+          setSafetyAlert(t.safetyWarning);
+          await flagUser(user.uid, "Safety Violation: Forbidden subjects or injection attempt.");
+          setIsChatLoading(false);
+          return;
+        }
+        throw routerErr;
       }
 
-      const data = await response.json();
-      
-      if (data.choices && data.choices[0]) {
-        const assistantMessage: Message = {
-          id: `${Date.now()}-${Math.random().toString(36).substr(2, 7)}`,
-          role: 'assistant',
-          content: data.choices[0].message.content,
-          timestamp: Date.now()
-        };
-        setMessages(prev => [...prev, assistantMessage]);
-        incrementQueryCount(user.uid).catch(e => console.error("Failed to increment count:", e));
-      } else {
-        throw new Error(data.error || 'Failed to get response');
-      }
+      const assistantMessage: Message = {
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 7)}`,
+        role: 'assistant',
+        content: result.content,
+        timestamp: Date.now()
+      };
+      setMessages(prev => [...prev, assistantMessage]);
+      incrementQueryCount(user.uid).catch(e => console.error("Failed to increment count:", e));
+
     } catch (error: any) {
       const errorMessage: Message = {
         id: `error-${Date.now()}-${Math.random().toString(36).substr(2, 7)}`,
