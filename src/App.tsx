@@ -132,6 +132,21 @@ export default function App() {
     return () => unsubscribeConfig();
   }, [user]);
 
+  // Enforce Trial Limits (24 Hours OR Quota Exhausted)
+  useEffect(() => {
+    if (profile && !profile.unlimitedUsage && !appConfig?.isProduction) {
+      const maxQueries = profile.maxQueries || 10;
+      const maxImages = profile.maxImages || 10;
+      
+      const createdAt = profile.createdAt?.toDate ? profile.createdAt.toDate() : new Date();
+      const hoursSinceCreation = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60);
+
+      if ((profile.queriesUsed || 0) >= maxQueries || (profile.imagesUsed || 0) >= maxImages || hoursSinceCreation >= 24) {
+        setTrialEnded(true);
+      }
+    }
+  }, [profile, appConfig?.isProduction]);
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -171,8 +186,11 @@ export default function App() {
 
     if (!isSuperAdmin && !appConfig?.isProduction) {
       if (!profile?.unlimitedUsage) {
-        const maxQueries = profile?.maxQueries || 5;
-        if ((profile?.queriesUsed || 0) >= maxQueries) {
+        const maxQueries = profile?.maxQueries || 10;
+        const createdAt = profile?.createdAt?.toDate ? profile.createdAt.toDate() : new Date();
+        const hoursSinceCreation = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60);
+
+        if ((profile?.queriesUsed || 0) >= maxQueries || hoursSinceCreation >= 24) {
           setTrialEnded(true);
           return;
         }

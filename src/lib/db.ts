@@ -65,8 +65,8 @@ export async function ensureUserRecord(user: any) {
         isBanned: false,
         queriesUsed: 0,
         imagesUsed: 0,
-        maxQueries: 5,
-        maxImages: 2,
+        maxQueries: 10,
+        maxImages: 10,
         unlimitedUsage: user.email === SUPER_ADMIN_EMAIL,
         createdAt: Timestamp.now(),
         lastActive: Timestamp.now()
