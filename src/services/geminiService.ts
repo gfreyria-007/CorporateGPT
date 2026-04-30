@@ -36,6 +36,13 @@ export interface StudioSlideData {
   aiSuggestedMood?: string;
 }
 
+export interface SlideSkeleton {
+  id: string;
+  title: string;
+  subtitle: string;
+  content: string[]; // Bloques de texto simples
+}
+
 export async function generateStylePreview(prompt: string, mood: string, lang: 'en' | 'es'): Promise<{ preview: StudioSlideData, suggestedMood: string }> {
   const systemInstruction = `You are the Creative Director for Neural Studio 5.0. 
   Generate ONE preview slide that establishes the visual language for: "${prompt}".
@@ -261,3 +268,77 @@ export async function generateInfographicContent(prompt: string, style: string):
   return JSON.parse(response.text || '{}');
 }
 
+export async function generateSkeleton(prompt: string, count: number = 10): Promise<SlideSkeleton[]> {
+  const systemInstruction = `You are a Narrative Architect. 
+  Create a ${count}-slide presentation skeleton for: "${prompt}".
+  Focus ONLY on the story and data points. 
+  Return a JSON array of slides.`;
+
+  const payload = {
+    model: "gemini-1.5-flash",
+    contents: [{ role: "user", parts: [{ text: `Generate ${count} slides for: "${prompt}". 
+    Format: { "slides": [{ "id": "1", "title": "...", "subtitle": "...", "content": ["point 1", "point 2"] }] }` }] }],
+    config: {
+      systemInstruction,
+      responseMimeType: "application/json"
+    }
+  };
+
+  const res = await fetch('/api/gemini', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'generateContent', payload })
+  });
+  
+  const response = await res.json();
+  return response.slides || [];
+}
+
+export async function regenerateSlideSkeleton(slideIndex: number, fullContext: string): Promise<SlideSkeleton> {
+  const payload = {
+    model: "gemini-1.5-flash",
+    contents: [{ role: "user", parts: [{ text: `Regenerate ONLY slide number ${slideIndex + 1} for this presentation: "${fullContext}". 
+    Return ONE slide object.` }] }],
+    config: {
+      responseMimeType: "application/json"
+    }
+  };
+
+  const res = await fetch('/api/gemini', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'generateContent', payload })
+  });
+  
+  const response = await res.json();
+  return (response.slides && response.slides[0]) || response;
+}
+
+export async function renderSlideVisual(title: string, subtitle: string, content: string[], style: string): Promise<{ visualLayout: string, badge: string, narrativePhase: string }> {
+  const systemInstruction = `You are a Visual Architect using the NANOBANANA 2 ENGINE. 
+  Generate a high-fidelity visual configuration for this slide.
+  NANOBANANA 2 RULES:
+  - Maximize visual density and data clarity.
+  - Layouts: 'hero', 'split', 'grid', 'focal', 'technical_drawing', 'dense_table'.
+  - Style: ${style}.`;
+
+  const payload = {
+    model: "gemini-1.5-flash",
+    contents: [{ role: "user", parts: [{ text: `Title: ${title}. Content: ${content.join(' | ')}. Style: ${style}. 
+    Return JSON: { "visualLayout": "...", "badge": "...", "narrativePhase": "..." }` }] }],
+    config: {
+      systemInstruction,
+      responseMimeType: "application/json"
+    }
+  };
+
+  const res = await fetch('/api/gemini', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'generateContent', payload })
+  });
+  
+  const response = await res.json();
+  const slides = response.slides || [];
+  return slides[0] || response;
+}
