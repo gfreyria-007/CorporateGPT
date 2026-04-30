@@ -102,7 +102,7 @@ export const PricingSection = () => {
         setShowSecureMessage(false);
         
         const details = plan === 'Professional' ? ` (${professionalUsers} usuarios)` : '';
-        alert(`CATALIZIA SECURE GATEWAY:\n\nSe está procesando tu solicitud para el plan ${plan}${details}.\n\nPara finalizar la suscripción de forma segura en este entorno de pruebas, contacta a ventas@catalizia.com o usa el panel de Super Admin.`);
+        alert(`CATALIZIA SECURE GATEWAY:\n\nSe está procesando tu solicitud para el plan ${plan}${details}.\n\nPara finalizar la suscripción de forma segura en este entorno de pruebas, contacta a contacto@catalizia.com o usa el panel de Super Admin.`);
       }, 2000);
     }, 1000);
   };
