@@ -104,10 +104,10 @@ export const PPTStudio: React.FC<{
     setGenStatus(lang === 'es' ? 'DEFINIENDO CONCEPTO VISUAL...' : 'DEFINING VISUAL CONCEPT...');
     
     try {
-       // Timeout protection: if preview takes > 10s, fallback to full gen
+       // Aggressive timeout: if preview takes > 5s, jump to full gen
        const previewPromise = generateStylePreview(topic, selectedMood, lang);
        const timeoutPromise = new Promise((_, reject) => 
-         setTimeout(() => reject(new Error("Preview Timeout")), 10000)
+         setTimeout(() => reject(new Error("Preview Timeout")), 5000)
        );
 
        const result = await Promise.race([previewPromise, timeoutPromise]) as any;
@@ -123,7 +123,7 @@ export const PPTStudio: React.FC<{
        }
     } catch (error) {
        console.warn("Preview failed or timed out, skipping to full generation:", error);
-       handleGenerate();
+       confirmAndGenerateFull();
     }
   };
 
