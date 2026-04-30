@@ -150,8 +150,17 @@ export async function generateStudioSlides(prompt: string, mood: string, lang: '
     body: JSON.stringify({ action: 'generateContent', payload })
   });
   const response = await res.json();
+  
+  // High-reliability parsing: find slides in either 'slides' or 'text'
+  if (response.slides && response.slides.length > 0) return response;
+  
   const text = response.text || '{"slides":[], "finalMood": "corporativo"}';
-  return JSON.parse(text);
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    console.error("JSON Parse error in full gen:", e);
+    return { slides: [], finalMood: mood };
+  }
 }
 
 export async function suggestBetterPrompt(currentPrompt: string): Promise<string> {
