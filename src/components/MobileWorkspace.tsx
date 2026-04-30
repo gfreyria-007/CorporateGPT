@@ -28,6 +28,7 @@ import { cn } from '../lib/utils';
 import { ImageEditor } from './ImageEditor';
 import PPTStudio from './PPTStudio';
 import { GPTsGenerator } from './GPTsGenerator';
+import { EcoModeBanner } from './EcoModeBanner';
 
 export function MobileWorkspace({ 
   theme, 
@@ -45,7 +46,12 @@ export function MobileWorkspace({
   appConfig,
   setTrialEnded,
   setSelectedGPT,
-  selectedGPT
+  selectedGPT,
+  quota,
+  ecoModeActive,
+  tokenPercent,
+  multimediaRemaining,
+  isSuperAdmin
 }: any) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isDark = theme === 'dark';
@@ -118,6 +124,15 @@ export function MobileWorkspace({
 
               {/* Chat Body */}
               <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
+                
+                <EcoModeBanner
+                  quota={quota}
+                  ecoModeActive={ecoModeActive}
+                  tokenPercent={tokenPercent}
+                  multimediaRemaining={multimediaRemaining}
+                  isSuperAdmin={isSuperAdmin}
+                />
+
                 {messages.length === 0 ? (
                     <div className="flex-1 flex flex-col items-center justify-center text-center p-6 space-y-8">
                       <div className="space-y-4">

@@ -40,12 +40,20 @@ function classifyQuery(text: string): QueryClass {
  * Resolves the actual model to use, overriding user selection with Elite-Eco.
  * If the user explicitly selected a specific (non-auto) model, honour it.
  */
-function resolveEliteModel(requestedModel: string, queryClass: QueryClass): {
+function resolveEliteModel(requestedModel: string, queryClass: QueryClass, ecoMode = false): {
   modelId: string;
   tier: string;
 } {
   const autoModels = ['openrouter/auto', 'auto', '', null, undefined];
   const isAutoRoute = autoModels.includes(requestedModel as any);
+
+  // ♻️ Eco Mode: force only cheap models regardless of request
+  if (ecoMode) {
+    const ecoModel = queryClass === 'reasoning'
+      ? 'deepseek/deepseek-r1'
+      : 'qwen/qwen-2.5-72b-instruct';
+    return { modelId: ecoModel, tier: 'elite-eco-forced' };
+  }
 
   if (!isAutoRoute) {
     // User explicitly chose a model (e.g. from ModelSelector) — honour it
@@ -124,6 +132,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const {
       model, messages, userId, instructions,
       temperature, maxTokens, deepThink, webSearch, docsOnly,
+      ecoMode,
     } = req.body;
 
     const currentTime = new Date().toISOString();
@@ -149,9 +158,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ─── Elite Model Resolution (invisible to user) ───────────────────────
     const queryClass = classifyQuery(lastMessage);
-    const { modelId, tier } = resolveEliteModel(model, queryClass);
+    const { modelId, tier } = resolveEliteModel(model, queryClass, ecoMode === true);
 
-    console.log(`[EliteRouter] Query: "${lastMessage.substring(0, 60)}..." | Class: ${queryClass} | Model: ${modelId} | Tier: ${tier}`);
+    console.log(`[EliteRouter] Query class: ${queryClass} | Model: ${modelId} | Tier: ${tier} | Eco: ${ecoMode}`);
 
     const referer = process.env.APP_URL || 'http://localhost:3000';
     const resolvedTemp  = temperature ?? 0.7;

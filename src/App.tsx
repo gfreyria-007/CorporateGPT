@@ -60,6 +60,8 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { cn } from './lib/utils';
 import { failsafeChat } from './lib/failsafeRouter';
 import { useVersionGatekeeper } from './lib/useVersionGatekeeper';
+import { useQuota } from './lib/useQuota';
+import { EcoModeBanner } from './components/EcoModeBanner';
 import { translations } from './lib/translations';
 
 export default function App() {
@@ -102,6 +104,12 @@ export default function App() {
   // V2 Version Gatekeeper — reads appVersion from company tenant
   const { appVersion, engineStatus, setEngineStatus } = useVersionGatekeeper(
     (profile as any)?.companyId ?? null
+  );
+
+  // V2 Quota Engine — daily tokens + multimedia credits + eco mode
+  const { quota, ecoModeActive, tokenPercent, multimediaRemaining, deductTokens } = useQuota(
+    user?.uid,
+    (profile as any)?.companyTier ?? 'trial'
   );
   
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -244,7 +252,8 @@ export default function App() {
           deepThink: advancedSettings.deepThink,
           webSearch: advancedSettings.webSearch,
           docsOnly: advancedSettings.docsOnly,
-        });
+          ecoMode: ecoModeActive,             // V2: server enforces eco model
+        } as any);
 
         // Track engine health for Super Admin diagnostics
         setEngineStatus(result.usedFallback ? 'fallback' : 'primary', result.fallbackReason);
@@ -266,6 +275,8 @@ export default function App() {
         timestamp: Date.now()
       };
       setMessages(prev => [...prev, assistantMessage]);
+      // Deduct ~500 tokens estimate per response
+      deductTokens(500).catch(() => {});
       incrementQueryCount(user.uid).catch(e => console.error("Failed to increment count:", e));
 
     } catch (error: any) {
@@ -338,6 +349,11 @@ export default function App() {
         setTrialEnded={setTrialEnded}
         selectedGPT={selectedGPT}
         setSelectedGPT={setSelectedGPT}
+        quota={quota}
+        ecoModeActive={ecoModeActive}
+        tokenPercent={tokenPercent}
+        multimediaRemaining={multimediaRemaining}
+        isSuperAdmin={isSuperAdmin}
       />
     );
   }
@@ -419,6 +435,16 @@ export default function App() {
                     lang={lang}
                     zdrOnly={zdrEnabled}
                   />
+                  
+                  <div className="pt-2">
+                    <EcoModeBanner
+                      quota={quota}
+                      ecoModeActive={ecoModeActive}
+                      tokenPercent={tokenPercent}
+                      multimediaRemaining={multimediaRemaining}
+                      isSuperAdmin={isSuperAdmin}
+                    />
+                  </div>
                </div>
 
                {isSuperAdmin && (
