@@ -40,7 +40,7 @@ export async function generateStylePreview(prompt: string, mood: string, lang: '
   Layouts: 'dense_table', 'technical_drawing', 'grid'.`;
 
   const payload = {
-    model: "gemini-1.5-pro",
+    model: "gemini-1.5-flash",
     contents: `Establish the visual concept for: "${prompt}".`,
     config: {
       systemInstruction,
@@ -87,7 +87,7 @@ export async function generateStylePreview(prompt: string, mood: string, lang: '
 }
 
 export async function generateStudioSlides(prompt: string, mood: string, lang: 'en' | 'es'): Promise<{ slides: StudioSlideData[], finalMood: string }> {
-  const model = "gemini-1.5-pro"; 
+  const model = "gemini-1.5-flash"; 
   
   const systemInstruction = `You are the Neural Studio Engine 5.0 (Cinematic Storyteller). 
   Goal: Synthesize a NON-EDITABLE 10-slide professional infographic narrative.
@@ -153,7 +153,7 @@ export async function generateStudioSlides(prompt: string, mood: string, lang: '
 
 export async function suggestBetterPrompt(currentPrompt: string): Promise<string> {
   const payload = {
-    model: "gemini-3.1-pro-preview",
+    model: "gemini-1.5-pro",
     contents: `The user wants to generate an AMAZING infographic or visual asset with this prompt: "${currentPrompt}".
     Improve this prompt to be high-density, professional, and visually stunning.
     Instructions:
@@ -173,7 +173,7 @@ export async function suggestBetterPrompt(currentPrompt: string): Promise<string
 }
 
 export async function salesAgentChat(message: string, lang: 'en' | 'es'): Promise<string> {
-  const model = "gemini-3-flash-preview"; 
+  const model = "gemini-1.5-flash"; 
   
   const systemInstruction = lang === 'es' ? 
     `ERES EL ASESOR CORPORATIVO DE CORPORATEGPT. 
