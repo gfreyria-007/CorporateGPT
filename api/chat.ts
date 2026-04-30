@@ -89,7 +89,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ],
         temperature: temperature ?? 0.7,
         max_tokens: maxTokens ?? 4000,
-        ...(webSearch && { plugins: [{ id: "web", max_results: 5 }] })
+        ...((webSearch !== false && !docsOnly) && { plugins: [{ id: "web", max_results: 5 }] })
       }),
     });
 
