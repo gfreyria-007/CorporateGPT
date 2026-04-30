@@ -63,6 +63,7 @@ import { useVersionGatekeeper } from './lib/useVersionGatekeeper';
 import { useQuota } from './lib/useQuota';
 import { EcoModeBanner } from './components/EcoModeBanner';
 import { SuperAdminPanel } from './components/SuperAdminPanel';
+import { UpgradePlanPage } from './components/UpgradePlanPage';
 import { translations } from './lib/translations';
 
 export default function App() {
@@ -97,6 +98,7 @@ export default function App() {
   const [appConfig, setAppConfig] = useState<any>(null);
   const [chatInputValue, setChatInputValue] = useState('');
   const [showLanding, setShowLanding] = useState(false);
+  const [showUpgradePlan, setShowUpgradePlan] = useState(false);
   const [trialEnded, setTrialEnded] = useState(false);
   const [fontSize, setFontSize] = useState(14);
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
@@ -407,7 +409,7 @@ export default function App() {
                    </button>
                  ))}
                  <button 
-                  onClick={() => setShowLanding(true)}
+                  onClick={() => setShowUpgradePlan(true)}
                   className="flex items-center gap-3 px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-corporate-900 transition-all"
                  >
                     <CreditCard size={18} /> Upgrade Plan
@@ -679,6 +681,12 @@ export default function App() {
         {isAdvancedPanelOpen && <AdvancedPanel isOpen={isAdvancedPanelOpen} onClose={() => setIsAdvancedPanelOpen(false)} settings={advancedSettings} setSettings={setAdvancedSettings} onPromptGenie={() => setIsPromptGenieOpen(true)} theme={theme} />}
         {showFAQ && <FAQ onClose={() => setShowFAQ(false)} lang={lang} theme={theme} />}
         {showPrivacyPolicy && <PrivacyPolicy onClose={() => setShowPrivacyPolicy(false)} theme={theme} />}
+        {showUpgradePlan && (
+          <UpgradePlanPage 
+            onClose={() => setShowUpgradePlan(false)}
+            lang={lang}
+          />
+        )}
       </AnimatePresence>
     </div>
   );

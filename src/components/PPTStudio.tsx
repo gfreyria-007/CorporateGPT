@@ -15,11 +15,20 @@ import {
 type StudioStep = 'config' | 'clarify' | 'skeleton';
 
 const studioStyles = [
-  { id: 'cyber', name: 'Cyberpunk', icon: <Zap size={14} />, color: 'bg-blue-600' },
-  { id: 'minimal', name: 'Executive', icon: <ChevronRight size={14} />, color: 'bg-slate-800' },
-  { id: 'brutalist', name: 'Brutalist', icon: <Layout size={14} />, color: 'bg-orange-600' },
-  { id: 'glass', name: 'Glass', icon: <Palette size={14} />, color: 'bg-purple-600' }
+  { id: 'auto', name: 'Auto-select', icon: <RefreshCw size={14} />, color: 'bg-blue-500' },
+  { id: 'sketch', name: 'Sketch Note', icon: <Palette size={14} />, color: 'bg-slate-500' },
+  { id: 'kawaii', name: 'Kawaii', icon: <Sparkles size={14} />, color: 'bg-pink-400' },
+  { id: 'professional', name: 'Professional', icon: <Shield size={14} />, color: 'bg-blue-800' },
+  { id: 'scientific', name: 'Scientific', icon: <Database size={14} />, color: 'bg-emerald-600' },
+  { id: 'anime', name: 'Anime', icon: <Zap size={14} />, color: 'bg-orange-500' },
+  { id: 'clay', name: 'Clay', icon: <Layout size={14} />, color: 'bg-red-400' },
+  { id: 'editorial', name: 'Editorial', icon: <Type size={14} />, color: 'bg-slate-900' },
+  { id: 'instructional', name: 'Instructional', icon: <Presentation size={14} />, color: 'bg-indigo-600' },
+  { id: 'bento', name: 'Bento Grid', icon: <Layout size={14} />, color: 'bg-purple-600' },
+  { id: 'bricks', name: 'Bricks', icon: <Box size={14} />, color: 'bg-yellow-500' }
 ];
+
+import { Shield, Box, Download, FileText } from 'lucide-react';
 
 const PPTStudio: React.FC<{ 
   onClose: () => void, 
@@ -273,6 +282,50 @@ const PPTStudio: React.FC<{
                         isDark ? "text-white placeholder:text-white/50" : "text-slate-800"
                       )}
                     />
+
+                    {/* Visual Style Selector */}
+                    <div className="px-10 pb-8 space-y-4">
+                      <div className="flex items-center justify-between">
+                         <h3 className={cn("text-[10px] font-black uppercase tracking-[0.3em]", isDark ? "text-blue-400" : "text-blue-600")}>
+                           Choose Visual Style
+                         </h3>
+                      </div>
+                      <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar snap-x no-scrollbar">
+                        {studioStyles.map((s) => (
+                          <button
+                            key={s.id}
+                            onClick={() => setSelectedStyle(s.id)}
+                            className={cn(
+                              "flex-shrink-0 w-32 group relative snap-start transition-all",
+                              selectedStyle === s.id ? "scale-105" : "hover:scale-102 opacity-60 hover:opacity-100"
+                            )}
+                          >
+                            <div className={cn(
+                              "aspect-[4/3] rounded-2xl border-2 flex flex-col items-center justify-center gap-3 transition-all relative overflow-hidden",
+                              selectedStyle === s.id 
+                                ? "bg-blue-600/10 border-blue-600 shadow-xl shadow-blue-600/20" 
+                                : isDark ? "bg-white/5 border-white/10" : "bg-white border-slate-200"
+                            )}>
+                               <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg", s.color)}>
+                                 {s.icon}
+                               </div>
+                               {selectedStyle === s.id && (
+                                 <motion.div layoutId="styleCheck" className="absolute top-2 right-2 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center text-white">
+                                   <Sparkles size={10} />
+                                 </motion.div>
+                               )}
+                               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                            <p className={cn(
+                              "mt-2 text-[10px] font-black uppercase tracking-widest text-center",
+                              selectedStyle === s.id ? "text-blue-600" : "text-slate-500"
+                            )}>
+                              {s.name}
+                            </p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                       <div className={cn(
                       "w-full px-8 py-8 flex border-t border-inherit",
                       isMobile ? "flex-col gap-6" : "items-center justify-between",
@@ -638,6 +691,40 @@ const PPTStudio: React.FC<{
                         {slides[activeSlide]?.rendered ? <RefreshCw size={14} className={isGenerating ? "animate-spin" : ""} /> : <ImageIcon size={14} />}
                         {slides[activeSlide]?.rendered ? 'Regenerar Gráficos' : 'Generar Visual'}
                       </button>
+
+                      {/* Finalize & Export Section */}
+                      <div className="pt-8 space-y-4">
+                        <div className="h-px bg-slate-400/10" />
+                        <div className="flex gap-2">
+                          <button 
+                            className={cn(
+                              "flex-1 py-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all border",
+                              isDark ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-500 hover:bg-emerald-500 hover:text-white" : "border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white"
+                            )}
+                          >
+                            <Download size={14} /> PDF
+                          </button>
+                          <button 
+                            className={cn(
+                              "flex-1 py-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all border",
+                              isDark ? "border-blue-500/30 bg-blue-500/5 text-blue-500 hover:bg-blue-500 hover:text-white" : "border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white"
+                            )}
+                          >
+                            <FileText size={14} /> PowerPoint
+                          </button>
+                          <button 
+                            className={cn(
+                              "flex-1 py-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all border",
+                              isDark ? "border-orange-500/30 bg-orange-500/5 text-orange-500 hover:bg-orange-500 hover:text-white" : "border-orange-200 bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white"
+                            )}
+                          >
+                            <ImageIcon size={14} /> PNG Image
+                          </button>
+                        </div>
+                        <p className={cn("text-[9px] font-black text-center opacity-30 uppercase tracking-[0.2em]")}>
+                          Engine: {selectedStyle} // Vector Synthesis
+                        </p>
+                      </div>
                     </div>
                   </div>
 
@@ -656,26 +743,135 @@ const PPTStudio: React.FC<{
                           )}>Vista previa no generada</p>
                         </div>
                       ) : (
-                        <div className="w-full h-full p-12 flex flex-col bg-slate-950 text-white relative">
-                          <div className="mb-8 flex items-center justify-between">
-                            <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest italic">{selectedStyle} // L0{activeSlide+1}</span>
-                            {logoUrl ? (
-                              <img src={logoUrl} className="h-6 object-contain" alt="Branding" />
-                            ) : (
-                              <BarChart3 size={20} className="text-white/20" />
-                            )}
-                          </div>
-                          <h3 className="text-4xl font-black mb-4 italic tracking-tighter uppercase">{slides[activeSlide].title}</h3>
-                          <p className="text-lg text-white/40 font-medium mb-10">{slides[activeSlide].subtitle}</p>
-                          <div className="grid grid-cols-2 gap-4">
-                            {slides[activeSlide].content.map((p, i) => (
-                              <div key={i} className="p-4 bg-white/5 border border-white/10 rounded-xl">
-                                <p className="text-xs font-bold leading-relaxed">{p}</p>
+                        <div className={cn(
+                          "w-full h-full p-12 flex flex-col relative transition-all duration-700 overflow-hidden",
+                          selectedStyle === 'scientific' ? "bg-slate-950 text-cyan-50 font-mono" :
+                          selectedStyle === 'bricks' ? "bg-[#1e40af] text-white" :
+                          selectedStyle === 'kawaii' ? "bg-pink-50 text-pink-900" :
+                          selectedStyle === 'sketch' ? "bg-white text-slate-800" :
+                          selectedStyle === 'bento' ? "bg-slate-100 dark:bg-corporate-900 text-corporate-900 dark:text-white" :
+                          "bg-slate-950 text-white"
+                        )}>
+                          {/* Background Decorative Elements based on Style */}
+                          {selectedStyle === 'scientific' && (
+                            <div className="absolute inset-0 opacity-20 pointer-events-none">
+                              <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-cyan-500/10 via-transparent to-transparent" />
+                              <div className="absolute inset-0 border-[0.5px] border-cyan-500/20 m-8" />
+                              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] border border-cyan-500/10 rounded-full" />
+                              {/* Grid lines */}
+                              <div className="absolute inset-0 bg-[linear-gradient(rgba(6,182,212,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(6,182,212,0.05)_1px,transparent_1px)] bg-[size:40px_40px]" />
+                            </div>
+                          )}
+                          {selectedStyle === 'bento' && (
+                            <div className="absolute inset-0 opacity-10 pointer-events-none overflow-hidden">
+                              <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-blue-500 rounded-full blur-[120px]" />
+                              <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-purple-500 rounded-full blur-[120px]" />
+                            </div>
+                          )}
+                          {selectedStyle === 'bricks' && (
+                            <div className="absolute inset-0 opacity-40 pointer-events-none overflow-hidden">
+                              <div className="grid grid-cols-12 gap-1 w-full h-full">
+                                {Array.from({ length: 48 }).map((_, i) => (
+                                  <div key={i} className="aspect-square bg-white/5 border border-white/10 rounded-sm" />
+                                ))}
                               </div>
-                            ))}
-                          </div>
-                          <div className="absolute bottom-8 right-8 opacity-20">
-                             <BrainCircuit size={32} />
+                              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-yellow-400 rounded-lg rotate-12 shadow-2xl" />
+                              <div className="absolute -top-10 -left-10 w-40 h-40 bg-red-500 rounded-lg -rotate-12 shadow-2xl" />
+                            </div>
+                          )}
+
+                          <div className="relative z-10 flex flex-col h-full">
+                            <div className="mb-8 flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <span className={cn(
+                                  "text-[10px] font-black uppercase tracking-[0.3em] italic",
+                                  selectedStyle === 'scientific' ? "text-cyan-400" : "text-blue-500"
+                                )}>
+                                  {selectedStyle} // L0{activeSlide+1} // INFOGRAPHIC_CORE
+                                </span>
+                              </div>
+                              {logoUrl ? (
+                                <img src={logoUrl} className="h-8 object-contain" alt="Branding" />
+                              ) : (
+                                <div className={cn(
+                                  "w-8 h-8 rounded-lg flex items-center justify-center",
+                                  selectedStyle === 'scientific' ? "bg-cyan-500/20 text-cyan-400" : "bg-white/10 text-white/40"
+                                )}>
+                                  <BarChart3 size={16} />
+                                </div>
+                              )}
+                            </div>
+
+                            <h3 className={cn(
+                              "font-black mb-4 tracking-tighter uppercase italic transition-all duration-500",
+                              selectedStyle === 'scientific' ? "text-5xl text-white drop-shadow-[0_0_15px_rgba(6,182,212,0.5)]" :
+                              selectedStyle === 'bricks' ? "text-6xl text-white drop-shadow-lg" :
+                              selectedStyle === 'kawaii' ? "text-5xl text-pink-600 italic-none tracking-normal font-bold" :
+                              "text-4xl text-white"
+                            )}>
+                              {slides[activeSlide].title}
+                            </h3>
+                            
+                            <p className={cn(
+                              "text-lg font-medium mb-12 max-w-2xl transition-all",
+                              selectedStyle === 'scientific' ? "text-cyan-200/60 uppercase tracking-widest text-xs" :
+                              selectedStyle === 'bricks' ? "text-yellow-300 uppercase font-black" :
+                              "text-white/40"
+                            )}>
+                              {slides[activeSlide].subtitle}
+                            </p>
+
+                            <div className={cn(
+                              "flex-1 transition-all duration-500",
+                              selectedStyle === 'bento' ? "grid grid-cols-3 gap-4" :
+                              selectedStyle === 'scientific' ? "grid grid-cols-2 gap-8" :
+                              "grid grid-cols-2 gap-4"
+                            )}>
+                              {slides[activeSlide].content.map((p, i) => (
+                                <div key={i} className={cn(
+                                  "p-6 transition-all relative overflow-hidden",
+                                  selectedStyle === 'scientific' ? "bg-cyan-950/20 border-l-2 border-cyan-500/50" :
+                                  selectedStyle === 'bricks' ? "bg-white text-blue-900 rounded-xl border-b-4 border-slate-300 shadow-lg font-black uppercase text-[11px]" :
+                                  selectedStyle === 'kawaii' ? "bg-white text-pink-600 rounded-3xl border-2 border-pink-100 shadow-sm font-bold" :
+                                  selectedStyle === 'bento' ? "bg-white/10 border border-white/5 rounded-2xl backdrop-blur-md" :
+                                  "bg-white/5 border border-white/10 rounded-xl"
+                                )}>
+                                  {selectedStyle === 'scientific' && (
+                                    <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-cyan-500 rounded-full animate-pulse" />
+                                  )}
+                                  <p className={cn(
+                                    "leading-relaxed",
+                                    selectedStyle === 'scientific' ? "text-xs font-mono" :
+                                    "text-xs font-bold"
+                                  )}>{p}</p>
+                                </div>
+                              ))}
+
+                              {/* Placeholder for Graphic Content */}
+                              {(slides[activeSlide] as any).chartType !== 'none' && (
+                                <div className={cn(
+                                  "col-span-2 mt-4 p-8 rounded-2xl flex items-center justify-center border-2 border-dashed",
+                                  selectedStyle === 'scientific' ? "border-cyan-500/20 bg-cyan-500/5" : "border-white/10 bg-white/5"
+                                )}>
+                                   <div className="text-center space-y-2">
+                                      <div className="inline-block p-4 bg-blue-600 rounded-full text-white animate-pulse">
+                                         <Zap size={32} />
+                                      </div>
+                                      <p className="text-[10px] font-black uppercase tracking-widest opacity-40">
+                                        Nano Banana 2 // Dynamic {(slides[activeSlide] as any).chartType} Generated
+                                      </p>
+                                   </div>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="absolute bottom-10 right-10 flex items-center gap-4 opacity-30">
+                               <div className="text-right">
+                                  <p className="text-[8px] font-black uppercase tracking-[0.3em]">Neural Studio</p>
+                                  <p className="text-[8px] font-black uppercase tracking-[0.3em]">Catalizia V2.5</p>
+                               </div>
+                               <BrainCircuit size={28} className={selectedStyle === 'scientific' ? "text-cyan-500" : "text-white"} />
+                            </div>
                           </div>
                         </div>
                       )}

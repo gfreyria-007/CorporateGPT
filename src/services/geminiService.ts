@@ -478,6 +478,18 @@ export async function renderSlideVisual(
   const systemInstruction = `You are a Visual Architect using the NANOBANANA 2 ENGINE. 
   Current Date context: ${new Date().toISOString().split('T')[0]}. The current year is 2026.
   Generate a high-fidelity visual configuration for this slide.
+  
+  NANOBANANA 2 STYLE DICTIONARY:
+  - scientific: High-density astrophysical visuals, schematics with labels, technical cross-sections, data-rich infographics.
+  - bricks: Modular LEGO-style aesthetic, vibrant primary colors, brick-built charts and structures, playful yet professional data.
+  - sketch: Hand-drawn artistic style, charcoal/ink strokes, rough textures, creative whiteboard feel.
+  - kawaii: Pastel colors, rounded shapes, adorable characters/mascots, soft gradients, friendly UI.
+  - anime: High-energy shonen aesthetic, speed lines, vibrant glowing effects, dramatic perspective.
+  - clay: 3D stop-motion clay style, soft shadows, fingerprint textures, handcrafted organic feel.
+  - editorial: High-end magazine layout, bold typography, monochromatic with accent colors, white-space focus.
+  - bento: Modular grid layout (Bento Grid), glassmorphism, depth layers, clean functional sections.
+  - professional: Executive corporate style, dark blue/slate tones, clean lines, minimalist yet powerful.
+  
   NANOBANANA 2 RULES:
   - Maximize visual density and data clarity.
   - Layouts: 'hero', 'split', 'grid', 'focal', 'technical_drawing', 'dense_table', 'chart_focused'.
