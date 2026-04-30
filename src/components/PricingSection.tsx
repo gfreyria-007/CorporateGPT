@@ -46,7 +46,7 @@ const PricingCard = ({ plan, users, oldPrice, newPrice, features, isFeatured, on
         <p className="text-sm font-bold opacity-40 line-through leading-none">{oldPrice}</p>
         <div className="flex items-baseline gap-2 mt-1">
           <span className="text-4xl font-display font-black tracking-tighter leading-none">{newPrice}</span>
-          <span className="text-[10px] font-black uppercase tracking-widest opacity-50">MXN/año</span>
+          <span className="text-[10px] font-black uppercase tracking-widest opacity-50">MXN/mes</span>
         </div>
       </div>
     </div>
@@ -80,9 +80,9 @@ export const PricingSection = () => {
   const handleBuy = (plan: string) => {
     // Placeholder for Stripe redirection
     const stripeUrls: Record<string, string> = {
-      'SME': 'https://buy.stripe.com/test_sme_plan',
-      'Professional': 'https://buy.stripe.com/test_pro_plan',
-      'Corporate': 'https://buy.stripe.com/test_corp_plan'
+      'Starter': 'https://buy.stripe.com/test_starter',
+      'Professional': 'https://buy.stripe.com/test_professional',
+      'Top-Up': 'https://buy.stripe.com/test_topup_50'
     };
     window.open(stripeUrls[plan] || '#', '_blank');
   };
@@ -95,14 +95,14 @@ export const PricingSection = () => {
           whileInView={{ opacity: 1, y: 0 }}
           className="inline-flex items-center gap-2 px-6 py-2 bg-blue-600/10 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-[0.4em] mb-4"
         >
-          <Zap size={14} /> Oferta de Lanzamiento
+          <Zap size={14} /> Especial Mayo 2026
         </motion.div>
         <motion.h2 
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           className="text-4xl lg:text-7xl font-display font-black tracking-tighter leading-[0.85] uppercase"
         >
-          Potencia tu PyME con <span className="text-blue-600 underline decoration-blue-600/30 underline-offset-12">IA Segura</span>
+          Elige tu <span className="text-blue-600 underline decoration-blue-600/30 underline-offset-12">Plan Seguro</span>
         </motion.h2>
         <motion.div 
           initial={{ opacity: 0 }}
@@ -110,53 +110,52 @@ export const PricingSection = () => {
           className="flex items-center justify-center gap-4 text-xs font-black uppercase tracking-[0.2em] text-blue-600"
         >
            <div className="w-12 h-[1px] bg-blue-600/20" />
-           50% de Descuento hasta el 31 de Mayo
+           15% de Descuento Automático Incluido
            <div className="w-12 h-[1px] bg-blue-600/20" />
         </motion.div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <PricingCard 
-          plan="SME"
-          users="1 a 10"
-          oldPrice="$18,000"
-          newPrice="$9,000"
+          plan="Starter"
+          users="1 Usuario"
+          oldPrice="$274 MXN"
+          newPrice="$233"
           features={[
-            "Acceso a Modelos Top (OpenAI, Anthropic, Gemini)",
-            "Seguridad de Nivel Corporativo",
-            "Soporte por Correo",
-            "Auditoría de Consultas Básica"
+            "20,000 Tokens Premium / Día",
+            "5 Créditos Multimedia / Día",
+            "Auto Router (Elite-Eco)",
+            "Acceso a Nano Banana Studio"
           ]}
-          onBuy={() => handleBuy('SME')}
+          onBuy={() => handleBuy('Starter')}
         />
         <PricingCard 
           plan="Professional"
-          users="11 a 50"
-          oldPrice="$55,000"
-          newPrice="$27,500"
+          users="Múltiples Usuarios"
+          oldPrice="$224 MXN"
+          newPrice="$191"
           isFeatured
           features={[
-             "Todo en SME",
-             "Knowledge Bank Avanzado",
-             "Dashboard de Análisis de Uso",
-             "Administrador de Usuarios",
-             "Consultas Prioritarias"
+             "Todo lo de Starter",
+             "Dashboard Admin Multi-tenant",
+             "Control de Seguridad ZDR Plus",
+             "API Access para ERP/CRM",
+             "Soporte Dedicado"
           ]}
           onBuy={() => handleBuy('Professional')}
         />
         <PricingCard 
-          plan="Corporate"
-          users="51 a 100"
-          oldPrice="$95,000"
-          newPrice="$47,500"
+          plan="Top-Up"
+          users="Créditos Eternos"
+          oldPrice="Uso Ilimitado"
+          newPrice="$50"
           features={[
-             "Todo en Professional",
-             "Auditoría Full Compliance",
-             "Control de Seguridad ZDR Plus",
-             "API Access para ERP/CRM",
-             "Soporte 24/7 Dedicado"
+             "+50,000 Tokens de Élite",
+             "Nunca caducan",
+             "Evitan el Modo Eco Forzado",
+             "Se consumen al acabar la cuota diaria"
           ]}
-          onBuy={() => handleBuy('Corporate')}
+          onBuy={() => handleBuy('Top-Up')}
         />
       </div>
 
