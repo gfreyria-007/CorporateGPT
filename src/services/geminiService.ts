@@ -53,7 +53,7 @@ export interface ClarifyingQuestion {
 
 export async function generateClarifyingQuestions(prompt: string): Promise<ClarifyingQuestion[]> {
   const payload = {
-    model: "gemini-1.5-flash",
+    model: "gemini-3.1-pro-preview",
     contents: [{ role: "user", parts: [{ text: 
 `You are a premium corporate presentation architect. The user wants to generate a high-impact presentation about: "${prompt}"
 
@@ -131,7 +131,7 @@ export async function generateStylePreview(prompt: string, mood: string, lang: '
   Layouts: 'dense_table', 'technical_drawing', 'grid'.`;
 
   const payload = {
-    model: "gemini-1.5-flash",
+    model: "gemini-3.1-pro-preview",
     contents: [{ role: "user", parts: [{ text: `Establish the visual concept for: "${prompt}".` }] }],
     config: {
       systemInstruction,
@@ -181,7 +181,7 @@ export async function generateStylePreview(prompt: string, mood: string, lang: '
 }
 
 export async function generateStudioSlides(prompt: string, mood: string, lang: 'en' | 'es'): Promise<{ slides: StudioSlideData[], finalMood: string }> {
-  const model = "gemini-1.5-flash"; 
+  const model = "gemini-3.1-pro-preview"; 
   
   const systemInstruction = `You are the Neural Studio Engine 5.0 (Cinematic Storyteller). 
   Goal: Synthesize a NON-EDITABLE 10-slide professional infographic narrative.
@@ -282,7 +282,7 @@ export async function suggestBetterPrompt(currentPrompt: string): Promise<string
 }
 
 export async function salesAgentChat(message: string, lang: 'en' | 'es'): Promise<string> {
-  const model = "gemini-1.5-flash"; 
+  const model = "gemini-3.1-pro-preview"; 
   
   const systemInstruction = lang === 'es' ? 
     `ERES EL ASESOR CORPORATIVO DE CORPORATEGPT. 
@@ -321,7 +321,7 @@ export async function salesAgentChat(message: string, lang: 'en' | 'es'): Promis
 
 export async function generateInfographicContent(prompt: string, style: string): Promise<InfographicData> {
   const payload = {
-    model: "gemini-1.5-flash",
+    model: "gemini-3.1-pro-preview",
     contents: [{ role: "user", parts: [{ text: `Generate a structured infographic about: "${prompt}". Style: ${style}. Return JSON format only.` }] }],
     config: {
       responseMimeType: "application/json",
@@ -377,7 +377,7 @@ export async function generateSkeleton(prompt: string, count: number = 10): Prom
   - Return ONLY the JSON object, nothing else.`;
 
   const payload = {
-    model: "gemini-1.5-flash",
+    model: "gemini-3.1-pro-preview",
     contents: [{ role: "user", parts: [{ text: `Generate EXACTLY ${count} content-rich slides for this topic: "${prompt}".
     IMPORTANT: Fill each slide with REAL, SPECIFIC information. No placeholder text.
     Return as JSON: { "slides": [{ "id": "1", "title": "Specific Title", "subtitle": "Descriptive subtitle", "content": ["Concrete fact 1", "Specific data point 2", "Real insight 3"] }] }` }] }],
@@ -443,7 +443,7 @@ export async function generateSkeleton(prompt: string, count: number = 10): Prom
 
 export async function regenerateSlideSkeleton(slideIndex: number, fullContext: string): Promise<SlideSkeleton> {
   const payload = {
-    model: "gemini-1.5-flash",
+    model: "gemini-3.1-pro-preview",
     contents: [{ role: "user", parts: [{ text: `Regenerate ONLY slide number ${slideIndex + 1} for this presentation: "${fullContext}". 
     Return ONE slide object.` }] }],
     config: {
@@ -484,7 +484,7 @@ export async function renderSlideVisual(
     : '';
 
   const payload = {
-    model: "gemini-1.5-flash",
+    model: "gemini-3.1-pro-preview",
     contents: [{ role: "user", parts: [{ text: `Title: ${title}. Content: ${content.join(' | ')}. Style: ${style}. ${chartContext}
     Return JSON: { "visualLayout": "...", "badge": "...", "narrativePhase": "...", "visualInstruction": "detailed instructions for the UI to render the visual or chart" }` }] }],
     config: {

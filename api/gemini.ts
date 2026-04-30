@@ -22,7 +22,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       try {
         const generationConfig = payload.config || payload.generationConfig || {};
         
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || "gemini-1.5-flash"}:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || "gemini-3.1-pro-preview"}:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -65,7 +65,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       } catch (genError: any) {
         console.error('--- GEMINI SDK ERROR ---', genError);
         return res.status(500).json({ 
-          error: 'Gemini SDK Execution Failure', 
+          error: genError.message || 'Gemini SDK Execution Failure', 
           details: genError.message,
           code: genError.code || 'UNKNOWN'
         });
@@ -73,7 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     } else if (action === 'chat') {
       try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || "gemini-1.5-flash"}:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || "gemini-3.1-pro-preview"}:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

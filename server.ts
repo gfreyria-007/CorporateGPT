@@ -238,7 +238,7 @@ async function startServer() {
       console.log(`[GEMINI PROXY] Action: ${action}, Model: ${payload.model}`);
 
       if (action === 'generateContent') {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || 'gemini-flash-latest'}:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || 'gemini-3.1-pro-preview'}:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -277,7 +277,7 @@ async function startServer() {
 
       } else if (action === 'chat') {
          // Simplified chat for local proxy
-         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || 'gemini-flash-latest'}:generateContent?key=${apiKey}`, {
+         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || 'gemini-3.1-pro-preview'}:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
