@@ -51,6 +51,12 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 
 export const SUPER_ADMIN_EMAIL = 'gfreyria@gmail.com';
 
+/**
+ * ensureUserRecord — V2 Multi-Tenant aware.
+ * On first login, creates the user document.
+ * If the user is registering without a companyId invite,
+ * they are treated as a solo trial user (no tenant yet).
+ */
 export async function ensureUserRecord(user: any) {
   const userRef = doc(db, 'users', user.uid);
   try {
@@ -62,6 +68,8 @@ export async function ensureUserRecord(user: any) {
         displayName: user.displayName,
         photoURL: user.photoURL,
         role: user.email === SUPER_ADMIN_EMAIL ? 'super-admin' : 'user',
+        companyId: null,          // V2: assigned later via invite or self-onboard
+        companyRole: null,        // V2: 'owner' | 'admin' | 'member'
         isBanned: false,
         queriesUsed: 0,
         imagesUsed: 0,

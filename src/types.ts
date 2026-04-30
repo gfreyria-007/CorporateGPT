@@ -26,20 +26,48 @@ export interface Message {
   timestamp: number;
 }
 
+// ─── V2 Multi-Tenant Types ────────────────────────────────────────────────────
+
+export type CompanyTier = 'starter' | 'professional' | 'enterprise';
+
+export interface CompanyBranding {
+  logo_url?: string;
+  primary_color?: string;  // hex e.g. "#2563EB"
+  app_name?: string;
+}
+
+export interface Company {
+  id: string;
+  name: string;
+  tier: CompanyTier;
+  appVersion: string;        // active app version ID
+  branding: CompanyBranding;
+  adminUid: string;          // uid of the company owner
+  adminEmail: string;
+  maxSeats: number;          // user seat limit per tier
+  isActive: boolean;
+  createdAt: any;            // Firestore Timestamp
+  updatedAt: any;
+}
+
+// ─── User Profile ─────────────────────────────────────────────────────────────
+
 export interface UserProfile {
   uid: string;
   email: string;
   displayName?: string;
   photoURL?: string;
   role: 'super-admin' | 'admin' | 'user';
+  companyId?: string;        // V2: tenant isolation key
+  companyRole?: 'owner' | 'admin' | 'member';  // role within the company
   isBanned?: boolean;
   queriesUsed: number;
   imagesUsed: number;
   maxQueries: number;
   maxImages: number;
   unlimitedUsage: boolean;
-  createdAt: string;
-  lastActive: string;
+  createdAt: any;            // Firestore Timestamp
+  lastActive: any;
 }
 
 export interface AppConfig {

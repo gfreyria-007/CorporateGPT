@@ -2,13 +2,18 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 0. Global Safety Net
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 0. GLOBAL SAFETY NET — deny everything not explicitly permitted
+    // ═══════════════════════════════════════════════════════════════════════
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // --- Primitives & Global Helpers ---
-    
+    // ═══════════════════════════════════════════════════════════════════════
+    // PRIMITIVES & GLOBAL HELPERS
+    // ═══════════════════════════════════════════════════════════════════════
+
     function isSignedIn() {
       return request.auth != null;
     }
@@ -29,11 +34,25 @@ service cloud.firestore {
       return resource.data;
     }
 
-    function isAdmin() {
+    // ═══════════════════════════════════════════════════════════════════════
+    // ROLE HELPERS
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /** Platform-level Super Admin (Catalizia internal) */
+    function isSuperAdmin() {
       return isSignedIn() && isEmailVerified() && (
         request.auth.token.email == 'gfreyria@gmail.com' ||
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'super-admin'])
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'super-admin')
+      );
+    }
+
+    /** Legacy isAdmin helper kept for backward compatibility */
+    function isAdmin() {
+      return isSuperAdmin() || (
+        isSignedIn() && isEmailVerified() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'super-admin']
       );
     }
 
@@ -41,24 +60,67 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // --- Entity Validations ---
+    // ═══════════════════════════════════════════════════════════════════════
+    // V2 MULTI-TENANT HELPERS — NDA-Proof tenant isolation
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * Returns the companyId stored on the caller's user profile.
+     * Used to enforce resource.data.companyId == caller's companyId.
+     */
+    function callerCompanyId() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId;
+    }
+
+    /** True if resource belongs to the same tenant as the caller */
+    function isSameTenant() {
+      return isSignedIn() &&
+             resource.data.companyId == callerCompanyId();
+    }
+
+    /** True if incoming write targets the caller's own tenant */
+    function incomingIsSameTenant() {
+      return isSignedIn() &&
+             incoming().companyId == callerCompanyId();
+    }
+
+    /**
+     * True if the caller is a Company Admin or Owner within their tenant.
+     */
+    function isCompanyAdmin() {
+      return isSignedIn() && isEmailVerified() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyRole in ['admin', 'owner'];
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // ENTITY VALIDATIONS
+    // ═══════════════════════════════════════════════════════════════════════
 
     function isValidUser(data, userId) {
-      return data.keys().hasAll(['uid', 'email', 'role', 'isBanned', 'queriesUsed']) && 
-             data.keys().size() <= 20 &&
+      return data.keys().hasAll(['uid', 'email', 'role', 'isBanned', 'queriesUsed']) &&
+             data.keys().size() <= 25 &&
              data.uid == userId &&
              data.email is string && data.email.size() <= 200 &&
              data.role in ['user', 'admin', 'super-admin'] &&
              data.isBanned is bool &&
              data.queriesUsed is int &&
              (!data.keys().hasAny(['displayName']) || (data.displayName == null || (data.displayName is string && data.displayName.size() <= 100))) &&
-             (!data.keys().hasAny(['photoURL']) || (data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 512)));
+             (!data.keys().hasAny(['photoURL'])    || (data.photoURL    == null || (data.photoURL    is string && data.photoURL.size()    <= 512)));
+    }
+
+    function isValidCompany(data) {
+      return data.keys().hasAll(['id', 'name', 'tier', 'adminUid', 'adminEmail', 'branding', 'isActive']) &&
+             data.name is string && data.name.size() <= 150 &&
+             data.tier in ['starter', 'professional', 'enterprise'] &&
+             data.adminUid == request.auth.uid &&
+             data.isActive is bool;
     }
 
     function isValidGPT(data) {
       return data.keys().hasAll(['id', 'userId', 'name', 'instructions']) &&
              data.id is string && data.id.size() <= 128 &&
-             data.userId == request.auth.uid && // Must own what you create
+             data.userId == request.auth.uid &&
              data.name is string && data.name.size() <= 100 &&
              data.instructions is string && data.instructions.size() <= 2000 &&
              data.isPublic is bool;
@@ -69,70 +131,106 @@ service cloud.firestore {
              data.id is string && data.id.size() <= 128 &&
              data.ownerId == request.auth.uid &&
              data.name is string && data.name.size() <= 255 &&
-             data.content is string && data.content.size() <= 500000; // 500KB cap
+             data.content is string && data.content.size() <= 500000;
     }
 
-    // --- Match Rules ---
+    // ═══════════════════════════════════════════════════════════════════════
+    // COMPANIES COLLECTION — Core of Multi-Tenant Architecture
+    // ═══════════════════════════════════════════════════════════════════════
+    match /companies/{companyId} {
+      // Only Super Admin can create companies (onboarding)
+      allow create: if isSuperAdmin() && isValidId(companyId) && isValidCompany(incoming());
 
-    // User Collection
+      // Company admin/owner OR Super Admin can read their company doc
+      allow get: if isSuperAdmin() ||
+                    (isSignedIn() && callerCompanyId() == companyId);
+
+      // Company admins/owners can update branding & settings; Super Admin can update anything
+      allow update: if isSuperAdmin() ||
+                       (isCompanyAdmin() && callerCompanyId() == companyId &&
+                        incoming().diff(existing()).affectedKeys()
+                          .hasOnly(['branding', 'appVersion', 'updatedAt']));
+
+      // Only Super Admin can delete (offboard) a company
+      allow delete: if isSuperAdmin();
+
+      // Super Admin can list all; a user can list only their own company
+      allow list: if isSuperAdmin() || (isSignedIn() && callerCompanyId() == companyId);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // USERS COLLECTION
+    // ═══════════════════════════════════════════════════════════════════════
     match /users/{userId} {
-      // Hardened: only the owner or an admin can read the full profile
-      allow get: if isOwner(userId) || isAdmin();
-      // Only admins can list users for management
-      allow list: if isAdmin();
-      
-      allow create: if isOwner(userId) && isValidUser(incoming(), userId) && 
-                    (incoming().role == 'user' || (incoming().role == 'super-admin' && incoming().email == 'gfreyria@gmail.com'));
-      
-      allow update: if (isOwner(userId) || isAdmin()) && (
-        // Action: Self-update (Profile fields only)
-        (isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'lastActive', 'queriesUsed', 'imagesUsed', 'flagged', 'flaggedAt', 'flagReason']) && 
-         incoming().role == existing().role && incoming().uid == existing().uid && incoming().email == existing().email) ||
-        // Action: Admin override
-        (isAdmin())
+      // Owner, same-tenant company admin, or Super Admin can read
+      allow get: if isOwner(userId) || isSuperAdmin() ||
+                    (isCompanyAdmin() && isSameTenant());
+      allow list: if isSuperAdmin() || (isCompanyAdmin() && isSameTenant());
+
+      // Self-create on first login
+      allow create: if isOwner(userId) && isValidUser(incoming(), userId) &&
+                       (incoming().role == 'user' ||
+                        (incoming().role == 'super-admin' && incoming().email == 'gfreyria@gmail.com'));
+
+      // Self-update (limited fields) OR admin override
+      allow update: if (isOwner(userId) || isSuperAdmin() || isCompanyAdmin()) && (
+        (isOwner(userId) &&
+         incoming().diff(existing()).affectedKeys()
+           .hasOnly(['displayName', 'photoURL', 'lastActive', 'queriesUsed', 'imagesUsed',
+                     'flagged', 'flaggedAt', 'flagReason', 'companyId', 'companyRole']) &&
+         incoming().role == existing().role &&
+         incoming().uid  == existing().uid  &&
+         incoming().email == existing().email) ||
+        isSuperAdmin() ||
+        (isCompanyAdmin() && isSameTenant())
       ) && isValidUser(incoming(), userId);
     }
 
-    // GPTs Collection
+    // ═══════════════════════════════════════════════════════════════════════
+    // GPTS COLLECTION — Tenant-scoped GPTs
+    // ═══════════════════════════════════════════════════════════════════════
     match /gpts/{gptId} {
-      allow get: if isSignedIn() && (resource.data.isPublic == true || resource.data.userId == request.auth.uid || isAdmin());
-      // Secure List Queries pattern: filter enforced by matching resource fields
-      allow list: if isSignedIn() && (resource.data.isPublic == true || resource.data.userId == request.auth.uid || isAdmin());
-      
+      // Public GPTs OR same-tenant GPTs OR Super Admin
+      allow get:  if isSignedIn() && (resource.data.isPublic == true || resource.data.userId == request.auth.uid || isSuperAdmin() || isSameTenant());
+      allow list: if isSignedIn() && (resource.data.isPublic == true || resource.data.userId == request.auth.uid || isSuperAdmin() || isSameTenant());
+
       allow create: if isSignedIn() && isValidId(gptId) && isValidGPT(incoming());
-      
-      allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin()) && (
-        // Action: Update metadata
-        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'instructions', 'isPublic', 'updatedAt', 'description', 'avatarUrl', 'tags', 'files'])
-      ) && isValidGPT(incoming());
-      
-      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+
+      allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || isSuperAdmin()) &&
+                       incoming().diff(existing()).affectedKeys()
+                         .hasOnly(['name', 'instructions', 'isPublic', 'updatedAt', 'description', 'avatarUrl', 'tags', 'files']) &&
+                       isValidGPT(incoming());
+
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isSuperAdmin());
     }
 
-    // Documents Collection
+    // ═══════════════════════════════════════════════════════════════════════
+    // DOCUMENTS COLLECTION — Tenant-scoped Private Documents
+    // ═══════════════════════════════════════════════════════════════════════
     match /documents/{docId} {
-      allow get: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
-      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
-      
+      allow get:    if isSignedIn() && (resource.data.ownerId == request.auth.uid || isSuperAdmin() || isSameTenant());
+      allow list:   if isSignedIn() && (resource.data.ownerId == request.auth.uid || isSuperAdmin() || isSameTenant());
       allow create: if isSignedIn() && isValidId(docId) && isValidDocument(incoming());
-      
-      allow update: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin()) && (
-        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'content', 'updatedAt'])
-      ) && isValidDocument(incoming());
-      
-      allow delete: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow update: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isSuperAdmin()) &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['name', 'content', 'updatedAt']) &&
+                       isValidDocument(incoming());
+      allow delete: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isSuperAdmin());
     }
 
-    // Admin Config
+    // ═══════════════════════════════════════════════════════════════════════
+    // ADMIN CONFIG — Platform-level settings
+    // ═══════════════════════════════════════════════════════════════════════
     match /admin/{docId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin() && isValidId(docId);
+      allow read:  if isSignedIn();
+      allow write: if isSuperAdmin() && isValidId(docId);
     }
 
-    // Global Settings
+    // ═══════════════════════════════════════════════════════════════════════
+    // GLOBAL SETTINGS
+    // ═══════════════════════════════════════════════════════════════════════
     match /settings/{settingId} {
-      allow read: if isSignedIn(); // Hardened: only signed in users can see settings
-      allow write: if isAdmin() && isValidId(settingId);
+      allow read:  if isSignedIn();
+      allow write: if isSuperAdmin() && isValidId(settingId);
     }
   }
 }
