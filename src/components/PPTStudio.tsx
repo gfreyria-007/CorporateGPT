@@ -218,22 +218,52 @@ const PPTStudio: React.FC<PPTStudioProps> = ({ onClose, isOpen }) => {
                           placeholder="Contexto o subtítulo..."
                         />
                       </div>
-                      <div className="space-y-3">
-                        <p className="text-[9px] font-black uppercase text-slate-300 tracking-widest">Puntos Clave</p>
-                        {slides[activeSlide]?.content.map((p, pi) => (
-                          <div key={pi} className="flex items-start gap-3">
-                            <div className="w-1.5 h-1.5 rounded-full bg-blue-600 mt-2 shrink-0" />
-                            <input 
-                              type="text" value={p}
-                              onChange={(e) => {
-                                const newC = [...slides[activeSlide].content];
-                                newC[pi] = e.target.value;
-                                handleUpdateSlide(activeSlide, 'content', newC);
-                              }}
-                              className="w-full text-xs font-bold text-slate-600 outline-none border-b border-transparent focus:border-slate-100 py-1"
-                            />
+                      
+                      <div className="pt-10 space-y-10">
+                        {/* Puntos Clave */}
+                        <div className="space-y-4">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Puntos Clave</p>
+                          {slides[activeSlide]?.content.map((point, pi) => (
+                            <div key={pi} className="group flex items-center gap-4">
+                              <div className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
+                              <input 
+                                type="text" value={point} 
+                                onChange={(e) => {
+                                  const newContent = [...slides[activeSlide].content];
+                                  newContent[pi] = e.target.value;
+                                  handleUpdateSlide(activeSlide, 'content', newContent);
+                                }}
+                                className="bg-transparent text-lg font-medium text-slate-800 outline-none border-b border-transparent focus:border-slate-200 flex-1 py-1"
+                              />
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Excel Data Box */}
+                        <div className="space-y-4 p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                          <div className="flex items-center justify-between">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Excel / Table Data</p>
+                            <select 
+                              value={slides[activeSlide]?.chartType || 'none'}
+                              onChange={(e) => handleUpdateSlide(activeSlide, 'chartType', e.target.value)}
+                              className="bg-white border border-slate-200 rounded-lg text-[9px] font-black uppercase tracking-widest px-3 py-1.5 outline-none focus:ring-2 focus:ring-blue-600/20"
+                            >
+                              <option value="none">Sin Gráfica</option>
+                              <option value="bar_2d">Barras 2D</option>
+                              <option value="bar_3d">Barras 3D</option>
+                              <option value="pie_2d">Circular 2D</option>
+                              <option value="pie_3d">Circular 3D</option>
+                              <option value="line">Líneas</option>
+                              <option value="area">Área</option>
+                            </select>
                           </div>
-                        ))}
+                          <textarea 
+                            value={slides[activeSlide]?.tableData}
+                            onChange={(e) => handleUpdateSlide(activeSlide, 'tableData', e.target.value)}
+                            placeholder="Pega aquí tus datos de Excel (Celdas, Columnas...)"
+                            className="w-full h-32 bg-white border border-slate-200 rounded-xl p-4 text-xs font-mono outline-none focus:ring-2 focus:ring-blue-600/20 resize-none placeholder:opacity-30"
+                          />
+                        </div>
                       </div>
 
                       <button 
