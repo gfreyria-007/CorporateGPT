@@ -21,6 +21,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (action === 'generateContent') {
       try {
         const generationConfig = payload.config || payload.generationConfig || {};
+        const { systemInstruction, ...restConfig } = generationConfig;
         
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || "gemini-3.1-pro-preview"}:generateContent?key=${apiKey}`, {
           method: 'POST',
@@ -28,10 +29,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           body: JSON.stringify({
             contents: payload.contents,
             generationConfig: {
-              ...generationConfig,
-              responseMimeType: generationConfig.responseMimeType || "application/json"
+              ...restConfig,
+              responseMimeType: restConfig.responseMimeType || "application/json"
             },
-            systemInstruction: payload.systemInstruction || undefined
+            systemInstruction: payload.systemInstruction || systemInstruction ? { role: 'user', parts: [{ text: payload.systemInstruction || systemInstruction }] } : undefined
           })
         });
 

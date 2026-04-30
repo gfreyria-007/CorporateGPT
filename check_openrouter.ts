@@ -9,11 +9,11 @@ async function checkOpenRouter() {
   }
 
   try {
-    const res = await fetch('https://openrouter.ai/api/v1/credits', {
+    const res = await fetch('https://openrouter.ai/api/v1/auth/key', {
       headers: { 'Authorization': `Bearer ${key}` }
     });
     const data = await res.json();
-    console.log('OpenRouter Credit Check:', JSON.stringify(data, null, 2));
+    console.log('OpenRouter Key Check:', JSON.stringify(data, null, 2));
   } catch (e: any) {
     console.error('OpenRouter check failed:', e.message);
   }
