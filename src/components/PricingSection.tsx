@@ -11,9 +11,11 @@ interface PricingCardProps {
   features: string[];
   isFeatured?: boolean;
   onBuy: () => void;
+  children?: React.ReactNode;
+  isLoading?: boolean;
 }
 
-const PricingCard = ({ plan, users, oldPrice, newPrice, features, isFeatured, onBuy }: PricingCardProps) => (
+const PricingCard = ({ plan, users, oldPrice, newPrice, features, isFeatured, onBuy, children, isLoading }: PricingCardProps) => (
   <motion.div 
     whileHover={{ y: -8, scale: 1.02 }}
     className={cn(
@@ -49,6 +51,8 @@ const PricingCard = ({ plan, users, oldPrice, newPrice, features, isFeatured, on
           <span className="text-[10px] font-black uppercase tracking-widest opacity-50">MXN/mes</span>
         </div>
       </div>
+
+      {children}
     </div>
 
     <ul className="space-y-4 flex-1">
@@ -64,27 +68,49 @@ const PricingCard = ({ plan, users, oldPrice, newPrice, features, isFeatured, on
 
     <button 
       onClick={onBuy}
+      disabled={isLoading}
       className={cn(
-        "w-full h-16 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3",
+        "w-full h-16 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 active:scale-95",
+        isLoading ? "bg-slate-400 cursor-wait opacity-50" :
         isFeatured 
           ? "bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/40" 
           : "bg-corporate-900 text-white hover:bg-black dark:bg-white dark:text-corporate-950"
       )}
     >
-      Comprar Ahora <Terminal size={14} className="opacity-50" />
+      {isLoading ? "Redirigiendo..." : "Comprar Ahora"} <Terminal size={14} className={cn("opacity-50", isLoading && "animate-spin")} />
     </button>
   </motion.div>
 );
 
 export const PricingSection = () => {
+  const [professionalUsers, setProfessionalUsers] = React.useState(10);
+  const [isRedirecting, setIsRedirecting] = React.useState<string | null>(null);
+  
   const handleBuy = (plan: string) => {
-    // Placeholder for Stripe redirection
-    const stripeUrls: Record<string, string> = {
-      'Starter': 'https://buy.stripe.com/test_starter',
-      'Professional': 'https://buy.stripe.com/test_professional',
-      'Top-Up': 'https://buy.stripe.com/test_topup_50'
-    };
-    window.open(stripeUrls[plan] || '#', '_blank');
+    setIsRedirecting(plan);
+    console.log(`Redirecting to ${plan} checkout...`);
+    
+    // Use window.location.href to avoid popup blockers
+    setTimeout(() => {
+      if (plan === 'Professional') {
+        const total = 191 * professionalUsers;
+        window.location.href = `https://checkout.stripe.com/pay/professional?qty=${professionalUsers}&total=${total}&role=admin`;
+        return;
+      }
+
+      const stripeUrls: Record<string, string> = {
+        'Starter': 'https://buy.stripe.com/test_starter',
+        'Top-Up': 'https://buy.stripe.com/test_topup_50'
+      };
+      
+      const url = stripeUrls[plan];
+      if (url) {
+        window.location.href = url;
+      } else {
+        alert("Servidor de pagos en mantenimiento. Intente en unos minutos.");
+        setIsRedirecting(null);
+      }
+    }, 800);
   };
 
   return (
@@ -121,6 +147,7 @@ export const PricingSection = () => {
           users="1 Usuario"
           oldPrice="$274 MXN"
           newPrice="$233"
+          isLoading={isRedirecting === 'Starter'}
           features={[
             "20,000 Tokens Premium / Día",
             "5 Créditos Multimedia / Día",
@@ -131,10 +158,11 @@ export const PricingSection = () => {
         />
         <PricingCard 
           plan="Professional"
-          users="Múltiples Usuarios"
-          oldPrice="$224 MXN"
-          newPrice="$191"
+          users={`${professionalUsers} Usuarios`}
+          oldPrice={`$${224 * professionalUsers} MXN`}
+          newPrice={`$${191 * professionalUsers}`}
           isFeatured
+          isLoading={isRedirecting === 'Professional'}
           features={[
              "Todo lo de Starter",
              "Dashboard Admin Multi-tenant",
@@ -143,12 +171,32 @@ export const PricingSection = () => {
              "Soporte Dedicado"
           ]}
           onBuy={() => handleBuy('Professional')}
-        />
+        >
+          <div className="pt-6 space-y-3">
+             <div className="flex items-center justify-between">
+                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-400">Cantidad de Usuarios (Min. 10)</label>
+                <span className="text-xs font-black text-white">{professionalUsers}</span>
+             </div>
+             <input 
+               type="range" 
+               min="10" 
+               max="100" 
+               step="1"
+               value={professionalUsers}
+               onChange={(e) => setProfessionalUsers(parseInt(e.target.value))}
+               className="w-full h-1 bg-blue-600/30 rounded-lg appearance-none cursor-pointer accent-blue-500"
+             />
+             <p className="text-[8px] font-bold text-blue-300 uppercase leading-relaxed">
+               El usuario que realice el pago será designado como <span className="text-white font-black">Super Admin</span> del espacio de trabajo.
+             </p>
+          </div>
+        </PricingCard>
         <PricingCard 
           plan="Top-Up"
           users="Créditos Eternos"
           oldPrice="Uso Ilimitado"
           newPrice="$50"
+          isLoading={isRedirecting === 'Top-Up'}
           features={[
              "+50,000 Tokens de Élite",
              "Nunca caducan",
@@ -162,14 +210,14 @@ export const PricingSection = () => {
       <motion.div 
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
-        className="max-w-3xl mx-auto p-10 lg:p-12 bg-slate-50 dark:bg-white/5 rounded-[4rem] border border-corporate-200 dark:border-white/10 flex flex-col md:flex-row items-center gap-10 text-center md:text-left"
+        className="max-w-3xl mx-auto p-10 lg:p-12 bg-white dark:bg-blue-600/10 rounded-[4rem] border border-corporate-200 dark:border-blue-500/30 flex flex-col md:flex-row items-center gap-10 text-center md:text-left shadow-2xl dark:shadow-blue-900/20"
       >
-        <div className="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center text-white shrink-0 shadow-2xl shadow-blue-500/20">
+        <div className="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center text-white shrink-0 shadow-2xl shadow-blue-500/30">
           <Terminal size={32} />
         </div>
-        <div className="space-y-3">
-          <h4 className="font-display font-black text-xl tracking-tight uppercase">Modelo de Consumo Transparente</h4>
-          <p className="text-xs font-bold leading-relaxed opacity-60 uppercase tracking-widest">
+        <div className="space-y-3 flex-1">
+          <h4 className="font-display font-black text-xl tracking-tight uppercase dark:text-blue-400">Modelo de Consumo Transparente</h4>
+          <p className="text-xs font-bold leading-relaxed text-slate-700 dark:text-white/80 uppercase tracking-widest">
             El costo de los tokens de IA se gestiona de forma independiente mediante una bolsa de saldo prepagada, garantizando transparencia total en el consumo y evitando cargos inesperados.
           </p>
         </div>
