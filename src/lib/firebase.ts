@@ -18,6 +18,9 @@ export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : nul
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+import { OAuthProvider, EmailAuthProvider } from 'firebase/auth';
+export const appleProvider = new OAuthProvider('apple.com');
+export const emailProvider = new EmailAuthProvider();
 
 export async function testConnection() {
   try {

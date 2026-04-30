@@ -1,0 +1,7 @@
+{
+  "name": "Techie Tutor AI",
+  "description": "Tu tutor personal con Inteligencia Artificial para aprender de forma divertida y efectiva.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

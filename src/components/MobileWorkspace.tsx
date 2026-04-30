@@ -51,9 +51,11 @@ export function MobileWorkspace({
   ecoModeActive,
   tokenPercent,
   multimediaRemaining,
-  isSuperAdmin
+  isSuperAdmin,
+  appMode = 'corporate'
 }: any) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const isJunior = appMode === 'junior';
   const isDark = theme === 'dark';
 
   // Haptic-like feedback helper
@@ -97,17 +99,26 @@ export function MobileWorkspace({
                 <div className="flex items-center gap-3">
                   <button 
                     onClick={() => handleAction(() => setIsMenuOpen(true))}
-                    className={cn("p-2 rounded-xl", isDark ? "bg-white/5" : "bg-slate-100")}
+                    className={cn("p-2 rounded-xl", 
+                      isJunior ? "bg-emerald-500/10 text-emerald-600" : (isDark ? "bg-white/5" : "bg-slate-100")
+                    )}
                   >
                     <Menu size={20} />
                   </button>
-                  <div className="flex flex-col">
-                    <h1 className="text-xs font-black uppercase tracking-widest leading-none">
-                      {selectedGPT ? selectedGPT.name : 'Corporate GPT'}
-                    </h1>
-                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
-                      {isChatLoading ? 'Neural Processing...' : 'v5.0 Native Mobile'}
-                    </span>
+                  <div className="flex items-center gap-2">
+                    {isJunior && (
+                      <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center border border-blue-100 overflow-hidden">
+                        <img src="https://catalizia.com/images/catalizia-techie.png" alt="Techie" className="w-full h-full object-contain p-1" />
+                      </div>
+                    )}
+                    <div className="flex flex-col">
+                      <h1 className="text-xs font-black uppercase tracking-widest leading-none">
+                        {isJunior ? 'Techie Tutor AI' : (selectedGPT ? selectedGPT.name : 'Corporate GPT')}
+                      </h1>
+                      <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
+                        {isChatLoading ? 'Procesando...' : (isJunior ? 'Tu guía inteligente' : 'v5.0 Native Mobile')}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -136,15 +147,17 @@ export function MobileWorkspace({
                 {messages.length === 0 ? (
                     <div className="flex-1 flex flex-col items-center justify-center text-center p-6 space-y-8">
                       <div className="space-y-4">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600/10 text-blue-600 rounded-full text-[8px] font-black uppercase tracking-[0.2em] border border-blue-600/20">
-                           <Shield size={10} /> ENTERPRISE PIPELINE
+                         <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600/10 text-blue-600 rounded-full text-[8px] font-black uppercase tracking-[0.2em] border border-blue-600/20">
+                           {isJunior ? '✨ APRENDIZAJE MÁGICO' : '🛡️ ENTERPRISE PIPELINE'}
                         </div>
                         <h2 className="text-5xl font-display font-black tracking-tighter leading-[0.9] uppercase">
-                           <span className={isDark ? "text-white" : "text-corporate-900"}>Command</span><br/>
-                           <span className="text-blue-600">The Future</span>
+                           <span className={isDark ? "text-white" : "text-corporate-900"}>{isJunior ? 'Hola,' : 'Command'}</span><br/>
+                           <span className={isJunior ? "text-emerald-500" : "text-blue-600"}>{isJunior ? (profile?.name || 'Explorador') : 'The Future'}</span>
                         </h2>
                         <p className="text-[10px] text-slate-400 font-black leading-relaxed max-w-[240px] mx-auto uppercase tracking-[0.1em]">
-                           {appConfig?.landingSubtitle || 'El primer pipeline de IA para PyMEs que prioriza tus datos y tu bolsillo.'}
+                           {isJunior 
+                             ? '¿Qué quieres descubrir hoy? Tu guía inteligente está lista para ayudarte.'
+                             : (appConfig?.landingSubtitle || 'El primer pipeline de IA para PyMEs que prioriza tus datos y tu bolsillo.')}
                         </p>
                       </div>
 
@@ -310,12 +323,12 @@ export function MobileWorkspace({
         )}>
            <button 
              onClick={() => handleAction(() => onOpenPanel('chat'))} 
-             className={cn("flex flex-col items-center gap-1 transition-all", activePanel === 'chat' ? "text-blue-500" : "text-slate-400")}
+             className={cn("flex flex-col items-center gap-1 transition-all", activePanel === 'chat' ? (isJunior ? "text-emerald-500" : "text-blue-500") : "text-slate-400")}
            >
-              <div className={cn("p-2 rounded-2xl", activePanel === 'chat' && (isDark ? "bg-blue-500/10" : "bg-blue-50"))}>
+              <div className={cn("p-2 rounded-2xl", activePanel === 'chat' && (isDark ? (isJunior ? "bg-emerald-500/10" : "bg-blue-500/10") : (isJunior ? "bg-emerald-50" : "bg-blue-50")))}>
                  <MessageSquare size={22} strokeWidth={activePanel === 'chat' ? 3 : 2} />
               </div>
-              <span className="text-[9px] font-black uppercase tracking-tighter">Chat</span>
+              <span className="text-[9px] font-black uppercase tracking-tighter">{isJunior ? 'Tutor' : 'Chat'}</span>
            </button>
            <button 
              onClick={() => handleAction(() => onOpenPanel('ppt'))} 
@@ -324,16 +337,20 @@ export function MobileWorkspace({
               <div className="p-2 rounded-2xl">
                  <Presentation size={22} />
               </div>
-              <span className="text-[9px] font-black uppercase tracking-tighter">Studio</span>
+              <span className="text-[9px] font-black uppercase tracking-tighter">{isJunior ? 'Clases' : 'Studio'}</span>
            </button>
            <button 
              className="relative -top-6"
              onClick={() => handleAction(() => onOpenPanel('knowledge'))}
            >
-              <div className="w-14 h-14 bg-blue-600 rounded-[1.75rem] flex items-center justify-center text-white shadow-2xl shadow-blue-600/40 border-4 border-slate-50 dark:border-corporate-950">
+              <div className={cn("w-14 h-14 rounded-[1.75rem] flex items-center justify-center text-white shadow-2xl border-4 border-slate-50 dark:border-corporate-950",
+                isJunior ? "bg-emerald-500 shadow-emerald-500/40" : "bg-blue-600 shadow-blue-600/40"
+              )}>
                  <Plus size={28} strokeWidth={3} />
               </div>
-              <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-tighter text-blue-600">GPTs</span>
+              <span className={cn("absolute -bottom-6 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-tighter",
+                isJunior ? "text-emerald-600" : "text-blue-600"
+              )}>{isJunior ? 'Nuevo' : 'GPTs'}</span>
            </button>
            <button 
              onClick={() => handleAction(() => onOpenPanel('creative'))} 
@@ -342,7 +359,7 @@ export function MobileWorkspace({
               <div className="p-2 rounded-2xl">
                  <ImageIcon size={22} />
               </div>
-              <span className="text-[9px] font-black uppercase tracking-tighter">Assets</span>
+              <span className="text-[9px] font-black uppercase tracking-tighter">{isJunior ? 'Arte' : 'Assets'}</span>
            </button>
            <button 
              onClick={() => handleAction(() => setIsMenuOpen(true))} 
@@ -351,7 +368,7 @@ export function MobileWorkspace({
               <div className="p-2 rounded-2xl">
                  <LayoutGrid size={22} />
               </div>
-              <span className="text-[9px] font-black uppercase tracking-tighter">More</span>
+              <span className="text-[9px] font-black uppercase tracking-tighter">{isJunior ? 'Mochila' : 'More'}</span>
            </button>
         </nav>
       )}

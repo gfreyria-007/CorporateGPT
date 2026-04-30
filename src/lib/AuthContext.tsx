@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, User, signInWithPopup, signOut } from 'firebase/auth';
-import { auth, googleProvider } from './firebase';
+import { onAuthStateChanged, User, signInWithPopup, signOut, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
+import { auth, googleProvider, appleProvider } from './firebase';
 import { ensureUserRecord } from './db';
 import { handleFirestoreError, OperationType } from './db';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -12,6 +12,8 @@ interface AuthContextType {
   loading: boolean;
   isSigningIn: boolean;
   signIn: () => Promise<void>;
+  signInWithApple: () => Promise<void>;
+  signInWithEmail: (email: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -31,6 +33,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (unsubProfile) {
         unsubProfile();
         unsubProfile = null;
+      }
+
+      // Handle Email Link Auth
+      if (!u && isSignInWithEmailLink(auth, window.location.href)) {
+        let email = window.localStorage.getItem('emailForSignIn');
+        if (!email) {
+          email = window.prompt('Please provide your email for confirmation');
+        }
+        if (email) {
+          try {
+            const result = await signInWithEmailLink(auth, email, window.location.href);
+            window.localStorage.removeItem('emailForSignIn');
+            u = result.user;
+          } catch (error) {
+            console.error("Magic Link Error:", error);
+          }
+        }
       }
 
       setUser(u);
@@ -87,12 +106,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signInWithApple = async () => {
+    if (isSigningIn) return;
+    setIsSigningIn(true);
+    try {
+      await signInWithPopup(auth, appleProvider);
+    } catch (error) {
+      console.error("Apple Auth Error:", error);
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
+
+  const signInWithEmail = async (email: string) => {
+    const actionCodeSettings = {
+      url: window.location.origin + '/auth/verify',
+      handleCodeInApp: true,
+    };
+    try {
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      window.localStorage.setItem('emailForSignIn', email);
+      alert('Se ha enviado un enlace de acceso seguro a tu correo corporativo.');
+    } catch (error) {
+      console.error("Email Link Error:", error);
+      throw error;
+    }
+  };
+
   const logout = async () => {
     await signOut(auth);
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, isSigningIn, signIn, logout }}>
+    <AuthContext.Provider value={{ user, profile, loading, isSigningIn, signIn, signInWithApple, signInWithEmail, logout }}>
       {children}
     </AuthContext.Provider>
   );

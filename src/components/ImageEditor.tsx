@@ -476,16 +476,13 @@ Make it look like a premium, professionally designed asset that could be used in
       const resValue = genResolution === '2K' ? 2048 : 1024;
       
       const payload = {
-        model: 'gemini-3.1-flash-image-preview',
+        model: 'gemini-3-pro-image-preview',
         contents: { parts: [{ text: fullPrompt }] },
         config: {
           temperature: genTemperature,
           responseModalities: genOutputFormat === 'images_only' ? ['IMAGE'] : ['TEXT', 'IMAGE'],
           imageConfig: { 
-            aspectRatio,
-            // Use high res if selected
-            width: resValue,
-            height: Math.round(resValue * (currentTemplate.height / currentTemplate.width))
+            aspectRatio
           }
         }
       };
@@ -768,7 +765,7 @@ Make it look like a premium, professionally designed asset that could be used in
 
       // 3) Send to Gemini: original image + mask + text prompt
       const payload = {
-        model: 'gemini-3.1-flash-image-preview',
+        model: 'gemini-3-pro-image-preview',
         contents: {
           parts: [
             {

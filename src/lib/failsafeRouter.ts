@@ -19,6 +19,7 @@ export interface RouterPayload {
   model: string;
   messages: { role: string; content: string }[];
   userId: string;
+  idToken: string; // Required for backend verification
   instructions?: string | null;
   temperature?: number;
   maxTokens?: number;
@@ -70,8 +71,12 @@ async function parseFallbackResponse(res: Response): Promise<string> {
  * Tries primary → on any failure (timeout, 5xx) → silently escalates to fallback.
  */
 export async function failsafeChat(payload: RouterPayload): Promise<RouterResult> {
-  const body = JSON.stringify(payload);
-  const headers = { 'Content-Type': 'application/json' };
+  const { idToken, ...rest } = payload;
+  const body = JSON.stringify(rest);
+  const headers = { 
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${idToken}`
+  };
 
   // ─── PRIMARY ATTEMPT ─────────────────────────────────────────────────────
   try {
@@ -125,7 +130,10 @@ async function runFallback(payload: RouterPayload, reason: string): Promise<Rout
   try {
     const fallbackRes = await fetch('/api/fallback', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${payload.idToken}`
+      },
       body: fallbackBody,
     });
 

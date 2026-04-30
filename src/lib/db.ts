@@ -125,14 +125,19 @@ export async function incrementQueryCount(uid: string) {
 export async function saveGPT(uid: string, gptData: any) {
   const gptId = gptData.id || Math.random().toString(36).substr(2, 9);
   const gptRef = doc(db, 'gpts', gptId);
+  const finalData = {
+    ...gptData,
+    id: gptId,
+    userId: uid, // Ensure owner is tracked
+    updatedAt: serverTimestamp(),
+    createdAt: gptData.createdAt || serverTimestamp()
+  };
+  
+  // Firestore rejects undefined values, so we sanitize the object
+  Object.keys(finalData).forEach(key => finalData[key] === undefined && delete finalData[key]);
+
   try {
-    await setDoc(gptRef, {
-      ...gptData,
-      id: gptId,
-      userId: uid, // Ensure owner is tracked
-      updatedAt: serverTimestamp(),
-      createdAt: gptData.createdAt || serverTimestamp()
-    }, { merge: true });
+    await setDoc(gptRef, finalData, { merge: true });
     return gptId;
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, `gpts`);

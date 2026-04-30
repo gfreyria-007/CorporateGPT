@@ -10,6 +10,11 @@ import {
 } from 'lucide-react';
 import { translations } from '../lib/translations';
 import { cn } from '../lib/utils';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useGSAP } from '@gsap/react';
+
+gsap.registerPlugin(ScrollTrigger);
 
 interface LandingPageProps {
   onStartSession: () => void;
@@ -36,8 +41,64 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
     featuresRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    // Problem section grid items
+    gsap.from('.problem-card', {
+      scrollTrigger: {
+        trigger: '.problem-section',
+        start: 'top 80%',
+      },
+      y: 50,
+      opacity: 0,
+      duration: 0.8,
+      stagger: 0.15,
+      ease: 'power3.out'
+    });
+
+    // Solution bento grid items
+    gsap.from('.solution-card', {
+      scrollTrigger: {
+        trigger: '.solution-section',
+        start: 'top 80%',
+      },
+      y: 50,
+      opacity: 0,
+      duration: 0.8,
+      stagger: 0.2,
+      ease: 'back.out(1.7)'
+    });
+
+    // Products section
+    gsap.from('.product-card', {
+      scrollTrigger: {
+        trigger: '.product-section',
+        start: 'top 80%',
+      },
+      scale: 0.95,
+      opacity: 0,
+      duration: 1,
+      stagger: 0.2,
+      ease: 'power4.out'
+    });
+
+    // Table section
+    gsap.from('.comparison-row', {
+      scrollTrigger: {
+        trigger: '.comparison-table',
+        start: 'top 85%',
+      },
+      x: -50,
+      opacity: 0,
+      duration: 0.6,
+      stagger: 0.1,
+      ease: 'power2.out'
+    });
+  }, { scope: containerRef });
+
   return (
-    <div className="min-h-screen bg-black font-sans selection:bg-blue-600 selection:text-white relative">
+    <div ref={containerRef} className="min-h-screen bg-black font-sans selection:bg-blue-600 selection:text-white relative">
       {/* Navigation */}
       <nav className="h-20 lg:h-24 px-6 lg:px-12 flex items-center justify-between sticky top-0 z-[100] bg-black/80 backdrop-blur-3xl border-b border-white/[0.05]">
         <div className="flex items-center gap-3 lg:gap-4">
@@ -132,7 +193,7 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
       </section>
 
       {/* THE PROBLEM SECTION */}
-      <section className="py-24 px-6 lg:px-12 bg-black border-y border-white/[0.05]" id="solutions">
+      <section className="py-24 px-6 lg:px-12 bg-black border-y border-white/[0.05] problem-section" id="solutions">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-5xl font-black text-white tracking-tight mb-4">Hoy usar IA en tu empresa es un caos</h2>
@@ -140,22 +201,22 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-             <div className="p-8 rounded-3xl bg-red-950/10 border border-red-500/10 hover:border-red-500/30 transition-all">
+             <div className="problem-card p-8 rounded-3xl bg-red-950/10 border border-red-500/10 hover:border-red-500/30 transition-all">
                 <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center text-red-400 mb-6"><Users size={24} /></div>
                 <h4 className="text-lg font-black text-white mb-2">Herramientas Dispersas</h4>
                 <p className="text-slate-400 text-sm">Cada equipo contrata y usa herramientas distintas. No hay un estándar.</p>
              </div>
-             <div className="p-8 rounded-3xl bg-amber-950/10 border border-amber-500/10 hover:border-amber-500/30 transition-all">
+             <div className="problem-card p-8 rounded-3xl bg-amber-950/10 border border-amber-500/10 hover:border-amber-500/30 transition-all">
                 <div className="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-400 mb-6"><FileWarning size={24} /></div>
                 <h4 className="text-lg font-black text-white mb-2">Fuga de Datos Sensibles</h4>
                 <p className="text-slate-400 text-sm">Nadie controla qué documentos confidenciales se comparten en prompts públicos.</p>
              </div>
-             <div className="p-8 rounded-3xl bg-blue-950/10 border border-blue-500/10 hover:border-blue-500/30 transition-all">
+             <div className="problem-card p-8 rounded-3xl bg-blue-950/10 border border-blue-500/10 hover:border-blue-500/30 transition-all">
                 <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-400 mb-6"><BarChart3 size={24} /></div>
                 <h4 className="text-lg font-black text-white mb-2">Costos Incontrolables</h4>
                 <p className="text-slate-400 text-sm">Pagas suscripciones mensuales sin usar el límite y los gastos crecen sin explicación.</p>
              </div>
-             <div className="p-8 rounded-3xl bg-purple-950/10 border border-purple-500/10 hover:border-purple-500/30 transition-all">
+             <div className="problem-card p-8 rounded-3xl bg-purple-950/10 border border-purple-500/10 hover:border-purple-500/30 transition-all">
                 <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-400 mb-6"><Target size={24} /></div>
                 <h4 className="text-lg font-black text-white mb-2">Cero Visibilidad</h4>
                 <p className="text-slate-400 text-sm">Falta de trazabilidad. Es imposible saber quién usa qué, ni para qué tareas.</p>
@@ -170,7 +231,7 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
       </section>
 
       {/* THE SOLUTION & VALUE CLEAR SECTION */}
-      <section className="py-24 px-6 lg:px-12 bg-[#020205] relative" id="economics">
+      <section className="py-24 px-6 lg:px-12 bg-[#020205] relative solution-section" id="economics">
         <div className="max-w-7xl mx-auto">
           <div className="mb-20">
              <div className="inline-block px-4 py-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-xs font-black uppercase tracking-widest mb-6">
@@ -186,7 +247,7 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
 
           {/* Value Bento */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-             <div className="p-10 rounded-[2.5rem] bg-white/[0.02] border border-white/[0.05] flex flex-col justify-between hover:bg-white/[0.04] transition-colors group">
+             <div className="solution-card p-10 rounded-[2.5rem] bg-white/[0.02] border border-white/[0.05] flex flex-col justify-between hover:bg-white/[0.04] transition-colors group">
                 <div className="w-14 h-14 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-400 border border-emerald-500/20 mb-6 group-hover:scale-110 transition-transform"><Coins size={24} /></div>
                 <div>
                    <h4 className="text-4xl font-black text-white mb-3">-70% Gasto</h4>
@@ -194,7 +255,7 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
                 </div>
              </div>
              
-             <div className="p-10 rounded-[2.5rem] bg-white/[0.02] border border-white/[0.05] flex flex-col justify-between hover:bg-white/[0.04] transition-colors group">
+             <div className="solution-card p-10 rounded-[2.5rem] bg-white/[0.02] border border-white/[0.05] flex flex-col justify-between hover:bg-white/[0.04] transition-colors group">
                 <div className="w-14 h-14 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-400 border border-blue-500/20 mb-6 group-hover:scale-110 transition-transform"><ShieldCheck size={24} /></div>
                 <div>
                    <h4 className="text-4xl font-black text-white mb-3">0 Fugas</h4>
@@ -202,7 +263,7 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
                 </div>
              </div>
 
-             <div className="p-10 rounded-[2.5rem] bg-white/[0.02] border border-white/[0.05] flex flex-col justify-between hover:bg-white/[0.04] transition-colors group">
+             <div className="solution-card p-10 rounded-[2.5rem] bg-white/[0.02] border border-white/[0.05] flex flex-col justify-between hover:bg-white/[0.04] transition-colors group">
                 <div className="w-14 h-14 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-400 border border-purple-500/20 mb-6 group-hover:scale-110 transition-transform"><Target size={24} /></div>
                 <div>
                    <h4 className="text-4xl font-black text-white mb-3">100% Visión</h4>
@@ -214,7 +275,7 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
       </section>
 
       {/* PRODUCTS (REPOSITIONED) */}
-      <section className="py-24 px-6 lg:px-12 bg-black border-t border-white/[0.05]">
+      <section className="py-24 px-6 lg:px-12 bg-black border-t border-white/[0.05] product-section">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
              <h2 className="text-4xl font-black text-white tracking-tight mb-4">Un solo motor. Dos entornos.</h2>
@@ -223,7 +284,7 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
             {/* Enterprise Core */}
-            <div className="group relative rounded-[2.5rem] bg-white/[0.02] border border-white/[0.05] overflow-hidden hover:bg-white/[0.04] transition-all duration-500 flex flex-col">
+            <div className="product-card group relative rounded-[2.5rem] bg-white/[0.02] border border-white/[0.05] overflow-hidden hover:bg-white/[0.04] transition-all duration-500 flex flex-col">
               <div className="relative h-64 w-full bg-black/40 border-b border-white/[0.05] overflow-hidden flex items-end justify-center px-8 pt-12">
                  <div className="w-full h-full bg-[#0a0a0f] rounded-t-2xl border-x border-t border-white/10 shadow-[0_-20px_50px_rgba(37,99,235,0.1)] relative overflow-hidden flex transform group-hover:translate-y-[-8px] transition-transform duration-500">
                     <div className="w-20 lg:w-24 h-full border-r border-white/5 p-4 flex flex-col gap-4 bg-white/[0.02]">
@@ -257,7 +318,7 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
             </div>
 
             {/* Safe Learning */}
-            <div className="group relative rounded-[2.5rem] bg-white/[0.02] border border-white/[0.05] overflow-hidden hover:bg-white/[0.04] transition-all duration-500 flex flex-col">
+            <div className="product-card group relative rounded-[2.5rem] bg-white/[0.02] border border-white/[0.05] overflow-hidden hover:bg-white/[0.04] transition-all duration-500 flex flex-col">
               <div className="relative h-64 w-full bg-black/40 border-b border-white/[0.05] overflow-hidden flex items-end justify-center px-8 pt-12">
                  <div className="w-full h-full bg-[#0a0f0d] rounded-t-2xl border-x border-t border-white/10 shadow-[0_-20px_50px_rgba(16,185,129,0.1)] relative overflow-hidden transform group-hover:translate-y-[-8px] transition-transform duration-500">
                     <div className="w-full h-16 bg-emerald-950/20 border-b border-emerald-500/10 p-4 flex items-center justify-between">
@@ -302,28 +363,28 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
              <p className="text-slate-400">Diseñado para equipos que no pueden fallar (Marketing, Operaciones, Legal).</p>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/[0.02] backdrop-blur-xl overflow-hidden">
+          <div className="comparison-table rounded-3xl border border-white/10 bg-white/[0.02] backdrop-blur-xl overflow-hidden">
              <div className="grid grid-cols-3 bg-white/[0.02] border-b border-white/10 p-6 font-black uppercase text-xs tracking-widest text-slate-400">
                 <div>Característica</div>
                 <div className="text-center text-blue-400">Catalizia</div>
                 <div className="text-center">Otras IA</div>
              </div>
-             <div className="grid grid-cols-3 p-6 border-b border-white/5 hover:bg-white/[0.02] transition-colors items-center">
+             <div className="comparison-row grid grid-cols-3 p-6 border-b border-white/5 hover:bg-white/[0.02] transition-colors items-center">
                 <div className="font-bold text-white text-sm">Acceso Multi-modelo</div>
                 <div className="flex justify-center"><CheckCircle2 className="text-emerald-400" /></div>
                 <div className="flex justify-center"><XCircle className="text-red-500/50" /></div>
              </div>
-             <div className="grid grid-cols-3 p-6 border-b border-white/5 hover:bg-white/[0.02] transition-colors items-center">
+             <div className="comparison-row grid grid-cols-3 p-6 border-b border-white/5 hover:bg-white/[0.02] transition-colors items-center">
                 <div className="font-bold text-white text-sm">Control de Privacidad / Datos</div>
                 <div className="flex justify-center"><CheckCircle2 className="text-emerald-400" /></div>
                 <div className="flex justify-center"><AlertTriangle className="text-amber-500" /></div>
              </div>
-             <div className="grid grid-cols-3 p-6 border-b border-white/5 hover:bg-white/[0.02] transition-colors items-center">
+             <div className="comparison-row grid grid-cols-3 p-6 border-b border-white/5 hover:bg-white/[0.02] transition-colors items-center">
                 <div className="font-bold text-white text-sm">Routing y Optimización de Costos</div>
                 <div className="flex justify-center"><CheckCircle2 className="text-emerald-400" /></div>
                 <div className="flex justify-center"><XCircle className="text-red-500/50" /></div>
              </div>
-             <div className="grid grid-cols-3 p-6 hover:bg-white/[0.02] transition-colors items-center">
+             <div className="comparison-row grid grid-cols-3 p-6 hover:bg-white/[0.02] transition-colors items-center">
                 <div className="font-bold text-white text-sm">Gobierno por Equipo / Accesos</div>
                 <div className="flex justify-center"><CheckCircle2 className="text-emerald-400" /></div>
                 <div className="flex justify-center"><XCircle className="text-red-500/50" /></div>

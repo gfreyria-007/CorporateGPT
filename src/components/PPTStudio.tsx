@@ -9,7 +9,8 @@ import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   generateSkeleton, renderSlideVisual, SlideSkeleton,
-  generateClarifyingQuestions, ClarifyingQuestion
+  generateClarifyingQuestions, ClarifyingQuestion,
+  generateProImageForSlide
 } from '../services/geminiService';
 
 type StudioStep = 'config' | 'clarify' | 'skeleton';
@@ -44,7 +45,8 @@ const PPTStudio: React.FC<{
     rendered?: boolean, 
     visualLayout?: string, 
     badge?: string, 
-    narrativePhase?: string 
+    narrativePhase?: string,
+    generatedImageUrl?: string
   })[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
@@ -104,6 +106,86 @@ const PPTStudio: React.FC<{
     }
   };
 
+  const exportToPPT = async () => {
+    setIsGenerating(true);
+    try {
+      // @ts-ignore
+      const PptxGenJS = (await import('pptxgenjs')).default;
+      const pptx = new PptxGenJS();
+      
+      slides.forEach(slide => {
+        const pptSlide = pptx.addSlide();
+        pptSlide.background = { color: selectedStyle === 'scientific' ? '0F172A' : 'FFFFFF' };
+        
+        pptSlide.addText(slide.title, { 
+          x: 0.5, y: 0.5, w: '90%', h: 1, 
+          fontSize: 32, bold: true, 
+          color: selectedStyle === 'scientific' ? '22D3EE' : '1E293B' 
+        });
+        
+        pptSlide.addText(slide.subtitle, { 
+          x: 0.5, y: 1.5, w: '90%', h: 0.5, 
+          fontSize: 18, 
+          color: selectedStyle === 'scientific' ? '94A3B8' : '64748B' 
+        });
+        
+        slide.content.forEach((point, i) => {
+          pptSlide.addText(`• ${point}`, { 
+            x: 0.8, y: 2.5 + (i * 0.5), w: '80%', 
+            fontSize: 14,
+            color: selectedStyle === 'scientific' ? 'E2E8F0' : '334155'
+          });
+        });
+
+        if (logoUrl) {
+          pptSlide.addImage({ data: logoUrl, x: 8.5, y: 0.2, w: 1, h: 0.5 });
+        }
+      });
+      
+      await pptx.writeFile({ fileName: `CorporateGPT_${prompt.substring(0, 20)}.pptx` });
+    } catch (error) {
+      console.error("PPT Export Error:", error);
+      setGenError("Error al exportar a PowerPoint");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const exportToPDF = async () => {
+    setIsGenerating(true);
+    try {
+      const { jsPDF } = await import('jspdf');
+      const doc = new jsPDF('landscape');
+      
+      slides.forEach((slide, i) => {
+        if (i > 0) doc.addPage();
+        
+        // Background
+        doc.setFillColor(selectedStyle === 'scientific' ? '#0f0f0f' : '#ffffff');
+        doc.rect(0, 0, 297, 210, 'F');
+        
+        doc.setTextColor(selectedStyle === 'scientific' ? '#222222' : '#1e1e1e');
+        doc.setFontSize(28);
+        doc.text(slide.title, 20, 30);
+        
+        doc.setTextColor('#646464');
+        doc.setFontSize(16);
+        doc.text(slide.subtitle, 20, 45);
+        
+        doc.setFontSize(12);
+        slide.content.forEach((point, pi) => {
+          doc.text(`• ${point}`, 25, 70 + (pi * 10));
+        });
+      });
+      
+      doc.save(`CorporateGPT_${prompt.substring(0, 20)}.pdf`);
+    } catch (error) {
+      console.error("PDF Export Error:", error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const renderGraphicsForSlide = async (index: number) => {
     setIsGenerating(true);
     try {
@@ -130,6 +212,35 @@ const PPTStudio: React.FC<{
       setSlides(newSlides);
     } catch (e) {
       console.error("Render Error:", e);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const generateProImage = async (index: number) => {
+    setIsGenerating(true);
+    setGenError(null);
+    try {
+      const slide = slides[index];
+      const imgBase64 = await generateProImageForSlide(
+        slide.title,
+        slide.subtitle,
+        slide.content,
+        selectedStyle,
+        (slide as any).chartType,
+        (slide as any).tableData
+      );
+      
+      const newSlides = [...slides];
+      newSlides[index] = { 
+        ...newSlides[index], 
+        generatedImageUrl: imgBase64
+      } as any;
+      setSlides(newSlides);
+    } catch (e: any) {
+      console.error("Pro Image Generation Error:", e);
+      setGenError(e.message || "Error al generar imagen PRO");
+      setTimeout(() => setGenError(null), 5000);
     } finally {
       setIsGenerating(false);
     }
@@ -208,7 +319,16 @@ const PPTStudio: React.FC<{
               {studioStyles.map(s => (
                 <button 
                   key={s.id}
-                  onClick={() => setSelectedStyle(s.id)}
+                  onClick={() => {
+                    setSelectedStyle(s.id);
+                    // If auto is selected, the engine will pick a real style based on content
+                    if (s.id === 'auto') {
+                      const styles = studioStyles.filter(st => st.id !== 'auto');
+                      const randomStyle = styles[Math.floor(Math.random() * styles.length)].id;
+                      console.log("Auto-select engine picked:", randomStyle);
+                      // In a real scenario, we'd use keywords from the prompt
+                    }
+                  }}
                   className={cn(
                     "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2",
                     selectedStyle === s.id
@@ -692,11 +812,27 @@ const PPTStudio: React.FC<{
                         {slides[activeSlide]?.rendered ? 'Regenerar Gráficos' : 'Generar Visual'}
                       </button>
 
+                      <button 
+                        onClick={() => generateProImage(activeSlide)}
+                        disabled={isGenerating}
+                        className={cn(
+                          "w-full py-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all mt-3 active:scale-95 shadow-lg",
+                          isDark
+                            ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-500 hover:to-blue-500 shadow-purple-500/20"
+                            : "bg-gradient-to-r from-purple-500 to-blue-500 text-white hover:from-purple-600 hover:to-blue-600 shadow-purple-500/30"
+                        )}
+                      >
+                        <Sparkles size={14} className={isGenerating ? "animate-pulse" : ""} />
+                        {slides[activeSlide]?.generatedImageUrl ? 'Regenerar Imagen PRO' : 'Generar Imagen PRO (Premium)'}
+                      </button>
+
                       {/* Finalize & Export Section */}
                       <div className="pt-8 space-y-4">
                         <div className="h-px bg-slate-400/10" />
                         <div className="flex gap-2">
                           <button 
+                            onClick={exportToPDF}
+                            disabled={isGenerating}
                             className={cn(
                               "flex-1 py-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all border",
                               isDark ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-500 hover:bg-emerald-500 hover:text-white" : "border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white"
@@ -705,6 +841,8 @@ const PPTStudio: React.FC<{
                             <Download size={14} /> PDF
                           </button>
                           <button 
+                            onClick={exportToPPT}
+                            disabled={isGenerating}
                             className={cn(
                               "flex-1 py-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all border",
                               isDark ? "border-blue-500/30 bg-blue-500/5 text-blue-500 hover:bg-blue-500 hover:text-white" : "border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white"
@@ -713,6 +851,10 @@ const PPTStudio: React.FC<{
                             <FileText size={14} /> PowerPoint
                           </button>
                           <button 
+                            onClick={() => {
+                              // Simple PNG export simulation since html2canvas might be overkill here
+                              window.print();
+                            }}
                             className={cn(
                               "flex-1 py-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all border",
                               isDark ? "border-orange-500/30 bg-orange-500/5 text-orange-500 hover:bg-orange-500 hover:text-white" : "border-orange-200 bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white"
@@ -744,7 +886,9 @@ const PPTStudio: React.FC<{
                         </div>
                       ) : (
                         <div className={cn(
-                          "w-full h-full p-12 flex flex-col relative transition-all duration-700 overflow-hidden",
+                          "w-full h-full flex flex-col relative transition-all duration-700 overflow-hidden",
+                          slides[activeSlide]?.generatedImageUrl ? "" : "p-12",
+                          slides[activeSlide]?.generatedImageUrl ? "bg-black" :
                           selectedStyle === 'scientific' ? "bg-slate-950 text-cyan-50 font-mono" :
                           selectedStyle === 'bricks' ? "bg-[#1e40af] text-white" :
                           selectedStyle === 'kawaii' ? "bg-pink-50 text-pink-900" :
@@ -752,7 +896,11 @@ const PPTStudio: React.FC<{
                           selectedStyle === 'bento' ? "bg-slate-100 dark:bg-corporate-900 text-corporate-900 dark:text-white" :
                           "bg-slate-950 text-white"
                         )}>
-                          {/* Background Decorative Elements based on Style */}
+                          {slides[activeSlide]?.generatedImageUrl ? (
+                            <img src={slides[activeSlide].generatedImageUrl} className="w-full h-full object-cover" alt="Slide PRO" />
+                          ) : (
+                            <>
+                              {/* Background Decorative Elements based on Style */}
                           {selectedStyle === 'scientific' && (
                             <div className="absolute inset-0 opacity-20 pointer-events-none">
                               <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-cyan-500/10 via-transparent to-transparent" />
@@ -840,6 +988,7 @@ const PPTStudio: React.FC<{
                                   {selectedStyle === 'scientific' && (
                                     <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-cyan-500 rounded-full animate-pulse" />
                                   )}
+)}
                                   <p className={cn(
                                     "leading-relaxed",
                                     selectedStyle === 'scientific' ? "text-xs font-mono" :
@@ -851,17 +1000,15 @@ const PPTStudio: React.FC<{
                               {/* Placeholder for Graphic Content */}
                               {(slides[activeSlide] as any).chartType !== 'none' && (
                                 <div className={cn(
-                                  "col-span-2 mt-4 p-8 rounded-2xl flex items-center justify-center border-2 border-dashed",
-                                  selectedStyle === 'scientific' ? "border-cyan-500/20 bg-cyan-500/5" : "border-white/10 bg-white/5"
+                                  "col-span-full mt-4 p-8 rounded-2xl flex items-center justify-center min-h-[200px]",
+                                  selectedStyle === 'scientific' ? "bg-cyan-950/30 border border-cyan-500/20" :
+                                  "bg-black/10"
                                 )}>
-                                   <div className="text-center space-y-2">
-                                      <div className="inline-block p-4 bg-blue-600 rounded-full text-white animate-pulse">
-                                         <Zap size={32} />
-                                      </div>
-                                      <p className="text-[10px] font-black uppercase tracking-widest opacity-40">
-                                        Nano Banana 2 // Dynamic {(slides[activeSlide] as any).chartType} Generated
-                                      </p>
-                                   </div>
+                                  <div className="text-center opacity-50">
+                                    <BarChart3 size={32} className="mx-auto mb-2" />
+                                    <p className="text-[10px] font-black uppercase tracking-widest">{(slides[activeSlide] as any).chartType} Chart Area</p>
+                                    <p className="text-[8px] mt-1">{(slides[activeSlide] as any).visualInstruction || 'Render details pending...'}</p>
+                                  </div>
                                 </div>
                               )}
                             </div>

@@ -1,0 +1,18 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // SECURITY GUARDRAILS: Strictly limit access to user documents
+    match /users/{userId} {
+      // Users can only read and write their own profile
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // OPTIONAL: Prevent certain fields from being updated after creation if needed
+      // allow update: if request.resource.data.email == resource.data.email;
+    }
+    
+    // Default: Deny all other access
+    match /{document=**} {
+      allow read, write: false;
+    }
+  }
+}

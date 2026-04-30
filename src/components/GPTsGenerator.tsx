@@ -52,20 +52,27 @@ export function GPTsGenerator({ onClose, onSelect, theme, isMobile = false }: { 
     setIsSaving(true);
     setSaveStatus('idle');
     try {
-      const gptData = {
-        id: currentGptId,
-        name,
-        description,
-        instructions,
+      const gptData: any = {
+        id: currentGptId || null,
+        name: name || '',
+        description: description || '',
+        instructions: instructions || '',
         isPublic: isAdmin ? isPublic : false,
         files: files.map(f => ({ 
-          name: f.name, 
-          size: f.size, 
-          type: f.type,
-          content: f.content // Persist text content for knowledge base
+          name: f.name || '', 
+          size: f.size || '', 
+          type: f.type || '',
+          content: f.content || null
         }))
       };
-      const id = await saveGPT(user.uid, gptData);
+      
+      // Remove any undefined values just to be absolutely safe
+      Object.keys(gptData).forEach(key => gptData[key] === undefined && delete gptData[key]);
+      // Add a timeout to prevent infinite hanging
+      const savePromise = saveGPT(user.uid, gptData);
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout saving GPT")), 10000));
+      
+      const id = await Promise.race([savePromise, timeoutPromise]) as string;
       if (id) { setCurrentGptId(id); setSaveStatus('saved'); }
     } catch (error) {
       console.error("Save error:", error);

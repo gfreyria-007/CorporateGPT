@@ -534,3 +534,52 @@ export async function renderSlideVisual(
     visualInstruction: result.visualInstruction || ''
   };
 }
+
+export async function generateProImageForSlide(
+  title: string,
+  subtitle: string,
+  content: string[],
+  style: string,
+  chartType: string = 'none',
+  tableData: string = ''
+): Promise<string> {
+  const prompt = `Create a highly professional, visually stunning presentation slide infographic.
+Title: "${title}"
+Subtitle: "${subtitle}"
+Key Points: ${content.join(' | ')}
+Data Context (if any): ${chartType !== 'none' ? tableData : 'None'}
+
+Style Requirement: ${style}. 
+The image should be a complete, cohesive infographic slide. Do not include random text, use the exact title and points where possible, or use visual metaphors to represent them. Use a 16:9 aspect ratio and make it look like a premium corporate or technical slide design. Ensure high data density and a breathtaking aesthetic.`;
+
+  const payload = {
+    model: 'gemini-3-pro-image-preview',
+    contents: { parts: [{ text: prompt }] },
+    config: {
+      temperature: 1,
+      responseModalities: ['IMAGE'],
+      imageConfig: { 
+        aspectRatio: '16:9'
+      }
+    }
+  };
+
+  const res = await fetch('/api/gemini', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'generateContent', payload })
+  });
+  
+  const imgRes = await res.json();
+  if (imgRes.error) {
+    throw new Error(imgRes.error);
+  }
+
+  const imgPart = imgRes.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData);
+  if (!imgPart) {
+    throw new Error('No image was generated. The model returned text only.');
+  }
+
+  return `data:${imgPart.inlineData.mimeType || 'image/png'};base64,${imgPart.inlineData.data}`;
+}
+

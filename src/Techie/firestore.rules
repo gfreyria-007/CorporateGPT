@@ -1,0 +1,138 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId} (Firebase Auth UID)
+    // Fields:
+    //   - uid: string (required, immutable)
+    //   - email: string (required, immutable)
+    //   - name: string (required)
+    //   - role: string (required) - ["user", "admin"]
+    //   - isApproved: bool (required)
+    //   - tokensPerDay: number (required)
+    //   - dailyUsageCount: number (required)
+    //   - lastUsageDate: string (required) - YYYY-MM-DD
+    //   - gradeId: string (optional)
+    //   - age: number (optional)
+    //
+    // Collection: access_requests
+    // Fields:
+    //   - email: string
+    //   - status: string - ["pending", "approved", "rejected"]
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+         (request.auth.token.email == "gfreyria@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'name', 'role', 'isApproved', 'tokensPerDay', 'dailyUsageCount', 'lastUsageDate']) &&
+             data.uid is string &&
+             data.email is string &&
+             data.name is string &&
+             data.role in ['user', 'admin'] &&
+             data.isApproved is bool &&
+             data.tokensPerDay is number &&
+             data.dailyUsageCount is number &&
+             data.lastUsageDate is string;
+    }
+
+    function uidUnchanged() {
+      return request.resource.data.uid == resource.data.uid;
+    }
+
+    function emailUnchanged() {
+      return request.resource.data.email == resource.data.email;
+    }
+
+    function roleUnchanged() {
+      return request.resource.data.role == resource.data.role;
+    }
+
+    function isApprovedUnchanged() {
+      return request.resource.data.isApproved == resource.data.isApproved;
+    }
+
+    function isValidLog(data) {
+      return data.keys().hasAll(['type', 'message', 'timestamp']) &&
+             data.type in ['usage', 'error', 'violation', 'tokens'] &&
+             data.message is string && data.message.size() < 1000 &&
+             data.timestamp is timestamp &&
+             (!('uid' in data) || data.uid is string) &&
+             (!('email' in data) || data.email is string) &&
+             (!('details' in data) || data.details is map);
+    }
+
+    function tokensPerDayUnchanged() {
+      return request.resource.data.tokensPerDay == resource.data.tokensPerDay;
+    }
+
+    function isValidTokenUpdate() {
+      let isReset = request.resource.data.dailyUsageCount == 0 && request.resource.data.lastUsageDate != resource.data.lastUsageDate;
+      let isIncrement = request.resource.data.dailyUsageCount == resource.data.dailyUsageCount + 1 && request.resource.data.lastUsageDate == resource.data.lastUsageDate;
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['dailyUsageCount', 'lastUsageDate']) &&
+             (isReset || isIncrement) &&
+             request.resource.data.dailyUsageCount <= resource.data.tokensPerDay;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) &&
+                       isValidUser(request.resource.data) &&
+                       request.resource.data.dailyUsageCount == 0 &&
+                       request.resource.data.tokensPerDay == 100 &&
+                       ((request.resource.data.role == 'user') || 
+                        (request.auth.token.email == "gfreyria@gmail.com" && request.auth.token.email_verified == true));
+      allow update: if isAdmin() && isValidUser(request.resource.data) && uidUnchanged() && emailUnchanged()
+                    ||
+                    (isOwner(userId) &&
+                     isValidUser(request.resource.data) &&
+                     uidUnchanged() &&
+                     emailUnchanged() &&
+                     roleUnchanged() &&
+                     isApprovedUnchanged() &&
+                     tokensPerDayUnchanged())
+                    ||
+                    (isOwner(userId) && isValidTokenUpdate());
+      allow delete: if isAdmin();
+    }
+
+    match /access_requests/{requestId} {
+      allow read: if isAdmin() || (isAuthenticated() && request.auth.token.email == resource.data.email);
+      allow create: if isAuthenticated() && request.resource.data.email == request.auth.token.email;
+      allow update, delete: if isAdmin();
+    }
+
+    match /logs/{logId} {
+      // Only admins can read logs
+      allow read: if isAdmin();
+      // Any authenticated user can create a log (for usage/error reporting)
+      allow create: if isAuthenticated() && isValidLog(request.resource.data);
+      // Logs are immutable and cannot be deleted by users
+      allow update, delete: if isAdmin();
+    }
+  }
+}

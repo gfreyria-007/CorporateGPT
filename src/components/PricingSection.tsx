@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Check, Zap, Shield, Crown, Terminal } from 'lucide-react';
+import { Check, Zap, Shield, Crown, Terminal, ShieldCheck } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useAuth } from '../lib/AuthContext';
 
 interface PricingCardProps {
   plan: string;
@@ -83,9 +84,11 @@ const PricingCard = ({ plan, users, oldPrice, newPrice, features, isFeatured, on
 );
 
 export const PricingSection = () => {
+  const { user } = useAuth();
   const [professionalUsers, setProfessionalUsers] = React.useState(10);
   const [isRedirecting, setIsRedirecting] = React.useState<string | null>(null);
   const [showSecureMessage, setShowSecureMessage] = React.useState(false);
+  const [billingType, setBillingType] = React.useState<'business' | 'family'>('business');
   
   const handleBuy = async (plan: string) => {
     setIsRedirecting(plan);
@@ -97,17 +100,16 @@ export const PricingSection = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           plan,
-          qty: plan === 'Professional' ? professionalUsers : 1
+          qty: plan === 'Professional' ? professionalUsers : 1,
+          userId: user?.uid,
+          isFamily: billingType === 'family'
         })
       });
 
       if (!response.ok) throw new Error('Failed to create checkout session');
       
       const { url } = await response.json();
-      
       setShowSecureMessage(true);
-      
-      // Delay slightly for UX before redirecting
       setTimeout(() => {
         window.location.href = url;
       }, 1500);
@@ -120,31 +122,40 @@ export const PricingSection = () => {
   };
 
   return (
-    <section className="py-24 px-6 lg:px-12 max-w-7xl mx-auto w-full space-y-16">
+    <section className="py-24 px-6 lg:px-12 max-w-7xl mx-auto w-full space-y-12">
       <div className="text-center space-y-4">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           className="inline-flex items-center gap-2 px-6 py-2 bg-blue-600/10 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-[0.4em] mb-4"
         >
-          <Zap size={14} /> Especial Mayo 2026
+          <Zap size={14} /> Ecosistema Catalizia 2026
         </motion.div>
         <motion.h2 
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           className="text-4xl lg:text-7xl font-display font-black tracking-tighter leading-[0.85] uppercase"
         >
-          Elige tu <span className="text-blue-600 underline decoration-blue-600/30 underline-offset-12">Plan Seguro</span>
+          {billingType === 'business' ? 'Potencia tu' : 'Protege a tu'} <span className="text-blue-600 underline decoration-blue-600/30 underline-offset-12">{billingType === 'business' ? 'Empresa' : 'Familia'}</span>
         </motion.h2>
-        <motion.div 
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          className="flex items-center justify-center gap-4 text-xs font-black uppercase tracking-[0.2em] text-blue-600"
-        >
-           <div className="w-12 h-[1px] bg-blue-600/20" />
-           15% de Descuento Automático Incluido
-           <div className="w-12 h-[1px] bg-blue-600/20" />
-        </motion.div>
+
+        {/* Tab Switcher */}
+        <div className="flex justify-center pt-8">
+           <div className="bg-slate-100 dark:bg-white/5 p-1.5 rounded-2xl flex gap-1 border border-corporate-200 dark:border-white/10">
+              <button 
+                onClick={() => setBillingType('business')}
+                className={cn("px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", billingType === 'business' ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" : "text-slate-500 hover:text-blue-600")}
+              >
+                Corporativo
+              </button>
+              <button 
+                onClick={() => setBillingType('family')}
+                className={cn("px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", billingType === 'family' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-slate-500 hover:text-emerald-500")}
+              >
+                Familiar + Junior
+              </button>
+           </div>
+        </div>
       </div>
 
       {showSecureMessage && (
@@ -157,86 +168,114 @@ export const PricingSection = () => {
             <div className="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center text-white mx-auto shadow-2xl shadow-blue-500/20 animate-bounce">
               <ShieldCheck size={40} />
             </div>
-            <h3 className="text-2xl font-display font-black uppercase dark:text-white tracking-tighter">Conectando Pasarela</h3>
+            <h3 className="text-2xl font-display font-black uppercase dark:text-white tracking-tighter">Conectando Pipeline</h3>
             <p className="text-xs font-bold text-slate-500 dark:text-white/60 uppercase tracking-widest leading-relaxed">
-              Iniciando túnel seguro ZDR para procesamiento de suscripción {isRedirecting}...
+              Configurando espacio de trabajo {billingType === 'family' ? 'Familiar' : 'Corporativo'}...
             </p>
-            <div className="w-full h-1.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-               <motion.div 
-                 initial={{ width: "0%" }}
-                 animate={{ width: "100%" }}
-                 transition={{ duration: 2 }}
-                 className="h-full bg-blue-600"
-               />
-            </div>
           </div>
         </motion.div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <PricingCard 
-          plan="Starter"
-          users="1 Usuario"
-          oldPrice="$274 MXN"
-          newPrice="$233"
-          isLoading={isRedirecting === 'Starter'}
-          features={[
-            "20,000 Tokens Premium / Día",
-            "5 Créditos Multimedia / Día",
-            "Auto Router (Elite-Eco)",
-            "Acceso a Nano Banana Studio"
-          ]}
-          onBuy={() => handleBuy('Starter')}
-        />
-        <PricingCard 
-          plan="Professional"
-          users={`${professionalUsers} Usuarios`}
-          oldPrice={`$${224 * professionalUsers} MXN`}
-          newPrice={`$${191 * professionalUsers}`}
-          isFeatured
-          isLoading={isRedirecting === 'Professional'}
-          features={[
-             "Todo lo de Starter",
-             "Dashboard Admin Multi-tenant",
-             "Control de Seguridad ZDR Plus",
-             "API Access para ERP/CRM",
-             "Soporte Dedicado"
-          ]}
-          onBuy={() => handleBuy('Professional')}
-        >
-          <div className="pt-6 space-y-3">
-             <div className="flex items-center justify-between">
-                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-400">Cantidad de Usuarios (Min. 10)</label>
-                <span className="text-xs font-black text-white">{professionalUsers}</span>
-             </div>
-             <input 
-               type="range" 
-               min="10" 
-               max="100" 
-               step="1"
-               value={professionalUsers}
-               onChange={(e) => setProfessionalUsers(parseInt(e.target.value))}
-               className="w-full h-1 bg-blue-600/30 rounded-lg appearance-none cursor-pointer accent-blue-500"
-             />
-             <p className="text-[8px] font-bold text-blue-300 uppercase leading-relaxed">
-               El usuario que realice el pago será designado como <span className="text-white font-black">Super Admin</span> del espacio de trabajo.
-             </p>
-          </div>
-        </PricingCard>
-        <PricingCard 
-          plan="Top-Up"
-          users="Créditos Eternos"
-          oldPrice="Uso Ilimitado"
-          newPrice="$50"
-          isLoading={isRedirecting === 'Top-Up'}
-          features={[
-             "+50,000 Tokens de Élite",
-             "Nunca caducan",
-             "Evitan el Modo Eco Forzado",
-             "Se consumen al acabar la cuota diaria"
-          ]}
-          onBuy={() => handleBuy('Top-Up')}
-        />
+        {billingType === 'business' ? (
+          <>
+            <PricingCard 
+              plan="Starter"
+              users="1 Usuario"
+              oldPrice="Suscripción Individual"
+              newPrice="$199"
+              isLoading={isRedirecting === 'Starter'}
+              features={[
+                "20,000 Tokens Premium / Día",
+                "5 Créditos Multimedia / Día",
+                "Auto Router (Elite-Eco)",
+                "Acceso a Nano Banana Studio"
+              ]}
+              onBuy={() => handleBuy('Starter')}
+            />
+            <PricingCard 
+              plan="Professional"
+              users={`${professionalUsers} Usuarios`}
+              oldPrice="Precio Corporativo por Usuario"
+              newPrice={`$${179 * professionalUsers}`}
+              isFeatured
+              isLoading={isRedirecting === 'Professional'}
+              features={[
+                 "Todo lo de Starter",
+                 "Dashboard Admin Multi-tenant",
+                 "Control de Seguridad ZDR Plus",
+                 "API Access para ERP/CRM",
+                 "Soporte Dedicado"
+              ]}
+              onBuy={() => handleBuy('Professional')}
+            >
+              <div className="pt-6 space-y-3">
+                 <div className="flex items-center justify-between">
+                    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-400">Cantidad de Usuarios (Min. 10)</label>
+                    <span className="text-xs font-black text-white">{professionalUsers}</span>
+                 </div>
+                 <input 
+                   type="range" 
+                   min="10" 
+                   max="100" 
+                   step="1"
+                   value={professionalUsers}
+                   onChange={(e) => setProfessionalUsers(parseInt(e.target.value))}
+                   className="w-full h-1 bg-blue-600/30 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                 />
+              </div>
+            </PricingCard>
+            <PricingCard 
+              plan="Top-Up"
+              users="Bolsa de Créditos"
+              oldPrice="Uso Ilimitado"
+              newPrice="$50"
+              isLoading={isRedirecting === 'Top-Up'}
+              features={[
+                 "+50,000 Tokens de Élite",
+                 "Nunca caducan",
+                 "Evitan el Modo Eco Forzado",
+                 "Se consumen al acabar la cuota diaria"
+              ]}
+              onBuy={() => handleBuy('Top-Up')}
+            />
+          </>
+        ) : (
+          <>
+            <PricingCard 
+              plan="Family Starter"
+              users="4 Miembros"
+              oldPrice="2 Adultos + 2 Niños"
+              newPrice="$199"
+              isLoading={isRedirecting === 'Family Starter'}
+              features={[
+                "Saldo compartido (20k tokens/día)",
+                "Techie Tutor (Junior) Incluido",
+                "Filtros de Seguridad Infantil",
+                "Control Parental de Consumo",
+                "Acceso a Creative Studio"
+              ]}
+              onBuy={() => handleBuy('Family Starter')}
+            />
+            <PricingCard 
+              plan="Family Mega"
+              users="6 Miembros"
+              oldPrice="Espacio Multigeneracional"
+              newPrice="$299"
+              isFeatured
+              isLoading={isRedirecting === 'Family Mega'}
+              features={[
+                 "Hasta 6 miembros de la familia",
+                 "BONO: $100 MXN en tokens extra",
+                 "Techie Tutor (Junior) PRO",
+                 "Reportes de aprendizaje semanales",
+                 "Soporte prioritario familiar",
+                 "Tokens Elite-Eco Ilimitados"
+              ]}
+              onBuy={() => handleBuy('Family Mega')}
+            />
+          </>
+        )}
       </div>
 
       <motion.div 
