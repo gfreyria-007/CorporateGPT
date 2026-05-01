@@ -391,11 +391,11 @@ const featuresRef = useRef<HTMLDivElement>(null);
                 <p className="text-slate-600 text-sm leading-relaxed mb-8 flex-1">
                   {lang === 'es' ? 'Accede a los mejores LLMs del mundo sin exponer tus datos. Análisis de contratos, NDAs y documentos sensibles con arquitectura zero-data retention.' : 'Access the worlds best LLMs without exposing your data. Analyze contracts, NDAs and sensitive documents with zero-data retention architecture.'}
                 </p>
-                <ul className="space-y-3 mb-8">
-                   <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-blue-600"/> {lang === 'es' ? 'Arquitectura NDA-Proof' : 'NDA-Proof Architecture'}</li>
-                   <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-blue-600"/> {lang === 'es' ? '70% Ahorro Automático' : '70% Auto Savings'}</li>
-                   <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-blue-600"/> {lang === 'es' ? 'Gobierno Total' : 'Full Governance'}</li>
-                </ul>
+<ul className="space-y-3 mb-8">
+                   <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-blue-600"/> {lang === 'es' ? 'Nano Banana 2: Presentaciones + Infografías' : 'Nano Banana 2: Presentations + Infographics'}</li>
+                   <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-blue-600"/> {lang === 'es' ? '100+ LLMs con Auto Router' : '100+ LLMs with Auto Router'}</li>
+                   <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-blue-600"/> {lang === 'es' ? 'ZDR: Seguridad NDA Total' : 'ZDR: Total NDA Security'}</li>
+                 </ul>
               </div>
             </div>
 
@@ -424,13 +424,13 @@ const featuresRef = useRef<HTMLDivElement>(null);
                   <p className="text-sm font-bold text-emerald-600 uppercase tracking-widest">{lang === 'es' ? 'Aprendizaje Seguro + Tutoría' : 'Safe Learning + Tutoring'}</p>
                 </div>
                 <p className="text-slate-600 text-sm leading-relaxed mb-8 flex-1">
-                  {lang === 'es' ? 'El único entorno donde tus hijos pueden aprender con IA reales, guiados por un tutor pedagógico que responde a su curiosidad de forma segura.' : 'The only environment where your kids can learn with real AI, guided by a pedagogical tutor that answers their curiosity safely.'}
+                  {lang === 'es' ? 'El único entorno donde tus hijos pueden aprender con IA reales, guiados por un tutor visual de matemáticas y pedagogy Socrática que responde a su curiosidad de forma segura.' : 'The only environment where your kids can learn with real AI, guided by a visual math tutor and Socratic tutoring that answers their curiosity safely.'}
                 </p>
-                <ul className="space-y-3 mb-8">
-                   <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-emerald-600"/> {lang === 'es' ? 'Sandbox Junior' : 'Junior Sandbox'}</li>
+<ul className="space-y-3 mb-8">
+                   <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-emerald-600"/> {lang === 'es' ? 'Tutor Visual de Matemáticas' : 'Visual Math Tutor'}</li>
                    <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-emerald-600"/> {lang === 'es' ? 'Tutoría Socrática' : 'Socratic Tutoring'}</li>
                    <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-emerald-600"/> {lang === 'es' ? 'Controles Parentales' : 'Parent Controls'}</li>
-                </ul>
+                 </ul>
               </div>
             </div>
 
