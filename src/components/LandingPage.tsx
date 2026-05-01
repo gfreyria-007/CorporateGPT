@@ -242,10 +242,10 @@ export const LandingPage = ({ onStartSession, onSignInWithApple, isSigningIn, sh
                 className="hero-btn px-8 py-5 rounded-xl bg-blue-600 text-white font-black uppercase tracking-widest text-sm hover:bg-blue-700 hover:scale-[1.02] transition-all shadow-xl shadow-blue-600/30 flex items-center justify-center gap-3"
               >
                 <Shield size={18} /> {lang === 'es' ? 'Google' : 'Google'}
-              </button>
-              <button 
-                onClick={() => { console.log('[Landing] Apple SignIn clicked'); onSignInWithApple?.(); }}
-                className="hero-btn px-8 py-5 rounded-xl bg-slate-900 text-white font-black uppercase tracking-widest text-sm hover:bg-slate-800 hover:scale-[1.02] transition-all shadow-xl shadow-slate-900/30 flex items-center justify-center gap-3"
+</button>
+              <button
+                onClick={onSignInWithApple}
+                className="hero-btn px-8 py-5 rounded-2xl bg- black text-white font- black uppercase tracking-widest text-sm hover:bg-gray-800 hover:scale-[1.02] transition-all shadow-2xl flex items-center justify-center gap-3"
               >
                 <Sparkles size={18} /> {lang === 'es' ? 'Apple' : 'Apple'}
               </button>
