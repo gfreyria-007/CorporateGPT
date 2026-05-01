@@ -171,15 +171,17 @@ const featuresRef = useRef<HTMLDivElement>(null);
         </div>
         
         <div className="hidden lg:flex items-center gap-10 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">
-          <a href="#solutions" onClick={(e) => { e.preventDefault(); scrollToFeatures(); }} className="hover:text-blue-600 transition-colors nav-item">Plataforma</a>
-          <a href="#economics" className="hover:text-blue-600 transition-colors nav-item">Ahorro y Control</a>
-          <div className="nav-item">
-            <a href={appMode === 'junior' ? 'https://corporategpt.catalizia.com' : 'https://techie.catalizia.com'} className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl border border-blue-100 hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2 group">
-              <Zap size={12} className={cn("transition-transform group-hover:scale-125", appMode === 'junior' ? "text-blue-600" : "text-emerald-600")} />
-              {appMode === 'junior' ? 'Corporate GPT' : 'Techie Tutor (Junior)'}
-            </a>
-          </div>
-          <a href="#support" className="hover:text-blue-600 transition-colors nav-item">Soporte</a>
+          <a href="#solutions" onClick={(e) => { e.preventDefault(); scrollToFeatures(); }} className="hover:text-blue-600 transition-colors nav-item">{lang === 'es' ? 'Plataforma' : 'Platform'}</a>
+          <a href="#economics" className="hover:text-blue-600 transition-colors nav-item">{lang === 'es' ? 'Ahorro' : 'Savings'}</a>
+          <a href="https://techie.catalizia.com" className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100 hover:bg-emerald-600 hover:text-white transition-all flex items-center gap-2 group">
+            <Sparkles size={12} className="text-emerald-600 group-hover:text-white" />
+            {lang === 'es' ? 'Techie' : 'Techie'}
+          </a>
+          <a href="https://corporategpt.catalizia.com" className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl border border-blue-100 hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2 group">
+            <Shield size={12} className="text-blue-600 group-hover:text-white" />
+            {lang === 'es' ? 'Corporate' : 'Corporate'}
+          </a>
+          <a href="#support" className="hover:text-blue-600 transition-colors nav-item">{lang === 'es' ? 'Soporte' : 'Support'}</a>
         </div>
 
         <div className="flex items-center gap-3 lg:gap-4 nav-item">
@@ -236,15 +238,27 @@ const featuresRef = useRef<HTMLDivElement>(null);
             <div className="flex flex-col sm:flex-row gap-4 pt-4 w-full sm:w-auto">
               <button 
                 onClick={onStartSession}
-                className="hero-btn px-8 py-4 rounded-xl bg-blue-600 text-white font-black uppercase tracking-widest text-xs hover:bg-blue-700 hover:scale-[1.02] transition-all shadow-xl shadow-blue-600/30 flex items-center justify-center gap-3"
+                className="hero-btn px-10 py-5 rounded-xl bg-blue-600 text-white font-black uppercase tracking-widest text-sm hover:bg-blue-700 hover:scale-[1.02] transition-all shadow-xl shadow-blue-600/30 flex items-center justify-center gap-3"
               >
                 🚀 {lang === 'es' ? 'Empezar Gratis' : 'Get Started Free'}
               </button>
               <button 
-                onClick={() => setLang(lang === 'es' ? 'en' : 'es')}
-                className="hero-btn px-8 py-4 rounded-xl bg-white border border-slate-200 text-slate-900 font-black uppercase tracking-widest text-xs hover:bg-slate-50 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 group shadow-sm"
+                onClick={() => window.open('https://corporategpt.catalizia.com', '_blank')}
+                className="hero-btn px-10 py-5 rounded-xl bg-emerald-600 text-white font-black uppercase tracking-widest text-sm hover:bg-emerald-700 hover:scale-[1.02] transition-all shadow-xl shadow-emerald-600/30 flex items-center justify-center gap-3"
               >
-                <Globe size={16} className="text-blue-600" /> {lang === 'es' ? 'English' : 'Español'}
+                <Shield size={18} /> {lang === 'es' ? 'Ir a Corporate' : 'Go to Corporate'}
+              </button>
+              <button 
+                onClick={() => window.open('https://techie.catalizia.com', '_blank')}
+                className="hero-btn px-10 py-5 rounded-xl bg-indigo-600 text-white font-black uppercase tracking-widest text-sm hover:bg-indigo-700 hover:scale-[1.02] transition-all shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-3"
+              >
+                <Sparkles size={18} /> {lang === 'es' ? 'Ir a Techie' : 'Go to Techie'}
+              </button>
+              <button 
+                onClick={() => setLang(lang === 'es' ? 'en' : 'es')}
+                className="hero-btn px-6 py-5 rounded-xl bg-white border border-slate-200 text-slate-900 font-black uppercase tracking-widest text-sm hover:bg-slate-50 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 group shadow-sm"
+              >
+                <Globe size={18} className="text-blue-600" />
               </button>
             </div>
             <div className="text-[11px] text-slate-500 font-black tracking-wide uppercase mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
