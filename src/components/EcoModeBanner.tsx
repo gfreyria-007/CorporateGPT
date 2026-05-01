@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Leaf, Clock, Zap, Image, Presentation } from 'lucide-react';
 import { DailyQuota, hoursUntilMexicoMidnight, isMayPromoActive, MAY_2026_PROMO } from '../lib/quotaManager';
 

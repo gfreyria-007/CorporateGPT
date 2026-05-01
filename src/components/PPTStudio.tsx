@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { 
-  BrainCircuit, X, Plus, Trash2, RefreshCw, 
+  BrainCircuit, X, Plus, Minus, Trash2, RefreshCw, 
   ChevronRight, Sparkles, Layout, Type, Palette, 
   Zap, Database, BarChart3, Presentation, Image as ImageIcon
 } from 'lucide-react';
 import { NeuralOverlay } from './NeuralOverlay';
 import { cn } from '../lib/utils';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   generateSkeleton, renderSlideVisual, SlideSkeleton,
   generateClarifyingQuestions, ClarifyingQuestion,
@@ -38,6 +38,135 @@ const PPTStudio: React.FC<{
   user: any, 
   isMobile?: boolean 
 }> = ({ onClose, theme, lang, user, isMobile = false }) => {
+  const isDark = theme === 'dark';
+
+  const parseTableData = (data: string) => {
+    if (!data) return [];
+    return data.split('\n').map(line => {
+      const parts = line.split(/[,\t]/);
+      return { label: parts[0]?.trim(), value: parseFloat(parts[1]) || 0 };
+    }).filter(p => p.label && !isNaN(p.value));
+  };
+
+  const NeuralChart = ({ type, data, style = 'auto' }: { type: string, data: string, style?: string }) => {
+    const points = parseTableData(data);
+    if (points.length === 0) return null;
+
+    const maxVal = Math.max(...points.map(p => p.value));
+    const height = 180;
+    const width = 450;
+    const padding = 30;
+
+    const isScientific = style === 'scientific';
+    const isBricks = style === 'bricks';
+
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center p-4">
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
+          {/* Background grid for scientific */}
+          {isScientific && (
+            <g className="opacity-20">
+              {[0, 25, 50, 75, 100].map(v => {
+                const y = height - padding - (v/100) * (height - padding * 2);
+                return <line key={v} x1={padding} y1={y} x2={width-padding} y2={y} stroke="#22d3ee" strokeDasharray="4 4" />;
+              })}
+            </g>
+          )}
+
+          {type === 'bar' && points.map((p, i) => {
+            const barWidth = (width - padding * 2) / points.length - 15;
+            const barHeight = (p.value / maxVal) * (height - padding * 2);
+            const x = padding + i * (barWidth + 15);
+            const y = height - padding - barHeight;
+
+            if (isBricks) {
+              // LEGO Style Bar
+              const studs = Math.ceil(barHeight / 15);
+              return (
+                <g key={i}>
+                  {Array.from({ length: studs }).map((_, si) => (
+                    <rect 
+                      key={si}
+                      x={x} 
+                      y={height - padding - (si + 1) * 15} 
+                      width={barWidth} 
+                      height={14} 
+                      fill={['#ef4444', '#3b82f6', '#f59e0b', '#10b981'][i % 4]}
+                      rx="2"
+                    />
+                  ))}
+                  <text x={x + barWidth/2} y={height - padding + 15} textAnchor="middle" fontSize="10" fill={isDark ? 'white' : 'black'} fontWeight="900" className="uppercase tracking-tighter">{p.label}</text>
+                </g>
+              );
+            }
+
+            return (
+              <g key={i}>
+                <rect 
+                  x={x} 
+                  y={y} 
+                  width={barWidth} 
+                  height={barHeight} 
+                  fill={isScientific ? 'url(#sciGradient)' : (isDark ? '#3b82f6' : '#2563eb')}
+                  rx={isScientific ? "0" : "8"}
+                  className="transition-all duration-1000"
+                />
+                {isScientific && <line x1={x} y1={y} x2={x+barWidth} y2={y} stroke="#22d3ee" strokeWidth="2" />}
+                <text 
+                  x={x + barWidth/2} 
+                  y={height - padding + 15} 
+                  textAnchor="middle" 
+                  fontSize="8" 
+                  fill={isDark ? 'white' : 'black'} 
+                  opacity="0.5"
+                  className="font-mono font-bold"
+                >{p.label}</text>
+              </g>
+            );
+          })}
+
+          {type === 'line' && (
+            <g>
+              {isScientific && (
+                <defs>
+                  <linearGradient id="sciLineGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.5" />
+                    <stop offset="100%" stopColor="#22d3ee" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+              )}
+              <polyline
+                fill={isScientific ? "url(#sciLineGrad)" : "none"}
+                stroke={isScientific ? "#22d3ee" : (isDark ? '#3b82f6' : '#2563eb')}
+                strokeWidth={isBricks ? "8" : "3"}
+                strokeLinecap={isBricks ? "square" : "round"}
+                points={points.map((p, i) => {
+                  const x = padding + i * ((width - padding * 2) / (points.length - 1));
+                  const y = height - padding - (p.value / maxVal) * (height - padding * 2);
+                  return `${x},${y}`;
+                }).join(' ')}
+              />
+              {points.map((p, i) => {
+                const x = padding + i * ((width - padding * 2) / (points.length - 1));
+                const y = height - padding - (p.value / maxVal) * (height - padding * 2);
+                return <circle key={i} cx={x} cy={y} r={isBricks ? "6" : "4"} fill={isBricks ? "white" : (isScientific ? "#22d3ee" : "#3b82f6")} stroke={isBricks ? "black" : "none"} strokeWidth="2" />;
+              })}
+            </g>
+          )}
+
+          {isScientific && (
+            <defs>
+              <linearGradient id="sciGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#22d3ee" stopOpacity="0.2" />
+              </linearGradient>
+            </defs>
+          )}
+        </svg>
+      </div>
+    );
+  };
+
   const [step, setStep] = useState<StudioStep>('config');
   const [prompt, setPrompt] = useState('');
   const [slideCount, setSlideCount] = useState(10);
@@ -55,8 +184,6 @@ const PPTStudio: React.FC<{
   const [clarifyQuestions, setClarifyQuestions] = useState<ClarifyingQuestion[]>([]);
   const [clarifyAnswers, setClarifyAnswers] = useState<Record<string, string>>({});
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
-
-  const isDark = theme === 'dark';
 
   // Step 1: fetch clarifying questions
   const startClarify = async () => {
@@ -207,7 +334,9 @@ const PPTStudio: React.FC<{
         visualLayout: design.visualLayout || 'split',
         badge: design.badge || 'PHASE',
         narrativePhase: design.narrativePhase || 'ANALYSIS',
-        visualInstruction: design.visualInstruction || ''
+        visualInstruction: design.visualInstruction || '',
+        chartType: design.chartType || (newSlides[index] as any).chartType,
+        tableData: design.tableData || (newSlides[index] as any).tableData
       } as any;
       setSlides(newSlides);
     } catch (e) {
@@ -228,7 +357,8 @@ const PPTStudio: React.FC<{
         slide.content,
         selectedStyle,
         (slide as any).chartType,
-        (slide as any).tableData
+        (slide as any).tableData,
+        (slide as any).userImageUrl
       );
       
       const newSlides = [...slides];
@@ -663,27 +793,51 @@ const PPTStudio: React.FC<{
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                   {slides.map((s, i) => (
-                    <button 
-                      key={s.id}
-                      onClick={() => setActiveSlide(i)}
-                      className={cn(
-                        "w-full p-4 rounded-2xl text-left transition-all border group relative",
-                        activeSlide === i 
-                          ? isDark
-                            ? "bg-white/10 border-white/20 text-white shadow-xl translate-x-2"
-                            : "bg-slate-900 border-slate-900 text-white shadow-xl translate-x-2"
-                          : isDark
-                            ? "bg-white/5 border-white/5 hover:border-white/20 text-slate-400 hover:text-white"
-                            : "bg-white border-slate-100 hover:border-slate-300 text-slate-600 shadow-sm"
-                      )}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-[9px] font-black opacity-40 uppercase italic">0{i + 1}</span>
-                        {s.rendered && <Sparkles size={10} className="text-blue-500" />}
-                      </div>
-                      <p className="text-xs font-bold truncate">{s.title || 'Untitled'}</p>
-                    </button>
+                    <div key={s.id} className="relative group">
+                      <button 
+                        onClick={() => setActiveSlide(i)}
+                        className={cn(
+                          "w-full p-4 rounded-2xl text-left transition-all border relative overflow-hidden",
+                          activeSlide === i 
+                            ? isDark
+                              ? "bg-white/10 border-white/20 text-white shadow-xl"
+                              : "bg-slate-900 border-slate-900 text-white shadow-xl"
+                            : isDark
+                              ? "bg-white/5 border-white/5 hover:border-white/20 text-slate-400 hover:text-white"
+                              : "bg-white border-slate-100 hover:border-slate-300 text-slate-600 shadow-sm"
+                        )}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[9px] font-black opacity-40 uppercase italic">Slide {i + 1 < 10 ? `0${i + 1}` : i + 1}</span>
+                          <div className="flex gap-1">
+                            {s.rendered && <Sparkles size={10} className="text-blue-500" />}
+                            {s.userImageUrl && <ImageIcon size={10} className="text-emerald-500" />}
+                          </div>
+                        </div>
+                        <p className="text-xs font-bold truncate pr-6">{s.title || 'Untitled'}</p>
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); removeSlide(i); }}
+                        className={cn(
+                          "absolute top-4 right-4 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all z-10",
+                          activeSlide === i ? "text-white/50 hover:text-red-400 hover:bg-white/10" : "text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
+                        )}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
                   ))}
+                  
+                  <button 
+                    onClick={addSlide}
+                    className={cn(
+                      "w-full p-4 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all hover:bg-blue-600/5 hover:border-blue-600/30 text-slate-400 hover:text-blue-600 group",
+                      isDark ? "border-white/10" : "border-slate-200"
+                    )}
+                  >
+                    <Plus size={20} className="group-hover:rotate-90 transition-transform duration-300" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">AÃ±adir Diapositiva</span>
+                  </button>
                 </div>
               </div>
 
@@ -705,17 +859,90 @@ const PPTStudio: React.FC<{
                         <span className="text-[9px] font-black uppercase tracking-widest">Contenido de Texto</span>
                       </div>
                       <div className="space-y-4">
-                        <input 
-                          type="text" value={slides[activeSlide]?.title}
-                          onChange={(e) => handleUpdateSlide(activeSlide, 'title', e.target.value)}
-                          className={cn(
-                            "w-full text-2xl font-black tracking-tight outline-none border-b transition-all py-2 italic bg-transparent",
-                            isDark
-                              ? "border-white/10 focus:border-blue-500 text-white"
-                              : "border-slate-100 focus:border-blue-600 text-slate-900"
-                          )}
-                          placeholder="TÃ­tulo de la slide"
-                        />
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="text" value={slides[activeSlide]?.title}
+                            onChange={(e) => handleUpdateSlide(activeSlide, 'title', e.target.value)}
+                            className={cn(
+                              "flex-1 text-2xl font-black tracking-tight outline-none border-b transition-all py-2 italic bg-transparent",
+                              isDark
+                                ? "border-white/10 focus:border-blue-500 text-white"
+                                : "border-slate-100 focus:border-blue-600 text-slate-900"
+                            )}
+                            placeholder="TÃ­tulo de la slide"
+                          />
+                          <div className="flex gap-1 shrink-0">
+                            <input 
+                              type="file" 
+                              id={`slide-image-${activeSlide}`}
+                              className="hidden" 
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onload = (re) => {
+                                    handleUpdateSlide(activeSlide, 'userImageUrl', re.target?.result);
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                            />
+                            <button 
+                              onClick={() => document.getElementById(`slide-image-${activeSlide}`)?.click()}
+                              className={cn(
+                                "p-2 rounded-xl transition-all border",
+                                slides[activeSlide]?.userImageUrl 
+                                  ? (isDark ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400" : "border-emerald-200 bg-emerald-50 text-emerald-600")
+                                  : (isDark ? "border-white/10 bg-white/5 text-white/40 hover:text-white" : "border-slate-200 bg-slate-50 text-slate-400 hover:text-slate-600")
+                              )}
+                              title="Anexar Imagen de Referencia"
+                            >
+                              <ImageIcon size={14} />
+                            </button>
+                            <button 
+                              onClick={() => removeSlide(activeSlide)}
+                              className={cn(
+                                "p-2 rounded-xl transition-all border",
+                                isDark ? "border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500 hover:text-white" : "border-red-200 bg-red-50 text-red-500 hover:bg-red-500 hover:text-white"
+                              )}
+                              title="Borrar Slide"
+                            >
+                              <Minus size={14} />
+                            </button>
+                            <button 
+                              onClick={addSlide}
+                              className={cn(
+                                "p-2 rounded-xl transition-all border",
+                                isDark ? "border-blue-500/20 bg-blue-500/5 text-blue-400 hover:bg-blue-500 hover:text-white" : "border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white"
+                              )}
+                              title="Añadir Slide"
+                            >
+                              <Plus size={14} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {slides[activeSlide]?.userImageUrl && (
+                          <div className={cn(
+                            "relative group aspect-video rounded-xl border overflow-hidden",
+                            isDark ? "border-white/10" : "border-slate-200"
+                          )}>
+                            <img src={slides[activeSlide].userImageUrl} className="w-full h-full object-cover" alt="Referencia" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <button 
+                                onClick={() => handleUpdateSlide(activeSlide, 'userImageUrl', null)}
+                                className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                            <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-[8px] text-white font-black uppercase tracking-widest">
+                              Imagen de Referencia
+                            </div>
+                          </div>
+                        )}
+
                         <textarea 
                           value={slides[activeSlide]?.subtitle}
                           onChange={(e) => handleUpdateSlide(activeSlide, 'subtitle', e.target.value)}
@@ -802,28 +1029,32 @@ const PPTStudio: React.FC<{
                         onClick={() => renderGraphicsForSlide(activeSlide)}
                         disabled={isGenerating}
                         className={cn(
-                          "w-full py-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all mt-6 active:scale-95 shadow-lg",
+                          "w-full py-5 rounded-2xl flex items-center justify-center gap-3 text-[11px] font-black uppercase tracking-[0.2em] transition-all mt-6 active:scale-95 shadow-2xl group",
                           isDark
-                            ? "bg-white text-corporate-950 hover:bg-slate-100 shadow-white/10"
-                            : "bg-slate-900 hover:bg-black text-white shadow-slate-200"
+                            ? "bg-[#0f172a] text-white border border-white/10 hover:bg-[#1e293b]"
+                            : "bg-[#0f172a] text-white hover:bg-black"
                         )}
                       >
-                        {slides[activeSlide]?.rendered ? <RefreshCw size={14} className={isGenerating ? "animate-spin" : ""} /> : <ImageIcon size={14} />}
-                        {slides[activeSlide]?.rendered ? 'Regenerar GrÃ¡ficos' : 'Generar Visual'}
+                        <RefreshCw size={14} className={isGenerating ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"} />
+                        Regenerar GrÃ¡ficos
                       </button>
 
                       <button 
                         onClick={() => generateProImage(activeSlide)}
                         disabled={isGenerating}
                         className={cn(
-                          "w-full py-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all mt-3 active:scale-95 shadow-lg",
+                          "w-full py-5 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all mt-3 active:scale-95 shadow-2xl relative overflow-hidden group",
                           isDark
-                            ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-500 hover:to-blue-500 shadow-purple-500/20"
-                            : "bg-gradient-to-r from-purple-500 to-blue-500 text-white hover:from-purple-600 hover:to-blue-600 shadow-purple-500/30"
+                            ? "bg-gradient-to-br from-indigo-600 to-blue-700 text-white border border-white/20"
+                            : "bg-slate-950 text-white hover:bg-black"
                         )}
                       >
-                        <Sparkles size={14} className={isGenerating ? "animate-pulse" : ""} />
-                        {slides[activeSlide]?.generatedImageUrl ? 'Regenerar Imagen PRO' : 'Generar Imagen PRO (Premium)'}
+                        <div className="flex items-center gap-3">
+                          <Sparkles size={16} className="text-blue-200 group-hover:scale-125 transition-transform" />
+                          <span className="text-[11px] font-black uppercase tracking-[0.2em]">Sintetizar InfografÃ­a Maestra</span>
+                        </div>
+                        <span className="text-[8px] font-black text-blue-200/60 uppercase tracking-widest">IA Neural â€¢ IntegraciÃ³n de GrÃ¡ficos y Datos</span>
+                        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </button>
 
                       {/* Finalize & Export Section */}
@@ -833,32 +1064,20 @@ const PPTStudio: React.FC<{
                           <button 
                             onClick={exportToPDF}
                             disabled={isGenerating}
-                            className={cn(
-                              "flex-1 py-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all border",
-                              isDark ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-500 hover:bg-emerald-500 hover:text-white" : "border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white"
-                            )}
+                            className="flex-1 py-4 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all"
                           >
                             <Download size={14} /> PDF
                           </button>
                           <button 
                             onClick={exportToPPT}
                             disabled={isGenerating}
-                            className={cn(
-                              "flex-1 py-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all border",
-                              isDark ? "border-blue-500/30 bg-blue-500/5 text-blue-500 hover:bg-blue-500 hover:text-white" : "border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white"
-                            )}
+                            className="flex-1 py-4 rounded-xl bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all"
                           >
                             <FileText size={14} /> PowerPoint
                           </button>
                           <button 
-                            onClick={() => {
-                              // Simple PNG export simulation since html2canvas might be overkill here
-                              window.print();
-                            }}
-                            className={cn(
-                              "flex-1 py-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all border",
-                              isDark ? "border-orange-500/30 bg-orange-500/5 text-orange-500 hover:bg-orange-500 hover:text-white" : "border-orange-200 bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white"
-                            )}
+                            onClick={() => window.print()}
+                            className="flex-1 py-4 rounded-xl bg-orange-50 text-orange-600 border border-orange-200 flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-widest hover:bg-orange-100 transition-all"
                           >
                             <ImageIcon size={14} /> PNG Image
                           </button>
@@ -996,18 +1215,31 @@ const PPTStudio: React.FC<{
                                 </div>
                               ))}
 
-                              {/* Placeholder for Graphic Content */}
                               {(slides[activeSlide] as any).chartType !== 'none' && (
                                 <div className={cn(
-                                  "col-span-full mt-4 p-8 rounded-2xl flex items-center justify-center min-h-[200px]",
+                                  "col-span-full mt-4 p-8 rounded-2xl flex items-center justify-center min-h-[300px] relative overflow-hidden",
                                   selectedStyle === 'scientific' ? "bg-cyan-950/30 border border-cyan-500/20" :
-                                  "bg-black/10"
+                                  selectedStyle === 'bricks' ? "bg-slate-100 border-4 border-slate-300" :
+                                  "bg-black/5 border border-white/5"
                                 )}>
-                                  <div className="text-center opacity-50">
-                                    <BarChart3 size={32} className="mx-auto mb-2" />
-                                    <p className="text-[10px] font-black uppercase tracking-widest">{(slides[activeSlide] as any).chartType} Chart Area</p>
-                                    <p className="text-[8px] mt-1">{(slides[activeSlide] as any).visualInstruction || 'Render details pending...'}</p>
-                                  </div>
+                                  {selectedStyle === 'scientific' && (
+                                    <div className="absolute inset-0 pointer-events-none opacity-10">
+                                       <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #22d3ee 1px, transparent 0)', backgroundSize: '24px 24px' }} />
+                                    </div>
+                                  )}
+                                  {(slides[activeSlide] as any).tableData ? (
+                                    <NeuralChart 
+                                      type={(slides[activeSlide] as any).chartType} 
+                                      data={(slides[activeSlide] as any).tableData} 
+                                      style={selectedStyle}
+                                    />
+                                  ) : (
+                                    <div className="text-center opacity-50">
+                                      <BarChart3 size={32} className="mx-auto mb-2" />
+                                      <p className="text-[10px] font-black uppercase tracking-widest">{(slides[activeSlide] as any).chartType} Chart Area</p>
+                                      <p className="text-[8px] mt-1">{(slides[activeSlide] as any).visualInstruction || 'Render details pending...'}</p>
+                                    </div>
+                                  )}
                                 </div>
                               )}
                             </div>

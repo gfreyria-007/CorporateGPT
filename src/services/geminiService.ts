@@ -41,6 +41,10 @@ export interface SlideSkeleton {
   content: string[];
   tableData?: string;
   chartType?: string;
+  userImageUrl?: string;
+  generatedImageUrl?: string;
+  rendered?: boolean;
+  visualLayout?: string;
 }
 
 export interface ClarifyingQuestion {
@@ -385,7 +389,8 @@ export async function generateSkeleton(prompt: string, count: number = 10): Prom
     model: "gemini-3.1-pro-preview",
     contents: [{ role: "user", parts: [{ text: `Generate EXACTLY ${count} content-rich slides for this topic: "${prompt}".
     IMPORTANT: Fill each slide with REAL, SPECIFIC information. No placeholder text.
-    Return as JSON: { "slides": [{ "id": "1", "title": "Specific Title", "subtitle": "Descriptive subtitle", "content": ["Concrete fact 1", "Specific data point 2", "Real insight 3"] }] }` }] }],
+    For at least 3-4 slides, choose an appropriate chartType (bar, line, pie, etc.) and provide the corresponding REAL DATA in 'tableData' (format: Label,Value\nLabel,Value).
+    Return as JSON: { "slides": [{ "id": "1", "title": "Specific Title", "subtitle": "Descriptive subtitle", "content": ["Concrete fact 1", "Specific data point 2", "Real insight 3"], "chartType": "bar", "tableData": "Q1,450\nQ2,620\nQ3,580\nQ4,910" }] }` }] }],
     config: {
       systemInstruction,
       responseMimeType: "application/json",
@@ -400,9 +405,11 @@ export async function generateSkeleton(prompt: string, count: number = 10): Prom
                 id: { type: Type.STRING },
                 title: { type: Type.STRING },
                 subtitle: { type: Type.STRING },
-                content: { type: Type.ARRAY, items: { type: Type.STRING } }
+                content: { type: Type.ARRAY, items: { type: Type.STRING } },
+                chartType: { type: Type.STRING, enum: ["none", "bar", "line", "pie", "donut", "radar", "scatter", "bubble"] },
+                tableData: { type: Type.STRING }
               },
-              required: ["id", "title", "subtitle", "content"]
+              required: ["id", "title", "subtitle", "content", "chartType"]
             }
           }
         },
@@ -474,7 +481,7 @@ export async function renderSlideVisual(
   chartType: string = 'none',
   tableData: string = '',
   hasLogo: boolean = false
-): Promise<{ visualLayout: string, badge: string, narrativePhase: string, visualInstruction?: string }> {
+): Promise<{ visualLayout: string, badge: string, narrativePhase: string, visualInstruction?: string, chartType?: string, tableData?: string }> {
   const systemInstruction = `You are a Visual Architect using the NANOBANANA 2 ENGINE. 
   Current Date context: ${new Date().toISOString().split('T')[0]}. The current year is 2026.
   Generate a high-fidelity visual configuration for this slide.
@@ -504,7 +511,14 @@ export async function renderSlideVisual(
   const payload = {
     model: "gemini-3.1-pro-preview",
     contents: [{ role: "user", parts: [{ text: `Title: ${title}. Content: ${content.join(' | ')}. Style: ${style}. ${chartContext}
-    Return JSON: { "visualLayout": "...", "badge": "...", "narrativePhase": "...", "visualInstruction": "detailed instructions for the UI to render the visual or chart" }` }] }],
+    Return JSON: { 
+      "visualLayout": "...", 
+      "badge": "...", 
+      "narrativePhase": "...", 
+      "visualInstruction": "detailed instructions for the UI to render the visual or chart",
+      "chartType": "${chartType !== 'none' ? chartType : 'suggest a type if data exists'}",
+      "tableData": "suggest real data if missing or chartType is set"
+    }` }] }],
     config: {
       systemInstruction,
       responseMimeType: "application/json"
@@ -531,7 +545,9 @@ export async function renderSlideVisual(
     visualLayout: result.visualLayout || 'split',
     badge: result.badge || 'PHASE',
     narrativePhase: result.narrativePhase || 'ANALYSIS',
-    visualInstruction: result.visualInstruction || ''
+    visualInstruction: result.visualInstruction || '',
+    chartType: result.chartType || chartType,
+    tableData: result.tableData || tableData
   };
 }
 
@@ -541,20 +557,33 @@ export async function generateProImageForSlide(
   content: string[],
   style: string,
   chartType: string = 'none',
-  tableData: string = ''
+  tableData: string = '',
+  userImage?: string
 ): Promise<string> {
-  const prompt = `Create a highly professional, visually stunning presentation slide infographic.
+  const prompt = `NANOBANANA INFOGRAPHIC ENGINE: Create a world-class, premium corporate presentation slide.
 Title: "${title}"
 Subtitle: "${subtitle}"
-Key Points: ${content.join(' | ')}
-Data Context (if any): ${chartType !== 'none' ? tableData : 'None'}
+Visual Concept: Integrated infographic combining data and text.
+Key Points to Include: ${content.join(' | ')}
+Data Context (if any): ${chartType !== 'none' ? `Detailed ${chartType} visualization: ${tableData}` : 'None'}
 
 Style Requirement: ${style}. 
-The image should be a complete, cohesive infographic slide. Do not include random text, use the exact title and points where possible, or use visual metaphors to represent them. Use a 16:9 aspect ratio and make it look like a premium corporate or technical slide design. Ensure high data density and a breathtaking aesthetic.`;
+
+MANDATORY DESIGN RULES:
+1. PRECISE INTEGRATION: All elements (text, data, icons) must be part of a single cohesive visual architecture.
+2. PREMIUM AESTHETIC: Use breathtaking gradients, shadows, and spacing typical of elite design studios.
+3. DATA DENSITY: Ensure high visual complexity and professional technical fidelity.
+4. COHESION: The slide must look like a complete, finished infographic, not just a picture.
+5. NO ARTIFACTS: Do not include placeholder text. Render actual titles and points in a cinematic 16:9 layout.`;
 
   const payload = {
-    model: 'gemini-3-pro-image-preview',
-    contents: { parts: [{ text: prompt }] },
+    model: 'gemini-2.0-pro-exp-02-05',
+    contents: { 
+      parts: [
+        { text: prompt },
+        ...(userImage ? [{ inlineData: { mimeType: 'image/jpeg', data: userImage.includes('base64,') ? userImage.split('base64,')[1] : userImage } }] : [])
+      ]
+    },
     config: {
       temperature: 1,
       responseModalities: ['IMAGE'],

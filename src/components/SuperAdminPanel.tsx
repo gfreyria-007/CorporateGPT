@@ -9,7 +9,7 @@
  */
 
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Settings, ShieldAlert, Rocket, ArrowLeftRight, Activity, DollarSign, BatteryCharging } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { purchaseTopUp } from '../lib/quotaManager';

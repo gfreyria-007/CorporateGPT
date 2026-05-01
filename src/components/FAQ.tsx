@@ -1,6 +1,6 @@
 import React from 'react';
 import { HelpCircle, ChevronRight, MessageSquare, ShieldCheck, Zap, Gem, Palette, Coins, X } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 
 interface FAQProps {
   onClose: () => void;

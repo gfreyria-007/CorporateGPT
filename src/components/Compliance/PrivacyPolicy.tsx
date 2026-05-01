@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Shield, Lock, Eye, FileText, Globe, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 

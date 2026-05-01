@@ -571,45 +571,7 @@ export const TechieMain: React.FC = () => {
             </div>
           )}
 
-          {!isEmailVerified ? (
-            <div className="flex-1 flex items-center justify-center p-4 bg-slate-50">
-                <div className="bg-white border border-gray-100 rounded-[3rem] p-12 max-w-md w-full shadow-2xl text-center">
-                    <div className="text-6xl mb-6">📧</div>
-                    <h2 className="text-3xl font-black text-[#1e3a8a] mb-4 uppercase tracking-tight">Verifica tu Email</h2>
-                    <p className="text-gray-500 mb-8 leading-relaxed">
-                        Para evitar el spam y proteger la comunidad, necesitamos que confirmes tu correo electrónico. 
-                        Revisa tu bandeja de entrada (y la carpeta de spam).
-                    </p>
-                    <div className="space-y-4">
-                        <button 
-                            onClick={() => window.location.reload()}
-                            className="w-full py-5 bg-[#1e3a8a] text-white font-black rounded-[2rem] shadow-xl hover:bg-black transition-all active:scale-95 uppercase tracking-widest"
-                        >
-                            Ya lo verifiqué ✅
-                        </button>
-                        <button 
-                            onClick={async () => {
-                                try {
-                                    await resendVerification();
-                                    alert("¡Correo enviado! Revisa tu bandeja de entrada.");
-                                } catch (e) {
-                                    alert("Hubo un error al enviar el correo. Intenta de nuevo más tarde.");
-                                }
-                            }}
-                            className="w-full py-4 bg-white border-2 border-gray-100 text-[#1e3a8a] font-black rounded-[2rem] hover:bg-gray-50 transition-all uppercase tracking-widest text-[10px]"
-                        >
-                            Reenviar Email de Confirmación
-                        </button>
-                    </div>
-                    <button 
-                        onClick={handleLogout}
-                        className="mt-8 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-red-500 transition-colors"
-                    >
-                        Cerrar Sesión
-                    </button>
-                </div>
-            </div>
-          ) : !canUseApp ? (
+          {!canUseApp ? (
             <div className="flex-1 flex items-center justify-center p-4 bg-slate-50">
                 <div className="bg-white border border-gray-100 rounded-[3rem] p-8 max-w-2xl w-full shadow-2xl text-center">
                     <div className="text-6xl mb-6">🚀</div>

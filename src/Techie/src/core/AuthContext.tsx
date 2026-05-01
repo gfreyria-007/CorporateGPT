@@ -168,7 +168,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
 
         await setDoc(doc(db, 'users', u.uid), newProfile);
-        sendEmailVerification(u).catch(console.error);
         setProfile(newProfile);
       }
     } catch (error) {

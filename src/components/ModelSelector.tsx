@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Check, ChevronDown, Search, Zap, Cpu, Coins } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ModelMetadata } from '../types';
 
 import { translations } from '../lib/translations';

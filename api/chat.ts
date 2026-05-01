@@ -40,35 +40,49 @@ function classifyQuery(text: string): QueryClass {
  * Resolves the actual model to use, overriding user selection with Elite-Eco.
  * If the user explicitly selected a specific (non-auto) model, honour it.
  */
-function resolveEliteModel(requestedModel: string, queryClass: QueryClass, ecoMode = false): {
+/**
+ * Resolves the actual model to use, overriding user selection with Elite-Eco.
+ * If the user explicitly selected a specific (non-auto) model, honour it.
+ */
+function resolveEliteModel(requestedModel: string, queryClass: QueryClass, ecoMode = false, isLongContext = false, forceDeepThink = false): {
   modelId: string;
   tier: string;
 } {
   const autoModels = ['openrouter/auto', 'auto', '', null, undefined];
   const isAutoRoute = autoModels.includes(requestedModel as any);
 
-  // ♻️ Eco Mode: force only cheap models regardless of request
-  if (ecoMode) {
+  // 🧠 Force DeepThink if requested
+  if (forceDeepThink) {
+    return { modelId: 'deepseek/deepseek-r1', tier: 'elite-reasoning-forced' };
+  }
+
+  // ♻️ Eco Mode or Long Context: force cheap/efficient models
+  if (ecoMode || isLongContext) {
+    if (isLongContext) {
+      // Gemini 1.5 Flash is the king of long context pricing and stability
+      return { modelId: 'google/gemini-flash-1.5', tier: 'elite-eco-long-context' };
+    }
     const ecoModel = queryClass === 'reasoning'
       ? 'deepseek/deepseek-r1'
-      : 'qwen/qwen-2.5-72b-instruct';
+      : 'deepseek/deepseek-chat'; // DeepSeek V3
     return { modelId: ecoModel, tier: 'elite-eco-forced' };
   }
 
   if (!isAutoRoute) {
-    // User explicitly chose a model (e.g. from ModelSelector) — honour it
+    // User explicitly chose a model — honour it
     return { modelId: requestedModel, tier: 'user-selected' };
   }
 
   // Auto-route: assign tier based on query classification
   switch (queryClass) {
     case 'reasoning':
-      return { modelId: 'deepseek/deepseek-r1', tier: 'elite-eco' };
+      return { modelId: 'deepseek/deepseek-r1', tier: 'elite-eco-reasoning' };
     case 'creative':
-      return { modelId: 'anthropic/claude-3.5-sonnet', tier: 'usa-premium' };
+      return { modelId: 'anthropic/claude-3.5-sonnet', tier: 'usa-premium-creative' };
     case 'general':
     default:
-      return { modelId: 'qwen/qwen-2.5-72b-instruct', tier: 'elite-eco' };
+      // DeepSeek V3 (chat) is the best all-rounder elite-eco model
+      return { modelId: 'deepseek/deepseek-chat', tier: 'elite-eco-general' };
   }
 }
 
@@ -158,9 +172,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ─── Elite Model Resolution (invisible to user) ───────────────────────
     const queryClass = classifyQuery(lastMessage);
-    const { modelId, tier } = resolveEliteModel(model, queryClass, ecoMode === true);
+    
+    // Detect Long Context (approx > 25k chars ~ 6k tokens)
+    const totalContentLength = messages.reduce((acc: number, m: any) => acc + (m.content?.length || 0), 0);
+    const isLongContext = totalContentLength > 25000;
 
-    console.log(`[EliteRouter] Query class: ${queryClass} | Model: ${modelId} | Tier: ${tier} | Eco: ${ecoMode}`);
+    const { modelId, tier } = resolveEliteModel(
+      model, 
+      queryClass, 
+      ecoMode === true, 
+      isLongContext,
+      deepThink === true
+    );
+
+    console.log(`[EliteRouter] Query class: ${queryClass} | Model: ${modelId} | Tier: ${tier} | Eco: ${ecoMode} | Context: ${totalContentLength} chars`);
 
     const referer = process.env.APP_URL || 'http://localhost:3000';
     const resolvedTemp  = temperature ?? 0.7;

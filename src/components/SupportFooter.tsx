@@ -32,6 +32,9 @@ export const SupportFooter = () => {
                   <a href="#" className="text-xs font-black uppercase text-corporate-900 dark:text-white hover:text-blue-600 transition-colors tracking-widest">{link}</a>
                 </li>
               ))}
+              <li>
+                <a href="https://techie.catalizia.com" className="text-xs font-black uppercase text-emerald-500 hover:text-emerald-400 transition-colors tracking-widest">Techie Tutor (Junior)</a>
+              </li>
             </ul>
           </div>
           <div className="space-y-6">

@@ -1,6 +1,6 @@
 // Build 6.5.2 Production Release - [2026-04-29T22:56:00]
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Zap,
   BarChart3,
@@ -143,9 +143,13 @@ export default function App() {
 
     // Auto-detect App Mode based on Subdomain
     const hostname = window.location.hostname.toLowerCase();
+    console.log('[App] Detected Hostname:', hostname);
+    
     if (hostname.startsWith('techie') || hostname.startsWith('junior') || hostname.includes('techie.catalizia.com')) {
+      console.log('[App] Switching to JUNIOR mode');
       setAppMode('junior');
     } else {
+      console.log('[App] Keeping CORPORATE mode');
       setAppMode('corporate');
     }
 

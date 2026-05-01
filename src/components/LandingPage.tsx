@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform } from 'motion/react';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { PricingSection } from './PricingSection';
 import { SupportFooter } from './SupportFooter';
 import { TrialEndedModal } from './TrialEndedModal';
@@ -113,8 +113,9 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
         <div className="hidden lg:flex items-center gap-10 text-[10px] font-black uppercase tracking-[0.3em] text-white/70">
           <a href="#solutions" onClick={(e) => { e.preventDefault(); scrollToFeatures(); }} className="hover:text-white transition-colors">Plataforma</a>
           <a href="#economics" className="hover:text-white transition-colors">Ahorro y Control</a>
-          <a href={appMode === 'junior' ? 'https://corporategpt.catalizia.com' : 'https://techie.catalizia.com'} className="px-3 py-1 bg-blue-600/10 text-blue-400 rounded-lg border border-blue-500/20 hover:bg-blue-600 hover:text-white transition-all">
-             {appMode === 'junior' ? 'Corporate' : 'Techie Tutor'}
+          <a href={appMode === 'junior' ? 'https://corporategpt.catalizia.com' : 'https://techie.catalizia.com'} className="px-4 py-2 bg-blue-600/10 text-blue-400 rounded-xl border border-blue-500/20 hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2 group">
+             <Zap size={12} className={cn("transition-transform group-hover:scale-125", appMode === 'junior' ? "text-blue-400" : "text-emerald-400")} />
+             {appMode === 'junior' ? 'Corporate GPT' : 'Techie Tutor (Junior)'}
           </a>
           <a href="#support" className="hover:text-white transition-colors">Soporte</a>
         </div>
@@ -153,7 +154,7 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
             >
               {appMode === 'junior' ? (
                 <>
-                  Tu Tutor de IA <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">Seguro</span> <br className="hidden md:block" />
+                  Tutor de IA <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">Seguro</span> <br className="hidden md:block" />
                   para el <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Crecimiento</span> de tus Hijos
                 </>
               ) : (

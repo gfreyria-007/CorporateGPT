@@ -41,7 +41,7 @@ import {
 } from 'lucide-react';
 import { translations } from '../lib/translations';
 import { cn } from '../lib/utils';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { PromptGenie } from './PromptGenie';
 import { useAuth } from '../lib/AuthContext';
 import { incrementImageCount } from '../lib/db';

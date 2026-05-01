@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X, Wand2, ArrowRight, Lightbulb, Zap, Send } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { GoogleGenAI } from '@google/genai';

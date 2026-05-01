@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db, collection, query, where, getDocs, updateDoc, doc, setDoc, deleteDoc, onSnapshot, handleFirestoreError, OperationType, addDoc, serverTimestamp } from '../firebase';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Papa from 'papaparse';
 
 interface AdminDashboardProps {

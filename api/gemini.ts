@@ -23,7 +23,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const generationConfig = payload.config || payload.generationConfig || {};
         const { systemInstruction, ...restConfig } = generationConfig;
         
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || "gemini-3.1-pro-preview"}:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || "gemini-2.0-flash"}:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -44,6 +44,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const result = await response.json();
         
+        // Handle Image Generation responses (binary/inlineData)
+        const hasImage = result.candidates?.[0]?.content?.parts?.some((p: any) => p.inlineData);
+        if (hasImage) {
+          return res.status(200).json(result);
+        }
+
         let rawText = '';
         if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
           rawText = result.candidates[0].content.parts[0].text;
@@ -63,7 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           console.warn("[GEMINI] JSON Parse warning (may be plain text):", e);
         }
 
-        return res.status(200).json({ text: rawText, ...parsedFields });
+        return res.status(200).json({ text: rawText, ...parsedFields, candidates: result.candidates });
       } catch (genError: any) {
         console.error('--- GEMINI SDK ERROR ---', genError);
         return res.status(500).json({ 
@@ -75,7 +81,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     } else if (action === 'chat') {
       try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || "gemini-3.1-pro-preview"}:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || "gemini-2.0-flash"}:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
