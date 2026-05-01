@@ -1,9 +1,9 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence, sendEmailVerification, User as FirebaseUser } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, addDoc, serverTimestamp, onSnapshot, deleteDoc } from 'firebase/firestore';
 import firebaseConfig from './firebase-applet-config.json';
 
-const app = initializeApp(firebaseConfig);
+const app = getApps().find(a => a.name === 'TechieApp') ? getApp('TechieApp') : initializeApp(firebaseConfig, 'TechieApp');
 export const auth = getAuth(app);
 console.log('Firebase Auth Initialized');
 setPersistence(auth, browserLocalPersistence).catch(err => console.error("Persistence error:", err));
