@@ -93,7 +93,7 @@ const PPTStudio: React.FC<{
     try {
       const skeleton = await generateSkeleton(enrichedPrompt, slideCount);
       if (!skeleton || skeleton.length === 0) {
-        setGenError('No se pudo generar contenido. Intenta con un prompt más específico o verifica tu API key de Gemini.');
+        setGenError('No se pudo generar contenido. Intenta con un prompt mÃ¡s especÃ­fico o verifica tu API key de Gemini.');
         return;
       }
       setSlides(skeleton.map(s => ({ ...s, rendered: false, visualLayout: 'split' })));
@@ -130,7 +130,7 @@ const PPTStudio: React.FC<{
         });
         
         slide.content.forEach((point, i) => {
-          pptSlide.addText(`• ${point}`, { 
+          pptSlide.addText(`â€¢ ${point}`, { 
             x: 0.8, y: 2.5 + (i * 0.5), w: '80%', 
             fontSize: 14,
             color: selectedStyle === 'scientific' ? 'E2E8F0' : '334155'
@@ -174,7 +174,7 @@ const PPTStudio: React.FC<{
         
         doc.setFontSize(12);
         slide.content.forEach((point, pi) => {
-          doc.text(`• ${point}`, 25, 70 + (pi * 10));
+          doc.text(`â€¢ ${point}`, 25, 70 + (pi * 10));
         });
       });
       
@@ -256,7 +256,7 @@ const PPTStudio: React.FC<{
     const newSlide: any = {
       id: Date.now().toString(),
       title: 'Nueva Diapositiva',
-      subtitle: 'Añade un subtítulo aquí',
+      subtitle: 'AÃ±ade un subtÃ­tulo aquÃ­',
       content: ['Punto clave 1'],
       tableData: '',
       chartType: 'none',
@@ -379,7 +379,7 @@ const PPTStudio: React.FC<{
                     "font-black tracking-tighter leading-none italic",
                     isMobile ? "text-5xl" : "text-8xl",
                     isDark ? "text-white" : "text-slate-950"
-                  )}>Estructura primero. <br className={isMobile ? "" : "hidden"} /> Diseño después.</h2>
+                  )}>Estructura primero. <br className={isMobile ? "" : "hidden"} /> DiseÃ±o despuÃ©s.</h2>
                 </div>
 
                 <div className={cn(
@@ -393,8 +393,8 @@ const PPTStudio: React.FC<{
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
                       placeholder={isMobile 
-                        ? "¿De qué trata tu presentación?" 
-                        : `Describe tu presentación en lenguaje natural...\n\nEjemplos:\n• "La historia de Tarzán en 3 slides"\n• "Estrategia de ventas Q3 2025"\n• "Resumen ejecutivo del mercado de IA"`
+                        ? "Â¿De quÃ© trata tu presentaciÃ³n?" 
+                        : `Describe tu presentaciÃ³n en lenguaje natural...\n\nEjemplos:\nâ€¢ "La historia de TarzÃ¡n en 3 slides"\nâ€¢ "Estrategia de ventas Q3 2025"\nâ€¢ "Resumen ejecutivo del mercado de IA"`
                       }
                       className={cn(
                         "w-full border-none p-10 font-medium focus:ring-0 outline-none resize-none placeholder:text-slate-500 placeholder:opacity-70 leading-relaxed bg-transparent",
@@ -521,7 +521,7 @@ const PPTStudio: React.FC<{
                 </div>
                 {genError && (
                   <div className="mt-8 px-8 py-5 bg-red-600/10 border border-red-500/30 rounded-[2rem] text-red-600 text-xs font-black uppercase tracking-[0.2em] text-center">
-                    ⚠️ {genError}
+                    âš ï¸ {genError}
                   </div>
                 )}
               </div>
@@ -541,7 +541,7 @@ const PPTStudio: React.FC<{
                       <BrainCircuit size={16} className="text-white" />
                     </div>
                     <span className={cn("text-[10px] font-black uppercase tracking-widest", isDark ? "text-blue-400" : "text-blue-600")}>
-                      Neural Interview — {isGenerating ? 'Sincronizando...' : 'Define tu visión'}
+                      Neural Interview â€” {isGenerating ? 'Sincronizando...' : 'Define tu visiÃ³n'}
                     </span>
                     {isGenerating && (
                       <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-full text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-600/30">
@@ -550,7 +550,7 @@ const PPTStudio: React.FC<{
                     )}
                   </div>
                   <h2 className={cn("text-4xl font-black tracking-tighter italic", isDark ? "text-white" : "text-slate-900")}>
-                    Cuéntame más
+                    CuÃ©ntame mÃ¡s
                   </h2>
                   <p className={cn("text-sm font-medium opacity-50", isDark ? "text-white" : "text-slate-900")}>
                     &ldquo;{prompt}&rdquo;
@@ -613,7 +613,7 @@ const PPTStudio: React.FC<{
                       isDark ? "text-slate-400 hover:text-white hover:bg-white/5" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
                     )}
                   >
-                    ← Volver
+                    â† Volver
                   </button>
                   <button
                     onClick={() => {
@@ -628,12 +628,12 @@ const PPTStudio: React.FC<{
                   >
                     {isGenerating
                       ? <><RefreshCw size={16} className="animate-spin" /> Sintetizando...</>
-                      : <>Generar Presentación <Sparkles size={16} className="group-hover:rotate-12 transition-transform" /></>}
+                      : <>Generar PresentaciÃ³n <Sparkles size={16} className="group-hover:rotate-12 transition-transform" /></>}
                   </button>
                 </div>
                 {genError && (
                   <div className="px-6 py-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-sm font-bold text-center animate-shake">
-                    ⚠️ {genError}
+                    âš ï¸ {genError}
                   </div>
                 )}
               </div>
@@ -714,7 +714,7 @@ const PPTStudio: React.FC<{
                               ? "border-white/10 focus:border-blue-500 text-white"
                               : "border-slate-100 focus:border-blue-600 text-slate-900"
                           )}
-                          placeholder="Título de la slide"
+                          placeholder="TÃ­tulo de la slide"
                         />
                         <textarea 
                           value={slides[activeSlide]?.subtitle}
@@ -723,7 +723,7 @@ const PPTStudio: React.FC<{
                             "w-full text-sm font-medium outline-none resize-none h-20 placeholder:text-slate-500 placeholder:opacity-60 bg-transparent",
                             isDark ? "text-slate-300 placeholder:text-white/40" : "text-slate-600"
                           )}
-                          placeholder="Contexto o subtítulo..."
+                          placeholder="Contexto o subtÃ­tulo..."
                         />
                       </div>
                       
@@ -769,25 +769,25 @@ const PPTStudio: React.FC<{
                                   : "bg-white border-slate-200 text-slate-900"
                               )}
                             >
-                              <option value="none">Sin Gráfica</option>
+                              <option value="none">Sin GrÃ¡fica</option>
                               <option value="bar">Barras</option>
                               <option value="bar_horizontal">Barras Horizontales</option>
                               <option value="bar_grouped">Barras Agrupadas</option>
-                              <option value="line">Líneas</option>
-                              <option value="area">Área</option>
+                              <option value="line">LÃ­neas</option>
+                              <option value="area">Ãrea</option>
                               <option value="pie">Circular (Pie)</option>
                               <option value="donut">Dona (Donut)</option>
                               <option value="radar">Radar</option>
-                              <option value="scatter">Dispersión</option>
+                              <option value="scatter">DispersiÃ³n</option>
                               <option value="bubble">Burbuja</option>
                               <option value="waterfall">Cascada</option>
-                              <option value="pyramid">Pirámide</option>
+                              <option value="pyramid">PirÃ¡mide</option>
                             </select>
                           </div>
                           <textarea 
                             value={slides[activeSlide]?.tableData}
                             onChange={(e) => handleUpdateSlide(activeSlide, 'tableData', e.target.value)}
-                            placeholder="Pega aquí tus datos de Excel (Celdas, Columnas...)"
+                            placeholder="Pega aquÃ­ tus datos de Excel (Celdas, Columnas...)"
                             className={cn(
                               "w-full h-32 border rounded-xl p-4 text-xs font-mono outline-none focus:ring-2 focus:ring-blue-600/20 resize-none placeholder:opacity-30",
                               isDark
@@ -809,7 +809,7 @@ const PPTStudio: React.FC<{
                         )}
                       >
                         {slides[activeSlide]?.rendered ? <RefreshCw size={14} className={isGenerating ? "animate-spin" : ""} /> : <ImageIcon size={14} />}
-                        {slides[activeSlide]?.rendered ? 'Regenerar Gráficos' : 'Generar Visual'}
+                        {slides[activeSlide]?.rendered ? 'Regenerar GrÃ¡ficos' : 'Generar Visual'}
                       </button>
 
                       <button 
@@ -870,7 +870,7 @@ const PPTStudio: React.FC<{
                     </div>
                   </div>
 
-                  {/* Previsualización de Diseño */}
+                  {/* PrevisualizaciÃ³n de DiseÃ±o */}
                   <div className="col-span-7">
                     <div className={cn(
                       "aspect-video rounded-[2rem] border shadow-2xl overflow-hidden relative group",
@@ -988,7 +988,6 @@ const PPTStudio: React.FC<{
                                   {selectedStyle === 'scientific' && (
                                     <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-cyan-500 rounded-full animate-pulse" />
                                   )}
-)}
                                   <p className={cn(
                                     "leading-relaxed",
                                     selectedStyle === 'scientific' ? "text-xs font-mono" :
@@ -1021,9 +1020,10 @@ const PPTStudio: React.FC<{
                                <BrainCircuit size={28} className={selectedStyle === 'scientific' ? "text-cyan-500" : "text-white"} />
                             </div>
                           </div>
-                        </div>
+                        </>
                       )}
-                      
+                    </div>
+                  )}
                       {isGenerating && (
                         <div className={cn(
                           "absolute inset-0 backdrop-blur-md flex flex-col items-center justify-center z-50",
