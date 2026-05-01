@@ -88,11 +88,11 @@ function resolveEliteModel(requestedModel: string, queryClass: QueryClass, ecoMo
       'deepseek/deepseek-chat',
       'google/gemini-2.0-flash-exp',
       'qwen/qwen-2.5-coder-32b',
-      'google/gemini-1.5-flash'
+      'google/gemini-1.5-flash-8b'
     ],
     vision: [
       'google/gemini-2.0-flash-exp',
-      'google/gemini-1.5-flash',
+      'google/gemini-1.5-flash-8b',
       'anthropic/claude-3.5-sonnet'
     ],
     general: [
