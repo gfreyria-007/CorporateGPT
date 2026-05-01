@@ -79,13 +79,13 @@ function resolveEliteModel(requestedModel: string, queryClass: QueryClass, ecoMo
   // Auto-route: assign tier based on query classification
   switch (queryClass) {
     case 'reasoning':
-      return { modelId: 'deepseek/deepseek-r1', tier: 'elite-eco-reasoning' };
+      return { modelId: 'deepseek/deepseek-r1', tier: 'deepseek-reasoning' };
     case 'creative':
-      return { modelId: 'anthropic/claude-3.5-sonnet', tier: 'usa-premium-creative' };
+      return { modelId: 'deepseek/deepseek-chat', tier: 'minimax-creative' };
     case 'general':
     default:
-      // DeepSeek V3 (chat) is the best all-rounder elite-eco model
-      return { modelId: 'deepseek/deepseek-chat', tier: 'elite-eco-general' };
+      // DeepSeek V3 + MiniMax available
+      return { modelId: 'deepseek/deepseek-chat', tier: 'deepseek-minimax-general' };
   }
 }
 
