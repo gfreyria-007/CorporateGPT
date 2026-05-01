@@ -195,12 +195,12 @@ const featuresRef = useRef<HTMLDivElement>(null);
             </button>
           )}
           <button 
-            onClick={onStartSession}
-            disabled={isSigningIn}
-            className="px-4 lg:px-6 h-10 lg:h-12 bg-blue-600 text-white rounded-xl font-black text-[9px] lg:text-[10px] uppercase tracking-widest transition-all hover:scale-105 shadow-lg shadow-blue-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSigningIn ? '...' : 'Iniciar Sesión'}
-          </button>
+              onClick={() => { console.log('[Landing] SignIn clicked'); onStartSession(); }}
+              disabled={isSigningIn}
+              className="px-4 lg:px-6 h-10 lg:h-12 bg-blue-600 text-white rounded-xl font-black text-[9px] lg:text-[10px] uppercase tracking-widest transition-all hover:scale-105 shadow-lg shadow-blue-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSigningIn ? '...' : 'Iniciar Sesión'}
+            </button>
         </div>
       </nav>
 
@@ -237,7 +237,7 @@ const featuresRef = useRef<HTMLDivElement>(null);
 
             <div className="flex flex-col sm:flex-row gap-4 pt-4 w-full sm:w-auto">
               <button 
-                onClick={onStartSession}
+                onClick={() => { console.log('[Landing] SignIn clicked'); onStartSession(); }}
                 className="hero-btn px-10 py-5 rounded-xl bg-blue-600 text-white font-black uppercase tracking-widest text-sm hover:bg-blue-700 hover:scale-[1.02] transition-all shadow-xl shadow-blue-600/30 flex items-center justify-center gap-3"
               >
                 🚀 {lang === 'es' ? 'Empezar Gratis' : 'Get Started Free'}
