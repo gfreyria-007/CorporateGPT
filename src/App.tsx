@@ -592,8 +592,9 @@ export default function App() {
                  </button>
                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <button onClick={() => setLang(lang === 'en' ? 'es' : 'en')} className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-corporate-900 transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10">
-                        <span className="text-[10px] font-black uppercase">{lang}</span>
+                      <button onClick={() => setLang(lang === 'en' ? 'es' : 'en')} className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-corporate-900 transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10" title="Change language">
+                        <Globe size={16} />
+                        <span className="text-[10px] font-black uppercase ml-1">{lang}</span>
                       </button>
                       <button onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-corporate-900 transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10">
                         {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
