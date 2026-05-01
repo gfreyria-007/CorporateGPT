@@ -86,9 +86,14 @@ function resolveEliteModel(requestedModel: string, queryClass: QueryClass, ecoMo
     ],
     creative: [
       'deepseek/deepseek-chat',
-      'anthropic/claude-3.5-sonnet',
+      'google/gemini-2.0-flash-exp',
       'qwen/qwen-2.5-coder-32b',
       'google/gemini-1.5-flash'
+    ],
+    vision: [
+      'google/gemini-2.0-flash-exp',
+      'google/gemini-1.5-flash',
+      'anthropic/claude-3.5-sonnet'
     ],
     general: [
       'deepseek/deepseek-chat',
@@ -98,7 +103,9 @@ function resolveEliteModel(requestedModel: string, queryClass: QueryClass, ecoMo
     ]
   };
   
+  const hasImage = messages?.some((m: any) => m.image_url?.url || m.content?.includes('data:image'));
   const getModel = (type: QueryClass) => {
+    if (hasImage) return MODELS.vision[0]; // Always use best Gemini for images
     const list = MODELS[type] || MODELS.general;
     return list[Math.floor(Date.now() / 60000) % list.length]; // Rotate every minute
   };
@@ -108,8 +115,13 @@ function resolveEliteModel(requestedModel: string, queryClass: QueryClass, ecoMo
       return { modelId: getModel('reasoning'), tier: 'multi-model-reasoning' };
     case 'creative':
       return { modelId: getModel('creative'), tier: 'multi-model-creative' };
-    case 'general':
+case 'general':
     default:
+      if (hasImage) return { modelId: getModel('vision'), tier: 'gemini-vision' };
+      return { modelId: getModel('general'), tier: 'multi-model-general' };
+  }
+}
+}
       return { modelId: getModel('general'), tier: 'multi-model-general' };
   }
 }
