@@ -19,6 +19,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 interface LandingPageProps {
   onStartSession: () => void;
+  onSignInWithApple?: () => void;
   isSigningIn: boolean;
   showTrialModal?: boolean;
   lang: 'en' | 'es';
@@ -28,7 +29,7 @@ interface LandingPageProps {
   isSuperAdmin?: boolean;
 }
 
-export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = false, lang = 'es', setLang, appConfig, appMode = 'corporate', isSuperAdmin = false }: LandingPageProps) => {
+export const LandingPage = ({ onStartSession, onSignInWithApple, isSigningIn, showTrialModal = false, lang = 'es', setLang, appConfig, appMode = 'corporate', isSuperAdmin = false }: LandingPageProps) => {
   const t = translations[lang] || translations.es;
   const [isModalOpen, setIsModalOpen] = useState(showTrialModal);
   const [showEditor, setShowEditor] = useState(false);
@@ -235,30 +236,42 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
               <p><span className="font-bold text-emerald-600">{lang === 'es' ? 'Activa ZDR para seguridad NDA total.' : 'Activate ZDR for total NDA security.'}</span> {lang === 'es' ? 'Tus datos nunca entren modelos públicos. Segurança corporativa real.' : 'Your data never trains public models. Real corporate security.'}</p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 pt-4 w-full sm:w-auto">
+<div className="flex flex-col sm:flex-row gap-4 pt-4 w-full sm:w-auto">
               <button 
-                onClick={() => { console.log('[Landing] SignIn clicked'); onStartSession(); }}
-                className="hero-btn px-10 py-5 rounded-xl bg-blue-600 text-white font-black uppercase tracking-widest text-sm hover:bg-blue-700 hover:scale-[1.02] transition-all shadow-xl shadow-blue-600/30 flex items-center justify-center gap-3"
+                onClick={() => { console.log('[Landing] Google SignIn clicked'); onStartSession(); }}
+                className="hero-btn px-8 py-5 rounded-xl bg-blue-600 text-white font-black uppercase tracking-widest text-sm hover:bg-blue-700 hover:scale-[1.02] transition-all shadow-xl shadow-blue-600/30 flex items-center justify-center gap-3"
               >
-                🚀 {lang === 'es' ? 'Empezar Gratis' : 'Get Started Free'}
+                <Shield size={18} /> {lang === 'es' ? 'Google' : 'Google'}
+              </button>
+              <button 
+                onClick={() => { console.log('[Landing] Apple SignIn clicked'); onSignInWithApple?.(); }}
+                className="hero-btn px-8 py-5 rounded-xl bg-slate-900 text-white font-black uppercase tracking-widest text-sm hover:bg-slate-800 hover:scale-[1.02] transition-all shadow-xl shadow-slate-900/30 flex items-center justify-center gap-3"
+              >
+                <Sparkles size={18} /> {lang === 'es' ? 'Apple' : 'Apple'}
+              </button>
+              <button 
+                onClick={() => { console.log('[Landing] Email SignIn clicked'); alert('Email sign-in: Contact support@catalizia.com'); }}
+                className="hero-btn px-8 py-5 rounded-xl bg-white border border-slate-200 text-slate-900 font-black uppercase tracking-widest text-sm hover:bg-slate-50 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 group shadow-sm"
+              >
+                <Globe size={18} /> {lang === 'es' ? 'Email' : 'Email'}
               </button>
               <button 
                 onClick={() => window.open('https://corporategpt.catalizia.com', '_blank')}
-                className="hero-btn px-10 py-5 rounded-xl bg-emerald-600 text-white font-black uppercase tracking-widest text-sm hover:bg-emerald-700 hover:scale-[1.02] transition-all shadow-xl shadow-emerald-600/30 flex items-center justify-center gap-3"
+                className="hero-btn px-6 py-5 rounded-xl bg-emerald-600 text-white font-black uppercase tracking-widest text-sm hover:bg-emerald-700 hover:scale-[1.02] transition-all shadow-xl shadow-emerald-600/30 flex items-center justify-center gap-3"
               >
-                <Shield size={18} /> {lang === 'es' ? 'Ir a Corporate' : 'Go to Corporate'}
+                <Shield size={18} /> 
               </button>
               <button 
                 onClick={() => window.open('https://techie.catalizia.com', '_blank')}
-                className="hero-btn px-10 py-5 rounded-xl bg-indigo-600 text-white font-black uppercase tracking-widest text-sm hover:bg-indigo-700 hover:scale-[1.02] transition-all shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-3"
+                className="hero-btn px-6 py-5 rounded-xl bg-indigo-600 text-white font-black uppercase tracking-widest text-sm hover:bg-indigo-700 hover:scale-[1.02] transition-all shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-3"
               >
-                <Sparkles size={18} /> {lang === 'es' ? 'Ir a Techie' : 'Go to Techie'}
+                <Sparkles size={18} /> 
               </button>
               <button 
                 onClick={() => setLang(lang === 'es' ? 'en' : 'es')}
-                className="hero-btn px-6 py-5 rounded-xl bg-white border border-slate-200 text-slate-900 font-black uppercase tracking-widest text-sm hover:bg-slate-50 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 group shadow-sm"
+                className="hero-btn px-5 py-5 rounded-xl bg-white border border-slate-200 text-slate-900 font-black uppercase tracking-widest text-sm hover:bg-slate-50 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 group shadow-sm"
               >
-                <Globe size={18} className="text-blue-600" />
+                <Globe size={18} />
               </button>
             </div>
             <div className="text-[11px] text-slate-500 font-black tracking-wide uppercase mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">

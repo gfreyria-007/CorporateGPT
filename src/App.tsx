@@ -362,6 +362,8 @@ export default function App() {
     return (
       <LandingPage 
         onStartSession={signIn} 
+        onSignInWithApple={signInWithApple}
+        onSignInWithEmail={signInWithEmail}
         isSigningIn={isSigningIn}
         showTrialModal={trialEnded}
         lang={lang}
