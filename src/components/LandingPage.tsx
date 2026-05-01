@@ -229,7 +229,8 @@ const featuresRef = useRef<HTMLDivElement>(null);
             </h1>
             
             <div className="hero-desc max-w-4xl text-sm md:text-base lg:text-lg text-slate-600 font-medium leading-relaxed space-y-4 text-left md:text-center bg-white/50 backdrop-blur-sm p-8 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40">
-              <p><span className="font-bold text-slate-900">{lang === 'es' ? 'Dos soluciones, una infraestructura segura.' : 'Two solutions, one secure infrastructure.'}</span> {lang === 'es' ? 'Dale a tu equipo acceso a la IA más potente del mundo sin exponer datos sensibles. Dale a tus hijos un tutor de IA que se adapta a su edad.' : 'Give your team access to the worlds most powerful AI without exposing sensitive data. Give your kids an AI tutor that adapts to their age.'}</p>
+              <p><span className="font-bold text-slate-900">{lang === 'es' ? 'Accede a las 100+ mejores IAs del mundo.' : 'Access the 100+ best AIs in the world.'}</span> {lang === 'es' ? 'Nuestro Auto Router escoge la mejor para cada tarea optimizando costos.' : 'Our Auto Router picks the best one for each task, optimizing costs.'}</p>
+              <p><span className="font-bold text-emerald-600">{lang === 'es' ? 'Activa ZDR para seguridad NDA total.' : 'Activate ZDR for total NDA security.'}</span> {lang === 'es' ? 'Tus datos nunca entren modelos públicos. Segurança corporativa real.' : 'Your data never trains public models. Real corporate security.'}</p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 pt-4 w-full sm:w-auto">
@@ -247,19 +248,19 @@ const featuresRef = useRef<HTMLDivElement>(null);
               </button>
             </div>
             <div className="text-[11px] text-slate-500 font-black tracking-wide uppercase mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-              <span className="hero-check flex items-center gap-2"><CheckCircle2 size={12} className="text-emerald-600"/> {lang === 'es' ? 'NDA PROOF' : 'NDA PROOF'}</span>
+              <span className="hero-check flex items-center gap-2"><CheckCircle2 size={12} className="text-emerald-600"/> {lang === 'es' ? '100+ LLMs' : '100+ LLMs'}</span>
               <span className="hero-check opacity-30">•</span> 
-              <span className="hero-check flex items-center gap-2"><CheckCircle2 size={12} className="text-emerald-600"/> {lang === 'es' ? 'SIN FILTROS' : 'SAFE MODE'}</span>
+              <span className="hero-check flex items-center gap-2"><CheckCircle2 size={12} className="text-emerald-600"/> {lang === 'es' ? 'AUTO ROUTER' : 'AUTO ROUTER'}</span>
               <span className="hero-check opacity-30">•</span> 
-              <span className="hero-check flex items-center gap-2"><CheckCircle2 size={12} className="text-emerald-600"/> {lang === 'es' ? '70% AHORRO' : '70% SAVINGS'}</span>
+              <span className="hero-check flex items-center gap-2"><CheckCircle2 size={12} className="text-emerald-600"/> {lang === 'es' ? 'ZDR / NDA' : 'ZDR / NDA'}</span>
             </div>
           </div>
 
           {/* Stats Bar */}
           <div className="grid grid-cols-3 gap-4 mt-12 pt-12 border-t border-slate-200">
             {[
+              { value: '100+', label: lang === 'es' ? 'LLMs DISPONIBLES' : 'LLMS AVAILABLE' },
               { value: '70%', label: lang === 'es' ? 'AHORRO EN IA' : 'AI SAVINGS' },
-              { value: '500+', label: lang === 'es' ? 'EQUIPOS PROTEGIDOS' : 'TEAMS PROTECTED' },
               { value: '0', label: lang === 'es' ? 'FILTRACIONES' : 'DATA LEAKS' }
             ].map((stat, i) => (
               <div key={i} className="text-center">
