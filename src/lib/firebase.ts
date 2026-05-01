@@ -15,7 +15,7 @@ const firebaseConfig = {
 
 let app;
 try {
-  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  app = getApps().find(a => a.name === '[DEFAULT]') ? getApp() : initializeApp(firebaseConfig);
 } catch (error) {
   console.error("Firebase initialization error:", error);
 }
