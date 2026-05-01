@@ -50,6 +50,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ? Math.max(10, parseInt(qty || '10'))
       : 1;
 
+    console.log(`[STRIPE] Creating session for plan: ${plan}, priceId: ${targetPrice}, userId: ${userId}`);
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [{ price: targetPrice, quantity }],
@@ -59,21 +61,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       metadata: {
         plan,
         qty: quantity.toString(),
-        userId: userId || '',
+        userId: userId || 'anonymous',
         role: plan === 'Professional' ? 'admin' : 'user'
       }
     });
 
+    console.log(`[STRIPE] Session created: ${session.id}`);
     return res.status(200).json({ url: session.url });
 
   } catch (error: any) {
-    console.error('[STRIPE] Checkout session creation failed:', error.message);
-    // Provide user-friendly Stripe error messages in Spanish
-    const friendlyMsg =
-      error.code === 'resource_missing'
-        ? 'El precio configurado no existe en Stripe. Verifica los IDs de precio en el panel.'
-        : error.message;
-    return res.status(500).json({ error: friendlyMsg });
+    console.error('[STRIPE ERROR]:', error.message);
+    return res.status(500).json({ error: error.message });
   }
 }
 

@@ -107,7 +107,10 @@ export const PricingSection = () => {
         })
       });
 
-      if (!response.ok) throw new Error('Failed to create checkout session');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to create checkout session');
+      }
       
       const { url } = await response.json();
       setShowSecureMessage(true);
@@ -286,14 +289,14 @@ export const PricingSection = () => {
       <motion.div 
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
-        className="max-w-3xl mx-auto p-10 lg:p-12 bg-white dark:bg-blue-600/10 rounded-[4rem] border border-corporate-200 dark:border-blue-500/30 flex flex-col md:flex-row items-center gap-10 text-center md:text-left shadow-2xl dark:shadow-blue-900/20"
+        className="max-w-3xl mx-auto p-10 lg:p-12 bg-blue-600 dark:bg-blue-600/20 rounded-[4rem] border border-blue-500/30 flex flex-col md:flex-row items-center gap-10 text-center md:text-left shadow-2xl shadow-blue-600/20"
       >
-        <div className="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center text-white shrink-0 shadow-2xl shadow-blue-500/30">
+        <div className="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center text-white shrink-0 shadow-xl backdrop-blur-md border border-white/20">
           <Terminal size={32} />
         </div>
         <div className="space-y-3 flex-1">
-          <h4 className="font-display font-black text-xl tracking-tight uppercase dark:text-blue-400">Modelo de Consumo Transparente</h4>
-          <p className="text-xs font-bold leading-relaxed text-slate-700 dark:text-white/80 uppercase tracking-widest">
+          <h4 className="font-display font-black text-xl tracking-tight uppercase text-white">Modelo de Consumo Transparente</h4>
+          <p className="text-[11px] font-bold leading-relaxed text-blue-50 dark:text-blue-100 uppercase tracking-widest">
             El costo de los tokens de IA se gestiona de forma independiente mediante una bolsa de saldo prepagada, garantizando transparencia total en el consumo y evitando cargos inesperados.
           </p>
         </div>

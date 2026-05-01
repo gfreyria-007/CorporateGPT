@@ -69,7 +69,7 @@ async function startServer() {
   // 2. CORS - Restrict to your domain in production
   app.use(cors({
     origin: process.env.NODE_ENV === 'production' 
-      ? ['https://corporategpt.catalizia.com', 'https://corporate-gpt-catalizia.vercel.app']
+      ? ['https://corporategpt.catalizia.com', 'https://corporate-gpt-catalizia.vercel.app', 'https://www.catalizia.com', 'https://catalizia.com']
       : true,
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -179,7 +179,11 @@ async function startServer() {
   app.use(express.json({ limit: '10mb' })); // Protect against large payloads
 
   const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  if (!stripeKey) {
+    console.error('[STRIPE ERROR] STRIPE_SECRET_KEY is missing from environment variables!');
+  }
+  const stripe = new Stripe(stripeKey || '', {
     apiVersion: '2025-02-24-preview' as any,
   });
 
@@ -254,9 +258,6 @@ async function startServer() {
   app.post('/api/create-checkout-session', async (req, res) => {
     try {
       const { plan, qty, priceId, userId } = req.body;
-      
-      // Map plan names to real Price IDs from Stripe Dashboard
-      // These should be set in .env in production
       const planPrices: Record<string, string> = {
         'Starter': process.env.STRIPE_PRICE_STARTER || 'price_starter_placeholder',
         'Professional': process.env.STRIPE_PRICE_PROFESSIONAL || 'price_professional_placeholder',
@@ -266,11 +267,19 @@ async function startServer() {
         'Junior Solo': process.env.STRIPE_PRICE_JUNIOR_SOLO || 'price_junior_solo_placeholder'
       };
 
+      const selectedPrice = planPrices[plan] || priceId;
+      console.log(`[STRIPE] Creating session for plan: ${plan}, priceId: ${selectedPrice}, userId: ${userId}`);
+
+      if (!selectedPrice || selectedPrice.includes('placeholder')) {
+        console.error(`[STRIPE ERROR] Invalid price ID for plan ${plan}: ${selectedPrice}`);
+        return res.status(400).json({ error: `Configuración incompleta para el plan ${plan}. Por favor contacta soporte.` });
+      }
+
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         line_items: [
           {
-            price: planPrices[plan] || priceId,
+            price: selectedPrice,
             quantity: plan === 'Professional' ? Math.max(10, parseInt(qty || '10')) : 1,
           },
         ],
@@ -280,14 +289,15 @@ async function startServer() {
         metadata: {
           plan: plan,
           qty: qty?.toString() || '1',
-          userId: userId,
+          userId: userId || 'anonymous',
           role: plan === 'Professional' ? 'admin' : 'user'
         }
       });
 
+      console.log(`[STRIPE] Session created: ${session.id}`);
       res.json({ url: session.url });
     } catch (error: any) {
-      console.error('Stripe error:', error);
+      console.error('[STRIPE ERROR]:', error.message);
       res.status(500).json({ error: error.message });
     }
   });

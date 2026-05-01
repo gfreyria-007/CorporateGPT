@@ -14,7 +14,7 @@ import {
   type LandingTheme
 } from '../lib/landingConfig';
 import { translations, Lang } from '../lib/translations';
-import { useAuth } from '../lib/useAuth';
+import { useAuth } from '../lib/AuthContext';
 
 interface LandingEditorProps {
   onClose: () => void;
