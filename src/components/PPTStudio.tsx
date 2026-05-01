@@ -187,12 +187,16 @@ const PPTStudio: React.FC<{
 
   // Step 1: fetch clarifying questions
   const startClarify = async () => {
+    console.log("[Studio] Starting Neural Interview clarify phase...");
     setIsGenerating(true);
     setGenError(null);
     try {
+      console.log("[Studio] Generating questions for prompt:", prompt);
       const qs = await generateClarifyingQuestions(prompt);
+      console.log("[Studio] Received questions:", qs);
       // If AI returns no questions, skip directly to generation
       if (!qs || qs.length === 0) {
+        console.log("[Studio] No questions returned, skipping to direct generation...");
         await generateWithContext('');
         return;
       }
@@ -200,7 +204,8 @@ const PPTStudio: React.FC<{
       setClarifyAnswers({});
       setStep('clarify');
       setIsGenerating(false); // Stop main loading to show questions
-    } catch {
+    } catch (error: any) {
+      console.error("[Studio] Clarify error:", error);
       // On any error, skip clarify and generate directly
       setGenError('Neural Interview no disponible, generando directamente...');
       setTimeout(() => setGenError(null), 3000);
@@ -212,6 +217,7 @@ const PPTStudio: React.FC<{
 
   // Step 2: generate slides with enriched context
   const generateWithContext = async (extraContext: string) => {
+    console.log("[Studio] Generating slides with context...");
     setIsGenerating(true);
     setGenError(null);
     const enrichedPrompt = extraContext
@@ -219,14 +225,15 @@ const PPTStudio: React.FC<{
       : prompt;
     try {
       const skeleton = await generateSkeleton(enrichedPrompt, slideCount);
+      console.log("[Studio] Generated skeleton:", skeleton);
       if (!skeleton || skeleton.length === 0) {
-        setGenError('No se pudo generar contenido. Intenta con un prompt mÃ¡s especÃ­fico o verifica tu API key de Gemini.');
+        setGenError('No se pudo generar contenido. Intenta con un prompt más específico o verifica tu API key de Gemini.');
         return;
       }
       setSlides(skeleton.map(s => ({ ...s, rendered: false, visualLayout: 'split' })));
       setStep('skeleton');
     } catch (error: any) {
-      console.error("Error:", error);
+      console.error("[Studio] Generation Error:", error);
       setGenError(`Error: ${error.message || 'Error al conectar con el motor de IA'}`);
     } finally {
       setIsGenerating(false);
@@ -257,7 +264,7 @@ const PPTStudio: React.FC<{
         });
         
         slide.content.forEach((point, i) => {
-          pptSlide.addText(`â€¢ ${point}`, { 
+          pptSlide.addText(`• ${point}`, { 
             x: 0.8, y: 2.5 + (i * 0.5), w: '80%', 
             fontSize: 14,
             color: selectedStyle === 'scientific' ? 'E2E8F0' : '334155'
@@ -301,7 +308,7 @@ const PPTStudio: React.FC<{
         
         doc.setFontSize(12);
         slide.content.forEach((point, pi) => {
-          doc.text(`â€¢ ${point}`, 25, 70 + (pi * 10));
+          doc.text(`• ${point}`, 25, 70 + (pi * 10));
         });
       });
       
@@ -386,7 +393,7 @@ const PPTStudio: React.FC<{
     const newSlide: any = {
       id: Date.now().toString(),
       title: 'Nueva Diapositiva',
-      subtitle: 'AÃ±ade un subtÃ­tulo aquÃ­',
+      subtitle: 'Añade un subtítulo aquí',
       content: ['Punto clave 1'],
       tableData: '',
       chartType: 'none',
@@ -507,9 +514,9 @@ const PPTStudio: React.FC<{
                   </div>
                   <h2 className={cn(
                     "font-black tracking-tighter leading-none italic",
-                    isMobile ? "text-5xl" : "text-8xl",
+                    isMobile ? "text-5xl" : "text-7xl",
                     isDark ? "text-white" : "text-slate-950"
-                  )}>Estructura primero. <br className={isMobile ? "" : "hidden"} /> DiseÃ±o despuÃ©s.</h2>
+                  )}>Estructura primero. <br className={isMobile ? "" : "hidden"} /> Diseño después.</h2>
                 </div>
 
                 <div className={cn(
@@ -523,15 +530,39 @@ const PPTStudio: React.FC<{
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
                       placeholder={isMobile 
-                        ? "Â¿De quÃ© trata tu presentaciÃ³n?" 
-                        : `Describe tu presentaciÃ³n en lenguaje natural...\n\nEjemplos:\nâ€¢ "La historia de TarzÃ¡n en 3 slides"\nâ€¢ "Estrategia de ventas Q3 2025"\nâ€¢ "Resumen ejecutivo del mercado de IA"`
+                        ? "¿De qué trata tu presentación?" 
+                        : "Describe tu presentación en lenguaje natural..."
                       }
                       className={cn(
-                        "w-full border-none p-10 font-medium focus:ring-0 outline-none resize-none placeholder:text-slate-500 placeholder:opacity-70 leading-relaxed bg-transparent",
-                        isMobile ? "h-64 text-lg" : "h-56 text-2xl",
-                        isDark ? "text-white placeholder:text-white/50" : "text-slate-800"
+                        "w-full border-none p-10 pb-4 font-medium focus:ring-0 outline-none resize-none placeholder:text-slate-500 placeholder:opacity-50 leading-relaxed bg-transparent",
+                        isMobile ? "h-64 text-lg" : "h-40 text-2xl",
+                        isDark ? "text-white placeholder:text-white/30" : "text-slate-800"
                       )}
                     />
+                    
+                    {!isMobile && !prompt && (
+                      <div className="px-10 pb-6 flex flex-wrap gap-2 animate-in fade-in slide-in-from-bottom-2 duration-700">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mr-2 self-center">Sugerencias:</span>
+                        {[
+                          { text: 'Historia de Tarzán en 3 slides', icon: '🌴' },
+                          { text: 'Estrategia de ventas Q3 2025', icon: '📈' },
+                          { text: 'Resumen ejecutivo IA', icon: '🧠' }
+                        ].map((sug, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setPrompt(sug.text)}
+                            className={cn(
+                              "px-4 py-2 rounded-full text-[11px] font-bold transition-all border flex items-center gap-2",
+                              isDark 
+                                ? "bg-white/5 border-white/10 text-white/60 hover:bg-white/10 hover:text-white hover:border-white/30" 
+                                : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-white hover:border-blue-400 hover:text-blue-600 hover:shadow-lg shadow-blue-200/20"
+                            )}
+                          >
+                            <span>{sug.icon}</span> {sug.text}
+                          </button>
+                        ))}
+                      </div>
+                    )}
 
                     {/* Visual Style Selector */}
                     <div className="px-10 pb-8 space-y-4">
@@ -628,30 +659,42 @@ const PPTStudio: React.FC<{
                              )}
                           </div>
                        </div>
-
-                       <button 
-                         onClick={(e) => {
-                           e.preventDefault();
-                           startClarify();
-                         }}
-                         disabled={!prompt.trim() || isGenerating}
-                         className={cn(
-                           "bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white rounded-2xl flex items-center justify-center gap-4 font-black uppercase tracking-widest transition-all shadow-2xl shadow-blue-600/30 active:scale-95",
-                           isMobile ? "w-full py-6 text-base" : "px-12 py-5 text-sm"
-                         )}
-                       >
-                         {isGenerating ? (
-                           <><RefreshCw size={18} className="animate-spin" /> {isMobile ? 'ANALIZANDO...' : 'EJECUTANDO NEURAL SCAN...'}</>
-                         ) : (
-                           <>Continuar <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" /></>
-                         )}
-                       </button>
+                                <button 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            console.log('[Studio] Button Clicked - Starting Neural Interview');
+                            try {
+                              startClarify();
+                            } catch (err) {
+                              console.error('[Studio] Error starting clarification:', err);
+                            }
+                          }}
+                          disabled={isGenerating || !prompt}
+                          className={cn(
+                            "group px-12 py-6 rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all flex items-center gap-4",
+                            !prompt 
+                              ? "bg-slate-100 text-slate-400 cursor-not-allowed" 
+                              : "bg-blue-600 text-white hover:bg-blue-700 hover:scale-[1.02] shadow-2xl shadow-blue-600/30 active:scale-[0.98]"
+                          )}
+                        >
+                          {isGenerating ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                              <span>Procesando...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>Continuar</span>
+                              <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                            </>
+                          )}
+                        </button>
                     </div>
                   </div>
                 </div>
                 {genError && (
                   <div className="mt-8 px-8 py-5 bg-red-600/10 border border-red-500/30 rounded-[2rem] text-red-600 text-xs font-black uppercase tracking-[0.2em] text-center">
-                    âš ï¸ {genError}
+                    ⚠️ {genError}
                   </div>
                 )}
               </div>
@@ -671,7 +714,7 @@ const PPTStudio: React.FC<{
                       <BrainCircuit size={16} className="text-white" />
                     </div>
                     <span className={cn("text-[10px] font-black uppercase tracking-widest", isDark ? "text-blue-400" : "text-blue-600")}>
-                      Neural Interview â€” {isGenerating ? 'Sincronizando...' : 'Define tu visiÃ³n'}
+                      Neural Interview — {isGenerating ? 'Sincronizando...' : 'Define tu visión'}
                     </span>
                     {isGenerating && (
                       <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-full text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-600/30">
@@ -680,10 +723,10 @@ const PPTStudio: React.FC<{
                     )}
                   </div>
                   <h2 className={cn("text-4xl font-black tracking-tighter italic", isDark ? "text-white" : "text-slate-900")}>
-                    CuÃ©ntame mÃ¡s
+                    Cuéntame más
                   </h2>
                   <p className={cn("text-sm font-medium opacity-50", isDark ? "text-white" : "text-slate-900")}>
-                    &ldquo;{prompt}&rdquo;
+                    “{prompt}”
                   </p>
                 </div>
 
@@ -735,7 +778,7 @@ const PPTStudio: React.FC<{
                   ))}
                 </div>
 
-                <div className="flex items-center justify-between pt-6 border-t border-white/5">
+                <div className="flex items-center justify-between mt-12">
                   <button
                     onClick={() => setStep('config')}
                     className={cn(
@@ -743,7 +786,7 @@ const PPTStudio: React.FC<{
                       isDark ? "text-slate-400 hover:text-white hover:bg-white/5" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
                     )}
                   >
-                    â† Volver
+                    ← Volver
                   </button>
                   <button
                     onClick={() => {
@@ -758,12 +801,12 @@ const PPTStudio: React.FC<{
                   >
                     {isGenerating
                       ? <><RefreshCw size={16} className="animate-spin" /> Sintetizando...</>
-                      : <>Generar PresentaciÃ³n <Sparkles size={16} className="group-hover:rotate-12 transition-transform" /></>}
+                      : <>Generar Presentación <Sparkles size={16} className="group-hover:rotate-12 transition-transform" /></>}
                   </button>
                 </div>
                 {genError && (
                   <div className="px-6 py-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-sm font-bold text-center animate-shake">
-                    âš ï¸ {genError}
+                    ⚠️ {genError}
                   </div>
                 )}
               </div>

@@ -808,7 +808,7 @@ export default function App() {
           </AnimatePresence>
         </div>
 
-        {activePanel === 'chat' && (
+        {activePanel === 'chat' && appMode === 'corporate' && (
           <div className={cn("p-10 border-t z-50", theme === 'dark' ? 'border-white/5 bg-corporate-950' : 'border-corporate-100 bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.02)]')}>
              <div className="max-w-5xl mx-auto">
                 <ChatInput 
@@ -848,21 +848,23 @@ export default function App() {
       </main>
 
       {/* Floating Environment Switcher */}
-      <div className="fixed bottom-6 right-6 z-[9999]">
-         <button 
-           onClick={() => window.location.href = appMode === 'corporate' ? 'https://techie.catalizia.com' : 'https://catalizia.com'}
-           className={cn("flex items-center gap-3 px-5 py-4 rounded-full shadow-2xl transition-all hover:scale-105 border",
-              appMode === 'corporate' 
-                ? "bg-emerald-500 text-white border-emerald-400 shadow-emerald-500/30" 
-                : "bg-blue-600 text-white border-blue-500 shadow-blue-600/30"
-           )}
-         >
-            {appMode === 'corporate' ? <Zap size={18} /> : <Shield size={18} />}
-            <span className="text-xs font-black uppercase tracking-widest">
-              {appMode === 'corporate' ? 'Ir a Techie Tutor' : 'Ir a Corporate'}
-            </span>
-         </button>
-      </div>
+      {!isMobile && activePanel !== 'ppt' && (
+        <div className="fixed bottom-6 right-6 z-[9999]">
+           <button 
+             onClick={() => setAppMode(appMode === 'corporate' ? 'junior' : 'corporate')}
+             className={cn("flex items-center gap-3 px-5 py-4 rounded-full shadow-2xl transition-all hover:scale-105 border",
+                appMode === 'corporate' 
+                  ? "bg-emerald-500 text-white border-emerald-400 shadow-emerald-500/30" 
+                  : "bg-blue-600 text-white border-blue-500 shadow-blue-600/30"
+             )}
+           >
+              {appMode === 'corporate' ? <Zap size={18} /> : <Shield size={18} />}
+              <span className="text-xs font-black uppercase tracking-widest">
+                {appMode === 'corporate' ? 'Ir a Techie Tutor' : 'Ir a Corporate'}
+              </span>
+           </button>
+        </div>
+      )}
 
       <PromptGenie isOpen={isPromptGenieOpen} onClose={() => setIsPromptGenieOpen(false)} onApply={setChatInputValue} theme={theme} />
       <AnimatePresence>

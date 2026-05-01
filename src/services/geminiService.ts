@@ -57,7 +57,7 @@ export interface ClarifyingQuestion {
 
 export async function generateClarifyingQuestions(prompt: string): Promise<ClarifyingQuestion[]> {
   const payload = {
-    model: "gemini-3.1-pro-preview",
+    model: "gemini-2.0-flash",
     contents: [{ role: "user", parts: [{ text: 
 `You are a premium corporate presentation architect. The user wants to generate a high-impact presentation about: "${prompt}"
 
@@ -136,7 +136,7 @@ export async function generateStylePreview(prompt: string, mood: string, lang: '
   Layouts: 'dense_table', 'technical_drawing', 'grid'.`;
 
   const payload = {
-    model: "gemini-3.1-pro-preview",
+    model: "gemini-2.0-flash",
     contents: [{ role: "user", parts: [{ text: `Establish the visual concept for: "${prompt}".` }] }],
     config: {
       systemInstruction,
@@ -186,7 +186,7 @@ export async function generateStylePreview(prompt: string, mood: string, lang: '
 }
 
 export async function generateStudioSlides(prompt: string, mood: string, lang: 'en' | 'es'): Promise<{ slides: StudioSlideData[], finalMood: string }> {
-  const model = "gemini-3.1-pro-preview"; 
+  const model = "gemini-2.0-flash"; 
   
   const systemInstruction = `You are the Neural Studio Engine 5.0 (Cinematic Storyteller). 
   Current Date context: ${new Date().toISOString().split('T')[0]}. The current year is 2026.
@@ -268,7 +268,7 @@ export async function generateStudioSlides(prompt: string, mood: string, lang: '
 
 export async function suggestBetterPrompt(currentPrompt: string): Promise<string> {
   const payload = {
-    model: "gemini-1.5-pro",
+    model: "gemini-1.5-pro-002",
     contents: [{ role: "user", parts: [{ text: `The user wants to generate an AMAZING infographic or visual asset with this prompt: "${currentPrompt}".
     Improve this prompt to be high-density, professional, and visually stunning.
     Instructions:
@@ -288,7 +288,7 @@ export async function suggestBetterPrompt(currentPrompt: string): Promise<string
 }
 
 export async function salesAgentChat(message: string, lang: 'en' | 'es'): Promise<string> {
-  const model = "gemini-3.1-pro-preview"; 
+  const model = "gemini-2.0-flash"; 
   
   const systemInstruction = lang === 'es' ? 
     `ERES EL ASESOR CORPORATIVO DE CORPORATEGPT. 
@@ -329,7 +329,7 @@ export async function salesAgentChat(message: string, lang: 'en' | 'es'): Promis
 
 export async function generateInfographicContent(prompt: string, style: string): Promise<InfographicData> {
   const payload = {
-    model: "gemini-3.1-pro-preview",
+    model: "gemini-2.0-flash",
     contents: [{ role: "user", parts: [{ text: `Generate a structured infographic about: "${prompt}". Style: ${style}. Return JSON format only.` }] }],
     config: {
       responseMimeType: "application/json",
@@ -386,7 +386,7 @@ export async function generateSkeleton(prompt: string, count: number = 10): Prom
   - Return ONLY the JSON object, nothing else.`;
 
   const payload = {
-    model: "gemini-3.1-pro-preview",
+    model: "gemini-2.0-flash",
     contents: [{ role: "user", parts: [{ text: `Generate EXACTLY ${count} content-rich slides for this topic: "${prompt}".
     IMPORTANT: Fill each slide with REAL, SPECIFIC information. No placeholder text.
     For at least 3-4 slides, choose an appropriate chartType (bar, line, pie, etc.) and provide the corresponding REAL DATA in 'tableData' (format: Label,Value\nLabel,Value).
@@ -455,7 +455,7 @@ export async function generateSkeleton(prompt: string, count: number = 10): Prom
 
 export async function regenerateSlideSkeleton(slideIndex: number, fullContext: string): Promise<SlideSkeleton> {
   const payload = {
-    model: "gemini-3.1-pro-preview",
+    model: "gemini-2.0-flash",
     contents: [{ role: "user", parts: [{ text: `Regenerate ONLY slide number ${slideIndex + 1} for this presentation: "${fullContext}". 
     Return ONE slide object.` }] }],
     config: {
@@ -509,7 +509,7 @@ export async function renderSlideVisual(
     : '';
 
   const payload = {
-    model: "gemini-3.1-pro-preview",
+    model: "gemini-2.0-flash",
     contents: [{ role: "user", parts: [{ text: `Title: ${title}. Content: ${content.join(' | ')}. Style: ${style}. ${chartContext}
     Return JSON: { 
       "visualLayout": "...", 

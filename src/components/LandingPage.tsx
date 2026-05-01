@@ -32,7 +32,7 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
   const t = translations[lang] || translations.es;
   const [isModalOpen, setIsModalOpen] = useState(showTrialModal);
   const [showEditor, setShowEditor] = useState(false);
-const featuresRef = useRef<HTMLDivElement>(null);
+  const featuresRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (showTrialModal) {
@@ -230,7 +230,7 @@ const featuresRef = useRef<HTMLDivElement>(null);
               </div>
             </h1>
             
-            <div className="hero-desc max-w-4xl text-sm md:text-base lg:text-lg text-slate-600 font-medium leading-relaxed space-y-4 text-left md:text-center bg-white/50 backdrop-blur-sm p-8 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40">
+            <div className="hero-desc max-w-4xl text-sm md:text-base lg:text-lg text-slate-600 font-medium leading-relaxed space-y-4 text-center bg-white/50 backdrop-blur-sm p-8 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40">
               <p><span className="font-bold text-slate-900">{lang === 'es' ? 'Accede a las 100+ mejores IAs del mundo.' : 'Access the 100+ best AIs in the world.'}</span> {lang === 'es' ? 'Nuestro Auto Router escoge la mejor para cada tarea optimizando costos.' : 'Our Auto Router picks the best one for each task, optimizing costs.'}</p>
               <p><span className="font-bold text-emerald-600">{lang === 'es' ? 'Activa ZDR para seguridad NDA total.' : 'Activate ZDR for total NDA security.'}</span> {lang === 'es' ? 'Tus datos nunca entren modelos públicos. Segurança corporativa real.' : 'Your data never trains public models. Real corporate security.'}</p>
             </div>
@@ -405,7 +405,7 @@ const featuresRef = useRef<HTMLDivElement>(null);
                 <p className="text-slate-600 text-sm leading-relaxed mb-8 flex-1">
                   {lang === 'es' ? 'Accede a los mejores LLMs del mundo sin exponer tus datos. Análisis de contratos, NDAs y documentos sensibles con arquitectura zero-data retention.' : 'Access the worlds best LLMs without exposing your data. Analyze contracts, NDAs and sensitive documents with zero-data retention architecture.'}
                 </p>
-<ul className="space-y-3 mb-8">
+                <ul className="space-y-3 mb-8">
                    <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-blue-600"/> {lang === 'es' ? 'Nano Banana 2: Presentaciones + Infografías' : 'Nano Banana 2: Presentations + Infographics'}</li>
                    <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-blue-600"/> {lang === 'es' ? '100+ LLMs con Auto Router' : '100+ LLMs with Auto Router'}</li>
                    <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-blue-600"/> {lang === 'es' ? 'ZDR: Seguridad NDA Total' : 'ZDR: Total NDA Security'}</li>
@@ -435,51 +435,16 @@ const featuresRef = useRef<HTMLDivElement>(null);
               <div className="p-10 lg:p-12 z-20 flex-1 flex flex-col">
                 <div className="mb-6">
                   <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-2">{lang === 'es' ? 'IA Familiar Segura' : 'Family Safe AI'}</h3>
-                  <p className="text-sm font-bold text-emerald-600 uppercase tracking-widest">{lang === 'es' ? 'Se Adapta a la Edad' : 'Adapts to Age'}</p>
+                  <p className="text-sm font-bold text-emerald-600 uppercase tracking-widest">{lang === 'es' ? 'Se Adapta a la Edad' : 'Se Adapta a la Edad'}</p>
                 </div>
                 <p className="text-slate-600 text-sm leading-relaxed mb-8 flex-1">
                   {lang === 'es' ? 'Selecciona el grado de tu hijo y Techie adapta sus respuestas. No es lo mismo 1º de primaria que 3º de secundaria. Tutoría personalizada por nivel educativo.' : 'Select your childs grade and Techie adapts its responses. 1st grade is different from 3rd grade. Personalized tutoring by education level.'}
                 </p>
-<ul className="space-y-3 mb-8">
+                <ul className="space-y-3 mb-8">
                    <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-emerald-600"/> {lang === 'es' ? 'Selecciona Grado (1º-3ºsecundaria)' : 'Select Grade (1st-3rd grade)'}</li>
                    <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-emerald-600"/> {lang === 'es' ? 'Respuestas por Nivel' : 'Age-Appropriate Answers'}</li>
                    <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-emerald-600"/> {lang === 'es' ? 'Controles Parentales' : 'Parent Controls'}</li>
                  </ul>
-              </div>
-            </div>
-
-            {/* Safe Learning */}
-            <div className="product-card group relative rounded-[2.5rem] bg-white border border-slate-200 overflow-hidden hover:shadow-2xl transition-all duration-500 flex flex-col">
-              <div className="relative h-64 w-full bg-slate-100 border-b border-slate-200 overflow-hidden flex items-end justify-center px-8 pt-12">
-                 <div className="w-full h-full bg-white rounded-t-2xl border-x border-t border-slate-200 shadow-2xl relative overflow-hidden transform group-hover:translate-y-[-8px] transition-transform duration-500">
-                    <div className="w-full h-16 bg-emerald-50 border-b border-emerald-100 p-4 flex items-center justify-between">
-                       <div className="flex gap-3">
-                          <div className="w-8 h-8 rounded-xl bg-emerald-100 border border-emerald-200 flex items-center justify-center"><Sparkles size={14} className="text-emerald-600"/></div>
-                       </div>
-                    </div>
-                    <div className="p-6 space-y-4">
-                       <div className="flex gap-4 items-start">
-                          <div className="w-10 h-10 rounded-xl bg-emerald-600 shadow-lg shadow-emerald-600/30 flex items-center justify-center"><Zap size={18} className="text-white"/></div>
-                          <div className="h-16 w-3/4 bg-emerald-50 rounded-2xl rounded-tl-sm border border-emerald-100 p-4">
-                             <div className="h-2 w-full bg-emerald-200 rounded-full" />
-                          </div>
-                       </div>
-                    </div>
-                 </div>
-              </div>
-              <div className="p-10 lg:p-12 z-20 flex-1 flex flex-col">
-                <div className="mb-6">
-                  <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Catalizia Safe Learning AI</h3>
-                  <p className="text-sm font-bold text-emerald-600 uppercase tracking-widest">Pedagogía Socrática • Junior Sandbox</p>
-                </div>
-                <p className="text-slate-600 text-sm leading-relaxed mb-8 flex-1">
-                  Un entorno de aprendizaje protegido que guía a los menores en lugar de dar respuestas vacías. Bloqueo total de contenido inapropiado y riesgos de modelos comerciales.
-                </p>
-                <ul className="space-y-3 mb-8">
-                   <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-emerald-600"/> Filtros de seguridad impenetrables</li>
-                   <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-emerald-600"/> Respuestas guiadas paso a paso</li>
-                   <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-emerald-600"/> Bloqueo de fuga de PII</li>
-                </ul>
               </div>
             </div>
           </div>
