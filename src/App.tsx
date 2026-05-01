@@ -74,9 +74,18 @@ export default function App() {
   // Auth & Profile
   const { user, profile, loading, isSigningIn, signIn, logout } = useAuth();
   
+  // Detect browser language
+  const getBrowserLang = (): 'en' | 'es' => {
+    if (typeof window !== 'undefined') {
+      const browserLang = navigator.language || (navigator as any).userLanguage || 'es';
+      return browserLang.startsWith('es') ? 'es' : 'en';
+    }
+    return 'es';
+  };
+  
   // App State
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [lang, setLang] = useState<'en' | 'es'>('es');
+  const [lang, setLang] = useState<'en' | 'es'>(getBrowserLang());
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [selectedModel, setSelectedModel] = useState('openrouter/auto');
   const [messages, setMessages] = useState<Message[]>([]);

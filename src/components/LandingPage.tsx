@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
-import { PricingSection } from './PricingSection';
 import { SupportFooter } from './SupportFooter';
 import { TrialEndedModal } from './TrialEndedModal';
 import { 
@@ -26,7 +25,7 @@ interface LandingPageProps {
   appMode?: 'corporate' | 'junior';
 }
 
-export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = false, lang, setLang, appConfig, appMode = 'corporate' }: LandingPageProps) => {
+export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = false, lang = 'es', setLang, appConfig, appMode = 'corporate' }: LandingPageProps) => {
   const t = translations[lang] || translations.es;
   const [isModalOpen, setIsModalOpen] = useState(showTrialModal);
   const featuresRef = useRef<HTMLDivElement>(null);
@@ -201,44 +200,23 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="flex flex-col items-center text-center space-y-8 mb-20">
             <div className="hero-badge inline-flex items-center gap-3 px-6 py-3 bg-blue-50 text-blue-700 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border border-blue-100 backdrop-blur-3xl shadow-sm">
-              <Sparkles size={14} className="text-blue-600" /> Empodera tu innovación con IA de confianza.
+              <Sparkles size={14} className="text-blue-600" /> {t.landingBadge || 'Secure AI for Business & Family'}
             </div>
             
             <h1 className="text-4xl md:text-5xl lg:text-[4.5rem] font-display font-black tracking-tighter leading-[1.05] text-slate-900">
               <div className="hero-title">
-                {appMode === 'junior' ? 'Tutor de IA' : 'Control Total:'}
+                {lang === 'es' ? 'Tu Empresa + Tu Familia:' : 'Your Enterprise + Your Family:'}
               </div>
               <div className="hero-title">
-                {appMode === 'junior' ? (
-                  <><span className="text-blue-600">Seguro</span> para el</>
-                ) : (
-                  <>Inteligencia <span className="text-blue-600">Segura</span></>
-                )}
+                <span className="text-blue-600">{lang === 'es' ? 'IA 100% Segura' : '100% Secure AI'}</span>
               </div>
               <div className="hero-title">
-                {appMode === 'junior' ? (
-                  <><span className="text-indigo-600">Crecimiento</span> de tus Hijos</>
-                ) : (
-                  <>para tu <span className="text-blue-600">Negocio</span> y tu <span className="text-emerald-600">Hogar</span></>
-                )}
+                {lang === 'es' ? 'para tu negocio y tu hogar' : 'for your business and your home'}
               </div>
             </h1>
             
-            <div className="hero-desc max-w-4xl text-sm md:text-base lg:text-lg text-slate-600 font-medium leading-relaxed space-y-6 text-left md:text-center bg-white/50 backdrop-blur-sm p-8 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40">
-              {appMode === 'junior' ? (
-                <>
-                  <p className="font-bold text-slate-900 border-l-4 border-emerald-500 pl-4">¿Sabes con qué IAs interactúan tus hijos?</p>
-                  <p>Techie Tutor ofrece un entorno protegido donde los menores pueden aprender y crear sin exposición a contenidos inadecuados o modelos comerciales sin filtros.</p>
-                  <p>Prevenimos los riesgos de modelos abiertos diseñados para adultos, guiando la curiosidad de los más jóvenes en un sandbox seguro e inteligente.</p>
-                </>
-              ) : (
-                <>
-                  <p className="font-bold text-slate-900 border-l-4 border-blue-600 pl-4">Impulsa la productividad de tu empresa sin límites.</p>
-                  <p>Catalizia Enterprise permite que tus empleados utilicen las IAs más potentes del mundo para agilizar tareas, analizando documentos sensibles y acuerdos de confidencialidad (NDA) en un entorno privado que nunca expone tu información al exterior.</p>
-                  <p className="font-bold text-slate-900 border-l-4 border-emerald-500 pl-4">Prepara a tus hijos para el futuro con seguridad...</p>
-                  <p>ofreciéndoles acceso a una IA diseñada pedagógicamente para responder a su curiosidad de forma adecuada, protegiéndolos de los sesgos de modelos comerciales abiertos y potenciando su aprendizaje genuino.</p>
-                </>
-              )}
+            <div className="hero-desc max-w-4xl text-sm md:text-base lg:text-lg text-slate-600 font-medium leading-relaxed space-y-4 text-left md:text-center bg-white/50 backdrop-blur-sm p-8 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40">
+              <p><span className="font-bold text-slate-900">{lang === 'es' ? 'Dos soluciones, una infraestructura segura.' : 'Two solutions, one secure infrastructure.'}</span> {lang === 'es' ? 'Dale a tu equipo acceso a la IA más potente del mundo sin exponer datos sensibles. Dale a tus hijos un tutor de IA que se adapta a su edad.' : 'Give your team access to the worlds most powerful AI without exposing sensitive data. Give your kids an AI tutor that adapts to their age.'}</p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 pt-4 w-full sm:w-auto">
@@ -246,26 +224,36 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
                 onClick={onStartSession}
                 className="hero-btn px-8 py-4 rounded-xl bg-blue-600 text-white font-black uppercase tracking-widest text-xs hover:bg-blue-700 hover:scale-[1.02] transition-all shadow-xl shadow-blue-600/30 flex items-center justify-center gap-3"
               >
-                🚀 Empezar Gratis
+                🚀 {lang === 'es' ? 'Empezar Gratis' : 'Get Started Free'}
               </button>
               <button 
-                onClick={() => window.location.href = appMode === 'junior' ? 'https://corporategpt.catalizia.com' : 'https://techie.catalizia.com'}
+                onClick={() => setLang(lang === 'es' ? 'en' : 'es')}
                 className="hero-btn px-8 py-4 rounded-xl bg-white border border-slate-200 text-slate-900 font-black uppercase tracking-widest text-xs hover:bg-slate-50 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 group shadow-sm"
               >
-                {appMode === 'junior' ? (
-                  <><Shield size={16} className="text-blue-600" /> Ir a Corporate GPT</>
-                ) : (
-                  <><Zap size={16} className="text-emerald-600" /> Ir a Techie Tutor</>
-                )}
+                <Globe size={16} className="text-blue-600" /> {lang === 'es' ? 'English' : 'Español'}
               </button>
             </div>
             <div className="text-[11px] text-slate-500 font-black tracking-wide uppercase mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-              <span className="hero-check flex items-center gap-2"><CheckCircle2 size={12} className="text-emerald-600"/> NDA PROOF</span>
+              <span className="hero-check flex items-center gap-2"><CheckCircle2 size={12} className="text-emerald-600"/> {lang === 'es' ? 'NDA PROOF' : 'NDA PROOF'}</span>
               <span className="hero-check opacity-30">•</span> 
-              <span className="hero-check flex items-center gap-2"><CheckCircle2 size={12} className="text-emerald-600"/> SAFE FOR JUNIORS</span>
+              <span className="hero-check flex items-center gap-2"><CheckCircle2 size={12} className="text-emerald-600"/> {lang === 'es' ? 'SIN FILTROS' : 'SAFE MODE'}</span>
               <span className="hero-check opacity-30">•</span> 
-              <span className="hero-check flex items-center gap-2"><CheckCircle2 size={12} className="text-emerald-600"/> COSTO OPTIMIZADO</span>
+              <span className="hero-check flex items-center gap-2"><CheckCircle2 size={12} className="text-emerald-600"/> {lang === 'es' ? '70% AHORRO' : '70% SAVINGS'}</span>
             </div>
+          </div>
+
+          {/* Stats Bar */}
+          <div className="grid grid-cols-3 gap-4 mt-12 pt-12 border-t border-slate-200">
+            {[
+              { value: '70%', label: lang === 'es' ? 'AHORRO EN IA' : 'AI SAVINGS' },
+              { value: '500+', label: lang === 'es' ? 'EQUIPOS PROTEGIDOS' : 'TEAMS PROTECTED' },
+              { value: '0', label: lang === 'es' ? 'FILTRACIONES' : 'DATA LEAKS' }
+            ].map((stat, i) => (
+              <div key={i} className="text-center">
+                <div className="text-3xl lg:text-4xl font-black text-blue-600">{stat.value}</div>
+                <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mt-1">{stat.label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -274,30 +262,30 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
       <section className="py-24 px-6 lg:px-12 bg-slate-50 border-y border-slate-200 problem-section" id="solutions">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-5xl font-black text-slate-900 tracking-tight mb-4">Usa la IA a tu favor, con total confianza</h2>
-            <p className="text-slate-600 text-lg">Resolvemos los retos de la IA abierta para que puedas enfocarte en lo que importa: crecer.</p>
+            <h2 className="text-3xl lg:text-5xl font-black text-slate-900 tracking-tight mb-4">{lang === 'es' ? 'Usa la IA a tu favor, con total confianza' : 'Use AI to your advantage, with confidence'}</h2>
+            <p className="text-slate-600 text-lg">{lang === 'es' ? 'Resolvemos los retos de la IA abierta para que puedas enfocarte en lo que importa: crecer.' : 'We solve open AI challenges so you can focus on what matters: growing.'}</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
              <div className="problem-card p-8 rounded-3xl bg-white border border-slate-200 shadow-xl shadow-slate-200/50 hover:border-blue-200 transition-all group">
                 <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 mb-6 group-hover:scale-110 group-hover:rotate-6 transition-transform"><Lock size={24} /></div>
-                <h4 className="text-lg font-black text-slate-900 mb-2">Privacidad de NDA</h4>
-                <p className="text-slate-600 text-sm">Tus datos sensibles se quedan en tu entorno. Usa la IA para analizar contratos con total tranquilidad.</p>
+                <h4 className="text-lg font-black text-slate-900 mb-2">{lang === 'es' ? 'Privacidad de NDA' : 'NDA Privacy'}</h4>
+                <p className="text-slate-600 text-sm">{lang === 'es' ? 'Tus datos sensibles se quedan en tu entorno. Usa la IA para analizar contratos con total tranquilidad.' : 'Your sensitive data stays in your environment. Use AI to analyze contracts with total peace of mind.'}</p>
              </div>
              <div className="problem-card p-8 rounded-3xl bg-white border border-slate-200 shadow-xl shadow-slate-200/50 hover:border-blue-200 transition-all group">
                 <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 mb-6 group-hover:scale-110 group-hover:rotate-6 transition-transform"><Sparkles size={24} /></div>
-                <h4 className="text-lg font-black text-slate-900 mb-2">Entorno Junior</h4>
-                <p className="text-slate-600 text-sm">Un espacio diseñado para menores, donde la IA actúa como un tutor mentor en lugar de un chat genérico.</p>
+                <h4 className="text-lg font-black text-slate-900 mb-2">{lang === 'es' ? 'Entorno Junior' : 'Junior Environment'}</h4>
+                <p className="text-slate-600 text-sm">{lang === 'es' ? 'Un espacio diseñado para menores, donde la IA actúa como un tutor mentor en lugar de un chat genérico.' : 'A space designed for minors, where AI acts as a mentor tutor instead of a generic chat.'}</p>
              </div>
              <div className="problem-card p-8 rounded-3xl bg-white border border-slate-200 shadow-xl shadow-slate-200/50 hover:border-blue-200 transition-all group">
                 <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 mb-6 group-hover:scale-110 group-hover:rotate-6 transition-transform"><BarChart3 size={24} /></div>
-                <h4 className="text-lg font-black text-slate-900 mb-2">Eficiencia de Costos</h4>
-                <p className="text-slate-600 text-sm">Consolidamos tu gasto. Un solo motor optimizado que te da acceso a lo mejor de la IA por mucho menos.</p>
+                <h4 className="text-lg font-black text-slate-900 mb-2">{lang === 'es' ? 'Eficiencia de Costos' : 'Cost Efficiency'}</h4>
+                <p className="text-slate-600 text-sm">{lang === 'es' ? 'Consolidamos tu gasto. Un solo motor optimizado que te da acceso a lo mejor de la IA por mucho menos.' : 'We consolidate your spending. One optimized engine that gives you access to the best AI for much less.'}</p>
              </div>
              <div className="problem-card p-8 rounded-3xl bg-white border border-slate-200 shadow-xl shadow-slate-200/50 hover:border-blue-200 transition-all group">
                 <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600 mb-6 group-hover:scale-110 group-hover:rotate-6 transition-transform"><Target size={24} /></div>
-                <h4 className="text-lg font-black text-slate-900 mb-2">Gobierno Simple</h4>
-                <p className="text-slate-600 text-sm">Gestiona usuarios y accesos desde un solo lugar. Transparencia total para Marketing, Legal y Operaciones.</p>
+                <h4 className="text-lg font-black text-slate-900 mb-2">{lang === 'es' ? 'Gobierno Simple' : 'Simple Governance'}</h4>
+                <p className="text-slate-600 text-sm">{lang === 'es' ? 'Gestiona usuarios y accesos desde un solo lugar. Transparencia total para Marketing, Legal y Operaciones.' : 'Manage users and access from one place. Total transparency for Marketing, Legal and Operations.'}</p>
              </div>
           </div>
 
@@ -305,7 +293,7 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
              <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center shrink-0 backdrop-blur-md">
                 <ShieldCheck size={32} />
              </div>
-             <p className="font-bold text-lg leading-tight">Catalizia no es solo IA; es la armadura de seguridad y el cerebro de eficiencia que tu organización y familia necesitan hoy.</p>
+             <p className="font-bold text-lg leading-tight">{lang === 'es' ? 'Catalizia no es solo IA; es la armadura de seguridad y el cerebro de eficiencia que tu organización y familia necesitan hoy.' : 'Catalizia is not just AI; its the security armor and efficiency brain your organization and family need today.'}</p>
           </div>
         </div>
       </section>
@@ -315,13 +303,13 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
         <div className="max-w-7xl mx-auto">
           <div className="mb-20">
              <div className="inline-block px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-xs font-black uppercase tracking-widest mb-6">
-                El Valor Real
+                {lang === 'es' ? 'El Valor Real' : 'The Real Value'}
              </div>
              <h2 className="text-4xl lg:text-6xl font-black text-slate-900 tracking-tight mb-6">
-                Orden, Seguridad <br className="hidden lg:block"/> y Economía de Escala
+                {lang === 'es' ? 'Orden, Seguridad' : 'Order, Security'}<br className="hidden lg:block"/> {lang === 'es' ? 'y Economía de Escala' : 'and Scale Economics'}
              </h2>
              <p className="text-xl text-slate-600 max-w-2xl">
-                Deja de pagar suscripciones individuales sin control. Centraliza, asegura y potencia el talento humano con inteligencia responsable.
+               {lang === 'es' ? 'Deja de pagar suscripciones individuales sin control. Centraliza, asegura y potencia el talento humano con inteligencia responsable.' : 'Stop paying for individual subscriptions without control. Centralize, secure and empower human talent with responsible intelligence.'}
              </p>
           </div>
 
@@ -354,12 +342,12 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
         </div>
       </section>
 
-      {/* PRODUCTS (REPOSITIONED) */}
+{/* PRODUCTS (REPOSITIONED) */}
       <section className="py-24 px-6 lg:px-12 bg-slate-50 border-t border-slate-200 product-section">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-             <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-4">Un solo motor. Dos entornos.</h2>
-             <p className="text-slate-600 text-lg">Poder y seguridad adaptados al contexto de uso.</p>
+             <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-4">{lang === 'es' ? 'Un solo motor. Dos entornos.' : 'One engine. Two environments.'}</h2>
+             <p className="text-slate-600 text-lg">{lang === 'es' ? 'Poder y seguridad adaptados al contexto de uso.' : 'Power and security adapted to your use case.'}</p>
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
@@ -383,16 +371,51 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
               </div>
               <div className="p-10 lg:p-12 z-20 flex-1 flex flex-col">
                 <div className="mb-6">
-                  <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Catalizia Enterprise Core</h3>
-                  <p className="text-sm font-bold text-blue-600 uppercase tracking-widest">Gobernanza Completa • NDA Proof</p>
+                  <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-2">{lang === 'es' ? 'IA Empresarial' : 'Corporate AI'}</h3>
+                  <p className="text-sm font-bold text-blue-600 uppercase tracking-widest">{lang === 'es' ? 'Seguridad + Control de Costos' : 'Security + Cost Control'}</p>
                 </div>
                 <p className="text-slate-600 text-sm leading-relaxed mb-8 flex-1">
-                  Ideal para equipos, operaciones y liderazgo. Seguridad avanzada de grado bancario y control administrativo para escalar IA en toda la empresa sin comprometer datos.
+                  {lang === 'es' ? 'Accede a los mejores LLMs del mundo sin exponer tus datos. Análisis de contratos, NDAs y documentos sensibles con arquitectura zero-data retention.' : 'Access the worlds best LLMs without exposing your data. Analyze contracts, NDAs and sensitive documents with zero-data retention architecture.'}
                 </p>
                 <ul className="space-y-3 mb-8">
-                   <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-blue-600"/> Gestión de roles y permisos</li>
-                   <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-blue-600"/> Análisis de documentos privados</li>
-                   <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-blue-600"/> Conexión con bases de datos</li>
+                   <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-blue-600"/> {lang === 'es' ? 'Arquitectura NDA-Proof' : 'NDA-Proof Architecture'}</li>
+                   <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-blue-600"/> {lang === 'es' ? '70% Ahorro Automático' : '70% Auto Savings'}</li>
+                   <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-blue-600"/> {lang === 'es' ? 'Gobierno Total' : 'Full Governance'}</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Safe Learning */}
+            <div className="product-card group relative rounded-[2.5rem] bg-white border border-slate-200 overflow-hidden hover:shadow-2xl transition-all duration-500 flex flex-col">
+              <div className="relative h-64 w-full bg-slate-100 border-b border-slate-200 overflow-hidden flex items-end justify-center px-8 pt-12">
+                 <div className="w-full h-full bg-white rounded-t-2xl border-x border-t border-slate-200 shadow-2xl relative overflow-hidden transform group-hover:translate-y-[-8px] transition-transform duration-500">
+                    <div className="w-full h-16 bg-emerald-50 border-b border-emerald-100 p-4 flex items-center justify-between">
+                       <div className="flex gap-3">
+                          <div className="w-8 h-8 rounded-xl bg-emerald-100 border border-emerald-200 flex items-center justify-center"><Sparkles size={14} className="text-emerald-600"/></div>
+                       </div>
+                    </div>
+                    <div className="p-6 space-y-4">
+                       <div className="flex gap-4 items-start">
+                          <div className="w-10 h-10 rounded-xl bg-emerald-600 shadow-lg shadow-emerald-600/30 flex items-center justify-center"><Zap size={18} className="text-white"/></div>
+                          <div className="h-16 w-3/4 bg-emerald-50 rounded-2xl rounded-tl-sm border border-emerald-100 p-4">
+                             <div className="h-2 w-full bg-emerald-200 rounded-full" />
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+              <div className="p-10 lg:p-12 z-20 flex-1 flex flex-col">
+                <div className="mb-6">
+                  <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-2">{lang === 'es' ? 'IA Familiar Segura' : 'Family Safe AI'}</h3>
+                  <p className="text-sm font-bold text-emerald-600 uppercase tracking-widest">{lang === 'es' ? 'Aprendizaje Seguro + Tutoría' : 'Safe Learning + Tutoring'}</p>
+                </div>
+                <p className="text-slate-600 text-sm leading-relaxed mb-8 flex-1">
+                  {lang === 'es' ? 'El único entorno donde tus hijos pueden aprender con IA reales, guiados por un tutor pedagógico que responde a su curiosidad de forma segura.' : 'The only environment where your kids can learn with real AI, guided by a pedagogical tutor that answers their curiosity safely.'}
+                </p>
+                <ul className="space-y-3 mb-8">
+                   <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-emerald-600"/> {lang === 'es' ? 'Sandbox Junior' : 'Junior Sandbox'}</li>
+                   <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-emerald-600"/> {lang === 'es' ? 'Tutoría Socrática' : 'Socratic Tutoring'}</li>
+                   <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-emerald-600"/> {lang === 'es' ? 'Controles Parentales' : 'Parent Controls'}</li>
                 </ul>
               </div>
             </div>
@@ -439,33 +462,33 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
       <section className="py-24 px-6 lg:px-12 bg-white border-t border-slate-200">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
-             <h2 className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tight mb-4">Mientras otros te dan acceso,<br/> nosotros te damos control.</h2>
-             <p className="text-slate-600 font-medium">Diseñado para quienes no pueden comprometer la seguridad ni el presupuesto.</p>
+             <h2 className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tight mb-4">{lang === 'es' ? 'Mientras otros te dan acceso,' : 'While others give you access,'}<br/>{lang === 'es' ? 'nosotros te damos control.' : 'we give you control.'}</h2>
+             <p className="text-slate-600 font-medium">{lang === 'es' ? 'Diseñado para quienes no pueden comprometer la seguridad ni el presupuesto.' : 'Designed for those who cant compromise on security or budget.'}</p>
           </div>
 
           <div className="comparison-table rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-slate-200/50 overflow-hidden">
              <div className="grid grid-cols-3 bg-slate-50 border-b border-slate-200 p-6 font-black uppercase text-xs tracking-widest text-slate-500">
-                <div>Característica</div>
+                <div>{lang === 'es' ? 'Característica' : 'Feature'}</div>
                 <div className="text-center text-blue-600">Catalizia</div>
-                <div className="text-center">Otras IA</div>
+                <div className="text-center">{lang === 'es' ? 'Otras IA' : 'Other AI'}</div>
              </div>
              <div className="comparison-row grid grid-cols-3 p-6 border-b border-slate-100 hover:bg-slate-50 transition-colors items-center group">
-                <div className="font-bold text-slate-900 text-sm group-hover:translate-x-2 transition-transform">Acceso Multi-modelo</div>
+                <div className="font-bold text-slate-900 text-sm group-hover:translate-x-2 transition-transform">{lang === 'es' ? 'Acceso Multi-modelo' : 'Multi-model Access'}</div>
                 <div className="flex justify-center"><CheckCircle2 className="text-emerald-600" /></div>
                 <div className="flex justify-center"><XCircle className="text-red-300" /></div>
              </div>
              <div className="comparison-row grid grid-cols-3 p-6 border-b border-slate-100 hover:bg-slate-50 transition-colors items-center group">
-                <div className="font-bold text-slate-900 text-sm group-hover:translate-x-2 transition-transform">Retención Cero (NDA Proof)</div>
+                <div className="font-bold text-slate-900 text-sm group-hover:translate-x-2 transition-transform">{lang === 'es' ? 'Retención Cero (NDA Proof)' : 'Zero Retention (NDA Proof)'}</div>
                 <div className="flex justify-center"><CheckCircle2 className="text-emerald-600" /></div>
                 <div className="flex justify-center"><AlertTriangle className="text-amber-500" /></div>
              </div>
              <div className="comparison-row grid grid-cols-3 p-6 border-b border-slate-100 hover:bg-slate-50 transition-colors items-center group">
-                <div className="font-bold text-slate-900 text-sm group-hover:translate-x-2 transition-transform">Auto Router de Costos</div>
+                <div className="font-bold text-slate-900 text-sm group-hover:translate-x-2 transition-transform">{lang === 'es' ? 'Auto Router de Costos' : 'Auto Cost Router'}</div>
                 <div className="flex justify-center"><CheckCircle2 className="text-emerald-600" /></div>
                 <div className="flex justify-center"><XCircle className="text-red-300" /></div>
              </div>
              <div className="comparison-row grid grid-cols-3 p-6 hover:bg-slate-50 transition-colors items-center group">
-                <div className="font-bold text-slate-900 text-sm group-hover:translate-x-2 transition-transform">Protección Infantil Real</div>
+                <div className="font-bold text-slate-900 text-sm group-hover:translate-x-2 transition-transform">{lang === 'es' ? 'Protección Infantil Real' : 'Real Kids Protection'}</div>
                 <div className="flex justify-center"><CheckCircle2 className="text-emerald-600" /></div>
                 <div className="flex justify-center"><XCircle className="text-red-300" /></div>
              </div>
@@ -473,10 +496,49 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
         </div>
       </section>
 
-      {/* Pricing / Scaling CTA */}
-      <div className="bg-slate-50 border-t border-slate-200">
-         <PricingSection />
-      </div>
+      {/* SOCIAL PROOF */}
+      <section className="py-24 px-6 lg:px-12 bg-slate-900 text-white">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl lg:text-4xl font-black mb-4">{lang === 'es' ? 'Empresas que ya confían en Catalizia' : 'Companies that trust Catalizia'}</h2>
+            <p className="text-slate-400">{lang === 'es' ? 'Lo que dicen nuestros usuarios' : 'What our users say'}</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-8 rounded-2xl bg-white/5 border border-white/10">
+              <div className="flex gap-1 mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <span key={i} className="text-amber-400">★</span>
+                ))}
+              </div>
+              <p className="text-lg font-medium mb-6">{lang === 'es' ? '"Pasamos de pagar 15 suscripciones separadas a tener todo centralizado. El ahorro real fue del 70% y nuestra paz mental."' : '"We went from paying 15 separate subscriptions to having everything centralized. Real 70% savings and peace of mind."'}</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-black">MA</div>
+                <div>
+                  <div className="font-bold text-sm">María A.</div>
+                  <div className="text-xs text-slate-400 uppercase tracking-wider">{lang === 'es' ? 'Directora, Colegio ST' : 'Director, School ST'}</div>
+                </div>
+              </div>
+            </div>
+            <div className="p-8 rounded-2xl bg-white/5 border border-white/10">
+              <div className="flex gap-1 mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <span key={i} className="text-amber-400">★</span>
+                ))}
+              </div>
+              <p className="text-lg font-medium mb-6">{lang === 'es' ? '"Analizamos contratos de M&A con IA. En 2 horas hicimos lo que antes tomaba 2 semanas. Y ningún dato salió."' : '"We analyzed M&A contracts with AI. In 2 hours we did what used to take 2 weeks. And no data left our infrastructure."'}</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center font-black">JR</div>
+                <div>
+                  <div className="font-bold text-sm">Javier R.</div>
+                  <div className="text-xs text-slate-400 uppercase tracking-wider">COO, LegalTech SA</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
 
       {/* FINAL CTA (CIERRE FUERTE) */}
       <section className="py-32 px-6 lg:px-12 bg-gradient-to-b from-white to-slate-100 border-t border-slate-200 relative overflow-hidden">
@@ -484,28 +546,28 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
          
          <div className="max-w-4xl mx-auto text-center relative z-10">
             <h2 className="text-4xl lg:text-6xl font-black text-slate-900 tracking-tight mb-8">
-               Lleva tu empresa y hogar <br/>
-               <span className="text-blue-600 italic">al siguiente nivel de inteligencia.</span>
+               {lang === 'es' ? 'Lleva tu empresa y hogar' : 'Take your business and home'}<br/>
+               <span className="text-blue-600 italic">{lang === 'es' ? 'al siguiente nivel de inteligencia.' : 'to the next level of intelligence.'}</span>
             </h2>
-            <p className="text-xl text-slate-600 mb-12 font-medium">Únete a la plataforma que empodera a las personas mediante el uso responsable y seguro de la IA.</p>
+            <p className="text-xl text-slate-600 mb-12 font-medium">{lang === 'es' ? 'Únete a la plataforma que empodera a las personas mediante el uso responsable y seguro de la IA.' : 'Join the platform that empowers people through responsible and secure AI use.'}</p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                <button 
                   onClick={onStartSession}
                   className="px-8 py-5 rounded-2xl bg-blue-600 text-white font-black uppercase tracking-widest text-sm hover:bg-blue-700 hover:scale-[1.02] transition-all shadow-2xl shadow-blue-600/30 flex items-center justify-center gap-3"
                >
-                  🚀 Crear Workspace Seguro
+                  🚀 {lang === 'es' ? 'Crear Workspace Seguro' : 'Create Secure Workspace'}
                </button>
                <button 
                   onClick={onStartSession}
                   className="px-8 py-5 rounded-2xl bg-white border border-slate-200 text-slate-900 font-black uppercase tracking-widest text-sm hover:bg-slate-50 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 shadow-sm"
                >
-                  📞 Hablar con un Asesor
+                  📞 {lang === 'es' ? 'Hablar con un Asesor' : 'Talk to an Advisor'}
                </button>
             </div>
             
             <p className="mt-8 text-sm text-slate-500 font-black uppercase tracking-widest">
-              "No necesitas más IA. Necesitas gobierno."
+              "{lang === 'es' ? 'No necesitas más IA. Necesitas gobierno.' : 'You dont need more AI. You need governance.'}"
             </p>
          </div>
       </section>
