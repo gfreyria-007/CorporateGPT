@@ -7,26 +7,26 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 console.log('Firebase Auth Initialized');
 setPersistence(auth, browserLocalPersistence).catch(err => console.error("Persistence error:", err));
-export const db = (firebaseConfig as any).firestoreDatabaseId 
+export const db = (firebaseConfig as any).firestoreDatabaseId
   ? getFirestore(app, (firebaseConfig as any).firestoreDatabaseId)
   : getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
 export const appleProvider = new OAuthProvider('apple.com');
 
-export { 
-  signInWithPopup, 
-  signOut, 
-  onAuthStateChanged, 
-  doc, 
-  getDoc, 
-  setDoc, 
-  updateDoc, 
-  collection, 
-  query, 
-  where, 
-  getDocs, 
-  addDoc, 
-  serverTimestamp, 
+export {
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  serverTimestamp,
   onSnapshot,
   deleteDoc,
   OAuthProvider,
@@ -81,9 +81,9 @@ export async function handleFirestoreError(error: unknown, operationType: Operat
     operationType,
     path
   }
-  
+
   console.error('Firestore Error: ', JSON.stringify(errInfo));
-  
+
   // Save to Firestore if authenticated
   if (auth.currentUser) {
     try {
