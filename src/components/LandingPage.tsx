@@ -106,13 +106,16 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
              C
           </div>
           <h1 className="text-lg lg:text-xl font-display font-black tracking-tight uppercase text-white">
-             Catalizia
+             {appMode === 'junior' ? 'Techie Tutor' : 'Catalizia'}
           </h1>
         </div>
         
         <div className="hidden lg:flex items-center gap-10 text-[10px] font-black uppercase tracking-[0.3em] text-white/70">
           <a href="#solutions" onClick={(e) => { e.preventDefault(); scrollToFeatures(); }} className="hover:text-white transition-colors">Plataforma</a>
           <a href="#economics" className="hover:text-white transition-colors">Ahorro y Control</a>
+          <a href={appMode === 'junior' ? 'https://corporategpt.catalizia.com' : 'https://techie.catalizia.com'} className="px-3 py-1 bg-blue-600/10 text-blue-400 rounded-lg border border-blue-500/20 hover:bg-blue-600 hover:text-white transition-all">
+             {appMode === 'junior' ? 'Corporate' : 'Techie Tutor'}
+          </a>
           <a href="#support" className="hover:text-white transition-colors">Soporte</a>
         </div>
 
@@ -148,16 +151,34 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
               initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
               className="text-4xl md:text-5xl lg:text-[4.5rem] font-display font-black tracking-tighter leading-[1.05] text-white"
             >
-              Control Total: Inteligencia Segura <br className="hidden md:block" />
-              para tu <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Negocio</span> y tu <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">Hogar</span>
+              {appMode === 'junior' ? (
+                <>
+                  Tu Tutor de IA <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">Seguro</span> <br className="hidden md:block" />
+                  para el <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Crecimiento</span> de tus Hijos
+                </>
+              ) : (
+                <>
+                  Control Total: Inteligencia Segura <br className="hidden md:block" />
+                  para tu <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Negocio</span> y tu <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">Hogar</span>
+                </>
+              )}
             </motion.h1>
             
             <motion.div 
               initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
               className="max-w-4xl text-sm md:text-base lg:text-lg text-slate-400 font-medium leading-relaxed space-y-4 text-left md:text-center"
             >
-              <p>¿Sabes qué herramientas de IA utilizan realmente tus empleados? Hoy en día, el uso de modelos comerciales abiertos para agilizar tareas está exponiendo datos sensibles y acuerdos de confidencialidad (NDA) de tu empresa sin que te des cuenta.</p>
-              <p>Al mismo tiempo, la falta de filtros en el hogar permite que los menores interactúen con IAs diseñadas para adultos, exponiéndolos a respuestas o contenidos no adecuados para su edad.</p>
+              {appMode === 'junior' ? (
+                <>
+                  <p>¿Sabes con qué IAs interactúan tus hijos? Techie Tutor ofrece un entorno protegido donde los menores pueden aprender y crear sin exposición a contenidos inadecuados o modelos comerciales sin filtros.</p>
+                  <p>Educación, creatividad y diversión potenciada por IA, con la tranquilidad de que su curiosidad está en buenas manos.</p>
+                </>
+              ) : (
+                <>
+                  <p>¿Sabes qué herramientas de IA utilizan realmente tus empleados? Hoy en día, el uso de modelos comerciales abiertos para agilizar tareas está exponiendo datos sensibles y acuerdos de confidencialidad (NDA) de tu empresa sin que te des cuenta.</p>
+                  <p>Al mismo tiempo, la falta de filtros en el hogar permite que los menores interactúen con IAs diseñadas para adultos, exponiéndolos a respuestas o contenidos no adecuados para su edad.</p>
+                </>
+              )}
             </motion.div>
 
             <motion.div 
@@ -171,10 +192,14 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
                 🚀 Empezar Gratis
               </button>
               <button 
-                onClick={onStartSession}
-                className="px-8 py-4 rounded-xl bg-white/[0.05] border border-white/10 text-white font-black uppercase tracking-widest text-xs hover:bg-white/[0.1] hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
+                onClick={() => window.location.href = appMode === 'junior' ? 'https://corporategpt.catalizia.com' : 'https://techie.catalizia.com'}
+                className="px-8 py-4 rounded-xl bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-xs hover:bg-white/10 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 group"
               >
-                🏢 Ver demo Enterprise
+                {appMode === 'junior' ? (
+                  <><Shield size={16} className="text-blue-500" /> Ir a Corporate GPT</>
+                ) : (
+                  <><Zap size={16} className="text-emerald-500" /> Ir a Techie Tutor</>
+                )}
               </button>
             </motion.div>
             <motion.p 
