@@ -458,9 +458,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, onOpenDiagnost
                             onChange={(e) => handleUpdateSubscription(user.id, e.target.value)}
                             className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-white text-[10px] focus:outline-none"
                           >
-                            <option value="free" className="bg-[#0f172a]">Básico (Gratis)</option>
-                            <option value="basic" className="bg-[#0f172a]">Plan $50 (Conexión Propia)</option>
-                            <option value="pro" className="bg-[#0f172a]">Plan $99 (Premium Plus)</option>
+                            <option value="free" className="bg-[#0f172a]">Prueba Gratis</option>
+                            <option value="explorador" className="bg-[#0f172a]">Explorador ($50 - BYOK)</option>
+                            <option value="maestro" className="bg-[#0f172a]">Maestro ($100)</option>
+                            <option value="leyenda" className="bg-[#0f172a]">Leyenda ($200)</option>
+                            <option value="family_starter" className="bg-[#0f172a]">Familiar Starter ($199)</option>
+                            <option value="family_mega" className="bg-[#0f172a]">Familiar Mega ($299)</option>
 
                           </select>
                         </div>

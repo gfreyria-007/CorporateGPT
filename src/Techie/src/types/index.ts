@@ -194,7 +194,7 @@ export interface Flashcard {
   answer: string;
 }
 
-export type SubscriptionLevel = 'free' | 'explorador' | 'maestro' | 'leyenda' | 'admin';
+export type SubscriptionLevel = 'free' | 'explorador' | 'maestro' | 'leyenda' | 'admin' | 'family_starter' | 'family_mega';
 
 export interface Badge {
   id: string;

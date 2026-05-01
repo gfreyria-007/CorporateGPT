@@ -37,7 +37,9 @@ import * as gameAudio from './utils/gameAudio';
 const BUDGETS = {
     FREE: 0,
     MAESTRO: 50,
-    LEYENDA: 125
+    LEYENDA: 125,
+    FAMILY_STARTER: 100,
+    FAMILY_MEGA: 250
 };
 
 const COSTS = {
@@ -105,19 +107,21 @@ export const TechieMain: React.FC = () => {
   const [showMathLab, setShowMathLab] = useState(false);
 
   const isTrialActive = userProfile?.trialExpiresAt ? new Date() < new Date(userProfile.trialExpiresAt) : true;
-  const isSubscribed = (userProfile?.subscriptionLevel === 'explorador' || userProfile?.subscriptionLevel === 'maestro' || userProfile?.role === 'admin');
-  const isEmailVerified = currentUser?.emailVerified;
+  const isSubscribed = ['explorador', 'maestro', 'leyenda', 'family_starter', 'family_mega'].includes(userProfile?.subscriptionLevel || '') || userProfile?.role === 'admin';
+  const isEmailVerified = true; // Bypassed per user request
   const hasPersonalKey = !!userProfile?.personalApiKey;
 
   // Maestro/Leyenda users and trial users get to use the system key.
   // Explorador users must use their own key (BYOK).
   const metaEnv = (import.meta as any).env || {};
   const systemKeyExists = !!metaEnv.VITE_GEMINI_API_KEY;
-  const canUseSystemKey = (isTrialActive || userProfile?.subscriptionLevel === 'maestro' || userProfile?.subscriptionLevel === 'leyenda' || userProfile?.role === 'admin') && systemKeyExists;
+  const canUseSystemKey = (isTrialActive || ['maestro', 'leyenda', 'family_starter', 'family_mega'].includes(userProfile?.subscriptionLevel || '') || userProfile?.role === 'admin') && systemKeyExists;
   
   const getMonthlyBudget = () => {
     if (userProfile?.role === 'admin') return Infinity;
+    if (userProfile?.subscriptionLevel === 'family_mega') return BUDGETS.FAMILY_MEGA;
     if (userProfile?.subscriptionLevel === 'leyenda') return BUDGETS.LEYENDA;
+    if (userProfile?.subscriptionLevel === 'family_starter') return BUDGETS.FAMILY_STARTER;
     if (userProfile?.subscriptionLevel === 'maestro') return BUDGETS.MAESTRO;
     return BUDGETS.FREE;
   };

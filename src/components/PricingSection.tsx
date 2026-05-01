@@ -244,8 +244,8 @@ export const PricingSection = () => {
           <>
             <PricingCard 
               plan="Family Starter"
-              users="4 Miembros"
-              oldPrice="2 Adultos + 2 Niños"
+              users="3 Miembros"
+              oldPrice="Acceso Familiar"
               newPrice="$199"
               isLoading={isRedirecting === 'Family Starter'}
               features={[
@@ -259,18 +259,18 @@ export const PricingSection = () => {
             />
             <PricingCard 
               plan="Family Mega"
-              users="6 Miembros"
+              users="5 Miembros"
               oldPrice="Espacio Multigeneracional"
               newPrice="$299"
               isFeatured
               isLoading={isRedirecting === 'Family Mega'}
               features={[
-                 "Hasta 6 miembros de la familia",
+                 "Hasta 5 miembros de la familia",
+                 "DOBLE DE TOKENS INCLUIDOS",
                  "BONO: $100 MXN en tokens extra",
                  "Techie Tutor (Junior) PRO",
                  "Reportes de aprendizaje semanales",
-                 "Soporte prioritario familiar",
-                 "Tokens Elite-Eco Ilimitados"
+                 "Soporte prioritario familiar"
               ]}
               onBuy={() => handleBuy('Family Mega')}
             />

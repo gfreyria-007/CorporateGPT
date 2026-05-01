@@ -16,8 +16,13 @@ import {
   Mail,
   ArrowRight
 } from 'lucide-react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useGSAP } from '@gsap/react';
 import { translations } from '../lib/translations';
 import { salesAgentChat } from '../services/geminiService';
+
+gsap.registerPlugin(ScrollTrigger);
 
 interface SalesLandingProps {
   lang: 'en' | 'es';
@@ -32,6 +37,39 @@ export const SalesLanding = ({ lang, onContact }: SalesLandingProps) => {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    const tl = gsap.timeline({ defaults: { ease: 'power4.out', duration: 1.2 } });
+
+    tl.from('.sales-hero-content > *', {
+      y: 40,
+      opacity: 0,
+      stagger: 0.2,
+    })
+    .from('.sales-agent-box', {
+      x: 60,
+      opacity: 0,
+      duration: 1.5,
+    }, '-=1')
+    .from('.sales-value-card', {
+      y: 30,
+      opacity: 0,
+      stagger: 0.1,
+      duration: 1,
+    }, '-=0.8');
+
+    gsap.from('.trust-item', {
+      scrollTrigger: {
+        trigger: '.trust-footer',
+        start: 'top 90%',
+      },
+      y: 20,
+      opacity: 0,
+      stagger: 0.1,
+      duration: 0.8,
+    });
+  }, { scope: containerRef });
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -56,19 +94,15 @@ export const SalesLanding = ({ lang, onContact }: SalesLandingProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white selection:bg-blue-500/30 overflow-hidden relative">
+    <div ref={containerRef} className="min-h-screen bg-[#020617] text-white selection:bg-blue-500/30 overflow-hidden relative">
       {/* Background Glows */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-600/10 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-indigo-600/10 blur-[130px] rounded-full pointer-events-none" />
 
       <main className="relative z-10 max-w-7xl mx-auto px-6 py-12 md:py-24 grid lg:grid-cols-2 gap-16 items-center">
         {/* Left Side: Content */}
-        <div className="space-y-12">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
-          >
+        <div className="space-y-12 sales-hero-content">
+          <div className="space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-[10px] font-black uppercase tracking-widest">
               <Zap size={12} fill="currentColor" />
               {lang === 'es' ? 'Potenciado por el Empresario' : 'Empowered by the Entrepreneur'}
@@ -80,28 +114,28 @@ export const SalesLanding = ({ lang, onContact }: SalesLandingProps) => {
             <p className="text-xl text-slate-400 max-w-xl leading-relaxed">
               {t.trialEndedSubtitle} {t.longTermValue}
             </p>
-          </motion.div>
+          </div>
 
           {/* Value Grid */}
           <div className="grid sm:grid-cols-2 gap-6">
-            <ValueCard 
-              icon={<Lock className="text-emerald-400" />}
-              title={lang === 'es' ? 'Privacidad vs Gratuito' : 'Privacy vs Free AI'}
-              desc={t.dataPrivacyWarning}
-            />
-            <ValueCard 
-              icon={<TrendingUp className="text-blue-400" />}
-              title={lang === 'es' ? 'Escalabilidad PyME' : 'SME Scalability'}
-              desc={t.pricingEfficiency}
-            />
+            <div className="sales-value-card">
+              <ValueCard 
+                icon={<Lock className="text-emerald-400" />}
+                title={lang === 'es' ? 'Privacidad vs Gratuito' : 'Privacy vs Free AI'}
+                desc={t.dataPrivacyWarning}
+              />
+            </div>
+            <div className="sales-value-card">
+              <ValueCard 
+                icon={<TrendingUp className="text-blue-400" />}
+                title={lang === 'es' ? 'Escalabilidad PyME' : 'SME Scalability'}
+                desc={t.pricingEfficiency}
+              />
+            </div>
           </div>
 
           {/* Use Case Spotlight */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="p-8 rounded-[2.5rem] bg-slate-900/40 border border-white/5 backdrop-blur-xl space-y-6"
-          >
+          <div className="sales-value-card p-8 rounded-[2.5rem] bg-slate-900/40 border border-white/5 backdrop-blur-xl space-y-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-indigo-500/20 rounded-2xl flex items-center justify-center">
                 <Users className="text-indigo-400" />
@@ -121,7 +155,7 @@ export const SalesLanding = ({ lang, onContact }: SalesLandingProps) => {
                 </span>
               ))}
             </div>
-          </motion.div>
+          </div>
 
           <div className="flex flex-col sm:flex-row gap-4">
              <button className="h-16 px-8 bg-blue-600 hover:bg-blue-700 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-xl shadow-blue-500/20 active:scale-95 group">
@@ -140,7 +174,7 @@ export const SalesLanding = ({ lang, onContact }: SalesLandingProps) => {
         </div>
 
         {/* Right Side: Sales Agent Agent */}
-        <div className="relative group">
+        <div className="relative group sales-agent-box">
           <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-[3rem] blur opacity-25 group-hover:opacity-40 transition-opacity" />
           <div className="relative bg-slate-900/80 border border-white/10 backdrop-blur-2xl rounded-[3rem] h-[700px] flex flex-col overflow-hidden shadow-2xl">
             {/* Header */}
@@ -218,12 +252,12 @@ export const SalesLanding = ({ lang, onContact }: SalesLandingProps) => {
       </main>
 
       {/* Trust Footer */}
-      <footer className="relative z-10 border-t border-white/5 py-12 bg-[#020617]/50 backdrop-blur-md">
+      <footer className="relative z-10 border-t border-white/5 py-12 bg-[#020617]/50 backdrop-blur-md trust-footer">
         <div className="max-w-7xl mx-auto px-6 flex flex-wrap justify-center gap-12 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all duration-700">
            {/* Fake logos representing the professional target */}
-           <div className="flex items-center gap-2 font-black text-xs uppercase tracking-tighter">TRUSTED SECURITY</div>
-           <div className="flex items-center gap-2 font-black text-xs uppercase tracking-tighter">SME COMPLIANT</div>
-           <div className="flex items-center gap-2 font-black text-xs uppercase tracking-tighter">60% LOWER TCO</div>
+           <div className="trust-item flex items-center gap-2 font-black text-xs uppercase tracking-tighter">TRUSTED SECURITY</div>
+           <div className="trust-item flex items-center gap-2 font-black text-xs uppercase tracking-tighter">SME COMPLIANT</div>
+           <div className="trust-item flex items-center gap-2 font-black text-xs uppercase tracking-tighter">60% LOWER TCO</div>
         </div>
       </footer>
     </div>
@@ -242,6 +276,6 @@ const ValueCard = ({ icon, title, desc }: ValueCardProps) => (
       {icon}
     </div>
     <h4 className="font-bold text-white mb-2">{title}</h4>
-    <p className="text-xs text-slate-500 leading-relaxed leading-relaxed">{desc}</p>
+    <p className="text-xs text-slate-500 leading-relaxed">{desc}</p>
   </div>
 );

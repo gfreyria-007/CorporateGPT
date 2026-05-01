@@ -40,6 +40,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, userProf
       case 'explorador': return 'Plan Explorador ($50)';
       case 'maestro': return 'Plan Maestro ($100)';
       case 'leyenda': return 'Plan Leyenda ($200)';
+      case 'family_starter': return 'Plan Familiar Starter ($199)';
+      case 'family_mega': return 'Plan Familiar Mega ($299)';
       case 'admin': return 'Plan Administrador';
       default: return 'Periodo de Prueba';
     }

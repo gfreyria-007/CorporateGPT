@@ -399,21 +399,25 @@ export default function App() {
     )} id="app-container">
       
       {/* Sidebar - Desktop only */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {isSidebarOpen && (
           <motion.aside 
             initial={{ width: 0, opacity: 0 }}
             animate={{ width: 320, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 35 }}
             className={cn("border-r flex flex-col shrink-0 z-50",
               theme === 'dark' ? 'bg-corporate-950 border-white/5 shadow-2xl' : 'bg-white border-corporate-100 shadow-xl'
             )}
           >
             <div className="p-8 border-b border-inherit">
                <div className="flex items-center gap-4 mb-12">
-                  <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-blue-500/30 ring-4 ring-blue-600/10">
+                  <motion.div 
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                    className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-blue-500/30 ring-4 ring-blue-600/10"
+                  >
                     {appConfig?.appLogoText || 'C'}
-                  </div>
+                  </motion.div>
                   <div>
                     <h1 className="text-xl font-display font-black tracking-tighter leading-none uppercase">
                       {appMode === 'junior' ? 'Techie Tutor' : (appConfig?.appName || t.appName)}
@@ -424,24 +428,47 @@ export default function App() {
                   </div>
                </div>
 
-               <div className="flex flex-col gap-1.5">
-                 {/* Persona Switcher - Only show if user has both permissions */}
-                 {((profile as any)?.permissions?.junior === true && (profile as any)?.permissions?.corporate !== false) && (
-                   <div className="mb-6 p-1 bg-slate-100 dark:bg-white/5 rounded-2xl flex gap-1 border border-corporate-200 dark:border-white/10">
-                      <button 
-                        onClick={() => setAppMode('corporate')}
-                        className={cn("flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2", appMode === 'corporate' ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" : "text-slate-500")}
-                      >
-                        <Shield size={12} /> Corporate
-                      </button>
-                      <button 
-                        onClick={() => setAppMode('junior')}
-                        className={cn("flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2", appMode === 'junior' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-slate-500 hover:text-emerald-500")}
-                      >
-                        <Zap size={12} /> Techie
-                      </button>
-                   </div>
-                 )}
+               <motion.div 
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  visible: { transition: { staggerChildren: 0.05 } },
+                  hidden: { transition: { staggerChildren: 0.05 } }
+                }}
+                className="flex flex-col gap-1.5"
+               >
+                  {/* Persona Switcher - Only show if user has both permissions */}
+                  {((profile as any)?.permissions?.junior === true && (profile as any)?.permissions?.corporate !== false) && (
+                    <motion.div 
+                     variants={{ hidden: { opacity: 0, scale: 0.95 }, visible: { opacity: 1, scale: 1 } }}
+                     className="mb-6 p-1.5 bg-slate-100 dark:bg-white/5 rounded-[2rem] flex gap-1.5 border border-corporate-200 dark:border-white/10 shadow-inner"
+                    >
+                       <motion.button 
+                         whileHover={{ scale: 1.02 }}
+                         whileTap={{ scale: 0.98 }}
+                         onClick={() => setAppMode('corporate')}
+                         className={cn("flex-1 py-3.5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2", 
+                           appMode === 'corporate' 
+                             ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30" 
+                             : "text-slate-500 hover:text-blue-600"
+                         )}
+                       >
+                         <Shield size={14} /> Corporate
+                       </motion.button>
+                       <motion.button 
+                         whileHover={{ scale: 1.02 }}
+                         whileTap={{ scale: 0.98 }}
+                         onClick={() => setAppMode('junior')}
+                         className={cn("flex-1 py-3.5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2", 
+                           appMode === 'junior' 
+                             ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30" 
+                             : "text-slate-500 hover:text-emerald-500"
+                         )}
+                       >
+                         <Zap size={14} /> Techie
+                       </motion.button>
+                    </motion.div>
+                  )}
 
                  {[
                    { id: 'chat', label: appMode === 'corporate' ? t.intelligentChat : 'Techie Tutor', icon: <MessageSquare size={18} /> },
@@ -449,44 +476,56 @@ export default function App() {
                    { id: 'knowledge', label: appMode === 'corporate' ? 'Knowledge Bank' : 'Biblioteca', icon: <Database size={18} /> },
                    { id: 'ppt', label: appMode === 'corporate' ? t.pptStudio : 'Presentaciones', icon: <Presentation size={18} /> }
                  ].map(item => (
-                   <button 
+                   <motion.button 
                     key={item.id}
+                    variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => setActivePanel(item.id as any)}
                     className={cn("flex items-center gap-3 px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all",
                       activePanel === item.id ? (appMode === 'corporate' ? 'bg-blue-600 text-white shadow-2xl shadow-blue-500/40 translate-x-2' : 'bg-emerald-500 text-white shadow-2xl shadow-emerald-500/40 translate-x-2') : 'text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-corporate-900'
                     )}
                    >
                       {item.icon} {item.label}
-                   </button>
+                   </motion.button>
                  ))}
                  
                  {isSuperAdmin && (
-                   <button 
+                   <motion.button 
+                    variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => setActivePanel('team')}
                     className="flex items-center gap-3 px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-corporate-900 transition-all"
                    >
                       <Users size={18} /> Team Management
-                   </button>
+                   </motion.button>
                  )}
 
-                 <button 
+                 <motion.button 
+                  variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => setShowUpgradePlan(true)}
                   className="flex items-center gap-3 px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-corporate-900 transition-all"
                  >
                     <CreditCard size={18} /> Upgrade Plan
-                 </button>
-               </div>
+                 </motion.button>
+               </motion.div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
                <div className="space-y-4">
                   <div className="px-2 space-y-3">
                      <div className="flex items-center justify-between">
-                        <label className="text-[10px] font-black text-slate-300 dark:text-slate-300 uppercase tracking-[0.2em] leading-none">Security Pipeline</label>
+                        <label className="text-[10px] font-black text-slate-300 dark:text-slate-400 uppercase tracking-[0.2em] leading-none">Security Pipeline</label>
                         <div className="flex items-center gap-2">
                            <span className={cn("text-[9px] font-black uppercase tracking-tighter", zdrEnabled ? "text-emerald-500" : "text-slate-300")}>ZDR</span>
                            <button onClick={() => setZdrEnabled(!zdrEnabled)} className={cn("w-10 h-5 rounded-full transition-all relative shrink-0", zdrEnabled ? "bg-emerald-500 shadow-lg shadow-emerald-500/20" : "bg-slate-300 dark:bg-corporate-800")}>
-                              <div className={cn("absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all shadow-md", zdrEnabled ? "right-0.5" : "left-0.5")} />
+                              <motion.div 
+                                animate={{ x: zdrEnabled ? 20 : 0 }}
+                                className={cn("absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all shadow-md")} 
+                              />
                            </button>
                         </div>
                      </div>
@@ -512,17 +551,22 @@ export default function App() {
                </div>
 
                {isSuperAdmin && (
-                 <div className="space-y-3 pt-6 border-t border-slate-200 dark:border-white/5">
+                 <motion.div 
+                  variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}
+                  className="space-y-3 pt-6 border-t border-slate-200 dark:border-white/5"
+                 >
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Management</label>
-                    <button 
+                    <motion.button 
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => setActivePanel('admin')}
                       className={cn("w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
                         activePanel === 'admin' ? 'bg-corporate-900 shadow-xl text-white' : 'text-slate-500 hover:bg-white dark:hover:bg-corporate-900'
                       )}
                     >
                        <Terminal size={18} /> Console
-                    </button>
-                 </div>
+                    </motion.button>
+                 </motion.div>
                )}
             </div>
 
@@ -558,25 +602,48 @@ export default function App() {
         )}>
           {/* Neural Processing Bar */}
           {isChatLoading && (
-            <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-600/20">
-               <div className="h-full bg-blue-600 w-1/3" />
-            </div>
+            <motion.div 
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute bottom-0 left-0 right-0 h-[3px] bg-blue-600/30 origin-left z-[60]"
+            >
+               <div className="h-full bg-gradient-to-r from-blue-600 to-indigo-600 w-full" />
+            </motion.div>
           )}
 
           <div className="flex items-center gap-6">
-             <button 
+             <motion.button 
+               whileHover={{ scale: 1.1, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}
+               whileTap={{ scale: 0.9 }}
                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-               className="p-3 bg-slate-100 dark:bg-white/5 rounded-2xl text-slate-400 hover:text-blue-600 transition-all active:scale-90"
+               className="p-3 bg-slate-100 dark:bg-white/5 rounded-2xl text-slate-400 hover:text-blue-600 transition-all shadow-sm"
              >
                <Menu size={20} />
-             </button>
+             </motion.button>
              <div className="flex items-center gap-3 relative">
-                 <div className={cn("w-3 h-3 rounded-full relative z-10", isChatLoading ? 'bg-amber-500' : 'bg-emerald-500')} />
-                <h2 className="text-xl font-display font-black tracking-tight uppercase">
+                 <motion.div 
+                  animate={{ 
+                    scale: [1, 1.3, 1],
+                    opacity: [1, 0.7, 1]
+                  }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                  className={cn("w-3.5 h-3.5 rounded-full relative z-10 shadow-lg", 
+                    isChatLoading ? 'bg-amber-500 shadow-amber-500/20' : 'bg-emerald-500 shadow-emerald-500/20'
+                  )} 
+                 />
+                <h2 className="text-xl font-display font-black tracking-tight uppercase bg-clip-text text-transparent bg-gradient-to-r from-inherit to-slate-400">
                   {selectedGPT ? selectedGPT.name : (selectedModel === 'openrouter/auto' ? t.autoRouter : currentModelData?.name || 'Corporate Pipeline')}
                 </h2>
                 {selectedGPT && (
-                  <button onClick={() => setSelectedGPT(null)} className="p-1.5 bg-slate-100 dark:bg-white/5 rounded-full text-slate-400 hover:text-red-500"><X size={14} /></button>
+                  <motion.button 
+                    whileHover={{ scale: 1.1, rotate: 90 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setSelectedGPT(null)} 
+                    className="p-1.5 bg-slate-100 dark:bg-white/5 rounded-full text-slate-400 hover:text-red-500"
+                  >
+                    <X size={14} />
+                  </motion.button>
                 )}
              </div>
           </div>
@@ -587,14 +654,29 @@ export default function App() {
                    <p className="text-sm font-black tracking-tight">{user.displayName || 'Corporate User'}</p>
                    <p className="text-[10px] font-black text-blue-600 capitalize opacity-60 tracking-widest">{profile?.role || 'Basic Account'}</p>
                 </div>
-                <div className="w-11 h-11 rounded-2xl bg-blue-600 flex-shrink-0 overflow-hidden shadow-2xl ring-4 ring-white dark:ring-corporate-950">
-                  {user.photoURL ? <img src={user.photoURL} alt="User" /> : <div className="w-full h-full flex items-center justify-center font-black text-lg text-white">U</div>}
-                </div>
-                <button onClick={logout} className="p-3 text-slate-400 hover:text-red-500 transition-colors"><LogOut size={20} /></button>
+                <motion.div 
+                  whileHover={{ scale: 1.1, rotate: -3 }}
+                  className="w-11 h-11 rounded-2xl bg-blue-600 flex-shrink-0 overflow-hidden shadow-2xl ring-4 ring-white dark:ring-corporate-950 cursor-pointer"
+                >
+                  {user.photoURL ? <img src={user.photoURL} alt="User" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-black text-lg text-white">U</div>}
+                </motion.div>
+                <motion.button 
+                  whileHover={{ scale: 1.1, color: '#ef4444' }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={logout} 
+                  className="p-3 text-slate-400 transition-colors"
+                >
+                  <LogOut size={20} />
+                </motion.button>
              </div>
-             <button onClick={() => setShowFAQ(true)} className="flex items-center gap-3 px-5 py-3 bg-slate-100 dark:bg-corporate-900 rounded-2xl text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-all text-[11px] font-black uppercase tracking-widest">
+             <motion.button 
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowFAQ(true)} 
+              className="flex items-center gap-3 px-5 py-3 bg-slate-100 dark:bg-corporate-900 rounded-2xl text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-all text-[11px] font-black uppercase tracking-widest shadow-sm"
+             >
                 <HelpCircle size={16} /> FAQ
-             </button>
+             </motion.button>
           </div>
         </header>
 

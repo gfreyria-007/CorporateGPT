@@ -17,22 +17,34 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, lang }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.98, y: 10 }}
+      initial={{ opacity: 0, scale: 0.95, y: 30 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ 
+        type: 'spring', 
+        stiffness: 260, 
+        damping: 20,
+        delay: isUser ? 0 : 0.1
+      }}
+      whileHover={{ scale: 1.002, transition: { duration: 0.2 } }}
       className={`flex gap-6 mb-8 max-w-4xl mx-auto w-full group relative`}
       id={`message-${message.id}`}
     >
-      <div className={`w-12 h-12 rounded-2xl flex-shrink-0 flex items-center justify-center text-[11px] font-black shadow-lg transition-transform group-hover:rotate-6 ${
-        isUser ? 'bg-white border border-slate-200 text-slate-400' : 'bg-blue-600 text-white shadow-blue-500/30 ring-4 ring-blue-600/10'
-      }`}>
+      <motion.div 
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ type: 'spring', delay: 0.2 }}
+        className={`w-12 h-12 rounded-2xl flex-shrink-0 flex items-center justify-center text-[11px] font-black shadow-lg transition-transform group-hover:rotate-6 ${
+          isUser ? 'bg-white border border-slate-200 text-slate-400' : 'bg-blue-600 text-white shadow-blue-500/30 ring-4 ring-blue-600/10'
+        }`}
+      >
         {isUser ? 'USR' : (
           <div className="relative w-full h-full flex items-center justify-center">
             <Sparkles size={18} />
           </div>
         )}
-      </div>
+      </motion.div>
       
-      <div className={`flex-1 p-8 rounded-[2.5rem] rounded-tl-none border transition-all relative overflow-hidden ${
+      <div className={`flex-1 p-8 rounded-[2.5rem] rounded-tl-none border transition-all relative overflow-hidden group-hover:shadow-2xl group-hover:shadow-blue-500/5 ${
         isUser 
           ? 'bg-white dark:bg-corporate-900 border-corporate-200 dark:border-white/10 text-corporate-900 dark:text-white shadow-sm' 
           : 'bg-white dark:bg-corporate-900 border-blue-500/20 dark:border-blue-500/30 text-corporate-900 dark:text-white shadow-xl shadow-blue-500/5'

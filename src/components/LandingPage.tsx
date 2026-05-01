@@ -42,66 +42,123 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
   };
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const glow1Ref = useRef<HTMLDivElement>(null);
+  const glow2Ref = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {
-    // Problem section grid items
+    // 1. Hero Entrance Timeline
+    const tl = gsap.timeline({ defaults: { ease: 'power4.out' } });
+    
+    tl.from('.nav-item', { 
+      y: -20, 
+      opacity: 0, 
+      duration: 1, 
+      stagger: 0.1 
+    })
+    .from('.hero-badge', { 
+      scale: 0.8, 
+      opacity: 0, 
+      duration: 1 
+    }, '-=0.5')
+    .from('.hero-title', { 
+      y: 40, 
+      opacity: 0, 
+      duration: 1.2,
+      stagger: 0.2
+    }, '-=0.8')
+    .from('.hero-desc', { 
+      y: 20, 
+      opacity: 0, 
+      duration: 1 
+    }, '-=1')
+    .from('.hero-btn', { 
+      y: 20, 
+      opacity: 0, 
+      duration: 1, 
+      stagger: 0.2 
+    }, '-=0.8')
+    .from('.hero-check', { 
+      opacity: 0, 
+      scale: 0, 
+      duration: 0.5, 
+      stagger: 0.1 
+    }, '-=0.5');
+
+    // 2. Interactive Parallax Glows
+    const handleMouseMove = (e: MouseEvent) => {
+      const { clientX, clientY } = e;
+      const xPos = (clientX / window.innerWidth - 0.5) * 50;
+      const yPos = (clientY / window.innerHeight - 0.5) * 50;
+
+      gsap.to(glow1Ref.current, { x: xPos, y: yPos, duration: 2, ease: 'power2.out' });
+      gsap.to(glow2Ref.current, { x: -xPos, y: -yPos, duration: 2, ease: 'power2.out' });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+
+    // 3. Problem Section Stagger
     gsap.from('.problem-card', {
       scrollTrigger: {
         trigger: '.problem-section',
-        start: 'top 80%',
+        start: 'top 75%',
+        toggleActions: 'play none none reverse'
       },
-      y: 50,
+      y: 60,
       opacity: 0,
-      duration: 0.8,
-      stagger: 0.15,
+      rotateX: -15,
+      duration: 1,
+      stagger: 0.1,
       ease: 'power3.out'
     });
 
-    // Solution bento grid items
+    // 4. Solution Bento Animation
     gsap.from('.solution-card', {
       scrollTrigger: {
         trigger: '.solution-section',
-        start: 'top 80%',
+        start: 'top 75%',
       },
-      y: 50,
+      scale: 0.9,
       opacity: 0,
-      duration: 0.8,
-      stagger: 0.2,
-      ease: 'back.out(1.7)'
+      y: 40,
+      duration: 1.2,
+      stagger: 0.15,
+      ease: 'back.out(1.2)'
     });
 
-    // Products section
+    // 5. Product Cards Reveal
     gsap.from('.product-card', {
       scrollTrigger: {
         trigger: '.product-section',
-        start: 'top 80%',
+        start: 'top 70%',
       },
-      scale: 0.95,
+      x: (i) => i % 2 === 0 ? -50 : 50,
       opacity: 0,
-      duration: 1,
-      stagger: 0.2,
+      duration: 1.5,
       ease: 'power4.out'
     });
 
-    // Table section
+    // 6. Comparison Table Row-by-Row
     gsap.from('.comparison-row', {
       scrollTrigger: {
         trigger: '.comparison-table',
-        start: 'top 85%',
+        start: 'top 80%',
       },
-      x: -50,
       opacity: 0,
-      duration: 0.6,
-      stagger: 0.1,
+      x: -30,
+      duration: 0.8,
+      stagger: 0.05,
       ease: 'power2.out'
     });
+
+    return () => window.removeEventListener('mousemove', handleMouseMove);
   }, { scope: containerRef });
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-black font-sans selection:bg-blue-600 selection:text-white relative">
+    <div ref={containerRef} className="min-h-screen bg-black font-sans selection:bg-blue-600 selection:text-white relative perspective-1000">
       {/* Navigation */}
       <nav className="h-20 lg:h-24 px-6 lg:px-12 flex items-center justify-between sticky top-0 z-[100] bg-black/80 backdrop-blur-3xl border-b border-white/[0.05]">
-        <div className="flex items-center gap-3 lg:gap-4">
+        <div className="flex items-center gap-3 lg:gap-4 nav-item">
           <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-[0_0_20px_rgba(255,255,255,0.1)] bg-white/10 backdrop-blur-md border border-white/20 transition-all">
              C
           </div>
@@ -111,16 +168,18 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
         </div>
         
         <div className="hidden lg:flex items-center gap-10 text-[10px] font-black uppercase tracking-[0.3em] text-white/70">
-          <a href="#solutions" onClick={(e) => { e.preventDefault(); scrollToFeatures(); }} className="hover:text-white transition-colors">Plataforma</a>
-          <a href="#economics" className="hover:text-white transition-colors">Ahorro y Control</a>
-          <a href={appMode === 'junior' ? 'https://corporategpt.catalizia.com' : 'https://techie.catalizia.com'} className="px-4 py-2 bg-blue-600/10 text-blue-400 rounded-xl border border-blue-500/20 hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2 group">
-             <Zap size={12} className={cn("transition-transform group-hover:scale-125", appMode === 'junior' ? "text-blue-400" : "text-emerald-400")} />
-             {appMode === 'junior' ? 'Corporate GPT' : 'Techie Tutor (Junior)'}
-          </a>
-          <a href="#support" className="hover:text-white transition-colors">Soporte</a>
+          <a href="#solutions" onClick={(e) => { e.preventDefault(); scrollToFeatures(); }} className="hover:text-white transition-colors nav-item">Plataforma</a>
+          <a href="#economics" className="hover:text-white transition-colors nav-item">Ahorro y Control</a>
+          <div className="nav-item">
+            <a href={appMode === 'junior' ? 'https://corporategpt.catalizia.com' : 'https://techie.catalizia.com'} className="px-4 py-2 bg-blue-600/10 text-blue-400 rounded-xl border border-blue-500/20 hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2 group">
+              <Zap size={12} className={cn("transition-transform group-hover:scale-125", appMode === 'junior' ? "text-blue-400" : "text-emerald-400")} />
+              {appMode === 'junior' ? 'Corporate GPT' : 'Techie Tutor (Junior)'}
+            </a>
+          </div>
+          <a href="#support" className="hover:text-white transition-colors nav-item">Soporte</a>
         </div>
 
-        <div className="flex items-center gap-3 lg:gap-4">
+        <div className="flex items-center gap-3 lg:gap-4 nav-item">
           <button 
             onClick={onStartSession}
             disabled={isSigningIn}
@@ -132,43 +191,40 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-24 px-6 lg:px-12 overflow-hidden bg-[#020205]">
+      <section className="relative pt-32 pb-24 px-6 lg:px-12 overflow-hidden bg-[#020205]" ref={heroRef}>
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-           <div className="absolute top-[-20%] right-[-10%] w-[70vw] h-[70vw] bg-blue-600/10 blur-[150px] rounded-full" />
-           <div className="absolute bottom-[-20%] left-[-10%] w-[70vw] h-[70vw] bg-emerald-500/10 blur-[150px] rounded-full" />
+           <div ref={glow1Ref} className="absolute top-[-20%] right-[-10%] w-[70vw] h-[70vw] bg-blue-600/10 blur-[150px] rounded-full" />
+           <div ref={glow2Ref} className="absolute bottom-[-20%] left-[-10%] w-[70vw] h-[70vw] bg-emerald-500/10 blur-[150px] rounded-full" />
            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>
         </div>
 
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="flex flex-col items-center text-center space-y-8 mb-20">
-            <motion.div 
-               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-               className="inline-flex items-center gap-3 px-6 py-3 bg-white/[0.03] text-slate-300 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border border-white/[0.08] backdrop-blur-3xl shadow-2xl"
-            >
+            <div className="hero-badge inline-flex items-center gap-3 px-6 py-3 bg-white/[0.03] text-slate-300 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border border-white/[0.08] backdrop-blur-3xl shadow-2xl">
               <AlertTriangle size={14} className="text-amber-400" /> La IA sin control no es innovación. Es riesgo.
-            </motion.div>
+            </div>
             
-            <motion.h1 
-              initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-              className="text-4xl md:text-5xl lg:text-[4.5rem] font-display font-black tracking-tighter leading-[1.05] text-white"
-            >
-              {appMode === 'junior' ? (
-                <>
-                  Tutor de IA <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">Seguro</span> <br className="hidden md:block" />
-                  para el <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Crecimiento</span> de tus Hijos
-                </>
-              ) : (
-                <>
-                  Control Total: Inteligencia Segura <br className="hidden md:block" />
-                  para tu <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Negocio</span> y tu <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">Hogar</span>
-                </>
-              )}
-            </motion.h1>
+            <h1 className="text-4xl md:text-5xl lg:text-[4.5rem] font-display font-black tracking-tighter leading-[1.05] text-white">
+              <div className="hero-title">
+                {appMode === 'junior' ? 'Tutor de IA' : 'Control Total:'}
+              </div>
+              <div className="hero-title">
+                {appMode === 'junior' ? (
+                  <><span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">Seguro</span> para el</>
+                ) : (
+                  <>Inteligencia <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Segura</span></>
+                )}
+              </div>
+              <div className="hero-title">
+                {appMode === 'junior' ? (
+                  <><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Crecimiento</span> de tus Hijos</>
+                ) : (
+                  <>para tu <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Negocio</span> y tu <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">Hogar</span></>
+                )}
+              </div>
+            </h1>
             
-            <motion.div 
-              initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-              className="max-w-4xl text-sm md:text-base lg:text-lg text-slate-400 font-medium leading-relaxed space-y-4 text-left md:text-center"
-            >
+            <div className="hero-desc max-w-4xl text-sm md:text-base lg:text-lg text-slate-400 font-medium leading-relaxed space-y-4 text-left md:text-center">
               {appMode === 'junior' ? (
                 <>
                   <p>¿Sabes con qué IAs interactúan tus hijos? Techie Tutor ofrece un entorno protegido donde los menores pueden aprender y crear sin exposición a contenidos inadecuados o modelos comerciales sin filtros.</p>
@@ -180,21 +236,18 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
                   <p>Al mismo tiempo, la falta de filtros en el hogar permite que los menores interactúen con IAs diseñadas para adultos, exponiéndolos a respuestas o contenidos no adecuados para su edad.</p>
                 </>
               )}
-            </motion.div>
+            </div>
 
-            <motion.div 
-              initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-              className="flex flex-col sm:flex-row gap-4 pt-4 w-full sm:w-auto"
-            >
+            <div className="flex flex-col sm:flex-row gap-4 pt-4 w-full sm:w-auto">
               <button 
                 onClick={onStartSession}
-                className="px-8 py-4 rounded-xl bg-blue-600 text-white font-black uppercase tracking-widest text-xs hover:bg-blue-500 hover:scale-[1.02] transition-all shadow-[0_0_30px_rgba(37,99,235,0.4)] flex items-center justify-center gap-3"
+                className="hero-btn px-8 py-4 rounded-xl bg-blue-600 text-white font-black uppercase tracking-widest text-xs hover:bg-blue-500 hover:scale-[1.02] transition-all shadow-[0_0_30px_rgba(37,99,235,0.4)] flex items-center justify-center gap-3"
               >
                 🚀 Empezar Gratis
               </button>
               <button 
                 onClick={() => window.location.href = appMode === 'junior' ? 'https://corporategpt.catalizia.com' : 'https://techie.catalizia.com'}
-                className="px-8 py-4 rounded-xl bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-xs hover:bg-white/10 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 group"
+                className="hero-btn px-8 py-4 rounded-xl bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-xs hover:bg-white/10 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 group"
               >
                 {appMode === 'junior' ? (
                   <><Shield size={16} className="text-blue-500" /> Ir a Corporate GPT</>
@@ -202,17 +255,14 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
                   <><Zap size={16} className="text-emerald-500" /> Ir a Techie Tutor</>
                 )}
               </button>
-            </motion.div>
-            <motion.p 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
-              className="text-[11px] text-slate-500 font-medium tracking-wide uppercase mt-4 flex items-center gap-2"
-            >
-              <CheckCircle2 size={12} className="text-blue-500"/> Sin tarjeta 
-              <span className="opacity-30">•</span> 
-              <CheckCircle2 size={12} className="text-blue-500"/> Setup en 2 minutos 
-              <span className="opacity-30">•</span> 
-              <CheckCircle2 size={12} className="text-blue-500"/> Control total desde el día 1
-            </motion.p>
+            </div>
+            <div className="text-[11px] text-slate-500 font-medium tracking-wide uppercase mt-4 flex items-center gap-2">
+              <span className="hero-check flex items-center gap-2"><CheckCircle2 size={12} className="text-blue-500"/> Sin tarjeta</span>
+              <span className="hero-check opacity-30">•</span> 
+              <span className="hero-check flex items-center gap-2"><CheckCircle2 size={12} className="text-blue-500"/> Setup en 2 minutos</span>
+              <span className="hero-check opacity-30">•</span> 
+              <span className="hero-check flex items-center gap-2"><CheckCircle2 size={12} className="text-blue-500"/> Control total desde el día 1</span>
+            </div>
           </div>
         </div>
       </section>
@@ -226,23 +276,23 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-             <div className="problem-card p-8 rounded-3xl bg-red-950/10 border border-red-500/10 hover:border-red-500/30 transition-all">
-                <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center text-red-400 mb-6"><Users size={24} /></div>
+             <div className="problem-card p-8 rounded-3xl bg-red-950/10 border border-red-500/10 hover:border-red-500/30 transition-all group">
+                <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center text-red-400 mb-6 group-hover:scale-110 group-hover:rotate-6 transition-transform"><Users size={24} /></div>
                 <h4 className="text-lg font-black text-white mb-2">Herramientas Dispersas</h4>
                 <p className="text-slate-400 text-sm">Cada equipo contrata y usa herramientas distintas. No hay un estándar.</p>
              </div>
-             <div className="problem-card p-8 rounded-3xl bg-amber-950/10 border border-amber-500/10 hover:border-amber-500/30 transition-all">
-                <div className="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-400 mb-6"><FileWarning size={24} /></div>
+             <div className="problem-card p-8 rounded-3xl bg-amber-950/10 border border-amber-500/10 hover:border-amber-500/30 transition-all group">
+                <div className="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-400 mb-6 group-hover:scale-110 group-hover:rotate-6 transition-transform"><FileWarning size={24} /></div>
                 <h4 className="text-lg font-black text-white mb-2">Fuga de Datos Sensibles</h4>
                 <p className="text-slate-400 text-sm">Nadie controla qué documentos confidenciales se comparten en prompts públicos.</p>
              </div>
-             <div className="problem-card p-8 rounded-3xl bg-blue-950/10 border border-blue-500/10 hover:border-blue-500/30 transition-all">
-                <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-400 mb-6"><BarChart3 size={24} /></div>
+             <div className="problem-card p-8 rounded-3xl bg-blue-950/10 border border-blue-500/10 hover:border-blue-500/30 transition-all group">
+                <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-400 mb-6 group-hover:scale-110 group-hover:rotate-6 transition-transform"><BarChart3 size={24} /></div>
                 <h4 className="text-lg font-black text-white mb-2">Costos Incontrolables</h4>
                 <p className="text-slate-400 text-sm">Pagas suscripciones mensuales sin usar el límite y los gastos crecen sin explicación.</p>
              </div>
-             <div className="problem-card p-8 rounded-3xl bg-purple-950/10 border border-purple-500/10 hover:border-purple-500/30 transition-all">
-                <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-400 mb-6"><Target size={24} /></div>
+             <div className="problem-card p-8 rounded-3xl bg-purple-950/10 border border-purple-500/10 hover:border-purple-500/30 transition-all group">
+                <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-400 mb-6 group-hover:scale-110 group-hover:rotate-6 transition-transform"><Target size={24} /></div>
                 <h4 className="text-lg font-black text-white mb-2">Cero Visibilidad</h4>
                 <p className="text-slate-400 text-sm">Falta de trazabilidad. Es imposible saber quién usa qué, ni para qué tareas.</p>
              </div>
@@ -394,23 +444,23 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
                 <div className="text-center text-blue-400">Catalizia</div>
                 <div className="text-center">Otras IA</div>
              </div>
-             <div className="comparison-row grid grid-cols-3 p-6 border-b border-white/5 hover:bg-white/[0.02] transition-colors items-center">
-                <div className="font-bold text-white text-sm">Acceso Multi-modelo</div>
+             <div className="comparison-row grid grid-cols-3 p-6 border-b border-white/5 hover:bg-white/[0.02] transition-colors items-center group">
+                <div className="font-bold text-white text-sm group-hover:translate-x-2 transition-transform">Acceso Multi-modelo</div>
                 <div className="flex justify-center"><CheckCircle2 className="text-emerald-400" /></div>
                 <div className="flex justify-center"><XCircle className="text-red-500/50" /></div>
              </div>
-             <div className="comparison-row grid grid-cols-3 p-6 border-b border-white/5 hover:bg-white/[0.02] transition-colors items-center">
-                <div className="font-bold text-white text-sm">Control de Privacidad / Datos</div>
+             <div className="comparison-row grid grid-cols-3 p-6 border-b border-white/5 hover:bg-white/[0.02] transition-colors items-center group">
+                <div className="font-bold text-white text-sm group-hover:translate-x-2 transition-transform">Control de Privacidad / Datos</div>
                 <div className="flex justify-center"><CheckCircle2 className="text-emerald-400" /></div>
                 <div className="flex justify-center"><AlertTriangle className="text-amber-500" /></div>
              </div>
-             <div className="comparison-row grid grid-cols-3 p-6 border-b border-white/5 hover:bg-white/[0.02] transition-colors items-center">
-                <div className="font-bold text-white text-sm">Routing y Optimización de Costos</div>
+             <div className="comparison-row grid grid-cols-3 p-6 border-b border-white/5 hover:bg-white/[0.02] transition-colors items-center group">
+                <div className="font-bold text-white text-sm group-hover:translate-x-2 transition-transform">Routing y Optimización de Costos</div>
                 <div className="flex justify-center"><CheckCircle2 className="text-emerald-400" /></div>
                 <div className="flex justify-center"><XCircle className="text-red-500/50" /></div>
              </div>
-             <div className="comparison-row grid grid-cols-3 p-6 hover:bg-white/[0.02] transition-colors items-center">
-                <div className="font-bold text-white text-sm">Gobierno por Equipo / Accesos</div>
+             <div className="comparison-row grid grid-cols-3 p-6 hover:bg-white/[0.02] transition-colors items-center group">
+                <div className="font-bold text-white text-sm group-hover:translate-x-2 transition-transform">Gobierno por Equipo / Accesos</div>
                 <div className="flex justify-center"><CheckCircle2 className="text-emerald-400" /></div>
                 <div className="flex justify-center"><XCircle className="text-red-500/50" /></div>
              </div>
@@ -449,8 +499,8 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
                </button>
             </div>
             
-            <p className="mt-8 text-sm text-slate-500 font-medium">
-               "No necesitas más herramientas. Necesitas control."
+            <p className="mt-8 text-sm text-slate-500 font-medium italic">
+              "No necesitas más herramientas. Necesitas gobierno."
             </p>
          </div>
       </section>
