@@ -142,8 +142,8 @@ export default function App() {
     }
 
     // Auto-detect App Mode based on Subdomain
-    const hostname = window.location.hostname;
-    if (hostname.includes('techie') || hostname.includes('junior')) {
+    const hostname = window.location.hostname.toLowerCase();
+    if (hostname.startsWith('techie') || hostname.startsWith('junior') || hostname.includes('techie.catalizia.com')) {
       setAppMode('junior');
     } else {
       setAppMode('corporate');
@@ -412,9 +412,11 @@ export default function App() {
                   </div>
                   <div>
                     <h1 className="text-xl font-display font-black tracking-tighter leading-none uppercase">
-                      {appConfig?.appName || t.appName}
+                      {appMode === 'junior' ? 'Techie Tutor' : (appConfig?.appName || t.appName)}
                     </h1>
-                    <p className="text-[9px] font-black text-blue-600 uppercase tracking-[0.2em] mt-1">{t.slogan}</p>
+                    <p className="text-[9px] font-black text-blue-600 uppercase tracking-[0.2em] mt-1">
+                      {appMode === 'junior' ? 'Tu Guía de IA Segura' : t.slogan}
+                    </p>
                   </div>
                </div>
 
@@ -744,7 +746,7 @@ export default function App() {
       {/* Floating Environment Switcher */}
       <div className="fixed bottom-6 right-6 z-[9999]">
          <button 
-           onClick={() => setAppMode(appMode === 'corporate' ? 'junior' : 'corporate')}
+           onClick={() => window.location.href = appMode === 'corporate' ? 'https://techie.catalizia.com' : 'https://catalizia.com'}
            className={cn("flex items-center gap-3 px-5 py-4 rounded-full shadow-2xl transition-all hover:scale-105 border",
               appMode === 'corporate' 
                 ? "bg-emerald-500 text-white border-emerald-400 shadow-emerald-500/30" 
