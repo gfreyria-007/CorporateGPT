@@ -2,13 +2,15 @@ import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { SupportFooter } from './SupportFooter';
 import { TrialEndedModal } from './TrialEndedModal';
+import { LandingEditor } from './LandingEditor';
 import { 
   ShieldCheck, Shield, CheckCircle2, ChevronRight, Zap, Globe, Sparkles, Coins, 
   Cpu, Lock, MousePointer2, MessageSquare, Presentation, Palette, Database,
-  AlertTriangle, Users, BarChart3, Fingerprint, Crosshair, Target, XCircle, FileWarning
+  AlertTriangle, Users, BarChart3, Fingerprint, Crosshair, Target, XCircle, FileWarning, Settings
 } from 'lucide-react';
 import { translations } from '../lib/translations';
 import { cn } from '../lib/utils';
+import { getLandingConfig, isAdminEditing, setAdminEditing } from '../lib/landingConfig';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
@@ -23,18 +25,27 @@ interface LandingPageProps {
   setLang: (lang: 'en' | 'es') => void;
   appConfig?: any;
   appMode?: 'corporate' | 'junior';
+  isSuperAdmin?: boolean;
 }
 
-export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = false, lang = 'es', setLang, appConfig, appMode = 'corporate' }: LandingPageProps) => {
+export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = false, lang = 'es', setLang, appConfig, appMode = 'corporate', isSuperAdmin = false }: LandingPageProps) => {
   const t = translations[lang] || translations.es;
   const [isModalOpen, setIsModalOpen] = useState(showTrialModal);
+  const [showEditor, setShowEditor] = useState(false);
   const featuresRef = useRef<HTMLDivElement>(null);
+  const landingConfig = getLandingConfig();
+  const adminEditMode = isAdminEditing();
 
   useEffect(() => {
     if (showTrialModal) {
       setIsModalOpen(true);
-    }
   }, [showTrialModal]);
+
+  useEffect(() => {
+    if (isSuperAdmin && !adminEditMode) {
+      setShowEditor(true);
+    }
+  }, [isSuperAdmin]);
 
   const scrollToFeatures = () => {
     featuresRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -179,6 +190,15 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
         </div>
 
         <div className="flex items-center gap-3 lg:gap-4 nav-item">
+          {isSuperAdmin && (
+            <button 
+              onClick={() => setShowEditor(true)}
+              className="px-4 py-2 bg-amber-500 text-white rounded-xl font-black text-[9px] uppercase tracking-widest transition-all hover:scale-105"
+            >
+              <Settings size={14} className="inline mr-1" />
+              Edit
+            </button>
+          )}
           <button 
             onClick={onStartSession}
             disabled={isSigningIn}
@@ -581,6 +601,8 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
         onClose={() => setIsModalOpen(false)} 
         onViewPricing={onStartSession} 
       />
+
+      {showEditor && <LandingEditor onClose={() => setShowEditor(false)} />}
     </div>
   );
 };

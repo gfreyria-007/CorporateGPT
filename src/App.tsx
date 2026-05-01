@@ -358,6 +358,7 @@ export default function App() {
   }
 
   if (showLanding || !user) {
+    const isLandingSuperAdmin = user?.email === SUPER_ADMIN_EMAIL || profile?.role === 'super-admin';
     return (
       <LandingPage 
         onStartSession={signIn} 
@@ -367,6 +368,7 @@ export default function App() {
         setLang={setLang}
         appConfig={appConfig}
         appMode={appMode}
+        isSuperAdmin={isLandingSuperAdmin}
       />
     );
   }
