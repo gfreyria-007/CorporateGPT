@@ -407,23 +407,23 @@ export default function App() {
             exit={{ width: 0, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 35 }}
             className={cn("border-r flex flex-col shrink-0 z-50",
-              theme === 'dark' ? 'bg-corporate-950 border-white/5 shadow-2xl' : 'bg-white border-corporate-100 shadow-xl'
+              theme === 'dark' ? 'bg-corporate-950 border-white/5 shadow-2xl' : 'bg-white/80 backdrop-blur-3xl border-slate-100 shadow-[20px_0_40px_rgba(0,0,0,0.02)]'
             )}
           >
             <div className="p-8 border-b border-inherit">
                <div className="flex items-center gap-4 mb-12">
                   <motion.div 
                     whileHover={{ scale: 1.1, rotate: 5 }}
-                    className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-blue-500/30 ring-4 ring-blue-600/10"
+                    className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-blue-500/30 ring-4 ring-blue-600/10"
                   >
                     {appConfig?.appLogoText || 'C'}
                   </motion.div>
                   <div>
-                    <h1 className="text-xl font-display font-black tracking-tighter leading-none uppercase">
+                    <h1 className="text-xl font-display font-black tracking-tighter leading-none uppercase text-slate-900">
                       {appMode === 'junior' ? 'Techie Tutor' : (appConfig?.appName || t.appName)}
                     </h1>
                     <p className="text-[9px] font-black text-blue-600 uppercase tracking-[0.2em] mt-1">
-                      {appMode === 'junior' ? 'Tu Guía de IA Segura' : t.slogan}
+                      {appMode === 'junior' ? 'Potenciando mentes brillantes' : 'Inteligencia que Empodera'}
                     </p>
                   </div>
                </div>
@@ -699,51 +699,51 @@ export default function App() {
                 {messages.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center py-12 lg:py-20 space-y-12 lg:space-y-16">
                      <div className="space-y-6">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600/10 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-[0.3em] border border-blue-600/20">
-                           <Shield size={14} /> Enterprise Grade Pipeline
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-[0.3em] border border-blue-100 shadow-sm">
+                           <Sparkles size={14} /> Tu Espacio de Innovación Segura
                         </div>
                         <h1 className="text-6xl md:text-8xl lg:text-[9rem] font-display font-black tracking-tighter leading-[0.85] uppercase max-w-5xl">
-                           <span className="text-corporate-900 dark:text-white">Command</span><br/>
-                           <span className="text-blue-600">The Future</span>
+                           <span className="text-corporate-900 dark:text-white">Empodera</span><br/>
+                           <span className="text-blue-600">Tu Equipo</span>
                         </h1>
-                        <p className="text-lg md:text-xl text-slate-400 font-medium max-w-2xl mx-auto uppercase tracking-wider">
-                           {appConfig?.landingSubtitle || 'El primer pipeline de IA para PyMEs que prioriza tus datos y tu bolsillo.'}
+                        <p className="text-lg md:text-xl text-slate-600 font-bold max-w-2xl mx-auto uppercase tracking-wider">
+                           {appConfig?.landingSubtitle || 'Transformamos la IA en una herramienta de confianza para tu crecimiento.'}
                         </p>
                      </div>
 
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-7xl px-6">
                         {[
                            { 
-                              title: 'Privacidad Absoluta', 
-                              desc: 'ZDR asegura que tu información técnica nunca entrene modelos externos.', 
+                              title: 'Privacidad Total', 
+                              desc: 'Seguridad NDA Proof: tus ideas y contratos se mantienen siempre privados.', 
                               icon: <Lock size={24} />, 
-                              color: 'bg-emerald-500',
-                              light: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-                              dark: 'dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
+                              color: 'bg-blue-600',
+                              light: 'bg-blue-50 text-blue-600 border-blue-100 shadow-blue-100/50',
+                              dark: 'dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20'
                            },
                            { 
-                              title: 'Costo Inteligente', 
-                              desc: 'Paga solo lo que usas. El Auto Router elige el modelo más barato.', 
+                              title: 'Eficiencia Real', 
+                              desc: 'IA de alto rendimiento optimizada para maximizar tu presupuesto.', 
                               icon: <TrendingUp size={24} />, 
                               color: 'bg-blue-600',
-                              light: 'bg-blue-50 text-blue-600 border-blue-100',
+                              light: 'bg-indigo-50 text-indigo-600 border-indigo-100 shadow-indigo-100/50',
                               dark: 'dark:bg-blue-600/10 dark:text-blue-400 dark:border-blue-600/20'
                            },
                            { 
-                              title: 'Valores Corporativos', 
-                              desc: 'IA alineada con tu identidad. Previene alucinaciones y riesgos.', 
+                              title: 'Valores Claros', 
+                              desc: 'IA alineada con tu identidad, evitando alucinaciones y sesgos.', 
                               icon: <Shield size={24} />, 
                               color: 'bg-orange-500',
-                              light: 'bg-orange-50 text-orange-600 border-orange-100',
+                              light: 'bg-orange-50 text-orange-600 border-orange-100 shadow-orange-100/50',
                               dark: 'dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20'
                            },
                            { 
-                              title: 'Empresa AI-First', 
-                              desc: 'Equipa a tu equipo con +100 LLMs. Sin suscripciones individuales caras.', 
-                              icon: <LayoutGrid size={24} />, 
-                              color: 'bg-purple-600',
-                              light: 'bg-purple-50 text-purple-600 border-purple-100',
-                              dark: 'dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20'
+                              title: 'Filtros Junior', 
+                              desc: 'Entorno protegido para menores, enfocado en aprendizaje y curiosidad.', 
+                              icon: <Sparkles size={24} />, 
+                              color: 'bg-emerald-600',
+                              light: 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-emerald-100/50',
+                              dark: 'dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
                            }
                         ].map((card, i) => (
                            <div key={i} className={cn("p-8 rounded-[3rem] border flex flex-col items-center gap-6 transition-all hover:scale-105 hover:shadow-2xl group", 

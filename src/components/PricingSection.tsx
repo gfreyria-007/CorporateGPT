@@ -186,10 +186,10 @@ export const PricingSection = () => {
               newPrice="$199"
               isLoading={isRedirecting === 'Starter'}
               features={[
-                "20,000 Tokens Premium / Día",
-                "5 Créditos Multimedia / Día",
-                "Auto Router (Elite-Eco)",
-                "Acceso a Nano Banana Studio"
+                "Acceso a modelos de Élite (GPT-4, Claude 3)",
+                "Privacidad NDA Proof (Retención Cero)",
+                "Auto Router de Costos Inteligente",
+                "Soporte Estándar"
               ]}
               onBuy={() => handleBuy('Starter')}
             />
@@ -202,17 +202,17 @@ export const PricingSection = () => {
               isLoading={isRedirecting === 'Professional'}
               features={[
                  "Todo lo de Starter",
-                 "Dashboard Admin Multi-tenant",
-                 "Control de Seguridad ZDR Plus",
-                 "API Access para ERP/CRM",
-                 "Soporte Dedicado"
+                 "Dashboard Admin para Equipos",
+                 "Gobierno de Datos y Trazabilidad",
+                 "API Access para Integraciones",
+                 "Soporte Prioritario"
               ]}
               onBuy={() => handleBuy('Professional')}
             >
               <div className="pt-6 space-y-3">
                  <div className="flex items-center justify-between">
-                    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-400">Cantidad de Usuarios (Min. 10)</label>
-                    <span className="text-xs font-black text-white">{professionalUsers}</span>
+                    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-600">Cantidad de Usuarios (Min. 10)</label>
+                    <span className="text-xs font-black text-slate-900">{professionalUsers}</span>
                  </div>
                  <input 
                    type="range" 
@@ -221,7 +221,7 @@ export const PricingSection = () => {
                    step="1"
                    value={professionalUsers}
                    onChange={(e) => setProfessionalUsers(parseInt(e.target.value))}
-                   className="w-full h-1 bg-blue-600/30 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                   className="w-full h-1 bg-blue-100 rounded-lg appearance-none cursor-pointer accent-blue-600"
                  />
               </div>
             </PricingCard>
@@ -232,10 +232,10 @@ export const PricingSection = () => {
               newPrice="$50"
               isLoading={isRedirecting === 'Top-Up'}
               features={[
-                 "+50,000 Tokens de Élite",
-                 "Nunca caducan",
-                 "Evitan el Modo Eco Forzado",
-                 "Se consumen al acabar la cuota diaria"
+                 "Tokens Extra de Alta Potencia",
+                 "Sin fecha de caducidad",
+                 "Ideales para tareas complejas",
+                 "Consumo transparente y bajo demanda"
               ]}
               onBuy={() => handleBuy('Top-Up')}
             />
@@ -249,11 +249,11 @@ export const PricingSection = () => {
               newPrice="$199"
               isLoading={isRedirecting === 'Family Starter'}
               features={[
-                "Saldo compartido (20k tokens/día)",
+                "Saldo compartido para 3 usuarios",
                 "Techie Tutor (Junior) Incluido",
                 "Filtros de Seguridad Infantil",
-                "Control Parental de Consumo",
-                "Acceso a Creative Studio"
+                "Entorno de Aprendizaje Mentor",
+                "Privacidad Familiar Garantizada"
               ]}
               onBuy={() => handleBuy('Family Starter')}
             />
@@ -266,11 +266,10 @@ export const PricingSection = () => {
               isLoading={isRedirecting === 'Family Mega'}
               features={[
                  "Hasta 5 miembros de la familia",
-                 "DOBLE DE TOKENS INCLUIDOS",
-                 "BONO: $100 MXN en tokens extra",
+                 "DOBLE DE CAPACIDAD INCLUIDA",
                  "Techie Tutor (Junior) PRO",
-                 "Reportes de aprendizaje semanales",
-                 "Soporte prioritario familiar"
+                 "Reportes de aprendizaje",
+                 "Acceso prioritario familiar"
               ]}
               onBuy={() => handleBuy('Family Mega')}
             />
