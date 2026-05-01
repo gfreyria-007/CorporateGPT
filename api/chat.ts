@@ -76,16 +76,41 @@ function resolveEliteModel(requestedModel: string, queryClass: QueryClass, ecoMo
     return { modelId: requestedModel, tier: 'user-selected' };
   }
 
-  // Auto-route: assign tier based on query classification
+  // Auto-route: multiple models for redundancy - never show "alta demanda"
+  const MODELS = {
+    reasoning: [
+      'deepseek/deepseek-r1',
+      'qwen/qwen-2.5-72b-instruct', 
+      'google/gemini-2.0-flash-exp',
+      'cognitivecomputations/dolphin3.5-mistral'
+    ],
+    creative: [
+      'deepseek/deepseek-chat',
+      'anthropic/claude-3.5-sonnet',
+      'qwen/qwen-2.5-coder-32b',
+      'google/gemini-1.5-flash'
+    ],
+    general: [
+      'deepseek/deepseek-chat',
+      'qwen/qwen-2.5-72b-instruct',
+      'google/gemini-1.5-flash',
+      'meta-llama/llama-3.1-70b-instruct'
+    ]
+  };
+  
+  const getModel = (type: QueryClass) => {
+    const list = MODELS[type] || MODELS.general;
+    return list[Math.floor(Date.now() / 60000) % list.length]; // Rotate every minute
+  };
+
   switch (queryClass) {
     case 'reasoning':
-      return { modelId: 'deepseek/deepseek-r1', tier: 'deepseek-reasoning' };
+      return { modelId: getModel('reasoning'), tier: 'multi-model-reasoning' };
     case 'creative':
-      return { modelId: 'deepseek/deepseek-chat', tier: 'minimax-creative' };
+      return { modelId: getModel('creative'), tier: 'multi-model-creative' };
     case 'general':
     default:
-      // DeepSeek V3 + MiniMax available
-      return { modelId: 'deepseek/deepseek-chat', tier: 'deepseek-minimax-general' };
+      return { modelId: getModel('general'), tier: 'multi-model-general' };
   }
 }
 
