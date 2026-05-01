@@ -3,6 +3,7 @@ import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+dotenv.config();
 import helmet from 'helmet';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
@@ -13,20 +14,31 @@ import { getAuth } from 'firebase-admin/auth';
 import admin from 'firebase-admin';
 
 // Initialize Firebase Admin for Secure Verification
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    })
-  });
+try {
+  if (!admin.apps.length) {
+    const projectId = process.env.FIREBASE_PROJECT_ID;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+    if (projectId && clientEmail && privateKey) {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId,
+          clientEmail,
+          privateKey: privateKey.replace(/\\n/g, '\n'),
+        })
+      });
+      console.log('âœ… Firebase Admin initialized successfully');
+    } else {
+      console.warn('âš ï¸  Firebase Admin credentials missing in .env. Some backend features may be restricted.');
+    }
+  }
+} catch (error) {
+  console.error('âŒ Firebase Admin initialization failed:', error);
 }
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-dotenv.config();
 
 // Production Health Check
 if (process.env.NODE_ENV === 'production') {
@@ -46,11 +58,12 @@ async function startServer() {
       directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
         "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://*.googleapis.com", "https://apis.google.com", "https://*.firebaseapp.com", "https://www.googletagmanager.com"],
-        "connect-src": ["'self'", "https://openrouter.ai", "https://*.googleapis.com", "https://*.firebaseio.com", "wss://*.firebaseio.com", "https://*.firebaseapp.com", "https://*.google-analytics.com"],
+        "connect-src": ["'self'", "https://openrouter.ai", "https://*.googleapis.com", "https://*.firebaseio.com", "wss://*.firebaseio.com", "https://*.firebaseapp.com", "https://*.google-analytics.com", "ws://localhost:*", "http://localhost:*"],
         "frame-src": ["'self'", "https://*.firebaseapp.com", "https://*.googleapis.com", "https://*.firebase.com"],
         "img-src": ["'self'", "data:", "https:", "blob:", "https://*.googleusercontent.com"],
       },
     },
+    crossOriginEmbedderPolicy: false,
   }));
 
   // 2. CORS - Restrict to your domain in production

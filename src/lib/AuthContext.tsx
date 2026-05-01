@@ -27,8 +27,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let unsubProfile: (() => void) | null = null;
+    
+    // Safety timeout to prevent infinite loading if Firebase hangs
+    const safetyTimer = setTimeout(() => {
+      if (loading) {
+        console.warn("Auth synchronization taking too long, forcing load state completion.");
+        setLoading(false);
+      }
+    }, 5000);
+
+    if (!auth || typeof auth.onAuthStateChanged !== 'function') {
+      console.error("Firebase Auth not initialized correctly.");
+      setLoading(false);
+      clearTimeout(safetyTimer);
+      return;
+    }
 
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
+      clearTimeout(safetyTimer);
       // Clean up previous profile listener if it exists
       if (unsubProfile) {
         unsubProfile();
@@ -70,16 +86,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
           console.error("Error setting up user session:", error);
         }
-        setLoading(false);
       } else {
         setProfile(null);
-        setLoading(false);
       }
+      setLoading(false);
     });
 
     return () => {
       unsubscribe();
       if (unsubProfile) unsubProfile();
+      clearTimeout(safetyTimer);
     };
   }, []);
 
