@@ -32,20 +32,13 @@ export const LandingPage = ({ onStartSession, isSigningIn, showTrialModal = fals
   const t = translations[lang] || translations.es;
   const [isModalOpen, setIsModalOpen] = useState(showTrialModal);
   const [showEditor, setShowEditor] = useState(false);
-  const featuresRef = useRef<HTMLDivElement>(null);
-  const landingConfig = getLandingConfig();
-  const adminEditMode = isAdminEditing();
+const featuresRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (showTrialModal) {
       setIsModalOpen(true);
-  }, [showTrialModal]);
-
-  useEffect(() => {
-    if (isSuperAdmin && !adminEditMode) {
-      setShowEditor(true);
     }
-  }, [isSuperAdmin]);
+  }, [showTrialModal]);
 
   const scrollToFeatures = () => {
     featuresRef.current?.scrollIntoView({ behavior: 'smooth' });
