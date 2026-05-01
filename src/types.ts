@@ -68,6 +68,13 @@ export interface UserProfile {
   unlimitedUsage: boolean;
   createdAt: any;            // Firestore Timestamp
   lastActive: any;
+  // Subscription & Permissions
+  plan?: string;
+  subscriptionStatus?: string;
+  permissions?: {
+    techie?: boolean;    // Access to Techie (kids app)
+    corporate?: boolean; // Access to Corporate GPT
+  };
 }
 
 export interface AppConfig {

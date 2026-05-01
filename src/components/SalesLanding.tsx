@@ -157,20 +157,43 @@ export const SalesLanding = ({ lang, onContact }: SalesLandingProps) => {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4">
-             <button className="h-16 px-8 bg-blue-600 hover:bg-blue-700 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-xl shadow-blue-600/30 active:scale-95 group">
-                <CreditCard size={18} />
-                {t.buyNow}
-                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-             </button>
-             <button 
-                onClick={onContact}
-                className="h-16 px-8 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 active:scale-95 shadow-sm"
-             >
-                <Mail size={18} />
-                {t.contactSales}
-             </button>
-          </div>
+<div className="flex flex-col sm:flex-row gap-4">
+              <button className="h-16 px-8 bg-blue-600 hover:bg-blue-700 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-xl shadow-blue-600/30 active:scale-95 group">
+                 <CreditCard size={18} />
+                 {t.buyNow}
+                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+              </button>
+              <button 
+                 onClick={onContact}
+                 className="h-16 px-8 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 active:scale-95 shadow-sm"
+              >
+                 <Mail size={18} />
+                 {t.contactSales}
+              </button>
+           </div>
+
+           {/* Trust Badges */}
+           <div className="flex flex-wrap items-center gap-4 pt-4">
+              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500">
+                 <ShieldCheck size={14} className="text-emerald-600" />
+                 {lang === 'es' ? 'Pago 100% Seguro' : '100% Secure Payment'}
+              </div>
+              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500">
+                 <CheckCircle2 size={14} className="text-blue-600" />
+                 {lang === 'es' ? '30 Días de Garantía' : '30-Day Money Back'}
+              </div>
+              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500">
+                 <Zap size={14} className="text-amber-500" />
+                 {lang === 'es' ? 'Cancela cuando quieras' : 'Cancel Anytime'}
+              </div>
+           </div>
+
+           {/* Pricing Reference */}
+           <div className="pt-4 border-t border-slate-200">
+              <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                 {lang === 'es' ? 'Planes desde' : 'Plans starting from'}: <span className="text-blue-600">$191 MXN/mes</span>
+              </p>
+           </div>
         </div>
 
         {/* Right Side: Sales Agent Agent */}

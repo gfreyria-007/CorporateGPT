@@ -14,9 +14,10 @@ interface PricingCardProps {
   onBuy: () => void;
   children?: React.ReactNode;
   isLoading?: boolean;
+  isLoggedIn?: boolean;
 }
 
-const PricingCard = ({ plan, users, oldPrice, newPrice, features, isFeatured, onBuy, children, isLoading }: PricingCardProps) => (
+const PricingCard = ({ plan, users, oldPrice, newPrice, features, isFeatured, onBuy, children, isLoading, isLoggedIn }: PricingCardProps) => (
   <motion.div 
     whileHover={{ y: -8, scale: 1.02 }}
     className={cn(
@@ -185,6 +186,7 @@ export const PricingSection = () => {
               oldPrice="Suscripción Individual"
               newPrice="$199"
               isLoading={isRedirecting === 'Starter'}
+              isLoggedIn={!!user}
               features={[
                 "Acceso a modelos de Élite (GPT-4, Claude 3)",
                 "Privacidad NDA Proof (Retención Cero)",
@@ -200,6 +202,7 @@ export const PricingSection = () => {
               newPrice={`$${179 * professionalUsers}`}
               isFeatured
               isLoading={isRedirecting === 'Professional'}
+              isLoggedIn={!!user}
               features={[
                  "Todo lo de Starter",
                  "Dashboard Admin para Equipos",
@@ -231,6 +234,7 @@ export const PricingSection = () => {
               oldPrice="Uso Ilimitado"
               newPrice="$50"
               isLoading={isRedirecting === 'Top-Up'}
+              isLoggedIn={!!user}
               features={[
                  "Tokens Extra de Alta Potencia",
                  "Sin fecha de caducidad",
@@ -248,6 +252,7 @@ export const PricingSection = () => {
               oldPrice="Acceso Familiar"
               newPrice="$199"
               isLoading={isRedirecting === 'Family Starter'}
+              isLoggedIn={!!user}
               features={[
                 "Saldo compartido para 3 usuarios",
                 "Techie Tutor (Junior) Incluido",
@@ -264,6 +269,7 @@ export const PricingSection = () => {
               newPrice="$299"
               isFeatured
               isLoading={isRedirecting === 'Family Mega'}
+              isLoggedIn={!!user}
               features={[
                  "Hasta 5 miembros de la familia",
                  "DOBLE DE CAPACIDAD INCLUIDA",

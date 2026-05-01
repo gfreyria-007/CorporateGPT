@@ -3,21 +3,54 @@ import { getAnalytics } from "firebase/analytics";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDibbDHl11Dp54dMZiFIUR8CKegxqtMkT4",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "corporategptv2.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "corporategptv2",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "corporategptv2.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "282195596392",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:282195596392:web:c479ed0ff71dc349de57dd",
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-7D88LWN0KT"
+const getFirebaseConfig = () => {
+  const requiredVars = [
+    'VITE_FIREBASE_API_KEY',
+    'VITE_FIREBASE_AUTH_DOMAIN',
+    'VITE_FIREBASE_PROJECT_ID',
+    'VITE_FIREBASE_STORAGE_BUCKET',
+    'VITE_FIREBASE_MESSAGING_SENDER_ID',
+    'VITE_FIREBASE_APP_ID',
+  ];
+
+  const missing = requiredVars.filter(v => !import.meta.env[v]);
+  if (missing.length > 0) {
+    console.error(`Firebase configuration error: Missing env variables: ${missing.join(', ')}`);
+    return null;
+  }
+
+  return {
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || undefined
+  };
 };
 
-let app;
-try {
-  app = getApps().find(a => a.name === '[DEFAULT]') ? getApp() : initializeApp(firebaseConfig);
-} catch (error) {
-  console.error("Firebase initialization error:", error);
+const firebaseConfig = getFirebaseConfig();
+
+let app = null;
+if (firebaseConfig) {
+  try {
+    const existingApp = getApps().find(a => a.name === '[DEFAULT]');
+    if (existingApp) {
+      try {
+        app = getApp();
+      } catch {
+        existingApp.delete().catch(() => {});
+        app = initializeApp(firebaseConfig);
+      }
+    } else {
+      app = initializeApp(firebaseConfig);
+    }
+  } catch (error) {
+    console.error("Firebase initialization error:", error);
+  }
+} else {
+  console.warn("Firebase not initialized due to missing configuration. Please set all required VITE_FIREBASE_* environment variables.");
 }
 
 export const analytics = typeof window !== 'undefined' && app ? getAnalytics(app) : null;

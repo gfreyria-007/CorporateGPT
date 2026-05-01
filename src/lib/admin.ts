@@ -20,7 +20,18 @@ export async function updateUserLimits(uid: string, maxQueries: number, maxImage
   });
 }
 
-export async function updateAppConfig(config: any) {
+export interface AppConfig {
+  version?: string;
+  maintenanceMode?: boolean;
+  features?: Record<string, boolean>;
+  limits?: {
+    maxUsers?: number;
+    maxCompanies?: number;
+  };
+  [key: string]: unknown;
+}
+
+export async function updateAppConfig(config: AppConfig) {
   const configRef = doc(db, 'admin', 'config');
   await updateDoc(configRef, config);
 }

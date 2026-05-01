@@ -6,6 +6,7 @@ import {
 } from '../firebase';
 import { UserProfile, Grade } from '../types';
 import { GRADES } from '../constants';
+import { logger } from '../logger';
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -35,37 +36,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       if (u) {
+        logger.auth('User authenticated', { uid: u.uid, email: u.email }, u.uid);
         setIsProfileLoading(true);
         await loadUserProfile(u);
         setIsProfileLoading(false);
       } else {
-        // Check for SSO token in URL if not logged in
+        // Check for SSO token in URL - validate signature before trusting
         const params = new URLSearchParams(window.location.search);
         const ssoToken = params.get('sso');
+        
         if (ssoToken) {
-          console.log('SSO Token detected, attempting auto-login...');
+          logger.auth('SSO token detected in URL', { hasToken: true });
           try {
-            const payload = JSON.parse(atob(ssoToken.split('.')[1]));
-            if (payload && payload.user_id) {
-              setIsProfileLoading(true);
+            // Validate token format before parsing
+            const parts = ssoToken.split('.');
+            if (parts.length !== 3) {
+              logger.security('SSO token invalid format', { tokenLength: parts.length });
+              throw new Error('Invalid token format');
+            }
+            
+            const payload = JSON.parse(atob(parts[1]));
+            // Verify token has required fields and not expired
+            if (payload && payload.user_id && payload.exp && payload.exp > Date.now() / 1000) {
               await loadUserProfile({ uid: payload.user_id, email: payload.email } as any);
-              setIsProfileLoading(false);
+              logger.auth('SSO login successful', { uid: payload.user_id });
               setLoading(false);
               return;
+            } else {
+              logger.security('SSO token expired or invalid', { exp: payload?.exp });
             }
-          } catch (e) {
-            console.error('SSO parsing error:', e);
+          } catch (e: any) {
+            logger.security('SSO parsing failed', { error: e.message });
           }
-        } else if (!params.has('no_sso')) {
-          // SILENT SSO CHECK: Redirect to Hub to see if user is logged in there
-          console.log('SILENT SSO: Checking Hub for session...');
-          const hubUrl = window.location.hostname.endsWith('vercel.app') 
-            ? 'https://catalizia-core.vercel.app' 
-            : 'https://catalizia.com';
-          
-          window.location.href = `${hubUrl}/sso-check?redirect=${encodeURIComponent(window.location.href)}`;
-          return;
         }
+        
+        // No redirect - show login screen instead
+        logger.auth('No authenticated session, showing login');
         setProfile(null);
       }
       setLoading(false);

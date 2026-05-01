@@ -68,6 +68,7 @@ import { SuperAdminPanel } from './components/SuperAdminPanel';
 import { UpgradePlanPage } from './components/UpgradePlanPage';
 import { TechieWorkspace } from './components/TechieWorkspace';
 import { translations } from './lib/translations';
+import { canAccessTechie } from './lib/permissions';
 
 export default function App() {
   // Auth & Profile
@@ -307,8 +308,7 @@ export default function App() {
         timestamp: Date.now()
       };
       setMessages(prev => [...prev, assistantMessage]);
-      // Deduct ~500 tokens estimate per response
-      deductTokens(500).catch(() => {});
+      // Quota is now deducted server-side in api/chat.ts for accurate counting
       incrementQueryCount(user.uid).catch(e => console.error("Failed to increment count:", e));
 
     } catch (error: any) {
@@ -455,18 +455,24 @@ export default function App() {
                        >
                          <Shield size={14} /> Corporate
                        </motion.button>
-                       <motion.button 
-                         whileHover={{ scale: 1.02 }}
-                         whileTap={{ scale: 0.98 }}
-                         onClick={() => setAppMode('junior')}
-                         className={cn("flex-1 py-3.5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2", 
-                           appMode === 'junior' 
-                             ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30" 
-                             : "text-slate-500 hover:text-emerald-500"
-                         )}
-                       >
-                         <Zap size={14} /> Techie
-                       </motion.button>
+<motion.button 
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => {
+                            if (!canAccessTechie(profile as any)) {
+                              alert('Techie Tutor está disponible para planes Family Starter y Family Mega. ¡Upgrade tu plan para acceder!');
+                              return;
+                            }
+                            setAppMode('junior');
+                          }}
+                          className={cn("flex-1 py-3.5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2", 
+                            appMode === 'junior' 
+                              ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30" 
+                              : "text-slate-500 hover:text-emerald-500"
+                          )}
+                        >
+                          <Zap size={14} /> Techie
+                        </motion.button>
                     </motion.div>
                   )}
 

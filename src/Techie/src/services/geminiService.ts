@@ -3,6 +3,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Grade, ChatMode, ExamQuestion, QuizOption, AspectRatio, ImageSize, Flashcard, ImageStyle, LightingStyle } from '../types';
 import { fileToGenerativePart } from '../utils/audio';
 import { STUDIO_STYLES, LIGHTING_PRESETS } from '../constants';
+import { logger } from '../logger';
 
 export const cleanJsonString = (str: string): string => {
   if (!str) return '';
@@ -73,9 +74,7 @@ const getAI = (customKey?: string) => {
     const metaEnv = (import.meta as any).env || {};
     const apiKey = customKey || metaEnv.VITE_GEMINI_API_KEY || (process as any).env?.GEMINI_API_KEY;
     if (!apiKey) {
-        console.error("No se encontró GEMINI_API_KEY o VITE_GEMINI_API_KEY en las variables de entorno.");
-    } else {
-        console.log("GEMINI_API_KEY encontrada (length:", apiKey.length, ")");
+        logger.system('GEMINI_API_KEY not found in environment variables');
     }
     return new GoogleGenAI({ apiKey: apiKey || "" });
 };

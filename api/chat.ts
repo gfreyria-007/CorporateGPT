@@ -10,6 +10,9 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { validateUserQuota, consumeServerQuota } from './quota';
+import { checkRateLimit, getIdentifier } from './rateLimit';
+import { logger, extractUserIdFromRequest } from './logger';
 
 // ─── Model Tier Definitions ───────────────────────────────────────────────────
 
@@ -125,10 +128,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
+  // ─── Rate Limiting ─────────────────────────────────────────────────────────
+  const { userId: extractedUserId, ip } = extractUserIdFromRequest(req);
+  const rateLimitId = getIdentifier(req);
+  const rateCheck = checkRateLimit(rateLimitId);
+  
+  if (!rateCheck.allowed) {
+    logger.security('Rate limit exceeded', { ip, remainingRequests: 0, resetInSeconds: Math.ceil(rateCheck.resetIn / 1000) }, extractedUserId);
+    return res.status(429).json({ 
+      error: 'RATE_LIMIT_EXCEEDED',
+      message: 'Demasiadas solicitudes. Por favor espera un momento.',
+      retryAfter: Math.ceil(rateCheck.resetIn / 1000)
+    });
+  }
+
+  logger.api('Chat request received', { 
+    ip, 
+    model: req.body?.model, 
+    messageCount: req.body?.messages?.length || 0,
+    hasDeepThink: req.body?.deepThink,
+    hasWebSearch: req.body?.webSearch
+  }, extractedUserId);
+
   try {
     const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
     if (!OPENROUTER_API_KEY) {
       return res.status(500).json({ error: 'OPENROUTER_API_KEY is not set' });
+    }
+
+    // ─── Server-Side Quota Validation ─────────────────────────────────────────
+    if (extractedUserId) {
+      const quotaCheck = await validateUserQuota(extractedUserId);
+      if (!quotaCheck.allowed) {
+        logger.quota('Request blocked - quota exhausted', { remainingTokens: 0, ecoMode: true }, extractedUserId);
+        return res.status(403).json({ 
+          error: 'QUOTA_EXHAUSTED',
+          reason: quotaCheck.reason,
+          ecoMode: quotaCheck.ecoMode
+        });
+      }
+      
+      logger.quota('Quota check passed', { remainingTokens: quotaCheck.remainingTokens, ecoMode: quotaCheck.ecoMode }, extractedUserId);
     }
 
     // Credit balance check
@@ -139,7 +179,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const creditData = await creditRes.json();
       const balance = creditData.data?.total_credits - creditData.data?.total_usage;
       if (balance < 5) {
-        console.warn(`[ALERT] LOW CREDITS: $${balance?.toFixed(2)}`);
+        logger.system('CRITICAL: Low API credits', { balance: balance?.toFixed(2), alertThreshold: 5 });
       }
     }
 
@@ -149,17 +189,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ecoMode,
     } = req.body;
 
+    // Extract userId from authorization header for quota tracking
+    let validatedUserId: string | null = null;
+    const authHeaderForQuota = req.headers.authorization;
+    if (authHeaderForQuota?.startsWith('Bearer ')) {
+      try {
+        const idToken = authHeaderForQuota.substring(7);
+        const decoded = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString());
+        validatedUserId = decoded.uid || decoded.user_id || userId || null;
+      } catch {
+        validatedUserId = userId || null;
+      }
+    }
+
     const currentTime = new Date().toISOString();
     const lastMessage = messages?.[messages.length - 1]?.content || '';
 
     // ─── Safety Guardrails ────────────────────────────────────────────────
     const forbiddenPatterns = [
-      /ignore previous instructions/i, /system prompt/i, /dan mode/i,
-      /bypass safety/i, /sql injection/i, /generate malware/i,
-      /how to hack/i, /unauthorized access/i, /prohibited content/i,
-      /child abuse/i, /hate speech/i, /bomb making/i,
+      { pattern: /ignore previous instructions/i, name: 'PROMPT_INJECTION' },
+      { pattern: /system prompt/i, name: 'SYSTEM_PROMPT_LEAK' },
+      { pattern: /dan mode/i, name: 'DAN_MODE_ATTEMPT' },
+      { pattern: /bypass safety/i, name: 'SAFETY_BYPASS' },
+      { pattern: /sql injection/i, name: 'SQL_INJECTION' },
+      { pattern: /generate malware/i, name: 'MALWARE_GENERATION' },
+      { pattern: /how to hack/i, name: 'HACKING_INSTRUCTIONS' },
+      { pattern: /unauthorized access/i, name: 'UNAUTHORIZED_ACCESS' },
+      { pattern: /prohibited content/i, name: 'PROHIBITED_CONTENT' },
+      { pattern: /child abuse/i, name: 'CHILD_SAFETY' },
+      { pattern: /hate speech/i, name: 'HATE_SPEECH' },
+      { pattern: /bomb making/i, name: 'DANGEROUS_CONTENT' },
     ];
-    if (forbiddenPatterns.some(p => p.test(lastMessage))) {
+    
+    const matchedPattern = forbiddenPatterns.find(p => p.pattern.test(lastMessage));
+    if (matchedPattern) {
+      logger.security('FORBIDDEN_CONTENT_DETECTED', { 
+        pattern: matchedPattern.name,
+        messagePreview: lastMessage.substring(0, 100)
+      }, extractedUserId);
       return res.status(403).json({ error: 'SAFETY_VIOLATION', reason: 'Forbidden content detected.' });
     }
 
@@ -185,7 +252,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       deepThink === true
     );
 
-    console.log(`[EliteRouter] Query class: ${queryClass} | Model: ${modelId} | Tier: ${tier} | Eco: ${ecoMode} | Context: ${totalContentLength} chars`);
+    logger.api('Elite Router decision', { queryClass, model: modelId, tier, ecoMode, contextChars: totalContentLength }, extractedUserId);
 
     const referer = process.env.APP_URL || 'http://localhost:3000';
     const resolvedTemp  = temperature ?? 0.7;
@@ -199,13 +266,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (primaryRes.ok) {
       const data = await primaryRes.json();
-      // Inject tier metadata silently (not exposed to user, used for admin diagnostics)
+      const estimatedTokens = data.usage?.total_tokens || Math.ceil(totalContentLength / 4);
+      
+      if (userId && estimatedTokens > 0) {
+        consumeServerQuota(userId, estimatedTokens).catch(err => 
+          logger.error('Quota consumption failed', err as Error, { userId }),
+        );
+      }
+      
       return res.status(200).json({ ...data, _tier: tier, _model: modelId });
     }
 
     // ─── TIER 2 FALLBACK: USA Premium if Tier 1 fails ────────────────────
     if (modelId !== USA_BACKUP_MODEL) {
-      console.warn(`[EliteRouter] Tier 1 (${modelId}) HTTP ${primaryRes.status} → Escalating to ${USA_BACKUP_MODEL}`);
+      logger.api('Primary model failed, escalating to fallback', { primaryModel: modelId, status: primaryRes.status, fallbackModel: USA_BACKUP_MODEL }, extractedUserId);
 
       const backupRes = await callOpenRouter(
         OPENROUTER_API_KEY, USA_BACKUP_MODEL, messages,
@@ -214,6 +288,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (backupRes.ok) {
         const data = await backupRes.json();
+        const estimatedTokens = data.usage?.total_tokens || Math.ceil(totalContentLength / 4);
+        
+        if (userId && estimatedTokens > 0) {
+          consumeServerQuota(userId, estimatedTokens).catch(err => 
+            logger.error('Quota consumption failed', err as Error, { userId }),
+          );
+        }
+        
         return res.status(200).json({ ...data, _tier: 'usa-premium-backup', _model: USA_BACKUP_MODEL });
       }
 

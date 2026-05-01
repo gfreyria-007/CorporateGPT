@@ -3,6 +3,7 @@ import {
   Plus, 
   Trash2, 
   ShieldCheck, 
+  ShieldAlert,
   Database, 
   Save, 
   Sparkles,
@@ -12,12 +13,14 @@ import {
   X,
   History,
   Send,
-  Loader2
+  Loader2,
+  AlertTriangle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
 import { useAuth } from '../lib/AuthContext';
 import { saveGPT, subscribeToGPTs, deleteGPT } from '../lib/db';
+import { processDocuments, ProcessedFile, createRAGContext } from '../lib/secureDocumentHandler';
 
 export function GPTsGenerator({ onClose, onSelect, theme, isMobile = false }: { onClose: () => void, onSelect: (gpt: any) => void, theme: 'light' | 'dark', isMobile?: boolean }) {
   const { user, profile } = useAuth();
@@ -26,7 +29,7 @@ export function GPTsGenerator({ onClose, onSelect, theme, isMobile = false }: { 
   const [description, setDescription] = useState('');
   const [instructions, setInstructions] = useState('');
   const [isPublic, setIsPublic] = useState(false);
-  const [files, setFiles] = useState<any[]>([]);
+  const [files, setFiles] = useState<ProcessedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [previewInput, setPreviewInput] = useState('');
@@ -47,13 +50,14 @@ export function GPTsGenerator({ onClose, onSelect, theme, isMobile = false }: { 
     return () => unsubscribe();
   }, [user]);
 
-  const handleSave = async () => {
+const handleSave = async () => {
     if (!user || !name) return;
     setIsSaving(true);
     setSaveStatus('idle');
     try {
       const gptData: any = {
-        id: currentGptId || null,
+        // Only include id if we're updating an existing GPT (not null for new ones)
+        ...(currentGptId && { id: currentGptId }),
         name: name || '',
         description: description || '',
         instructions: instructions || '',
@@ -68,12 +72,18 @@ export function GPTsGenerator({ onClose, onSelect, theme, isMobile = false }: { 
       
       // Remove any undefined values just to be absolutely safe
       Object.keys(gptData).forEach(key => gptData[key] === undefined && delete gptData[key]);
+      
       // Add a timeout to prevent infinite hanging
       const savePromise = saveGPT(user.uid, gptData);
       const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout saving GPT")), 10000));
       
       const id = await Promise.race([savePromise, timeoutPromise]) as string;
-      if (id) { setCurrentGptId(id); setSaveStatus('saved'); }
+      if (id) { 
+        setCurrentGptId(id); 
+        setSaveStatus('saved'); 
+        // Reset to idle after showing success
+        setTimeout(() => setSaveStatus('idle'), 2000);
+      }
     } catch (error) {
       console.error("Save error:", error);
       setSaveStatus('error');
@@ -81,7 +91,7 @@ export function GPTsGenerator({ onClose, onSelect, theme, isMobile = false }: { 
       setIsSaving(false);
       setTimeout(() => setSaveStatus('idle'), 3000);
     }
-  };
+};
 
   const handleNew = () => {
     setCurrentGptId(null);
@@ -108,60 +118,48 @@ export function GPTsGenerator({ onClose, onSelect, theme, isMobile = false }: { 
     if (currentGptId === id) handleNew();
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFiles = Array.from(e.target.files || []);
     if (uploadedFiles.length === 0) return;
     setIsProcessing(true);
     
-    let processed = 0;
-    const newFiles: any[] = [];
-
-    uploadedFiles.forEach(f => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        newFiles.push({
-          id: Math.random().toString(36).substr(2, 9),
-          name: f.name,
-          type: f.type,
-          size: (f.size / 1024 / 1024).toFixed(2) + ' MB',
-          date: new Date().toLocaleDateString(),
-          content: (f.type === 'text/plain' || f.name.endsWith('.txt') || f.name.endsWith('.md'))
-            ? (ev.target?.result as string || '').slice(0, 8000)
-            : undefined
-        });
-        processed++;
-        if (processed === uploadedFiles.length) {
-          setFiles(prev => [...prev, ...newFiles]);
-          setIsProcessing(false);
-        }
-      };
-      reader.onerror = () => { processed++; if (processed === uploadedFiles.length) setIsProcessing(false); };
-      reader.readAsText(f);
-    });
+    try {
+      const processedFiles = await processDocuments(uploadedFiles);
+      setFiles(prev => [...prev, ...processedFiles]);
+    } catch (error) {
+      console.error('File processing error:', error);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handlePreviewSend = async () => {
-    if (!previewInput.trim() || isPreviewLoading) return;
+    if (!user || !previewInput.trim() || isPreviewLoading) return;
     setIsPreviewLoading(true);
     setPreviewResponse('');
     const userMsg = previewInput;
     setPreviewInput('');
     try {
-      const fileContext = files
-        .filter(f => f.content)
-        .map(f => `--- ${f.name} ---\n${f.content}`)
-        .join('\n\n');
+      // Get ID token for authentication
+      const idToken = await user.getIdToken();
+      
+      // Use secure RAG context - only includes safe, parsed content
+      const fileContext = createRAGContext(files);
       const fullInstructions = [instructions, fileContext].filter(Boolean).join('\n\n---\n');
 
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
         body: JSON.stringify({
           model: 'openrouter/auto',
           messages: [{ role: 'user', content: userMsg }],
           instructions: fullInstructions || null,
           temperature: 0.7,
           maxTokens: 800,
+          docsOnly: files.length > 0 // Enable document context mode
         })
       });
       const data = await res.json();
@@ -367,22 +365,45 @@ export function GPTsGenerator({ onClose, onSelect, theme, isMobile = false }: { 
                      <label className="flex items-center gap-2 text-[10px] font-black text-blue-500 cursor-pointer">
                         {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} 
                         {isProcessing ? 'Processing...' : 'Add files'}
-                        <input type="file" multiple className="hidden" onChange={handleFileUpload} disabled={isProcessing} />
+                        <input 
+                          type="file" 
+                          multiple 
+                          accept=".txt,.md,.csv,.pdf,.docx,.xlsx,.xls"
+                          className="hidden" 
+                          onChange={handleFileUpload} 
+                          disabled={isProcessing} 
+                        />
                      </label>
                   </div>
-                  <div className="grid gap-3">
-                     {files.map(f => (
-                       <div key={f.id} className={cn("flex items-center justify-between p-4 rounded-2xl border transition-all", theme === 'dark' ? "bg-white/5 border-white/5" : "bg-white border-slate-100")}>
-                          <div className="flex items-center gap-4">
-                             <FileText size={18} className="text-blue-500" />
-                             <div>
-                                <p className="text-xs font-bold">{f.name}</p>
-                                <p className="text-[10px] font-black text-slate-500 uppercase">{f.size}</p>
-                             </div>
-                          </div>
-                          <button onClick={() => setFiles(prev => prev.filter(x => x.id !== f.id))} className="text-slate-400 hover:text-red-500"><Trash2 size={16} /></button>
-                       </div>
-                     ))}
+<div className="grid gap-3">
+                      {files.map(f => (
+                        <div key={f.id} className={cn("flex items-center justify-between p-4 rounded-2xl border transition-all", 
+                          f.isSafe ? (theme === 'dark' ? "bg-white/5 border-white/5" : "bg-white border-slate-100") : "bg-red-500/10 border-red-500/30"
+                        )}>
+                           <div className="flex items-center gap-3">
+                              {f.isSafe ? <FileText size={18} className="text-blue-500" /> : <ShieldAlert size={18} className="text-red-500" />}
+                              <div>
+                                 <p className="text-xs font-bold flex items-center gap-2">
+                                   {f.name}
+                                   <span className={cn("text-[8px] font-black px-1.5 py-0.5 rounded uppercase", 
+                                     f.contentType === 'text' ? 'bg-slate-500/20 text-slate-400' :
+                                     f.contentType === 'excel' ? 'bg-emerald-500/20 text-emerald-500' :
+                                     f.contentType === 'pdf' ? 'bg-red-500/20 text-red-500' :
+                                     f.contentType === 'word' ? 'bg-blue-500/20 text-blue-500' :
+                                     'bg-slate-500/20 text-slate-400'
+                                   )}>
+                                     {f.contentType}
+                                   </span>
+                                 </p>
+                                 <p className="text-[10px] font-black text-slate-500 uppercase">{f.size}</p>
+                                 {!f.isSafe && f.error && (
+                                   <p className="text-[9px] text-red-400 mt-1">{f.error}</p>
+                                 )}
+                              </div>
+                           </div>
+                           <button onClick={() => setFiles(prev => prev.filter(x => x.id !== f.id))} className="text-slate-400 hover:text-red-500"><Trash2 size={16} /></button>
+                        </div>
+                      ))}
                   </div>
                </div>
             </div>

@@ -15,6 +15,9 @@ interface AuthContextType {
   signInWithApple: () => Promise<void>;
   signInWithEmail: (email: string) => Promise<void>;
   logout: () => Promise<void>;
+  showEmailModal: boolean;
+  pendingEmailLink: boolean;
+  confirmEmailForLink: (email: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,6 +27,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [pendingEmailLink, setPendingEmailLink] = useState(false);
+
+  const confirmEmailForLink = async (email: string) => {
+    try {
+      const result = await signInWithEmailLink(auth, email, window.location.href);
+      window.localStorage.removeItem('emailForSignIn');
+      setUser(result.user);
+      setPendingEmailLink(false);
+      setShowEmailModal(false);
+    } catch (error) {
+      console.error("Magic Link Error:", error);
+      setShowEmailModal(false);
+    }
+  };
 
   useEffect(() => {
     let unsubProfile: (() => void) | null = null;
@@ -53,18 +71,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Handle Email Link Auth
       if (!u && isSignInWithEmailLink(auth, window.location.href)) {
-        let email = window.localStorage.getItem('emailForSignIn');
-        if (!email) {
-          email = window.prompt('Please provide your email for confirmation');
-        }
-        if (email) {
+        const storedEmail = window.localStorage.getItem('emailForSignIn');
+        if (storedEmail) {
           try {
-            const result = await signInWithEmailLink(auth, email, window.location.href);
+            const result = await signInWithEmailLink(auth, storedEmail, window.location.href);
             window.localStorage.removeItem('emailForSignIn');
             u = result.user;
           } catch (error) {
             console.error("Magic Link Error:", error);
+            setPendingEmailLink(true);
           }
+        } else {
+          setPendingEmailLink(true);
         }
       }
 
@@ -153,9 +171,94 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await signOut(auth);
   };
 
+  useEffect(() => {
+    if (pendingEmailLink) {
+      setShowEmailModal(true);
+    }
+  }, [pendingEmailLink]);
+
+  const [modalEmail, setModalEmail] = useState('');
+
+  const handleModalConfirm = () => {
+    if (modalEmail.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(modalEmail)) {
+      confirmEmailForLink(modalEmail);
+      setModalEmail('');
+    }
+  };
+
+  const handleModalCancel = () => {
+    setShowEmailModal(false);
+    setPendingEmailLink(false);
+    setModalEmail('');
+  };
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, isSigningIn, signIn, signInWithApple, signInWithEmail, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      profile, 
+      loading, 
+      isSigningIn, 
+      signIn, 
+      signInWithApple, 
+      signInWithEmail, 
+      logout,
+      showEmailModal,
+      pendingEmailLink,
+      confirmEmailForLink
+    }}>
       {children}
+      
+      {showEmailModal && (
+        <>
+          <div 
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+            onClick={handleModalCancel}
+          />
+          <div className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md mx-4">
+            <div className="bg-slate-800/95 backdrop-blur-xl border border-purple-500/30 rounded-2xl p-8 shadow-2xl">
+              <div className="text-center mb-6">
+                <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                  <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-bold text-white">Confirmar correo electrónico</h2>
+                <p className="text-slate-400 text-sm mt-2">
+                  Por favor ingresa el correo que usaste para el enlace mágico
+                </p>
+              </div>
+
+              <div>
+                <input
+                  type="email"
+                  value={modalEmail}
+                  onChange={(e) => setModalEmail(e.target.value)}
+                  placeholder="correo@empresa.com"
+                  className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all mb-4"
+                  autoFocus
+                />
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={handleModalCancel}
+                    className="flex-1 px-4 py-3 bg-slate-700 text-slate-300 font-medium rounded-xl hover:bg-slate-600 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleModalConfirm}
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium rounded-xl hover:from-purple-500 hover:to-blue-500 transition-all"
+                  >
+                    Confirmar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </AuthContext.Provider>
   );
 }

@@ -12,6 +12,9 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { validateUserQuota, consumeServerQuota } from './quota';
+import { checkRateLimit, getIdentifier } from './rateLimit';
+import { logger, extractUserIdFromRequest } from './logger';
 
 const FALLBACK_MODEL = 'gemini-1.5-flash-latest';
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -19,10 +22,37 @@ const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
+  // ─── Rate Limiting ─────────────────────────────────────────────────────────
+  const rateLimitId = getIdentifier(req);
+  const rateCheck = checkRateLimit(rateLimitId);
+  
+  if (!rateCheck.allowed) {
+    const { userId: fallbackUserId } = extractUserIdFromRequest(req);
+logger.security('Rate limit exceeded on fallback', { rateLimitId }, fallbackUserId);
+    return res.status(429).json({ 
+      error: 'RATE_LIMIT_EXCEEDED',
+      message: 'Demasiadas solicitudes. Por favor espera un momento.',
+      retryAfter: Math.ceil(rateCheck.resetIn / 1000)
+    });
+  }
+
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    console.error('[FALLBACK] CRITICAL: GEMINI_API_KEY missing — fallback engine offline');
+    logger.system('CRITICAL: GEMINI_API_KEY missing - fallback offline');
     return res.status(503).json({ error: 'Fallback engine offline — API key missing' });
+  }
+
+  // Extract userId for logging (declared outside try for catch block access)
+  let validatedUserId: string | null = null;
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith('Bearer ')) {
+    try {
+      const idToken = authHeader.substring(7);
+      const decoded = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString());
+      validatedUserId = decoded.uid || decoded.user_id || req.body?.userId || null;
+    } catch {
+      validatedUserId = req.body?.userId || null;
+    }
   }
 
   try {
@@ -30,7 +60,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const currentTime = new Date().toISOString();
     const targetModel = model || FALLBACK_MODEL;
 
-    console.log(`[FALLBACK] ⚡ Emergency engine activated → ${targetModel} at ${currentTime}`);
+    // ─── Server-Side Quota Validation ─────────────────────────────────────────
+    if (validatedUserId) {
+      const quotaCheck = await validateUserQuota(validatedUserId);
+      if (!quotaCheck.allowed) {
+        logger.quota('Request blocked - quota exhausted in fallback', { reason: quotaCheck.reason }, validatedUserId);
+        return res.status(403).json({ 
+          error: 'QUOTA_EXHAUSTED',
+          reason: quotaCheck.reason,
+          ecoMode: quotaCheck.ecoMode
+        });
+      }
+    }
+
+    logger.api('Fallback engine activated', { model: targetModel, timestamp: currentTime }, validatedUserId);
 
     // Build contents from OpenRouter-style messages array
     const contents = (messages || [])
@@ -72,14 +115,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!geminiRes.ok) {
       const errData = await geminiRes.json();
       const errMsg = errData.error?.message || `Gemini HTTP ${geminiRes.status}`;
-      console.error(`[FALLBACK] Gemini error: ${errMsg}`);
+      logger.error('Gemini API error in fallback', new Error(errMsg), { model: targetModel });
       return res.status(502).json({ error: errMsg });
     }
 
     const geminiData = await geminiRes.json();
     const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const estimatedTokens = Math.ceil(text.length / 4);
 
-    console.log(`[FALLBACK] ✅ Emergency response delivered (${text.length} chars)`);
+    if (validatedUserId && estimatedTokens > 0) {
+      consumeServerQuota(validatedUserId, estimatedTokens).catch(err => 
+        logger.error('Quota consumption failed in fallback', err as Error, { userId: validatedUserId }),
+      );
+    }
+
+    logger.api('Fallback response delivered', { responseLength: text.length }, validatedUserId);
 
     // Return in OpenRouter-compatible format so the frontend parsing is identical
     return res.status(200).json({
@@ -90,7 +140,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
   } catch (error: any) {
-    console.error('[FALLBACK] Critical failure:', error.message);
+    logger.error('Fallback engine total failure', error as Error, { userId: validatedUserId });
     return res.status(500).json({ error: `Fallback engine error: ${error.message}` });
   }
 }
