@@ -5,6 +5,7 @@ import { ensureUserRecord } from './db';
 import { handleFirestoreError, OperationType } from './db';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase';
+import { checkTrialStatus, startTrial } from './trialManager';
 
 interface AuthContextType {
   user: User | null;
@@ -123,7 +124,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log("Initializing Google Auth Synthesis...");
       const result = await signInWithPopup(auth, googleProvider);
-      console.log("Auth Success:", result.user.email);
+      const email = result.user.email;
+      console.log("Auth Success:", email);
+      
+      // Check trial status before allowing full access
+      if (email) {
+        const trialCheck = await checkTrialStatus(email);
+        if (!trialCheck.eligible) {
+          // Already used trial - log them out and show pricing
+          console.log("[Trial] Already used or expired for:", email);
+          await signOut(auth);
+          // Show trial ended modal by setting a flag in localStorage
+          localStorage.setItem('trial_blocked', 'true');
+          localStorage.setItem('blocked_email', email);
+          window.location.href = '/?status=trial_ended';
+          return;
+        }
+        
+        // Start new trial if eligible
+        await startTrial(email);
+      }
     } catch (error: any) {
       console.error("Neural Auth Error Details:", {
         code: error.code,
@@ -144,7 +164,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (isSigningIn) return;
     setIsSigningIn(true);
     try {
-      await signInWithPopup(auth, appleProvider);
+      const result = await signInWithPopup(auth, appleProvider);
+      const email = result.user.email;
+      
+      // Check trial status
+      if (email) {
+        const trialCheck = await checkTrialStatus(email);
+        if (!trialCheck.eligible) {
+          await signOut(auth);
+          localStorage.setItem('trial_blocked', 'true');
+          window.location.href = '/?status=trial_ended';
+          return;
+        }
+        await startTrial(email);
+      }
     } catch (error) {
       console.error("Apple Auth Error:", error);
     } finally {
