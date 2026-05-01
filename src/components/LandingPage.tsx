@@ -421,14 +421,14 @@ const featuresRef = useRef<HTMLDivElement>(null);
               <div className="p-10 lg:p-12 z-20 flex-1 flex flex-col">
                 <div className="mb-6">
                   <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-2">{lang === 'es' ? 'IA Familiar Segura' : 'Family Safe AI'}</h3>
-                  <p className="text-sm font-bold text-emerald-600 uppercase tracking-widest">{lang === 'es' ? 'Aprendizaje Seguro + Tutoría' : 'Safe Learning + Tutoring'}</p>
+                  <p className="text-sm font-bold text-emerald-600 uppercase tracking-widest">{lang === 'es' ? 'Se Adapta a la Edad' : 'Adapts to Age'}</p>
                 </div>
                 <p className="text-slate-600 text-sm leading-relaxed mb-8 flex-1">
-                  {lang === 'es' ? 'El único entorno donde tus hijos pueden aprender con IA reales, guiados por un tutor visual de matemáticas y pedagogy Socrática que responde a su curiosidad de forma segura.' : 'The only environment where your kids can learn with real AI, guided by a visual math tutor and Socratic tutoring that answers their curiosity safely.'}
+                  {lang === 'es' ? 'Selecciona el grado de tu hijo y Techie adapta sus respuestas. No es lo mismo 1º de primaria que 3º de secundaria. Tutoría personalizada por nivel educativo.' : 'Select your childs grade and Techie adapts its responses. 1st grade is different from 3rd grade. Personalized tutoring by education level.'}
                 </p>
 <ul className="space-y-3 mb-8">
-                   <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-emerald-600"/> {lang === 'es' ? 'Tutor Visual de Matemáticas' : 'Visual Math Tutor'}</li>
-                   <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-emerald-600"/> {lang === 'es' ? 'Tutoría Socrática' : 'Socratic Tutoring'}</li>
+                   <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-emerald-600"/> {lang === 'es' ? 'Selecciona Grado (1º-3ºsecundaria)' : 'Select Grade (1st-3rd grade)'}</li>
+                   <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-emerald-600"/> {lang === 'es' ? 'Respuestas por Nivel' : 'Age-Appropriate Answers'}</li>
                    <li className="flex items-center gap-3 text-sm text-slate-700 font-bold"><CheckCircle2 size={16} className="text-emerald-600"/> {lang === 'es' ? 'Controles Parentales' : 'Parent Controls'}</li>
                  </ul>
               </div>
