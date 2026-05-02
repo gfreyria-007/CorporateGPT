@@ -1,6 +1,7 @@
 import React from 'react';
 import { AuthProvider } from '../Techie/src/core/AuthContext';
 import { TechieMain } from '../Techie/src/TechieMain';
+import { useAuth } from '../lib/AuthContext';
 import '../Techie/src/index.css';
 
 /**
@@ -9,9 +10,11 @@ import '../Techie/src/index.css';
  * Scopes Tailwind and Context to prevent interference.
  */
 export const TechieWorkspace = () => {
+  const { user: mainUser } = useAuth();
+
   return (
     <div id="techie-root" className="w-full h-full overflow-hidden bg-slate-50">
-       <AuthProvider>
+       <AuthProvider mainUser={mainUser}>
           <TechieMain />
        </AuthProvider>
     </div>

@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { validateUserQuota, consumeServerQuota } from './quota';
 
 // ─── Model definitions with cost awareness ────────────────────────────────────
 
@@ -88,7 +89,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Lazy load quota
     let remainingTokens = 5000, ecoMode = false, fairUseLimit = false;
     try {
-      const { validateUserQuota } = await import('./quota');
       if (userId) {
         const q = await validateUserQuota(userId);
         remainingTokens = q.remainingTokens;
@@ -156,7 +156,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const estimatedTokens = data.usage?.total_tokens || 100;
     if (userId) {
       try {
-        const { consumeServerQuota } = await import('./quota');
         consumeServerQuota(userId, estimatedTokens).catch(() => {});
       } catch { /* ok */ }
     }

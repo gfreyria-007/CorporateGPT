@@ -3,12 +3,23 @@ import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signOut, o
 import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, addDoc, serverTimestamp, onSnapshot, deleteDoc } from 'firebase/firestore';
 import firebaseConfig from './firebase-applet-config.json';
 
-const app = getApps().find(a => a.name === 'TechieApp') ? getApp('TechieApp') : initializeApp(firebaseConfig, 'TechieApp');
+const appletConfig = firebaseConfig;
+const config = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || appletConfig.apiKey,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || appletConfig.authDomain,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || appletConfig.projectId,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || appletConfig.storageBucket,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || appletConfig.messagingSenderId,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || appletConfig.appId,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || appletConfig.measurementId
+};
+
+const app = getApps().find(a => a.name === 'TechieApp') ? getApp('TechieApp') : initializeApp(config, 'TechieApp');
 export const auth = getAuth(app);
-console.log('Firebase Auth Initialized');
+console.log('Firebase Auth Initialized (Unified)');
 setPersistence(auth, browserLocalPersistence).catch(err => console.error("Persistence error:", err));
-export const db = (firebaseConfig as any).firestoreDatabaseId
-  ? getFirestore(app, (firebaseConfig as any).firestoreDatabaseId)
+export const db = (config as any).firestoreDatabaseId
+  ? getFirestore(app, (config as any).firestoreDatabaseId)
   : getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
 export const appleProvider = new OAuthProvider('apple.com');

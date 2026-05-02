@@ -26,13 +26,25 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode, mainUser?: FirebaseUser | null }> = ({ children, mainUser }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
 
   useEffect(() => {
+    // If we have a mainUser from the parent, prioritize it to avoid double login
+    if (mainUser) {
+      setUser(mainUser);
+      loadUserProfile(mainUser);
+      setLoading(false);
+    }
+  }, [mainUser]);
+
+  useEffect(() => {
+    // Only set up internal listener if no mainUser is provided or if it's null
+    if (mainUser) return;
+
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       if (u) {
@@ -77,7 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     });
     return () => unsubscribe();
-  }, []);
+  }, [mainUser]);
 
   const loadUserProfile = async (u: FirebaseUser) => {
     if (!u.uid) return;
@@ -110,8 +122,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           data.lastCostResetDate = currentMonth;
         }
 
+        // Sync with Corporate GPT Plan if available
+        if ((data as any).plan && !data.subscriptionLevel) {
+          const planMap: Record<string, string> = {
+            'Starter': 'explorador',
+            'Professional': 'maestro',
+            'Family Starter': 'family_starter',
+            'Family Mega': 'family_mega'
+          };
+          const mappedSub = planMap[(data as any).plan];
+          if (mappedSub) {
+            await updateDoc(doc(db, 'users', u.uid), { subscriptionLevel: mappedSub });
+            data.subscriptionLevel = mappedSub as any;
+          }
+        }
+
         // Ensure trial field exists for legacy users and they are marked as approved
-        if (!data.trialExpiresAt || !data.isApproved) {
+        if (!data.trialExpiresAt || !data.isApproved || !data.subscriptionLevel) {
           const updates: any = {};
           if (!data.trialExpiresAt) {
             const trialExpires = new Date(data.createdAt || Date.now());
@@ -122,6 +149,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (!data.isApproved) {
             updates.isApproved = true;
             data.isApproved = true;
+          }
+          if (!data.subscriptionLevel) {
+            updates.subscriptionLevel = 'free';
+            data.subscriptionLevel = 'free';
           }
           await updateDoc(doc(db, 'users', u.uid), updates);
         }

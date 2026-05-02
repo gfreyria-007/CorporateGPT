@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { extractUserId, validateUserQuota, consumeServerQuota } from './quota';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
@@ -15,7 +16,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Auth & Quota check
     let fairUseLimit = false;
     let finalModel = payload.model;
-    const { extractUserId, validateUserQuota, consumeServerQuota } = await import('./quota');
     const userId = providedUserId || extractUserId(req);
 
     if (userId) {
