@@ -8,37 +8,7 @@
 import { VercelRequest } from '@vercel/node';
 import * as admin from 'firebase-admin';
 
-if (!admin.apps.length) {
-  try {
-    const projectId = process.env.FIREBASE_PROJECT_ID;
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
-
-    if (projectId && clientEmail && privateKey) {
-      admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId,
-          clientEmail,
-          privateKey: privateKey.replace(/\\n/g, '\n'),
-        }),
-      });
-      console.log('✅ Firebase Admin initialized in Quota API');
-    } else {
-      console.warn('⚠️ Firebase Admin credentials missing in Quota API. Running in permissive mode.');
-    }
-  } catch (error) {
-    console.error('❌ Firebase Admin init failed in Quota API:', error);
-  }
-}
-
-// Safe Firestore getter
-const getDb = () => {
-  try {
-    return admin.firestore();
-  } catch (e) {
-    return null;
-  }
-};
+// Removed top-level initialization to prevent Vercel boot crashes
 
 interface UserQuota {
   tokensUsed: number;
@@ -62,8 +32,24 @@ export async function validateUserQuota(userId: string): Promise<{
 }> {
   try {
     const todayMX = getMexicoDateString();
-    const db = getDb();
-    if (!db) throw new Error('Firestore not initialized');
+    
+    // Lazy Initialize inside the function
+    if (!admin.apps.length) {
+      const projectId = process.env.FIREBASE_PROJECT_ID;
+      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+      const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+      if (projectId && clientEmail && privateKey) {
+        admin.initializeApp({
+          credential: admin.credential.cert({ projectId, clientEmail, privateKey: privateKey.replace(/\\n/g, '\n') })
+        });
+      }
+    }
+
+    const db = admin.apps.length ? admin.firestore() : null;
+    if (!db) {
+      console.warn('⚠️ Quota check skipped: Firebase not initialized');
+      return { allowed: true, remainingTokens: 5000, ecoMode: false };
+    }
     
     const quotaDoc = await db.collection('users').doc(userId)
       .collection('quota').doc('daily').get();
@@ -117,7 +103,20 @@ export async function validateUserQuota(userId: string): Promise<{
 export async function consumeServerQuota(userId: string, tokensUsed: number): Promise<boolean> {
   try {
     const todayMX = getMexicoDateString();
-    const db = getDb();
+    
+    // Lazy Initialize inside the function
+    if (!admin.apps.length) {
+       const projectId = process.env.FIREBASE_PROJECT_ID;
+       const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+       const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+       if (projectId && clientEmail && privateKey) {
+         admin.initializeApp({
+           credential: admin.credential.cert({ projectId, clientEmail, privateKey: privateKey.replace(/\\n/g, '\n') })
+         });
+       }
+    }
+
+    const db = admin.apps.length ? admin.firestore() : null;
     if (!db) return false;
     
     const quotaRef = db.collection('users').doc(userId)
