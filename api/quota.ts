@@ -9,16 +9,36 @@ import { VercelRequest } from '@vercel/node';
 import * as admin from 'firebase-admin';
 
 if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    }),
-  });
+  try {
+    const projectId = process.env.FIREBASE_PROJECT_ID;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+    if (projectId && clientEmail && privateKey) {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId,
+          clientEmail,
+          privateKey: privateKey.replace(/\\n/g, '\n'),
+        }),
+      });
+      console.log('✅ Firebase Admin initialized in Quota API');
+    } else {
+      console.warn('⚠️ Firebase Admin credentials missing in Quota API. Running in permissive mode.');
+    }
+  } catch (error) {
+    console.error('❌ Firebase Admin init failed in Quota API:', error);
+  }
 }
 
-const db = admin.firestore();
+// Safe Firestore getter
+const getDb = () => {
+  try {
+    return admin.firestore();
+  } catch (e) {
+    return null;
+  }
+};
 
 interface UserQuota {
   tokensUsed: number;
@@ -42,6 +62,9 @@ export async function validateUserQuota(userId: string): Promise<{
 }> {
   try {
     const todayMX = getMexicoDateString();
+    const db = getDb();
+    if (!db) throw new Error('Firestore not initialized');
+    
     const quotaDoc = await db.collection('users').doc(userId)
       .collection('quota').doc('daily').get();
 
@@ -94,6 +117,9 @@ export async function validateUserQuota(userId: string): Promise<{
 export async function consumeServerQuota(userId: string, tokensUsed: number): Promise<boolean> {
   try {
     const todayMX = getMexicoDateString();
+    const db = getDb();
+    if (!db) return false;
+    
     const quotaRef = db.collection('users').doc(userId)
       .collection('quota').doc('daily');
 
