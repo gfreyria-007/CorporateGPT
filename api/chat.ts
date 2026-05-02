@@ -56,13 +56,6 @@ const DEFAULT_CHAIN = [
   { model: 'minimax/minimax-m2.7', provider: 'openrouter', speed: 5 },
 ];
 
-const DEFAULT_CHAIN = [
-  { model: 'minimax/minimax-m2.5-free', provider: 'openrouter', speed: 1 },
-  { model: 'qwen/qwen2.5-7b-instruct', provider: 'openrouter', speed: 2 },
-  { model: 'google/gemini-2.0-flash-lite', provider: 'openrouter', speed: 3 },
-  { model: 'gemini-2.0-flash', provider: 'gemini-direct', speed: 4 },
-];
-
 const TIER_LABELS = {
   elite: 'Elite',
   standard: 'Standard', 
