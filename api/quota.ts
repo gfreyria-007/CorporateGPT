@@ -8,7 +8,30 @@
 import { VercelRequest } from '@vercel/node';
 import admin from 'firebase-admin';
 
-// Removed top-level initialization to prevent Vercel boot crashes
+// Helper to initialize Firebase safely
+async function ensureFirebase() {
+  try {
+    if (!admin.apps.length) {
+      const projectId = process.env.FIREBASE_PROJECT_ID;
+      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+      let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+      if (projectId && clientEmail && privateKey) {
+        // Robust key cleaning for Vercel environments
+        privateKey = privateKey.replace(/\\n/g, '\n');
+        
+        admin.initializeApp({
+          credential: admin.credential.cert({ projectId, clientEmail, privateKey })
+        });
+        console.log('[Firebase] Admin initialized successfully');
+      } else {
+        console.warn('[Firebase] Config missing — Quota checking disabled');
+      }
+    }
+  } catch (err: any) {
+    console.error('[Firebase] Fatal Init Error (Suppressed):', err.message);
+  }
+}
 
 interface UserQuota {
   tokensUsed: number;
@@ -33,17 +56,8 @@ export async function validateUserQuota(userId: string): Promise<{
   try {
     const todayMX = getMexicoDateString();
     
-    // Lazy Initialize inside the function
-    if (!admin.apps.length) {
-      const projectId = process.env.FIREBASE_PROJECT_ID;
-      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-      const privateKey = process.env.FIREBASE_PRIVATE_KEY;
-      if (projectId && clientEmail && privateKey) {
-        admin.initializeApp({
-          credential: admin.credential.cert({ projectId, clientEmail, privateKey: privateKey.replace(/\\n/g, '\n') })
-        });
-      }
-    }
+    // Safe Boot
+    await ensureFirebase();
 
     const db = admin.apps.length ? admin.firestore() : null;
     if (!db) {
@@ -104,17 +118,8 @@ export async function consumeServerQuota(userId: string, tokensUsed: number): Pr
   try {
     const todayMX = getMexicoDateString();
     
-    // Lazy Initialize inside the function
-    if (!admin.apps.length) {
-       const projectId = process.env.FIREBASE_PROJECT_ID;
-       const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-       const privateKey = process.env.FIREBASE_PRIVATE_KEY;
-       if (projectId && clientEmail && privateKey) {
-         admin.initializeApp({
-           credential: admin.credential.cert({ projectId, clientEmail, privateKey: privateKey.replace(/\\n/g, '\n') })
-         });
-       }
-    }
+    // Safe Boot
+    await ensureFirebase();
 
     const db = admin.apps.length ? admin.firestore() : null;
     if (!db) return false;
