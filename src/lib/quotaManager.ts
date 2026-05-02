@@ -22,11 +22,11 @@ import {
 import { db } from './firebase';
 import { handleFirestoreError, OperationType } from './db';
 
-// ─── May 2026 Promotion ───────────────────────────────────────────────────────
+// ─── May 2026 Promotion (EXPIRED) ──────────────────────────────────────────────
 export const MAY_2026_PROMO = {
-  discount: 0.15,           // 15% off
-  starterMXN: 233,          // after discount
-  professionalMXN: 191,     // after discount (per user/seat)
+  discount: 0,              // No active discount
+  starterMXN: 275,          // original price
+  professionalMXN: 225,     // original price
   validMonth: '2026-05',    // YYYY-MM
 };
 

@@ -152,22 +152,31 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // Check for trial_ended status in URL
+    // URL Params Handling
     const params = new URLSearchParams(window.location.search);
+    
+    // 1. Trial Status
     if (params.get('status') === 'trial_ended') {
       setTrialEnded(true);
       setShowLanding(true);
     }
 
-    // Auto-detect App Mode based on Subdomain
+    // 2. Upgrade Flow
+    if (params.get('upgrade') === 'true') {
+      setShowUpgradePlan(true);
+    }
+
+    // 3. App Mode Detection (URL Param takes priority over Subdomain)
+    const modeParam = params.get('mode');
     const hostname = window.location.hostname.toLowerCase();
-    console.log('[App] Detected Hostname:', hostname);
     
-    if (hostname.startsWith('techie') || hostname.startsWith('junior') || hostname.includes('techie.catalizia.com')) {
-      console.log('[App] Switching to JUNIOR mode');
+    if (modeParam === 'junior' || modeParam === 'techie') {
+      setAppMode('junior');
+    } else if (modeParam === 'corporate') {
+      setAppMode('corporate');
+    } else if (hostname.startsWith('techie') || hostname.startsWith('junior') || hostname.includes('techie.catalizia.com')) {
       setAppMode('junior');
     } else {
-      console.log('[App] Keeping CORPORATE mode');
       setAppMode('corporate');
     }
 

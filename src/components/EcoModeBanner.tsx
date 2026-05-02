@@ -116,12 +116,6 @@ export function EcoModeBanner({
                       <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{lang === 'es' ? 'Créditos' : 'Credits'}</span>
                     </div>
                   </div>
-
-                  {mayPromo && (
-                    <div className="bg-emerald-500 hover:bg-emerald-600 transition-colors text-white text-[9px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-xl shadow-lg shadow-emerald-500/20 cursor-pointer flex items-center gap-2">
-                      <Zap size={10} /> -{Math.round(MAY_2026_PROMO.discount * 100)}% MAYO
-                    </div>
-                  )}
                </div>
             </div>
           </div>

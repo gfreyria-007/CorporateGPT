@@ -74,45 +74,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, userProf
               </div>
             </div>
 
-            {/* API Key Section (BYOK) */}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-2">Tu Llave de Acceso Personal (BYOK)</label>
-                <p className="text-[9px] text-gray-400 mb-3 ml-2 uppercase font-bold tracking-tight leading-relaxed">
-                  {(userProfile.subscriptionLevel?.includes('family') || userProfile.role === 'admin')
-                    ? `Estás en un Plan Premium de CatalizIA. Nosotros cubrimos tu consumo de inteligencia, pero puedes agregar tu propia llave si prefieres.`
-                    : 'Tu cuenta actual requiere una llave personal o una suscripción activa para continuar:'
-                  }
-                  <br/>
-                  <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-blue-500 underline font-black">Haz clic aquí para obtener tu código Gemini gratuito</a>.
+            <div className="text-center p-6 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+                <p className="text-[10px] text-slate-400 font-bold uppercase leading-relaxed">
+                   Tu cuenta está sincronizada con el Hub Central de CatalizIA. Los créditos se gestionan automáticamente.
                 </p>
-
-                <input 
-                  type="password" 
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="Pega tu código aquí..."
-                  className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:outline-none focus:border-blue-500 transition-all text-sm font-mono text-center"
-                />
-              </div>
-              
-              <button 
-                onClick={handleSave}
-                disabled={isSaving}
-                className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl hover:bg-[#1e3a8a] transition-all disabled:opacity-50 flex items-center justify-center gap-2 uppercase tracking-widest text-xs shadow-lg shadow-blue-500/20"
-              >
-                {isSaving ? 'Conectando...' : 'Guardar y Activar'}
-              </button>
             </div>
-
-
-            {userProfile.subscriptionLevel === 'free' && (
-              <div className="text-center p-4">
-                <p className="text-[10px] text-gray-400 font-bold uppercase leading-relaxed">
-                  ¿Quieres más potencia? Suscríbete a un Plan Familiar en el Hub de CatalizIA.
-                </p>
-              </div>
-            )}
 
             {message && (
               <p className="text-center text-[10px] font-black uppercase tracking-widest animate-pulse">

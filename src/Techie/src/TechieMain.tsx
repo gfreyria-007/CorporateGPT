@@ -35,7 +35,7 @@ import { useAuth } from './core/AuthContext';
 import * as gameAudio from './utils/gameAudio';
 
 const BUDGETS = {
-    FREE: 0,
+    FREE: 50, // Trial users get 50 units
     MAESTRO: 500,
     LEYENDA: 1000,
     FAMILY_STARTER: 1500,
@@ -106,7 +106,7 @@ export const TechieMain: React.FC = () => {
   const [isMuted, setIsMuted] = useState(false);
   const [showMathLab, setShowMathLab] = useState(false);
 
-  const isSubscribed = ['explorador', 'maestro', 'leyenda', 'family_starter', 'family_mega'].includes(userProfile?.subscriptionLevel || '') || userProfile?.role === 'admin';
+  const isSubscribed = ['trial', 'explorador', 'maestro', 'leyenda', 'family_starter', 'family_mega'].includes(userProfile?.subscriptionLevel || '') || userProfile?.role === 'admin';
   const isEmailVerified = true; // Bypassed per user request
   const hasPersonalKey = !!userProfile?.personalApiKey;
 
@@ -577,46 +577,31 @@ export const TechieMain: React.FC = () => {
                     <p className="text-gray-500 mb-8 text-sm leading-relaxed">
                         {isBudgetExceeded ? 'Has agotado tu crédito mensual.' : 'Tu acceso premium está inactivo.'} Elige cómo quieres seguir explorando:
                     </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                        {/* Family Coverage */}
-                        <div className="p-8 bg-blue-50 rounded-[2rem] border border-blue-100 text-left relative overflow-hidden group">
-                            <div className="absolute top-4 right-4 text-[10px] bg-blue-200 text-blue-700 px-3 py-1 rounded-full font-black uppercase tracking-widest">Recomendado</div>
-                            <h4 className="font-black text-[#1e3a8a] uppercase text-sm mb-2">Plan Familiar</h4>
-                            <p className="text-xs text-gray-600 mb-6 leading-relaxed">
-                                Techie Tutor está incluido en los planes **Family Starter** y **Family Mega** de Corporate GPT. Obtén acceso para toda tu familia.
+                    <div className="flex justify-center mb-8">
+                        {/* Unified Action */}
+                        <div className="p-8 bg-blue-50 rounded-[3rem] border border-blue-100 text-center relative overflow-hidden group max-w-sm">
+                            <div className="absolute top-4 right-4 text-[10px] bg-blue-200 text-blue-700 px-3 py-1 rounded-full font-black uppercase tracking-widest">Premium</div>
+                            <h4 className="font-black text-[#1e3a8a] uppercase text-xl mb-4">Potencia tu Plan</h4>
+                            <p className="text-sm text-gray-600 mb-8 leading-relaxed">
+                                Techie Tutor está incluido en los planes **Family Starter** y **Family Mega**. Obtén acceso ilimitado para toda tu familia.
                             </p>
-                            <div className="mt-auto">
+                            <div className="space-y-4">
                                 <button 
                                   onClick={() => window.location.href = '/?mode=corporate&upgrade=true'}
-                                  className="block w-full py-4 bg-blue-600 text-white text-center font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:scale-[1.02] transition-all"
+                                  className="block w-full py-5 bg-blue-600 text-white text-center font-black rounded-[2rem] text-sm uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:scale-[1.02] transition-all"
                                 >
                                   Ver Planes Familiares
                                 </button>
-                            </div>
-                        </div>
-                        {/* BYOK / Sync */}
-                        <div className="p-8 bg-slate-50 rounded-[2rem] border border-slate-200 text-left relative overflow-hidden group">
-                            <h4 className="font-black text-slate-800 uppercase text-sm mb-2">Sync Corporate</h4>
-                            <p className="text-xs text-gray-600 mb-6 leading-relaxed">
-                                Si ya tienes un plan activo en Corporate GPT, sincroniza tu sesión para desbloquear Techie Tutor inmediatamente.
-                            </p>
-                            <div className="mt-auto">
                                 <button 
                                   onClick={() => window.location.reload()}
-                                  className="block w-full py-4 bg-white text-slate-800 border border-slate-200 text-center font-black rounded-2xl text-xs uppercase tracking-widest hover:bg-slate-50 transition-all"
+                                  className="block w-full py-4 bg-white text-slate-400 text-center font-black rounded-2xl text-[10px] uppercase tracking-widest hover:text-blue-600 transition-all"
                                 >
-                                  Sincronizar Ahora
+                                  ¿Ya pagaste? Sincronizar ahora
                                 </button>
                             </div>
                         </div>
                     </div>
-                    <div className="space-y-3">
-                        <button 
-                            onClick={() => setShowSettingsModal(true)}
-                            className="w-full py-3 bg-white border-2 border-gray-200 text-[#1e3a8a] font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-gray-50 transition-all"
-                        >
-                            Ya tengo mi llave (Configurar)
-                        </button>
+                    <div className="pt-4">
                         <button 
                             onClick={handleLogout}
                             className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-red-500 transition-colors"

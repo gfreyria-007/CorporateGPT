@@ -5,13 +5,14 @@
  * Plans that include Techie: 'Family Starter', 'Family Mega'
  */
 
-export type PlanType = 'Starter' | 'Professional' | 'Family Starter' | 'Family Mega' | 'Junior Solo';
+export type PlanType = 'Starter' | 'Professional' | 'Family Starter' | 'Family Mega' | 'Junior Solo' | 'Trial' | 'trial';
 
-export const TECHIE_ENABLED_PLANS: PlanType[] = ['Family Starter', 'Family Mega'];
+export const TECHIE_ENABLED_PLANS: PlanType[] = ['Family Starter', 'Family Mega', 'Trial', 'trial'];
 
 export function hasTechieAccess(plan?: string): boolean {
   if (!plan) return false;
-  return TECHIE_ENABLED_PLANS.includes(plan as PlanType);
+  // Normalize and check
+  return TECHIE_ENABLED_PLANS.some(p => p.toLowerCase() === plan.toLowerCase());
 }
 
 export function canAccessTechie(profile: {
