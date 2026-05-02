@@ -63,19 +63,6 @@ function resolveTier(remaining: number, ecoMode: boolean, fairUseLimit?: boolean
   return { tier: 'elite', label: TIER_LABELS.elite };
 }
 
-// ─── OpenRouter call ──────────────────────────────────────────────────────────
-
-async function callOpenRouter(
-  apiKey: string, modelId: string, messages: any[], system: string,
-  temp: number, maxTokens: number, referer: string
-) {
-  return fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json', 'HTTP-Referer': referer, 'X-Title': 'Catalizia CorporateGPT' },
-    body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: system }, ...messages], temperature: temp, max_tokens: maxTokens }),
-  });
-}
-
 // ─── Main handler ─────────────────────────────────────────────────────────────
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -98,9 +85,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Rate limiting
     const rateLimit = await checkRateLimit(getIdentifier(req));
     if (!rateLimit.allowed) return res.status(429).json({ error: 'Rate limited', resetIn: rateLimit.resetIn });
-
-    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-    if (!OPENROUTER_API_KEY) return res.status(500).json({ error: 'API key missing' });
 
     // Lazy load quota
     let remainingTokens = 5000, ecoMode = false, fairUseLimit = false;
@@ -136,42 +120,89 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Notify user on downgrade
     let notification: string | null = null;
     if (tier === 'fairuse') {
-      notification = 'Elite tokens have run out for the day as per fair use policy. You are now on the Basic Engine. Add $50 MXN credits or upgrade to stay Elite!';
+      notification = 'Tokens have run out - using backup model.';
     } else if (tier === 'eco') {
-      notification = 'Modo Eco activado — usando modelos eficientes para ahorrar créditos.';
+      notification = 'Modo Eco activado — usando modelos eficientes.';
     } else if (tier === 'free') {
-      notification = 'Créditos agotados — modo gratuito activado sin interrupción del servicio.';
+      notification = 'Modo gratuito activado sin interrupción.';
     }
 
     console.log(`[Router] tier=${tier} model=${modelId} remaining=${remainingTokens}`);
 
-    // First try primary
-    let response: Response, data: any;
+    // Try multiple GEMINI models - fallback chain
+    let lastError = '';
+    let success = false;
+    let resultText = '';
     let usedModel = modelId;
+    
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+    const modelsToTry = [
+      modelId,
+      'gemini-2.0-flash-001',
+      'gemini-2.0-flash',
+      'gemini-1.5-flash-8b',
+      'gemini-1.5-flash'
+    ];
+    const uniqueModelsToTry = [...new Set(modelsToTry)];
 
-    response = await callOpenRouter(OPENROUTER_API_KEY, modelId, messages, systemContent, temperature ?? 0.7, realMaxTokens, process.env.APP_URL || 'http://localhost:3000');
+    const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error(`[Router] Primary failed (${response.status}): ${errText.substring(0, 200)}`);
+    for (const tryModel of uniqueModelsToTry) {
+      try {
+        const contents = messages.map((m: any) => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content || '' }]
+        }));
 
-      // Fallback to free model
-      const fallbackModel = MODELS.free[type];
-      if (fallbackModel !== modelId) {
-        response = await callOpenRouter(OPENROUTER_API_KEY, fallbackModel, messages, systemContent, temperature ?? 0.7, realMaxTokens, process.env.APP_URL || 'http://localhost:3000');
-        usedModel = fallbackModel;
-      }
+        const payload = {
+          contents,
+          system_instruction: { parts: [{ text: systemContent }] },
+          generationConfig: { temperature: temperature ?? 0.7, maxOutputTokens: realMaxTokens }
+        };
 
-      if (!response.ok) {
-        const fallbackErr = await response.text();
-        return res.status(502).json({ error: `Models unavailable: ${fallbackErr.substring(0, 200)}` });
+        const response = await fetch(
+          `${GEMINI_BASE}/${tryModel}:generateContent?key=${GEMINI_API_KEY}`,
+          { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          if (resultText) {
+            usedModel = tryModel;
+            success = true;
+            break;
+          }
+        }
+        
+        const errText = await response.text();
+        lastError = errText.substring(0, 200);
+      } catch (e: any) {
+        lastError = e?.message || 'Model failed';
+        continue;
       }
     }
 
-    data = await response.json();
+    if (!success) {
+      // Last resort: call via /api/fallback
+      console.error('[Chat] All Gemini models failed:', lastError);
+      const fallbackRes = await fetch('/api/fallback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages, instructions, temperature, model: modelId })
+      });
+      
+      if (!fallbackRes.ok) {
+        return res.status(502).json({ error: 'All AI models unavailable. Please try again.' });
+      }
+      
+      const fallbackData = await fallbackRes.json();
+      resultText = fallbackData.text || fallbackData.choices?.[0]?.message?.content || '';
+      usedModel = fallbackData.model || 'fallback';
+    }
 
     // Consume quota
-    const estimatedTokens = data.usage?.total_tokens || 100;
+    const estimatedTokens = Math.ceil((resultText.length + systemContent.length) / 4);
     if (userId) {
       try {
         consumeServerQuota(userId, estimatedTokens).then(() => {
@@ -183,10 +214,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     return res.status(200).json({
-      ...data,
+      choices: [{ message: { role: 'assistant', content: resultText } }],
       _tier: tier,
       _model: usedModel,
       _tierLabel: label,
+      _notification: notification,
+    });
+
+  } catch (err: any) {
+    console.error('[ChatHandler] Fatal:', err?.message || err);
+    return res.status(500).json({ error: `Error: ${(err?.message || 'Unknown').substring(0, 100)}` });
+  }
+}
       _notification: notification,
     });
 

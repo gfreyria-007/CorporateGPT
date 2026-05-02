@@ -319,12 +319,13 @@ export const TechieMain: React.FC = () => {
       if (userProfile.role !== 'admin' && canUseSystemKey) {
           const isOverDailyLimit = userProfile.dailyUsageCount >= userProfile.tokensPerDay;
 
-          if (userProfile.subscriptionLevel === 'free' && isOverDailyLimit && !isTrialActive) {
+          // Unified approach: Family plans cover everything. Free users have daily limits.
+          if (userProfile.subscriptionLevel === 'free' && isOverDailyLimit) {
               addMessage(Role.MODEL, "¡Ups! Has alcanzado tu límite diario. Vuelve mañana o usa tu propia API Key para acceso ilimitado. 🚀");
               return;
           }
 
-          if (isBudgetExceeded && !isTrialActive) {
+          if (isBudgetExceeded) {
               addMessage(Role.MODEL, {
                 type: 'selection',
                 text: "¡Atención! Has agotado tu crédito de tokens mensual de tu plan actual.",
