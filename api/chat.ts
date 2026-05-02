@@ -5,23 +5,55 @@ import { checkRateLimit, getIdentifier } from './rateLimit';
 const MAX_MESSAGE_SIZE = 50 * 1024;
 const MAX_TOKENS = 8000;
 
-// ─── EFFICIENT CHAINS (Cheap + Reliable + No Token Waste) ───────────────────────
-// Pricing May 2026 - Focus on value models, avoid expensive ones
+// ─── MODEL LOGGING ────────────────────────────────────────────────────────────
+// Track which models succeed/fail for monitoring
+const modelStats: Record<string, { success: number; fail: number; lastFail?: number } = {};
+const ADMIN_EMAIL = 'gfreyria@gmail.com';
+const LOG_INTERVAL_MS = 60 * 60 * 1000; // Log to console every hour
+
+function logModelAttempt(model: string, success: boolean) {
+  if (!modelStats[model]) modelStats[model] = { success: 0, fail: 0 };
+  if (success) modelStats[model].success++;
+  else {
+    modelStats[model].fail++;
+    modelStats[model].lastFail = Date.now();
+  }
+}
+
+function getModelReport(): string {
+  const lines = ['=== MODEL REPORT ==='];
+  for (const [model, stats] of Object.entries(modelStats)) {
+    const total = stats.success + stats.fail;
+    const rate = total > 0 ? Math.round((stats.success / total) * 100) : 0;
+    lines.push(`${model}: ${stats.success}/${total} (${rate}%) ${stats.lastFail ? '- LAST FAIL: ' + new Date(stats.lastFail).toISOString() : ''}`);
+  }
+  return lines.join('\n');
+}
+
+// Log report every hour
+setInterval(() => {
+  console.log(getModelReport());
+}, LOG_INTERVAL_MS);
+
+// ─── EFFICIENT CHAINS (Free → Cheap → Reliable) ───────────────────────────────────────
+// May 2026 - Priority: FREE > Cheap > Value
 
 // Data Protection: ZDR models only
 const PROTECTED_CHAIN = [
-  { model: 'minimax/minimax-m2.7', provider: 'openrouter', speed: 1 },
-  { model: 'deepseek/deepseek-v3-2', provider: 'openrouter', speed: 2 },
-  { model: 'google/gemini-2.0-flash-lite', provider: 'openrouter', speed: 3 },
-  { model: 'gemini-2.0-flash', provider: 'gemini-direct', speed: 4 },
+  { model: 'qwen/qwen3.6-plus', provider: 'openrouter', speed: 1, free: true },
+  { model: 'minimax/minimax-m2.7', provider: 'openrouter', speed: 2 },
+  { model: 'deepseek/deepseek-v3-2', provider: 'openrouter', speed: 3 },
+  { model: 'google/gemini-2.0-flash-lite', provider: 'openrouter', speed: 4 },
+  { model: 'gemini-2.0-flash', provider: 'gemini-direct', speed: 5 },
 ];
 
-// Default chain
+// Default chain - Try FREE first
 const DEFAULT_CHAIN = [
-  { model: 'minimax/minimax-m2.7', provider: 'openrouter', speed: 1 },
-  { model: 'xiaomi/mimo-v2-pro', provider: 'openrouter', speed: 2 },
+  { model: 'qwen/qwen3.6-plus', provider: 'openrouter', speed: 1, free: true },
+  { model: 'stepfun/step-3.5-flash', provider: 'openrouter', speed: 2 },
   { model: 'deepseek/deepseek-v3-2', provider: 'openrouter', speed: 3 },
-  { model: 'stepfun/step-3.5-flash', provider: 'openrouter', speed: 4 },
+  { model: 'xiaomi/mimo-v2-pro', provider: 'openrouter', speed: 4 },
+  { model: 'minimax/minimax-m2.7', provider: 'openrouter', speed: 5 },
 ];
 
 const DEFAULT_CHAIN = [
@@ -150,9 +182,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             resultText = data.choices?.[0]?.message?.content || '';
             if (resultText) {
               usedModel = `openrouter/${attempt.model}`;
+              logModelAttempt(attempt.model, true);
               success = true;
               break;
             }
+          } else {
+            logModelAttempt(attempt.model, false);
           }
         } 
         else if (attempt.provider === 'gemini-direct' && GEMINI_KEY) {
@@ -177,12 +212,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
             if (resultText) {
               usedModel = attempt.model;
+              logModelAttempt(attempt.model, true);
               success = true;
               break;
             }
+          } else {
+            logModelAttempt(attempt.model, false);
           }
         }
       } catch (e) {
+        logModelAttempt(attempt.model, false);
         console.log(`[Chain] ${attempt.provider}/${attempt.model} failed, trying next...`);
         continue;
       }

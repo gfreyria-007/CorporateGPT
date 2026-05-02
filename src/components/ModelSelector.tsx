@@ -35,14 +35,18 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   };
 
 const FILTERED_MODELS = [
-  'minimax/minimax-m2.7',
+  // FREE
+  'qwen/qwen3.6-plus',
+  // CHEAP ($0.10-$0.30)
+  'stepfun/step-3.5-flash',
   'deepseek/deepseek-v3-2',
   'xiaomi/mimo-v2-pro',
-  'stepfun/step-3.5-flash',
-  'qwen/qwen3.6-plus',
+  // VALUE
+  'minimax/minimax-m2.7',
+  // GEMINI (ZDR)
   'google/gemini-2.0-flash-lite',
   'google/gemini-2.0-flash',
-  'google/gemini-1.5-flash',
+  // SPECIALIZED
   'x-ai/grok-4.1-fast',
 ];
 
