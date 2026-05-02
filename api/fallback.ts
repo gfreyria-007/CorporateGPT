@@ -14,7 +14,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { messages, instructions, temperature, model, userId } = req.body;
     const currentTime = new Date().toISOString();
-    const targetModel = model || FALLBACK_MODEL;
+    let targetModel = model || FALLBACK_MODEL;
+
+    // Normalize model names for v1beta
+    if (targetModel.includes('gemini-1.5-flash-latest')) targetModel = 'gemini-1.5-flash';
+    if (targetModel.includes('gemini-2.0-flash')) targetModel = 'gemini-2.0-flash-001';
 
     const contents = (messages || [])
       .filter((m: any) => m.role !== 'system')
