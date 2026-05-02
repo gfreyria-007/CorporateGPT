@@ -7,7 +7,7 @@ import { PricingSection } from './PricingSection';
 import { 
   ShieldCheck, Shield, CheckCircle2, ChevronRight, Zap, Globe, Sparkles, Coins, 
   Cpu, Lock, MousePointer2, MessageSquare, Presentation, Palette, Database,
-  AlertTriangle, Users, BarChart3, Fingerprint, Crosshair, Target, XCircle, FileWarning, Settings, ArrowRight
+  AlertTriangle, Users, BarChart3, Fingerprint, Crosshair, Target, XCircle, FileWarning, Settings, ArrowRight, Mail, Chrome
 } from 'lucide-react';
 import { translations } from '../lib/translations';
 import { cn } from '../lib/utils';
@@ -43,6 +43,7 @@ export const LandingPage = ({
   appMode = 'corporate', 
   isSuperAdmin = false 
 }: LandingPageProps) => {
+  const [showAuthOptions, setShowAuthOptions] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(showTrialModal);
   const [showEditor, setShowEditor] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -259,10 +260,31 @@ export const LandingPage = ({
             </p>
 
             <div className="hero-btns flex flex-wrap gap-6 pt-4">
-              <button onClick={onStartSession} className="magnetic-btn px-10 py-6 rounded-2xl bg-white text-slate-900 font-black uppercase tracking-widest text-sm hover:bg-slate-100 transition-all shadow-[0_0_50px_rgba(255,255,255,0.2)] flex items-center gap-3">
-                {lang === 'es' ? 'Crear Workspace' : 'Create Workspace'} <ArrowRight size={20} />
-              </button>
-              <button onClick={onStartSession} className="magnetic-btn px-10 py-6 rounded-2xl bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-sm hover:bg-white/10 transition-all flex items-center gap-3 backdrop-blur-xl">
+              {!showAuthOptions ? (
+                <button onClick={() => setShowAuthOptions(true)} disabled={isSigningIn} className="magnetic-btn px-10 py-6 rounded-2xl bg-white text-slate-900 font-black uppercase tracking-widest text-sm hover:bg-slate-100 transition-all shadow-[0_0_50px_rgba(255,255,255,0.2)] flex items-center gap-3">
+                  {isSigningIn ? <Sparkles size={20} className="animate-spin" /> : <ChevronRight size={20} />}
+                  {lang === 'es' ? 'Iniciar Sesión' : 'Sign In'} <ArrowRight size={20} />
+                </button>
+              ) : (
+                <div className="flex flex-wrap gap-4">
+                  <button onClick={onStartSession} disabled={isSigningIn} className="magnetic-btn px-8 py-5 rounded-2xl bg-white text-slate-900 font-black uppercase tracking-widest text-sm hover:bg-slate-100 transition-all shadow-[0_0_50px_rgba(255,255,255,0.2)] flex items-center gap-3">
+                    <Chrome size={20} />
+                    Google
+                  </button>
+                  <button onClick={() => onSignInWithApple?.()} disabled={isSigningIn} className="magnetic-btn px-8 py-5 rounded-2xl bg-black text-white font-black uppercase tracking-widest text-sm hover:bg-slate-800 transition-all flex items-center gap-3">
+                    <Fingerprint size={20} />
+                    Apple
+                  </button>
+                  <button onClick={() => {
+                    const email = prompt(lang === 'es' ? 'Ingresa tu correo electrónico:' : 'Enter your email:');
+                    if (email && onSignInWithEmail) onSignInWithEmail(email);
+                  }} disabled={isSigningIn} className="magnetic-btn px-8 py-5 rounded-2xl bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-sm hover:bg-white/10 transition-all flex items-center gap-3 backdrop-blur-xl">
+                    <Mail size={20} />
+                    {lang === 'es' ? 'Correo' : 'Email'}
+                  </button>
+                </div>
+              )}
+              <button onClick={() => setShowAuthOptions(true)} className="magnetic-btn px-10 py-6 rounded-2xl bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-sm hover:bg-white/10 transition-all flex items-center gap-3 backdrop-blur-xl">
                 <Shield size={20} /> {lang === 'es' ? 'Seguridad ZDR' : 'ZDR Security'}
               </button>
             </div>
