@@ -12,7 +12,7 @@
  *   - A silent console event is logged for Super Admin diagnostics.
  */
 
-const PRIMARY_TIMEOUT_MS = 6000;    // 6-second SLA
+const PRIMARY_TIMEOUT_MS = 30000;    // 30-second SLA - give models time to respond
 const FALLBACK_MODEL = 'gemini-1.5-flash-latest';
 
 export interface RouterPayload {
