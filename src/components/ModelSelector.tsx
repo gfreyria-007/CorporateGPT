@@ -35,17 +35,15 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   };
 
 const FILTERED_MODELS = [
-  'google/gemini-1.5-flash',
-  'google/gemini-1.5-flash-8b', 
-  'google/gemini-2.0-flash',
+  'minimax/minimax-m2.7',
+  'deepseek/deepseek-v3-2',
+  'xiaomi/mimo-v2-pro',
+  'stepfun/step-3.5-flash',
+  'qwen/qwen3.6-plus',
   'google/gemini-2.0-flash-lite',
-  'google/gemini-2.5-flash',
-  'minimax/minimax-m2.5-free',
-  'anthropic/claude-3-haiku',
-  'anthropic/claude-3.5-sonnet',
-  'openai/gpt-4o-mini',
-  'openai/gpt-4o',
-  'qwen/qwen2.5-7b-instruct',
+  'google/gemini-2.0-flash',
+  'google/gemini-1.5-flash',
+  'x-ai/grok-4.1-fast',
 ];
 
 const isDataProtected = (id: string) => {

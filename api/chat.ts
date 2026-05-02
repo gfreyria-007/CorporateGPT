@@ -5,11 +5,23 @@ import { checkRateLimit, getIdentifier } from './rateLimit';
 const MAX_MESSAGE_SIZE = 50 * 1024;
 const MAX_TOKENS = 8000;
 
-// ─── DATA PROTECTION CHAIN (ZDR = Zero Data Retention) ────────────────────────────
-  { model: 'minimax/minimax-m2.5-free', provider: 'openrouter', speed: 1 },
-  { model: 'google/gemini-2.0-flash', provider: 'openrouter', speed: 2 },
-  { model: 'google/gemini-1.5-flash', provider: 'openrouter', speed: 3 },
-  { model: 'gemini-1.5-flash', provider: 'gemini-direct', speed: 3 },
+// ─── EFFICIENT CHAINS (Cheap + Reliable + No Token Waste) ───────────────────────
+// Pricing May 2026 - Focus on value models, avoid expensive ones
+
+// Data Protection: ZDR models only
+const PROTECTED_CHAIN = [
+  { model: 'minimax/minimax-m2.7', provider: 'openrouter', speed: 1 },
+  { model: 'deepseek/deepseek-v3-2', provider: 'openrouter', speed: 2 },
+  { model: 'google/gemini-2.0-flash-lite', provider: 'openrouter', speed: 3 },
+  { model: 'gemini-2.0-flash', provider: 'gemini-direct', speed: 4 },
+];
+
+// Default chain
+const DEFAULT_CHAIN = [
+  { model: 'minimax/minimax-m2.7', provider: 'openrouter', speed: 1 },
+  { model: 'xiaomi/mimo-v2-pro', provider: 'openrouter', speed: 2 },
+  { model: 'deepseek/deepseek-v3-2', provider: 'openrouter', speed: 3 },
+  { model: 'stepfun/step-3.5-flash', provider: 'openrouter', speed: 4 },
 ];
 
 const DEFAULT_CHAIN = [
