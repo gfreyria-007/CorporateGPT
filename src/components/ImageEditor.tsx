@@ -436,7 +436,6 @@ export function ImageEditor({
       const currentTemplate = TEMPLATES.find(t => t.id === selectedTemplate) || TEMPLATES[0];
       const currentStyle = VISUAL_STYLES.find(s => s.id === selectedStyle) || VISUAL_STYLES[0];
 
-      // Build a rich prompt that tells the model to create a full visual asset
       const aspectMap: Record<string, string> = {
         ppt: '16:9',
         infographic: '9:16',
@@ -473,38 +472,46 @@ The image must fill the entire frame with no empty space.
 Text should be crisp and readable. Use a ${currentStyle.name} aesthetic.
 Make it look like a premium, professionally designed asset that could be used in a real corporate presentation.`;
 
-      const resValue = genResolution === '2K' ? 2048 : 1024;
-      
-      const payload = {
-        model: 'gemini-2.0-flash',
-        contents: { parts: [{ text: fullPrompt }] },
-        config: {
-          temperature: genTemperature,
-          responseModalities: genOutputFormat === 'images_only' ? ['IMAGE'] : ['TEXT', 'IMAGE'],
-          imageConfig: { 
-            aspectRatio
+      const IMAGE_MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
+      let imgRes: any = null;
+
+      for (const model of IMAGE_MODELS) {
+        try {
+          const payload = {
+            model,
+            contents: { parts: [{ text: fullPrompt }] },
+            config: {
+              temperature: genTemperature,
+              responseModalities: genOutputFormat === 'images_only' ? ['IMAGE'] : ['TEXT', 'IMAGE'],
+              imageConfig: { aspectRatio }
+            }
+          };
+
+          const res = await fetch('/api/gemini', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'generateContent', payload })
+          });
+          
+          imgRes = await res.json();
+          
+          if (!imgRes.error) {
+            const imgPart = imgRes.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData);
+            if (imgPart) {
+              console.log(`[Image] Success with model: ${model}`);
+              break;
+            }
           }
+        } catch (e) {
+          console.warn(`[Image] Model ${model} failed:`, e);
         }
-      };
-
-      const res = await fetch('/api/gemini', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'generateContent', payload })
-      });
-      const imgRes = await res.json();
-
-      if (imgRes.error) {
-        throw new Error(imgRes.error);
       }
 
-      // Find the image part in the response
-      const imgPart = imgRes.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData);
-      if (!imgPart) {
-        throw new Error('No image was generated. The model returned text only.');
+      if (!imgRes?.candidates?.[0]?.content?.parts?.some((p: any) => p.inlineData)) {
+        throw new Error('Image generation failed. Try again.');
       }
 
-      // Load the generated image onto the canvas
+      const imgPart = imgRes.candidates[0].content.parts.find((p: any) => p.inlineData);
       const imgElement = new window.Image();
       imgElement.crossOrigin = 'anonymous';
       imgElement.src = `data:${imgPart.inlineData.mimeType || 'image/png'};base64,${imgPart.inlineData.data}`;
@@ -514,7 +521,6 @@ Make it look like a premium, professionally designed asset that could be used in
         imgElement.onerror = () => reject(new Error('Failed to load image'));
       });
 
-      // Match canvas to selected template exactly
       const targetWidth = currentTemplate.width;
       const targetHeight = currentTemplate.height;
 
@@ -529,7 +535,6 @@ Make it look like a premium, professionally designed asset that could be used in
         top: 0,
       });
 
-      // Scale image to fill the canvas dimensions exactly
       fabImg.scaleX = targetWidth / imgElement.naturalWidth;
       fabImg.scaleY = targetHeight / imgElement.naturalHeight;
 
@@ -714,7 +719,6 @@ Make it look like a premium, professionally designed asset that could be used in
 
     setIsGenerating(true);
     try {
-      // 1) Build a black/white mask from the brush strokes
       const allObjects = fabricCanvas.getObjects();
       const maskStrokes = allObjects.slice(premaskedObjects);
 
@@ -724,16 +728,13 @@ Make it look like a premium, professionally designed asset that could be used in
         return;
       }
 
-      // Create an off-screen canvas for the mask
       const maskCanvas = document.createElement('canvas');
       maskCanvas.width = fabricCanvas.width! * 2;
       maskCanvas.height = fabricCanvas.height! * 2;
       const maskCtx = maskCanvas.getContext('2d')!;
-      // Black background = keep, White strokes = edit
       maskCtx.fillStyle = '#000000';
       maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
 
-      // Create a temporary Fabric canvas to render only mask strokes
       const tempFabric = new fabric.StaticCanvas(null, {
         width: fabricCanvas.width! * 2,
         height: fabricCanvas.height! * 2,
@@ -759,46 +760,61 @@ Make it look like a premium, professionally designed asset that could be used in
       const maskDataUrl = tempFabric.toDataURL({ format: 'png', quality: 1, multiplier: 1 } as any);
       tempFabric.dispose();
 
-      // 2) Convert original snapshot and mask to base64 (strip data URI prefix)
       const originalBase64 = originalSnapshot.split(',')[1];
       const maskBase64 = maskDataUrl.split(',')[1];
 
-      // 3) Send to Gemini: original image + mask + text prompt
-      const payload = {
-        model: 'gemini-2.0-flash',
-        contents: {
-          parts: [
-            {
-              text: `Edit this image. I am providing the original image and a mask image. The white areas in the mask indicate the zones that need to be edited. Replace ONLY the white-masked areas with: ${maskPrompt}. Keep everything outside the mask EXACTLY as it is. The result must be seamless and photorealistic.`
+      const IMAGE_MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
+      let imgRes: any = null;
+
+      for (const model of IMAGE_MODELS) {
+        try {
+          const payload = {
+            model,
+            contents: {
+              parts: [
+                {
+                  text: `Edit this image. I am providing the original image and a mask image. The white areas in the mask indicate the zones that need to be edited. Replace ONLY the white-masked areas with: ${maskPrompt}. Keep everything outside the mask EXACTLY as it is. The result must be seamless and photorealistic.`
+                },
+                {
+                  inlineData: { mimeType: 'image/png', data: originalBase64 }
+                },
+                {
+                  inlineData: { mimeType: 'image/png', data: maskBase64 }
+                }
+              ]
             },
-            {
-              inlineData: { mimeType: 'image/png', data: originalBase64 }
-            },
-            {
-              inlineData: { mimeType: 'image/png', data: maskBase64 }
+            config: {
+              temperature: genTemperature,
+              responseModalities: ['IMAGE'],
+              imageConfig: { aspectRatio: 'auto' }
             }
-          ]
-        },
-        config: {
-          temperature: genTemperature,
-          responseModalities: ['IMAGE'],
-          imageConfig: { aspectRatio: 'auto' }
+          };
+
+          const res = await fetch('/api/gemini', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'generateContent', payload })
+          });
+          
+          imgRes = await res.json();
+          
+          if (!imgRes.error) {
+            const imgPart = imgRes.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData);
+            if (imgPart) {
+              console.log(`[Inpaint] Success with model: ${model}`);
+              break;
+            }
+          }
+        } catch (e) {
+          console.warn(`[Inpaint] Model ${model} failed:`, e);
         }
-      };
+      }
 
-      const res = await fetch('/api/gemini', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'generateContent', payload })
-      });
-      const imgRes = await res.json();
+      if (!imgRes?.candidates?.[0]?.content?.parts?.some((p: any) => p.inlineData)) {
+        throw new Error('Image editing failed. Try a clearer prompt.');
+      }
 
-      if (imgRes.error) throw new Error(imgRes.error);
-
-      const imgPart = imgRes.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData);
-      if (!imgPart) throw new Error('No image returned from inpainting. Try a clearer prompt.');
-
-      // 4) Load result and replace canvas
+      const imgPart = imgRes.candidates[0].content.parts.find((p: any) => p.inlineData);
       const imgElement = new window.Image();
       imgElement.crossOrigin = 'anonymous';
       imgElement.src = `data:${imgPart.inlineData.mimeType || 'image/png'};base64,${imgPart.inlineData.data}`;
@@ -808,7 +824,6 @@ Make it look like a premium, professionally designed asset that could be used in
         imgElement.onerror = () => reject(new Error('Failed to load inpainted image'));
       });
 
-      // Exit mask mode, clear everything, and place the new image
       fabricCanvas.isDrawingMode = false;
       setIsMaskMode(false);
 
