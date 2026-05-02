@@ -40,10 +40,12 @@ const FILTERED_MODELS = [
   'google/gemini-2.0-flash',
   'google/gemini-2.0-flash-lite',
   'google/gemini-2.5-flash',
+  'minimax/minimax-m2.5-free',
   'anthropic/claude-3-haiku',
   'anthropic/claude-3.5-sonnet',
   'openai/gpt-4o-mini',
   'openai/gpt-4o',
+  'qwen/qwen2.5-7b-instruct',
 ];
 
 const isDataProtected = (id: string) => {
@@ -51,7 +53,9 @@ const isDataProtected = (id: string) => {
   return FILTERED_MODELS.some(m => lowerId.includes(m.toLowerCase())) ||
          lowerId.includes('gemini') ||
          lowerId.includes('claude') ||
-         lowerId.includes('gpt-4o');
+         lowerId.includes('gpt-4o') ||
+         lowerId.includes('minimax') ||
+         lowerId.includes('qwen');
 };
 
 const isModelZdr = (id: string) => {

@@ -26,6 +26,8 @@ export interface RouterPayload {
   deepThink?: boolean;
   webSearch?: boolean;
   docsOnly?: boolean;
+  ecoMode?: boolean;
+  dataProtected?: boolean;
 }
 
 export interface RouterResult {

@@ -5,19 +5,39 @@ import { checkRateLimit, getIdentifier } from './rateLimit';
 const MAX_MESSAGE_SIZE = 50 * 1024;
 const MAX_TOKENS = 8000;
 
-// ─── SMART TIER SYSTEM ─────────────────────────────────────────────────────
-// Goal: Fast + Reliable + Cheap + Immortal
-// Chain: Try cheapest first, escalate if fail
+// ─── DATA PROTECTION MODELS ─────────────────────────────────────────────────────
+// ZDR = Zero Data Retention - models that don't train on your data
+// These are the ONLY models allowed when Data Protection is enabled
 
-const MODEL_CHAIN = [
-  // 1. CHEAP & RELIABLE - Qwen (best price/quality)
-  { model: 'qwen/qwen2.5-7b-instruct', provider: 'openrouter', speed: 1 },
-  // 2. GOOGLE FLASH LITE - Cheap + reliable
-  { model: 'google/gemini-2.0-flash-lite', provider: 'openrouter', speed: 2 },
-  // 3. GEMINI DIRECT - Fallback
-  { model: 'gemini-1.5-flash', provider: 'gemini-direct', speed: 2 },
-  // 4. LAST RESORT - Gemini 2.0
-  { model: 'gemini-2.0-flash', provider: 'gemini-direct', speed: 3 },
+const ZDR_MODELS = [
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-8b', 
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-lite',
+  'gemini-2.5-flash',
+  'claude-3-haiku',
+  'claude-3.5-sonnet',
+  'claude-3-sonnet',
+  'gpt-4o-mini',
+  'gpt-4o',
+];
+
+const PROTECTED_CHAIN = [
+  { model: 'minimax/minimax-m2.5-free', provider: 'openrouter', speed: 1 },
+  { model: 'google/gemini-2.0-flash', provider: 'openrouter', speed: 2 },
+  { model: 'google/gemini-1.5-flash', provider: 'openrouter', speed: 3 },
+  { model: 'anthropic/claude-3-haiku', provider: 'openrouter', speed: 4 },
+  { model: 'gemini-1.5-flash', provider: 'gemini-direct', speed: 3 },
+  { model: 'gemini-2.0-flash', provider: 'gemini-direct', speed: 4 },
+];
+
+// ─── DEFAULT CHAIN (All cheap models) ────────────────────────────────────────
+const DEFAULT_CHAIN = [
+  { model: 'minimax/minimax-m2.5-free', provider: 'openrouter', speed: 1 },
+  { model: 'qwen/qwen2.5-7b-instruct', provider: 'openrouter', speed: 2 },
+  { model: 'google/gemini-2.0-flash-lite', provider: 'openrouter', speed: 3 },
+  { model: 'gemini-1.5-flash', provider: 'gemini-direct', speed: 3 },
+  { model: 'gemini-2.0-flash', provider: 'gemini-direct', speed: 4 },
 ];
 
 const TIER_LABELS = {
@@ -99,13 +119,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const realMaxTokens = Math.min(maxTokens ?? 4000, MAX_TOKENS);
     const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
     const GEMINI_KEY = process.env.GEMINI_API_KEY;
+    const dataProtected = req.body.dataProtected === true;
+
+    // Select chain based on Data Protection setting
+    const activeChain = dataProtected ? PROTECTED_CHAIN : DEFAULT_CHAIN;
+    if (dataProtected) {
+      notification = 'Data Protection: Your data is protected from training.';
+    }
 
     let resultText = '';
     let usedModel = '';
     let success = false;
 
     // ─── IMMORTAL CHAIN: Try each model until one works ───
-    for (const attempt of MODEL_CHAIN) {
+    for (const attempt of activeChain) {
       try {
         if (attempt.provider === 'openrouter' && OPENROUTER_KEY) {
           const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {

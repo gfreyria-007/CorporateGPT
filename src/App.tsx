@@ -311,7 +311,8 @@ export default function App() {
           deepThink: advancedSettings.deepThink,
           webSearch: advancedSettings.webSearch,
           docsOnly: advancedSettings.docsOnly,
-          ecoMode: ecoModeActive,             // V2: server enforces eco model
+          ecoMode: ecoModeActive,
+          dataProtected: dataProtectionEnabled,
         } as any);
 
         // Track engine health for Super Admin diagnostics
