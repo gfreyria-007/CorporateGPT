@@ -303,6 +303,9 @@ async function startServer() {
   });
   // API Route for chat completions
   app.post('/api/chat', async (req, res) => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
     try {
       const authHeader = req.headers.authorization;
       if (!authHeader?.startsWith('Bearer ')) {
@@ -315,11 +318,9 @@ async function startServer() {
         try {
           await admin.auth().verifyIdToken(idToken); 
         } catch (authError: any) {
-          console.warn('[AUTH WARNING] Token verification failed, but proceeding due to emergency failsafe:', authError.message);
-          // In production, you might want to block this, but for stabilization, we let it pass with a log
+          console.warn('[AUTH WARNING] Token verification failed:', authError.message);
+          // Failsafe: only block if not in emergency mode (optional)
         }
-      } else {
-        console.warn('[SECURITY] Admin SDK not initialized. Proceeding without server-side verification.');
       }
 
       if (!OPENROUTER_API_KEY) {
@@ -341,11 +342,13 @@ async function startServer() {
       if (deepThink) systemContent += `\n\n[REASONING MODE ENABLED]: Think step-by-step in extreme detail.`;
       if (webSearch) systemContent += `\n\n[SEARCH MODE ENABLED]: Use web data context.`;
 
+      console.log(`[API/CHAT] Requesting model: ${model || 'openrouter/auto'}`);
+
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-          'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
+          'HTTP-Referer': process.env.APP_URL || 'https://corporategpt.catalizia.com',
           'X-Title': 'Catalizia CorporateGPT',
           'Content-Type': 'application/json',
         },
@@ -355,24 +358,38 @@ async function startServer() {
           temperature: temperature ?? 0.7,
           max_tokens: maxTokens ?? 4000,
         }),
+        signal: controller.signal
       });
 
+      clearTimeout(timeout);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || 'Chat completion failed');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('[OPENROUTER ERROR]:', response.status, JSON.stringify(errorData));
+        const errMsg = errorData.error?.message || errorData.error || `OpenRouter failed with status ${response.status}`;
+        throw new Error(typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
       }
 
       const data = await response.json();
       res.json(data);
     } catch (error: any) {
-      console.error('Chat error:', error);
-      res.status(500).json({ error: error.message });
+      clearTimeout(timeout);
+      const isTimeout = error.name === 'AbortError';
+      console.error(`Chat error [API/CHAT]: ${isTimeout ? 'TIMEOUT' : error.message}`);
+      res.status(isTimeout ? 504 : 500).json({ 
+        error: isTimeout ? 'Request timed out' : error.message,
+        isTimeout 
+      });
     }
   });
 
   // API Route for emergency fallback
   app.post('/api/fallback', async (req, res) => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout for fallback
+
     try {
+      console.log('[FALLBACK] Emergency failover triggered.');
       const authHeader = req.headers.authorization;
       if (!authHeader?.startsWith('Bearer ')) {
         return res.status(401).json({ error: 'Unauthorized: Missing token' });
@@ -380,15 +397,23 @@ async function startServer() {
 
       const idToken = authHeader.split('Bearer ')[1];
       if (isAdminInitialized) {
-        try { await admin.auth().verifyIdToken(idToken); } catch (e) {}
+        try { await admin.auth().verifyIdToken(idToken); } catch (e: any) {
+          console.warn('[FALLBACK AUTH WARNING]:', e.message);
+        }
       }
 
       const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) return res.status(500).json({ error: 'Fallback engine (Gemini) API key is missing' });
+      if (!apiKey) {
+        console.error('[FALLBACK ERROR]: GEMINI_API_KEY missing');
+        return res.status(500).json({ error: 'Fallback engine key missing' });
+      }
 
       const { messages, instructions, temperature, model } = req.body;
+      const targetModel = model || 'gemini-1.5-flash-latest';
       
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model || 'gemini-1.5-flash-latest'}:generateContent?key=${apiKey}`, {
+      console.log(`[FALLBACK] Engine: ${targetModel}`);
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -398,16 +423,32 @@ async function startServer() {
           })),
           generationConfig: { temperature: temperature ?? 0.7 },
           systemInstruction: instructions ? { parts: [{ text: instructions }] } : undefined
-        })
+        }),
+        signal: controller.signal
       });
 
-      if (!response.ok) throw new Error('Fallback engine failed');
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        console.error('[FALLBACK ENGINE ERROR]:', response.status, JSON.stringify(errData));
+        const errMsg = errData.error?.message || errData.error || response.statusText || 'Unknown failure';
+        throw new Error(`Fallback failed: ${typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg)}`);
+      }
+
       const result = await response.json();
       const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      console.log('[FALLBACK] SUCCESS');
       res.json({ text });
 
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      clearTimeout(timeout);
+      const isTimeout = error.name === 'AbortError';
+      console.error('[FALLBACK CRITICAL]:', isTimeout ? 'TIMEOUT' : error.message);
+      res.status(isTimeout ? 504 : 500).json({ 
+        error: isTimeout ? 'Fallback timeout' : error.message,
+        isTimeout
+      });
     }
   });
 

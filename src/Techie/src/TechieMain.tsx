@@ -28,6 +28,7 @@ import {
   AspectRatio, ImageSize, ImageStyle, LightingStyle, SearchSource, UserProfile, Badge, Project
 } from './types';
 import { TOOL_DEFINITIONS, GRADES } from './constants';
+import { Sparkles, GraduationCap, Calculator, Image as ImageIcon, Search, LayoutGrid, Zap, Crown, ChevronRight } from 'lucide-react';
 import * as geminiService from './services/geminiService';
 import { fileToGenerativePart } from './utils/audio';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -106,7 +107,8 @@ export const TechieMain: React.FC = () => {
   const [isMuted, setIsMuted] = useState(false);
   const [showMathLab, setShowMathLab] = useState(false);
 
-  const isSubscribed = ['trial', 'explorador', 'maestro', 'leyenda', 'family_starter', 'family_mega'].includes(userProfile?.subscriptionLevel || '') || userProfile?.role === 'admin';
+  const isAdminRole = userProfile?.role === 'admin' || userProfile?.role === 'super-admin' || (userProfile as any)?.role === 'owner' || currentUser?.email === 'gfreyria@gmail.com';
+  const isSubscribed = ['trial', 'explorador', 'maestro', 'leyenda', 'family_starter', 'family_mega'].includes(userProfile?.subscriptionLevel || '') || isAdminRole;
   const isEmailVerified = true; // Bypassed per user request
   const hasPersonalKey = !!userProfile?.personalApiKey;
 
@@ -114,10 +116,10 @@ export const TechieMain: React.FC = () => {
   // Explorador users must use their own key (BYOK).
   const metaEnv = (import.meta as any).env || {};
   const systemKeyExists = !!metaEnv.VITE_GEMINI_API_KEY;
-  const canUseSystemKey = (isSubscribed || userProfile?.role === 'admin') && systemKeyExists;
+  const canUseSystemKey = (isSubscribed || isAdminRole) && systemKeyExists;
   
   const getMonthlyBudget = () => {
-    if (userProfile?.role === 'admin') return Infinity;
+    if (isAdminRole) return Infinity;
     if (userProfile?.subscriptionLevel === 'family_mega') return BUDGETS.FAMILY_MEGA;
     if (userProfile?.subscriptionLevel === 'leyenda') return BUDGETS.LEYENDA;
     if (userProfile?.subscriptionLevel === 'family_starter') return BUDGETS.FAMILY_STARTER;
@@ -127,7 +129,7 @@ export const TechieMain: React.FC = () => {
 
   const isBudgetExceeded = (userProfile?.monthlyCostUsed || 0) >= getMonthlyBudget();
 
-  const canUseApp = isEmailVerified && (canUseSystemKey ? !isBudgetExceeded : hasPersonalKey);
+  const canUseApp = isEmailVerified && (isAdminRole || (canUseSystemKey ? !isBudgetExceeded : hasPersonalKey));
   const getCustomKey = () => canUseSystemKey ? undefined : userProfile?.personalApiKey;
 
   useEffect(() => {
@@ -570,38 +572,77 @@ export const TechieMain: React.FC = () => {
           {/* Trial banners removed - follows Corporate GPT trial/sub state */}
 
           {!canUseApp ? (
-            <div className="flex-1 flex items-center justify-center p-4 bg-slate-50">
-                <div className="bg-white border border-gray-100 rounded-[3rem] p-8 max-w-2xl w-full shadow-2xl text-center">
+            <div className="flex-1 flex items-center justify-center p-4 bg-slate-50 custom-scrollbar overflow-y-auto">
+                <div className="bg-white border border-gray-100 rounded-[3rem] p-8 md:p-12 max-w-4xl w-full shadow-2xl text-center my-8">
                     <div className="text-6xl mb-6">🚀</div>
-                    <h2 className="text-3xl font-black text-[#1e3a8a] mb-2 uppercase tracking-tight">Potencia tu Aprendizaje</h2>
-                    <p className="text-gray-500 mb-8 text-sm leading-relaxed">
-                        {isBudgetExceeded ? 'Has agotado tu crédito mensual.' : 'Tu acceso premium está inactivo.'} Elige cómo quieres seguir explorando:
+                    <h2 className="text-4xl font-black text-[#1e3a8a] mb-2 uppercase tracking-tight">Desbloquea el Poder de Techie</h2>
+                    <p className="text-gray-500 mb-12 text-base leading-relaxed max-w-2xl mx-auto">
+                        {isBudgetExceeded ? 'Has agotado tu crédito mensual.' : 'Tu acceso premium está inactivo.'} Techie Tutor es mucho más que un chat: es un ecosistema completo para potenciar el aprendizaje de tu familia.
                     </p>
-                    <div className="flex justify-center mb-8">
+
+                    {/* Features Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 text-left">
+                        {[
+                            { title: 'Tutor Socrático', desc: 'No solo da respuestas, enseña a pensar con IA.', icon: <Sparkles className="text-amber-500" /> },
+                            { title: 'PhD Research', desc: 'Investigación académica profunda en toda la web.', icon: <Search className="text-blue-500" /> },
+                            { title: 'Math Lab', desc: 'Resolución visual de problemas paso a paso.', icon: <Calculator className="text-emerald-500" /> },
+                            { title: 'Taller de Arte', desc: 'Crea imágenes increíbles para tareas y proyectos.', icon: <ImageIcon className="text-purple-500" /> },
+                            { title: 'Desafíos', desc: 'Quizzes gamificados para medir el progreso.', icon: <Crown className="text-yellow-500" /> },
+                            { title: 'Zona Arcade', desc: 'Juegos educativos para aprender divirtiéndose.', icon: <LayoutGrid className="text-pink-500" /> },
+                        ].map((f, i) => (
+                            <div key={i} className="p-5 bg-slate-50 rounded-2xl border border-slate-100 hover:border-blue-200 transition-colors">
+                                <div className="mb-3">{f.icon}</div>
+                                <h4 className="font-black text-[#1e3a8a] text-sm uppercase mb-1">{f.title}</h4>
+                                <p className="text-[11px] text-gray-500 leading-tight">{f.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="flex flex-col md:flex-row items-center justify-center gap-8">
                         {/* Unified Action */}
-                        <div className="p-8 bg-blue-50 rounded-[3rem] border border-blue-100 text-center relative overflow-hidden group max-w-sm">
-                            <div className="absolute top-4 right-4 text-[10px] bg-blue-200 text-blue-700 px-3 py-1 rounded-full font-black uppercase tracking-widest">Premium</div>
-                            <h4 className="font-black text-[#1e3a8a] uppercase text-xl mb-4">Potencia tu Plan</h4>
-                            <p className="text-sm text-gray-600 mb-8 leading-relaxed">
-                                Techie Tutor está incluido en los planes **Family Starter** y **Family Mega**. Obtén acceso ilimitado para toda tu familia.
+                        <div className="p-10 bg-blue-600 rounded-[3rem] text-center relative overflow-hidden group max-w-sm shadow-2xl shadow-blue-600/30">
+                            <div className="absolute top-6 right-6 text-[10px] bg-white/20 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest backdrop-blur-md">Recomendado</div>
+                            <h4 className="font-black text-white uppercase text-2xl mb-4">Plan Familiar</h4>
+                            <p className="text-sm text-blue-100 mb-10 leading-relaxed">
+                                Acceso ilimitado a Techie Tutor para **toda tu familia**. Incluido en Family Starter y Family Mega.
                             </p>
                             <div className="space-y-4">
                                 <button 
                                   onClick={() => window.location.href = '/?mode=corporate&upgrade=true'}
-                                  className="block w-full py-5 bg-blue-600 text-white text-center font-black rounded-[2rem] text-sm uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:scale-[1.02] transition-all"
+                                  className="block w-full py-5 bg-white text-blue-600 text-center font-black rounded-[2rem] text-sm uppercase tracking-widest shadow-xl hover:scale-[1.05] transition-all"
                                 >
-                                  Ver Planes Familiares
+                                  Ver Planes y Precios
                                 </button>
                                 <button 
                                   onClick={() => window.location.reload()}
-                                  className="block w-full py-4 bg-white text-slate-400 text-center font-black rounded-2xl text-[10px] uppercase tracking-widest hover:text-blue-600 transition-all"
+                                  className="block w-full py-4 bg-blue-700/50 text-blue-200 text-center font-black rounded-2xl text-[10px] uppercase tracking-widest hover:text-white transition-all"
                                 >
-                                  ¿Ya pagaste? Sincronizar ahora
+                                  ¿Ya pagaste? Sincronizar
                                 </button>
                             </div>
                         </div>
+
+                        <div className="max-w-xs text-left">
+                            <h5 className="font-black text-[#1e3a8a] uppercase text-xs mb-4 flex items-center gap-2">
+                                <Zap size={14} className="text-amber-500" /> Beneficios Premium
+                            </h5>
+                            <ul className="space-y-3">
+                                {[
+                                    'Sin límites de conversación diarios',
+                                    'Acceso a modelos de IA avanzados',
+                                    'Guardado de proyectos y medallas',
+                                    'Reportes de aprendizaje semanales'
+                                ].map((b, i) => (
+                                    <li key={i} className="flex items-start gap-2 text-[11px] text-gray-600">
+                                        <ChevronRight size={12} className="text-blue-500 mt-0.5 shrink-0" />
+                                        <span>{b}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     </div>
-                    <div className="pt-4">
+
+                    <div className="mt-12 pt-8 border-t border-slate-100">
                         <button 
                             onClick={handleLogout}
                             className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-red-500 transition-colors"

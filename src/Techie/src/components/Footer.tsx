@@ -27,24 +27,26 @@ const Footer: React.FC<FooterProps> = ({ sessionTokensUsed, subscriptionLevel, o
         <p className="mb-1">
           &copy; {new Date().getFullYear()} Catalizia.com.
         </p>
-        <p className="font-mono text-gray-300 text-[10px] mb-2 flex items-center justify-center gap-4">
-            <span>Tokens: {sessionTokensUsed}</span>
-            {subscriptionLevel && (
-              <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${
-                subscriptionLevel === 'leyenda' || subscriptionLevel === 'family_mega' ? 'bg-purple-500 text-white shadow-lg' : 
-                subscriptionLevel === 'maestro' || subscriptionLevel === 'family_starter' ? 'bg-blue-600 text-white shadow-lg' : 
-                'bg-gray-200 text-gray-500'
-              }`}>
-                Plan: {
-                  subscriptionLevel === 'leyenda' ? '$200' : 
-                  subscriptionLevel === 'maestro' ? '$100' : 
-                  subscriptionLevel === 'family_starter' ? 'Familiar' : 
-                  subscriptionLevel === 'family_mega' ? 'Mega' : 
-                  'Gratis'
-                }
-              </span>
-            )}
-        </p>
+        {!isAdmin && (
+          <p className="font-mono text-gray-300 text-[10px] mb-2 flex items-center justify-center gap-4">
+              <span>Tokens: {sessionTokensUsed}</span>
+              {subscriptionLevel && (
+                <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${
+                  subscriptionLevel === 'leyenda' || subscriptionLevel === 'family_mega' ? 'bg-purple-500 text-white shadow-lg' : 
+                  subscriptionLevel === 'maestro' || subscriptionLevel === 'family_starter' ? 'bg-blue-600 text-white shadow-lg' : 
+                  'bg-gray-200 text-gray-500'
+                }`}>
+                  Plan: {
+                    subscriptionLevel === 'leyenda' ? '$200' : 
+                    subscriptionLevel === 'maestro' ? '$100' : 
+                    subscriptionLevel === 'family_starter' ? 'Familiar' : 
+                    subscriptionLevel === 'family_mega' ? 'Mega' : 
+                    'Gratis'
+                  }
+                </span>
+              )}
+          </p>
+        )}
 
         {logout && (
           <button 

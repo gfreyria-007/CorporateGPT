@@ -136,6 +136,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let usedModel = modelId;
     
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+if (!GEMINI_API_KEY) {
+      console.error('[Chat] GEMINI_API_KEY not configured!');
+      return res.status(503).json({ error: 'API key not configured - contact admin' });
+    }
+
+    // If all Gemini fails, use OpenRouter as backup
+    const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
+    
     const modelsToTry = [
       modelId,
       'gemini-2.0-flash-001',
@@ -173,32 +181,62 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             success = true;
             break;
           }
+        } else {
+          const errText = await response.text();
+          console.log(`[Chat] Model ${tryModel} failed: ${response.status} - ${errText.substring(0, 100)}`);
+          lastError = `HTTP ${response.status}: ${errText.substring(0, 100)}`;
         }
-        
-        const errText = await response.text();
-        lastError = errText.substring(0, 200);
       } catch (e: any) {
         lastError = e?.message || 'Model failed';
+        console.log(`[Chat] Model ${tryModel} exception:`, lastError);
         continue;
       }
     }
 
     if (!success) {
-      // Last resort: call via /api/fallback
-      console.error('[Chat] All Gemini models failed:', lastError);
-      const fallbackRes = await fetch('/api/fallback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages, instructions, temperature, model: modelId })
-      });
-      
-      if (!fallbackRes.ok) {
-        return res.status(502).json({ error: 'All AI models unavailable. Please try again.' });
+      // Try OpenRouter as emergency backup
+      if (OPENROUTER_KEY) {
+        try {
+          console.log('[Chat] Trying OpenRouter emergency backup...');
+          const orMessages = messages.map((m: any) => ({
+            role: m.role === 'assistant' ? 'assistant' : 'user',
+            content: m.content
+          }));
+          
+          const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${OPENROUTER_KEY}`,
+              'Content-Type': 'application/json',
+              'HTTP-Referer': 'https://corporategpt.catalizia.com',
+              'X-Title': 'CorporateGPT'
+            },
+            body: JSON.stringify({
+              model: 'google/gemini-2.0-flash',
+              messages: orMessages,
+              temperature: temperature ?? 0.7,
+              max_tokens: realMaxTokens
+            })
+          });
+          
+          if (orRes.ok) {
+            const orData = await orRes.json();
+            resultText = orData.choices?.[0]?.message?.content || '';
+            if (resultText) {
+              usedModel = 'openrouter/gemini-2.0-flash';
+              success = true;
+              console.log('[Chat] OpenRouter backup worked!');
+            }
+          }
+        } catch (orErr) {
+          console.log('[Chat] OpenRouter backup failed:', orErr);
+        }
       }
       
-      const fallbackData = await fallbackRes.json();
-      resultText = fallbackData.text || fallbackData.choices?.[0]?.message?.content || '';
-      usedModel = fallbackData.model || 'fallback';
+      if (!success) {
+        console.error('[Chat] TOTAL FAILURE:', lastError);
+        return res.status(503).json({ error: 'All AI models currently unavailable. Please try again later.' });
+      }
     }
 
     // Consume quota
