@@ -114,10 +114,20 @@ logger.security('Rate limit exceeded on fallback', { rateLimitId }, fallbackUser
     );
 
     if (!geminiRes.ok) {
-      const errData = await geminiRes.json();
-      const errMsg = errData.error?.message || `Gemini HTTP ${geminiRes.status}`;
-      logger.error('Gemini API error in fallback', new Error(errMsg), { model: targetModel });
-      return res.status(502).json({ error: errMsg });
+      let errorMessage = `Gemini HTTP ${geminiRes.status}`;
+      try {
+        const errText = await geminiRes.text();
+        try {
+          const errData = JSON.parse(errText);
+          errorMessage = errData.error?.message || errorMessage;
+        } catch {
+          errorMessage = errText.substring(0, 200) || errorMessage;
+        }
+      } catch (e2) {
+        // Ignore
+      }
+      logger.error('Gemini API error in fallback', new Error(errorMessage), { model: targetModel });
+      return res.status(502).json({ error: errorMessage });
     }
 
     const geminiData = await geminiRes.json();
@@ -140,8 +150,16 @@ logger.security('Rate limit exceeded on fallback', { rateLimitId }, fallbackUser
       fallback: true,
     });
 
-  } catch (error: any) {
-    logger.error('Fallback engine total failure', error as Error, { userId: validatedUserId });
-    return res.status(500).json({ error: `Fallback engine error: ${error.message}` });
+  } catch (fallbackErr: any) {
+    logger.error('Fallback engine total failure', fallbackErr as Error, { userId: validatedUserId });
+    
+    // Both engines failed — surface a clean user-facing message
+    const cleanError = fallbackErr.message || 'Error desconocido';
+    console.error('[GatewayOfImmortality] TOTAL FAILURE — both engines unreachable:', cleanError);
+    return res.status(500).json({
+      error: `El sistema está experimentando alta demanda (Error: ${cleanError.substring(0, 50)}). Por favor intenta de nuevo en unos segundos.`,
+      usedFallback: true,
+      fallbackReason: `TOTAL FAILURE: ${cleanError}`,
+    });
   }
 }

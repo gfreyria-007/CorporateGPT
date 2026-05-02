@@ -148,11 +148,12 @@ async function runFallback(payload: RouterPayload, reason: string): Promise<Rout
 
   } catch (fallbackErr: any) {
     // Both engines failed — surface a clean user-facing message
-    console.error('[GatewayOfImmortality] TOTAL FAILURE — both engines unreachable:', fallbackErr.message);
+    const cleanError = fallbackErr.message || 'Error desconocido';
+    console.error('[GatewayOfImmortality] TOTAL FAILURE — both engines unreachable:', cleanError);
     return {
-      content: 'El sistema está experimentando alta demanda. Tu solicitud está en cola. Por favor intenta de nuevo en unos segundos.',
+      content: `El sistema está experimentando alta demanda (Error: ${cleanError.substring(0, 50)}). Por favor intenta de nuevo en unos segundos.`,
       usedFallback: true,
-      fallbackReason: `TOTAL FAILURE: ${fallbackErr.message}`,
+      fallbackReason: `TOTAL FAILURE: ${cleanError}`,
     };
   }
 }
