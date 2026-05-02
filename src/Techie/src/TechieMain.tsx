@@ -19,6 +19,7 @@ import SnakeGame from './components/SnakeGame';
 import TetrisGame from './components/TetrisGame';
 import SpaceAliensGame from './components/SpaceAliensGame';
 import MathLabModal from './components/MathLabModal';
+import MonthlyQuotaBanner from './components/MonthlyQuotaBanner';
 
 import { FirebaseUser } from './firebase';
 
@@ -114,9 +115,7 @@ export const TechieMain: React.FC = () => {
 
   // Maestro/Leyenda users and trial users get to use the system key.
   // Explorador users must use their own key (BYOK).
-  const metaEnv = (import.meta as any).env || {};
-  const systemKeyExists = !!metaEnv.VITE_GEMINI_API_KEY;
-  const canUseSystemKey = (isSubscribed || isAdminRole) && systemKeyExists;
+const canUseSystemKey = (isSubscribed || isAdminRole);
   
   const getMonthlyBudget = () => {
     if (isAdminRole) return Infinity;
@@ -129,7 +128,7 @@ export const TechieMain: React.FC = () => {
 
   const isBudgetExceeded = (userProfile?.monthlyCostUsed || 0) >= getMonthlyBudget();
 
-  const canUseApp = isEmailVerified && (isAdminRole || (canUseSystemKey ? !isBudgetExceeded : hasPersonalKey));
+  const canUseApp = isEmailVerified && (isAdminRole || hasPersonalKey || userProfile?.subscriptionLevel === 'free' || userProfile?.subscriptionLevel === 'explorador' || canUseSystemKey);
   const getCustomKey = () => canUseSystemKey ? undefined : userProfile?.personalApiKey;
 
   useEffect(() => {
@@ -334,7 +333,7 @@ export const TechieMain: React.FC = () => {
                 question: "¿Qué te gustaría hacer?",
                 options: [
                   { text: "Ver Planes de Mejora", isCorrect: true, feedback: "Redirigiendo al Hub...", action: () => window.location.href = '/' },
-                  { text: "Configurar mi propia llave", isCorrect: false, feedback: "Abriendo ajustes...", action: () => setShowSettingsModal(true) }
+                  { text: "Ver Planes de Mejora", isCorrect: true, feedback: "Redirigiendo al Hub...", action: () => window.location.href = '/' }
                 ]
               });
               return;
@@ -438,17 +437,10 @@ export const TechieMain: React.FC = () => {
       } catch (error: any) {
           console.error("[Chat] Error:", error.message);
           
-          if (error.message?.includes('API key is missing')) {
-            addMessage(Role.MODEL, {
-                type: 'selection',
-                text: "¡Ups! Parece que falta la llave maestra para conectar con mi cerebro (API Key).",
-                question: "¿Quieres configurar tu propia llave gratuita ahora?",
-                options: [
-                    { text: "Sí, configurar llave", isCorrect: true, feedback: "¡Excelente! Se abrirá el panel de ajustes.", action: () => setShowSettingsModal(true) }
-                ]
-            });
+          if (error.message?.includes('budget') || error.message?.includes('quota')) {
+            addMessage(Role.MODEL, "Has alcanzado el límite de tu plan actual. Por favor, considera subir de nivel para continuar.");
           } else {
-            addMessage(Role.MODEL, "La conexión está tardando más de lo normal. Intenta de nuevo en segundos.");
+            addMessage(Role.MODEL, "La conexión está tardando más de lo normal. Intenta de nuevo en unos segundos.");
           }
       } finally {
           setIsChatLoading(false);
@@ -663,8 +655,14 @@ export const TechieMain: React.FC = () => {
             <>
               <GradeSelector selectedGrade={selectedGrade} activeTool={TOOL_DEFINITIONS.find(t => t.id === chatMode)} onGradeChange={setSelectedGrade} />
               
+              {/* Monthly Quota Display */}
+              <MonthlyQuotaBanner 
+                userProfile={userProfile} 
+                monthlyCostUsed={userProfile?.monthlyCostUsed || 0} 
+                monthlyBudget={getMonthlyBudget()} 
+              />
 
-              <div className="flex-1 relative flex flex-col bg-white">
+              <div className="flex-1 relative flex-col bg-white">
                   <ChatWindow messages={messages} isLoading={isChatLoading} loadingText={loadingText} onQuizAnswer={(q, o) => o.isCorrect && chatMode === 'default' && handleSendMessage(`Siguiente paso?`)} onSelection={(t) => handleSendMessage(t)} onImageClick={(u,p)=> { setPopupImage(u); setPopupPrompt(p); setShowImagePopup(true); }} onCreateFlashcards={async (t)=> { const cards = await geminiService.generateFlashcards(t); setFlashcards(cards); setShowFlashcards(true); }} onEditImage={(u) => { setImageCreationUrl(u); setShowImageCreationModal(true); setShowImagePopup(false); }} onQuizFinished={(res) => addMessage(Role.MODEL, res)} onAwardBadge={handleAwardBadge} onSaveProject={handleSaveProject} grade={selectedGrade || undefined} userName={userName} customKey={getCustomKey()} />
               </div>
               <ChatInput 
@@ -800,10 +798,11 @@ export const TechieMain: React.FC = () => {
             isOpen={showDiagnostics}
             onClose={() => setShowDiagnostics(false)}
             systemInfo={{
-                apiKeyLength: (metaEnv.VITE_GEMINI_API_KEY || '').length,
-                userRole: userProfile?.role || 'user',
-                subscription: userProfile?.subscriptionLevel || 'free',
-                lastError: lastErrorMsg,
+apiKeyLength: 0,
+userRole: userProfile?.role || 'user',
+subscription: userProfile?.subscriptionLevel || 'free',
+lastError: lastErrorMsg,
+
                 browser: navigator.userAgent.split(' ').pop() || 'Unknown',
                 firebaseInitialized: true
             }}

@@ -70,8 +70,8 @@ const SAFETY_SETTINGS: any[] = [
 const GUARDRAIL_ERROR = "Lo siento, como IA educativa de Catalizia no puedo procesar o responder a esa solicitud porque va en contra de nuestras políticas de seguridad para menores.";
 
 const getAI = (customKey?: string) => {
-    const metaEnv = (import.meta as any).env || {};
-    const apiKey = customKey || metaEnv.VITE_GEMINI_API_KEY || (process as any).env?.GEMINI_API_KEY;
+// metaEnv removed
+    const apiKey = customKey;
     if (!apiKey) {
         logger.error('GEMINI_API_KEY no configurada. Ve a Settings > API Key para configurar.');
         throw new Error('GEMINI_API_KEY no configurada. Ve a Settings > API Key para configurar.');

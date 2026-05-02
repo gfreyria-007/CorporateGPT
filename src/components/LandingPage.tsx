@@ -200,7 +200,7 @@ export const LandingPage = ({
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="bg-glow-adaptive absolute top-0 left-1/4 w-[600px] h-[600px] bg-blue-600/15 blur-[150px] rounded-full" />
         <div className="bg-glow-adaptive absolute bottom-0 right-1/4 w-[800px] h-[800px] bg-emerald-500/10 blur-[180px] rounded-full" />
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.08] brightness-100 contrast-150 mix-blend-overlay"></div>
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-slate-950"></div>
       </div>
 
       {/* Navigation */}

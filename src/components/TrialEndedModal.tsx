@@ -41,7 +41,7 @@ export const TrialEndedModal = ({ isOpen, onClose, onViewPricing }: TrialEndedMo
                 </h3>
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
                   Has agotado tus consultas gratuitas. No dejes que tu equipo pierda el impulso. 
-                  Adquiere una licencia hoy con el <span className="text-blue-600">50% de descuento</span> de lanzamiento.
+                  Adquiere una licencia hoy y accede a todas las características premium.
                 </p>
               </div>
 
@@ -54,7 +54,7 @@ export const TrialEndedModal = ({ isOpen, onClose, onViewPricing }: TrialEndedMo
                   Ver Planes de Licencia
                 </button>
                 <div className="flex items-center justify-center gap-2 px-6 py-2 bg-amber-500/10 text-amber-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-amber-500/20">
-                   <Sparkles size={14} /> Oferta válida hasta el 31 de mayo
+                    <Sparkles size={14} /> Licencias exclusivas para equipos
                 </div>
               </div>
             </div>

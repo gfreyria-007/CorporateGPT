@@ -41,6 +41,9 @@ export default async function chat(req: VercelRequest, res: VercelResponse) {
   const GEMINI_KEY = process.env.GEMINI_API_KEY;
   const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
   
+  console.log('[Debug] GEMINI_KEY exists:', !!GEMINI_KEY);
+  console.log('[Debug] OPENROUTER_KEY exists:', !!OPENROUTER_KEY);
+  
   const systemContent = instructions 
     ? `${instructions} You are Catalizia CorporateGPT.`
     : 'You are Catalizia CorporateGPT.';
@@ -129,7 +132,11 @@ export default async function chat(req: VercelRequest, res: VercelResponse) {
     console.log('[Chain] TOTAL FAILURE:', errorLog.join(', '));
     return res.status(503).json({ 
       error: 'All models unavailable. Please try again.',
-      details: errorLog
+      details: errorLog,
+      debug: {
+        hasGeminiKey: !!GEMINI_KEY,
+        hasOpenRouterKey: !!OPENROUTER_KEY
+      }
     });
   }
 

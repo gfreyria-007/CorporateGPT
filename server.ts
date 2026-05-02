@@ -304,7 +304,7 @@ async function startServer() {
   // API Route for chat completions
   app.post('/api/chat', async (req, res) => {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
+    const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout for primary engine
 
     try {
       const authHeader = req.headers.authorization;
@@ -386,7 +386,7 @@ async function startServer() {
   // API Route for emergency fallback
   app.post('/api/fallback', async (req, res) => {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout for fallback
+    const timeout = setTimeout(() => controller.abort(), 45000); // 45s timeout for fallback engine
 
     try {
       console.log('[FALLBACK] Emergency failover triggered.');
