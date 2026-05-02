@@ -99,7 +99,7 @@ export default function App() {
   const [activePanel, setActivePanel] = useState<'chat' | 'admin' | 'creative' | 'knowledge' | 'ppt' | 'team'>('chat');
   const [showFAQ, setShowFAQ] = useState(false);
   const [safetyAlert, setSafetyAlert] = useState<string | null>(null);
-  const [zdrEnabled, setZdrEnabled] = useState(false);
+  const [dataProtectionEnabled, setDataProtectionEnabled] = useState(false);
   const [selectedGPT, setSelectedGPT] = useState<any | null>(null);
   const [isPromptGenieOpen, setIsPromptGenieOpen] = useState(false);
   const [isAdvancedPanelOpen, setIsAdvancedPanelOpen] = useState(false);
@@ -597,12 +597,12 @@ export default function App() {
                <div className="space-y-4">
                   <div className="px-2 space-y-3">
                      <div className="flex items-center justify-between">
-                        <label className="text-[10px] font-black text-slate-300 dark:text-slate-400 uppercase tracking-[0.2em] leading-none">Security Pipeline</label>
+                        <label className="text-[10px] font-black text-slate-300 dark:text-slate-400 uppercase tracking-[0.2em] leading-none">Data Protection</label>
                         <div className="flex items-center gap-2">
-                           <span className={cn("text-[9px] font-black uppercase tracking-tighter", zdrEnabled ? "text-emerald-500" : "text-slate-300")}>ZDR</span>
-                           <button onClick={() => setZdrEnabled(!zdrEnabled)} className={cn("w-10 h-5 rounded-full transition-all relative shrink-0", zdrEnabled ? "bg-emerald-500 shadow-lg shadow-emerald-500/20" : "bg-slate-300 dark:bg-corporate-800")}>
+                           <span className={cn("text-[9px] font-black uppercase tracking-tighter", dataProtectionEnabled ? "text-emerald-500" : "text-slate-300")}>ZDR</span>
+                           <button onClick={() => setDataProtectionEnabled(!dataProtectionEnabled)} className={cn("w-10 h-5 rounded-full transition-all relative shrink-0", dataProtectionEnabled ? "bg-emerald-500 shadow-lg shadow-emerald-500/20" : "bg-slate-300 dark:bg-corporate-800")}>
                               <motion.div 
-                                animate={{ x: zdrEnabled ? 20 : 0 }}
+                                animate={{ x: dataProtectionEnabled ? 20 : 0 }}
                                 className={cn("absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all shadow-md")} 
                               />
                            </button>
@@ -615,7 +615,7 @@ export default function App() {
                     onSelect={setSelectedModel} 
                     isLoading={isLoadingModels} 
                     lang={lang}
-                    zdrOnly={zdrEnabled}
+                    dataProtected={dataProtectionEnabled}
                   />
                   
                   <div className="pt-2">

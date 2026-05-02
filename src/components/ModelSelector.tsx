@@ -11,7 +11,7 @@ interface ModelSelectorProps {
   models: ModelMetadata[];
   isLoading: boolean;
   lang: 'en' | 'es';
-  zdrOnly: boolean;
+  dataProtected: boolean;
 }
 
 export const ModelSelector: React.FC<ModelSelectorProps> = ({
@@ -20,7 +20,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   models,
   isLoading,
   lang,
-  zdrOnly
+  dataProtected
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -34,26 +34,46 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     context_length: 0
   };
 
-  const isModelZdr = (id: string) => {
-    const lowerId = id.toLowerCase();
-    return lowerId.includes('gpt-4o') || 
-           lowerId.includes('gpt-4-turbo') ||
-           lowerId.includes('o1-') ||
-           lowerId.includes('claude-3') || 
-           lowerId.includes('gemini-1.5') ||
-           lowerId.includes('nvidia/') ||
-           lowerId.includes('meta-llama/llama-3.1') ||
-           lowerId === 'openrouter/auto';
-  };
+const FILTERED_MODELS = [
+  'google/gemini-1.5-flash',
+  'google/gemini-1.5-flash-8b', 
+  'google/gemini-2.0-flash',
+  'google/gemini-2.0-flash-lite',
+  'google/gemini-2.5-flash',
+  'anthropic/claude-3-haiku',
+  'anthropic/claude-3.5-sonnet',
+  'openai/gpt-4o-mini',
+  'openai/gpt-4o',
+];
 
-  const filteredModels = models
-    .filter(m => {
-      const matchesSearch = m.name.toLowerCase().includes(search.toLowerCase()) || 
-                           m.id.toLowerCase().includes(search.toLowerCase());
-      const matchesZdr = zdrOnly ? isModelZdr(m.id) : true;
-      return matchesSearch && matchesZdr;
-    })
-    .slice(0, 100);
+const isDataProtected = (id: string) => {
+  const lowerId = id.toLowerCase();
+  return FILTERED_MODELS.some(m => lowerId.includes(m.toLowerCase())) ||
+         lowerId.includes('gemini') ||
+         lowerId.includes('claude') ||
+         lowerId.includes('gpt-4o');
+};
+
+const isModelZdr = (id: string) => {
+  const lowerId = id.toLowerCase();
+  return lowerId.includes('gpt-4o') || 
+         lowerId.includes('gpt-4-turbo') ||
+         lowerId.includes('o1-') ||
+         lowerId.includes('claude-3') || 
+         lowerId.includes('gemini-1.5') ||
+         lowerId.includes('nvidia/') ||
+         lowerId.includes('meta-llama/llama-3.1') ||
+         lowerId === 'openrouter/auto';
+};
+
+const filteredModels = models
+  .filter(m => {
+    const matchesSearch = m.name.toLowerCase().includes(search.toLowerCase()) || 
+                         m.id.toLowerCase().includes(search.toLowerCase());
+    const matchesProtection = dataProtected ? isDataProtected(m.id) : true;
+    return matchesSearch && matchesProtection;
+  })
+  .slice(0, 100);
 
   const getModelTags = (model: ModelMetadata) => {
     const tags = [];
@@ -63,14 +83,14 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     if (id.includes('think') || id.includes('reason')) tags.push({ label: 'Deep Think', color: 'bg-purple-100 text-purple-700' });
     if (id.includes('flash') || id.includes('turbo') || id.includes('mini')) tags.push({ label: 'Fast', color: 'bg-blue-100 text-blue-700' });
     if (model.context_length > 128000) tags.push({ label: 'Elite', color: 'bg-amber-100 text-amber-700' });
-    if (isModelZdr(model.id)) tags.push({ label: 'NDA Proof', color: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400' });
+    if (isDataProtected(model.id)) tags.push({ label: 'NDA Proof', color: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400' });
     
     return tags.slice(0, 2);
   };
 
   const displayModels = search === '' 
     ? [{ id: 'openrouter/auto', name: t.autoRouter, description: t.optimizedSwitching, pricing: { prompt: '0', completion: '0' }, context_length: 128000 } as any, ...models.filter(m => m.id !== 'openrouter/auto')]
-        .filter(m => zdrOnly ? isModelZdr(m.id) : true)
+        .filter(m => dataProtected ? isDataProtected(m.id) : true)
         .slice(0, 101)
     : filteredModels;
 
