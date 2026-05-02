@@ -193,7 +193,7 @@ export const PricingSection = () => {
               features={[
                 "Acceso a modelos de Élite (GPT-4, Claude 3)",
                 "Privacidad NDA Proof (Retención Cero)",
-                "Auto Router de Costos Inteligente",
+                "OpenRouter de Costos Inteligente",
                 "Soporte Estándar"
               ]}
               onBuy={() => handleBuy('Starter')}

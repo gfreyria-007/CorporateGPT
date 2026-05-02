@@ -233,7 +233,7 @@ export const LandingPage = ({ onStartSession, onSignInWithApple, onSignInWithEma
             </h1>
             
             <div className="hero-desc max-w-4xl text-sm md:text-base lg:text-lg text-slate-600 font-medium leading-relaxed space-y-4 text-center bg-white/50 backdrop-blur-sm p-8 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40">
-              <p><span className="font-bold text-slate-900">{lang === 'es' ? 'Accede a las 100+ mejores IAs del mundo.' : 'Access the 100+ best AIs in the world.'}</span> {lang === 'es' ? 'Nuestro Auto Router escoge la mejor para cada tarea optimizando costos.' : 'Our Auto Router picks the best one for each task, optimizing costs.'}</p>
+              <p><span className="font-bold text-slate-900">{lang === 'es' ? 'Accede a las 100+ mejores IAs del mundo.' : 'Access the 100+ best AIs in the world.'}</span> {lang === 'es' ? 'Nuestro OpenRouter escoge la mejor para cada tarea optimizando costos.' : 'Our OpenRouter picks the best one for each task, optimizing costs.'}</p>
               <p><span className="font-bold text-emerald-600">{lang === 'es' ? 'Activa ZDR para seguridad NDA total.' : 'Activate ZDR for total NDA security.'}</span> {lang === 'es' ? 'Tus datos nunca entren modelos públicos. Segurança corporativa real.' : 'Your data never trains public models. Real corporate security.'}</p>
             </div>
 
