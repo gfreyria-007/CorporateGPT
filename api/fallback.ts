@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const FALLBACK_MODEL = 'gemini-2.0-flash-001';
-const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1/models';
+const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
