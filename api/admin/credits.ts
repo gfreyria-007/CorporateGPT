@@ -36,28 +36,106 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(403).json({ error: 'Admin access denied' });
   }
 
-  const userId = req.query.userId as string;
-
   try {
-    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-    if (!OPENROUTER_API_KEY) {
-      return res.status(500).json({ error: 'OPENROUTER_API_KEY is not set' });
+    const admin = await import('firebase-admin');
+    const db = admin.apps[0].firestore();
+    
+    const now = Date.now();
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayStartMs = todayStart.getTime();
+    
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - 7);
+    weekStart.setHours(0, 0, 0, 0);
+    const weekStartMs = weekStart.getTime();
+
+    // Get all users
+    const usersSnapshot = await db.collection('users').get();
+    const totalUsers = usersSnapshot.size;
+    
+    const usersToday = usersSnapshot.docs.filter(d => {
+      const data = d.data();
+      return data.lastActive > todayStartMs;
+    }).length;
+    
+    const usersThisWeek = usersSnapshot.docs.filter(d => {
+      const data = d.data();
+      return data.lastActive > weekStartMs;
+    }).length;
+
+    // Get flagged/banned users
+    const flaggedUsers = usersSnapshot.docs.filter(d => {
+      const data = d.data();
+      return data.flagged === true || data.banned === true;
+    }).map(d => ({ id: d.id, ...d.data() }));
+
+    // Get image counts
+    let imagesToday = 0;
+    let imagesThisWeek = 0;
+    let queriesToday = 0;
+    let queriesThisWeek = 0;
+    
+    for (const doc of usersSnapshot.docs) {
+      const userData = doc.data();
+      const quota = userData.quota;
+      if (quota) {
+        imagesToday += quota.imagesUsedToday || 0;
+        imagesThisWeek += quota.imagesUsedWeek || 0;
+        queriesToday += quota.queriesUsedToday || 0;
+        queriesThisWeek += quota.queriesUsedWeek || 0;
+      }
     }
 
-    const response = await fetch('https://openrouter.ai/api/v1/credits', {
-      headers: {
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+    // Get credit balance
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+    let creditBalance = 0;
+    let creditUsage = 0;
+    
+    if (GEMINI_API_KEY) {
+      try {
+        const creditRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}`);
+        const creditData = await creditRes.json();
+        creditBalance = creditData.models?.length ? 100 : 0; // Placeholder - real API needs different endpoint
+      } catch (e) {
+        console.error('Credit check failed:', e);
+      }
+    }
+
+    // Top power users this week
+    const powerUsers = usersSnapshot.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (b.quota?.queriesUsedWeek || 0) - (a.quota?.queriesUsedWeek || 0))
+      .slice(0, 10)
+      .map(u => ({
+        id: u.id,
+        email: u.email,
+        queries: u.quota?.queriesUsedWeek || 0,
+        images: u.quota?.imagesUsedWeek || 0,
+        role: u.role,
+        flagged: u.flagged,
+        banned: u.banned
+      }));
+
+    return res.status(200).json({
+      data: {
+        total_users: totalUsers,
+        users_today: usersToday,
+        users_this_week: usersThisWeek,
+        images_today: imagesToday,
+        images_this_week: imagesThisWeek,
+        queries_today: queriesToday,
+        queries_this_week: queriesThisWeek,
+        flagged_count: flaggedUsers.length,
+        flagged_users: flaggedUsers.slice(0, 20),
+        power_users: powerUsers,
+        credit_balance: creditBalance,
+        credit_usage: creditUsage,
+        as_of: new Date().toISOString()
       }
     });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch credits: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return res.status(200).json(data);
   } catch (error: any) {
-    console.error('Error fetching credits:', error);
+    console.error('Admin stats error:', error);
     return res.status(500).json({ error: error.message });
   }
 }

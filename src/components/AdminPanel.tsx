@@ -22,7 +22,7 @@ import {
 import { collection, query, getDocs, doc, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { translations } from '../lib/translations';
-import { updateUserRole, updateUserBanStatus, updateUserLimits, updateAppConfig } from '../lib/admin';
+import { updateUserRole, updateUserBanStatus, updateUserLimits, updateAppConfig, upgradeUserToPaid, addUserSubscription } from '../lib/admin';
 import { handleFirestoreError, OperationType } from '../lib/db';
 import * as XLSX from 'xlsx';
 import { cn } from '../lib/utils';
@@ -137,41 +137,126 @@ export const AdminPanel: React.FC<{ onClose: () => void, theme: 'light' | 'dark'
         <main className={cn("flex-1 overflow-y-auto p-10 custom-scrollbar",
           theme === 'dark' ? "bg-slate-900" : "bg-slate-100/50"
         )}>
-           {activeTab === 'overview' && (
-             <div className="space-y-10">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+{activeTab === 'overview' && (
+              <div className="space-y-10">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                    <StatsCard 
-                    label="Active Credits" 
-                    value={`$${credits?.total_credits?.toFixed(2) || '10.00'}`} 
-                    desc={`Usage: $${credits?.total_usage?.toFixed(2) || '0.11'}`}
-                    icon={<CreditCard className="text-blue-500" />} 
-                    color={theme === 'dark' ? "border-blue-500/20 bg-slate-950" : "bg-white border-blue-500/10 shadow-sm"}
-                    theme={theme}
+                     label="Images Today" 
+                     value={credits?.images_today?.toString() || '0'} 
+                     desc="Generated in last 24h"
+                     icon={<Palette className="text-purple-500" />} 
+                     color={theme === 'dark' ? "border-purple-500/20 bg-slate-950" : "bg-white border-purple-500/10 shadow-sm"}
+                     theme={theme}
                    />
                    <StatsCard 
-                    label="Total Users" 
-                    value={users.length.toString()} 
-                    desc={`${users.filter(u => u.lastActive > Date.now() - 86400000).length} active today`}
-                    icon={<Users className="text-emerald-500" />} 
-                    color={theme === 'dark' ? "border-emerald-500/20 bg-slate-950" : "bg-white border-emerald-500/10 shadow-sm"}
-                    theme={theme}
+                     label="Images This Week" 
+                     value={credits?.images_this_week?.toString() || '0'} 
+                     desc="Last 7 days"
+                     icon={<Palette className="text-indigo-500" />} 
+                     color={theme === 'dark' ? "border-indigo-500/20 bg-slate-950" : "bg-white border-indigo-500/10 shadow-sm"}
+                     theme={theme}
                    />
                    <StatsCard 
-                    label="Security Flags" 
-                    value={users.filter(u => u.flagged).length.toString()} 
-                    desc="High risk attempts"
-                    icon={<ShieldAlert className="text-red-500" />} 
-                    color={theme === 'dark' ? "border-red-500/20 bg-slate-950" : "bg-white border-red-500/10 shadow-sm"}
-                    theme={theme}
+                     label="Queries Today" 
+                     value={credits?.queries_today?.toString() || '0'} 
+                     desc="Chat messages"
+                     icon={<Cpu className="text-blue-500" />} 
+                     color={theme === 'dark' ? "border-blue-500/20 bg-slate-950" : "bg-white border-blue-500/10 shadow-sm"}
+                     theme={theme}
+                   />
+                   <StatsCard 
+                     label="Queries This Week" 
+                     value={credits?.queries_this_week?.toString() || '0'} 
+                     desc="Last 7 days"
+                     icon={<Cpu className="text-cyan-500" />} 
+                     color={theme === 'dark' ? "border-cyan-500/20 bg-slate-950" : "bg-white border-cyan-500/10 shadow-sm"}
+                     theme={theme}
                    />
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                   <StatsCard 
+                     label="Active Credits" 
+                     value={`$${credits?.credit_balance?.toFixed(2) || '10.00'}`} 
+                     desc={`API Budget`}
+                     icon={<CreditCard className="text-blue-500" />} 
+                     color={theme === 'dark' ? "border-blue-500/20 bg-slate-950" : "bg-white border-blue-500/10 shadow-sm"}
+                     theme={theme}
+                   />
+                   <StatsCard 
+                     label="Total Users" 
+                     value={credits?.total_users?.toString() || users.length.toString()} 
+                     desc={`${credits?.users_today || 0} active today`}
+                     icon={<Users className="text-emerald-500" />} 
+                     color={theme === 'dark' ? "border-emerald-500/20 bg-slate-950" : "bg-white border-emerald-500/10 shadow-sm"}
+                     theme={theme}
+                   />
+                   <StatsCard 
+                     label="Flagged/Banned" 
+                     value={credits?.flagged_count?.toString() || users.filter(u => u.flagged || u.banned).length.toString()} 
+                     desc="Review required"
+                     icon={<ShieldAlert className="text-red-500" />} 
+                     color={theme === 'dark' ? "border-red-500/20 bg-slate-950" : "bg-white border-red-500/10 shadow-sm"}
+                     theme={theme}
+                   />
+                </div>
+
+                {/* Power Users */}
+                {credits?.power_users?.length > 0 && (
+                  <div className={cn("border rounded-3xl p-8",
+                    theme === 'dark' ? "bg-slate-950 border-white/5" : "bg-white border-slate-200"
+                  )}>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-slate-500 mb-6">Top Power Users This Week</h3>
+                    <div className="space-y-3">
+                      {credits.power_users.map((u: any, i: number) => (
+                        <div key={u.id} className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                          <div className="flex items-center gap-4">
+                            <span className="text-xs font-black text-slate-500 w-6">{i + 1}</span>
+                            <div>
+                              <p className="text-sm font-bold">{u.email || u.id}</p>
+                              <p className="text-[10px] text-slate-500">{u.queries} queries • {u.images} images</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {u.flagged && <span className="px-2 py-1 bg-red-500/20 text-red-400 text-[10px] font-bold rounded">FLAGGED</span>}
+                            {u.banned && <span className="px-2 py-1 bg-red-600/20 text-red-500 text-[10px] font-bold rounded">BANNED</span>}
+                            <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-[10px] font-bold rounded">{u.role || 'user'}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Flagged Users */}
+                {credits?.flagged_users?.length > 0 && (
+                  <div className={cn("border border-red-500/20 rounded-3xl p-8 bg-red-950/10",
+                    theme === 'dark' ? "border-white/5" : "border-red-200"
+                  )}>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-red-400 mb-6">Red Flags - Needs Review</h3>
+                    <div className="space-y-2">
+                      {credits.flagged_users.slice(0, 10).map((u: any) => (
+                        <div key={u.id} className="flex items-center justify-between p-3 rounded-xl bg-red-500/10 border border-red-500/20">
+                          <div>
+                            <p className="text-sm font-bold">{u.email || u.id}</p>
+                            <p className="text-[10px] text-slate-500">Flagged: {u.flagged?.reason || 'High risk activity'}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded hover:bg-red-600">BAN</button>
+                            <button className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded hover:bg-green-600">CLEAR</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className={cn("border rounded-[3rem] p-8 shadow-inner",
                   theme === 'dark' ? "bg-slate-950 border-white/5 shadow-black/40" : "bg-white border-slate-200"
                 )}>
                    <div className="flex items-center justify-between mb-8">
-                     <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Real-time Usage Flow</h3>
-                     <span className="text-[10px] font-bold text-blue-500 bg-blue-500/10 px-2 py-1 rounded">LIVE UPDATES</span>
+                      <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Real-time Usage Flow</h3>
+                      <span className="text-[10px] font-bold text-blue-500 bg-blue-500/10 px-2 py-1 rounded">LIVE UPDATES</span>
                    </div>
                    <div className="h-80 flex items-end gap-3 px-4">
                       {[40, 70, 45, 90, 65, 80, 55, 95, 75, 60, 85, 50, 70, 90, 40].map((h, i) => (
@@ -181,8 +266,8 @@ export const AdminPanel: React.FC<{ onClose: () => void, theme: 'light' | 'dark'
                       ))}
                    </div>
                 </div>
-             </div>
-           )}
+              </div>
+            )}
 
            {activeTab === 'users' && (
              <div className="space-y-6">
@@ -231,17 +316,19 @@ export const AdminPanel: React.FC<{ onClose: () => void, theme: 'light' | 'dark'
                                     </div>
                                  </div>
                               </td>
-                              <td className="px-8 py-6">
-                                 <select 
-                                   value={u.role || 'user'} 
-                                   onChange={(e) => updateUserRole(u.id, e.target.value as any)}
-                                   className="bg-white/5 border border-white/5 p-2 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none focus:ring-1 focus:ring-blue-500 transition-all text-white"
-                                 >
-                                    <option value="user">USER</option>
-                                    <option value="admin" className={theme === 'dark' ? "bg-slate-950" : "bg-white"}>ADMIN</option>
-                                    <option value="super-admin" className={theme === 'dark' ? "bg-slate-950 text-red-500" : "bg-white text-red-600"}>SUPER ADMIN</option>
-                                 </select>
-                              </td>
+<td className="px-8 py-6">
+                                  <select 
+                                    value={u.role || 'trial'} 
+                                    onChange={(e) => updateUserRole(u.id, e.target.value as any)}
+                                    className="bg-white/5 border border-white/5 p-2 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none focus:ring-1 focus:ring-blue-500 transition-all text-white"
+                                  >
+                                     <option value="trial">TRIAL</option>
+                                     <option value="user">USER</option>
+                                     <option value="paid">PAID</option>
+                                     <option value="admin">ADMIN</option>
+                                     <option value="super-admin">SUPER ADMIN</option>
+                                  </select>
+                               </td>
                               <td className="px-8 py-6">
                                  <div className="space-y-2">
                                     <div className="flex justify-between text-[10px] font-black text-slate-500">
@@ -264,19 +351,44 @@ export const AdminPanel: React.FC<{ onClose: () => void, theme: 'light' | 'dark'
                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-500 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-500/20">Active</span>
                                  )}
                               </td>
-                              <td className="px-8 py-6 text-right">
-                                 <button 
-                                   onClick={() => updateUserBanStatus(u.id, !u.banned)}
-                                   className={cn("p-2 rounded-xl transition-all", 
-                                     u.banned 
-                                       ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white' 
-                                       : 'bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white'
-                                   )}
-                                   title={u.banned ? "Unban" : "Ban User"}
-                                 >
-                                    {u.banned ? <CheckCircle2 size={18} /> : <Ban size={18} />}
-                                 </button>
-                              </td>
+<td className="px-8 py-6 text-right">
+                                  <div className="flex items-center gap-2 justify-end">
+                                    {u.role === 'trial' && (
+                                      <button 
+                                        onClick={() => upgradeUserToPaid(u.id)}
+                                        className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all"
+                                        title="Upgrade to Paid"
+                                      >
+                                        <Zap size={18} />
+                                      </button>
+                                    )}
+                                    {u.role !== 'paid' && (
+                                      <button 
+                                        onClick={() => {
+                                          const plan = prompt('Enter plan (starter/professional/enterprise):');
+                                          if (plan && ['starter', 'professional', 'enterprise'].includes(plan)) {
+                                            addUserSubscription(u.id, plan as any);
+                                          }
+                                        }}
+                                        className="p-2 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all"
+                                        title="Add Subscription"
+                                      >
+                                        <CreditCard size={18} />
+                                      </button>
+                                    )}
+                                    <button 
+                                      onClick={() => updateUserBanStatus(u.id, !u.banned)}
+                                      className={cn("p-2 rounded-xl transition-all", 
+                                        u.banned 
+                                          ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white' 
+                                          : 'bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white'
+                                      )}
+                                      title={u.banned ? "Unban" : "Ban User"}
+                                    >
+                                       {u.banned ? <CheckCircle2 size={18} /> : <Ban size={18} />}
+                                    </button>
+                                  </div>
+                               </td>
                            </tr>
                          ))}
                       </tbody>
