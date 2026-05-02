@@ -47,7 +47,7 @@ function classifyQuery(text: string): QueryClass {
  * Resolves the actual model to use, overriding user selection with Elite-Eco.
  * If the user explicitly selected a specific (non-auto) model, honour it.
  */
-function resolveEliteModel(requestedModel: string, queryClass: QueryClass, ecoMode = false, isLongContext = false, forceDeepThink = false): {
+function resolveEliteModel(requestedModel: string, queryClass: QueryClass, ecoMode = false, isLongContext = false, forceDeepThink = false, hasImage = false): {
   modelId: string;
   tier: string;
 } {
@@ -103,8 +103,7 @@ function resolveEliteModel(requestedModel: string, queryClass: QueryClass, ecoMo
     ]
   };
   
-  const hasImage = messages?.some((m: any) => m.image_url?.url || m.content?.includes('data:image'));
-  const getModel = (type: QueryClass) => {
+  const getModel = (type: QueryClass | 'vision') => {
     if (hasImage) return MODELS.vision[0]; // Always use best Gemini for images
     const list = MODELS[type] || MODELS.general;
     return list[Math.floor(Date.now() / 60000) % list.length]; // Rotate every minute
@@ -118,10 +117,6 @@ function resolveEliteModel(requestedModel: string, queryClass: QueryClass, ecoMo
 case 'general':
     default:
       if (hasImage) return { modelId: getModel('vision'), tier: 'gemini-vision' };
-      return { modelId: getModel('general'), tier: 'multi-model-general' };
-  }
-}
-}
       return { modelId: getModel('general'), tier: 'multi-model-general' };
   }
 }
@@ -281,12 +276,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const totalContentLength = messages.reduce((acc: number, m: any) => acc + (m.content?.length || 0), 0);
     const isLongContext = totalContentLength > 25000;
 
+    const hasImage = messages.some((m: any) => m.image_url?.url || m.content?.includes('data:image'));
+
     const { modelId, tier } = resolveEliteModel(
       model, 
       queryClass, 
       ecoMode === true, 
       isLongContext,
-      deepThink === true
+      deepThink === true,
+      hasImage
     );
 
     logger.api('Elite Router decision', { queryClass, model: modelId, tier, ecoMode, contextChars: totalContentLength }, extractedUserId);

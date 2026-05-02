@@ -1,3 +1,5 @@
+export type Lang = 'en' | 'es';
+
 export const translations = {
   en: {
     appName: 'CorporateGPT',

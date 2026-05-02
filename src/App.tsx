@@ -72,7 +72,7 @@ import { canAccessTechie } from './lib/permissions';
 
 export default function App() {
   // Auth & Profile
-  const { user, profile, loading, isSigningIn, signIn, logout } = useAuth();
+  const { user, profile, loading, isSigningIn, signIn, signInWithApple, signInWithEmail, logout } = useAuth();
   
   // Detect browser language
   const getBrowserLang = (): 'en' | 'es' => {

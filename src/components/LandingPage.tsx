@@ -20,6 +20,7 @@ gsap.registerPlugin(ScrollTrigger);
 interface LandingPageProps {
   onStartSession: () => void;
   onSignInWithApple?: () => void;
+  onSignInWithEmail?: (email: string) => void;
   isSigningIn: boolean;
   showTrialModal?: boolean;
   lang: 'en' | 'es';
@@ -29,7 +30,7 @@ interface LandingPageProps {
   isSuperAdmin?: boolean;
 }
 
-export const LandingPage = ({ onStartSession, onSignInWithApple, isSigningIn, showTrialModal = false, lang = 'es', setLang, appConfig, appMode = 'corporate', isSuperAdmin = false }: LandingPageProps) => {
+export const LandingPage = ({ onStartSession, onSignInWithApple, onSignInWithEmail, isSigningIn, showTrialModal = false, lang = 'es', setLang, appConfig, appMode = 'corporate', isSuperAdmin = false }: LandingPageProps) => {
   const t = translations[lang] || translations.es;
   const [isModalOpen, setIsModalOpen] = useState(showTrialModal);
   const [showEditor, setShowEditor] = useState(false);
@@ -241,11 +242,11 @@ export const LandingPage = ({ onStartSession, onSignInWithApple, isSigningIn, sh
                 onClick={() => { console.log('[Landing] Google SignIn clicked'); onStartSession(); }}
                 className="hero-btn px-8 py-5 rounded-xl bg-blue-600 text-white font-black uppercase tracking-widest text-sm hover:bg-blue-700 hover:scale-[1.02] transition-all shadow-xl shadow-blue-600/30 flex items-center justify-center gap-3"
               >
-                <Shield size={18} /> {lang === 'es' ? 'Google' : 'Google'}
-</button>
+                 <Shield size={18} /> {lang === 'es' ? 'Google' : 'Google'}
+               </button>
               <button
                 onClick={onSignInWithApple}
-                className="hero-btn px-8 py-5 rounded-2xl bg- black text-white font- black uppercase tracking-widest text-sm hover:bg-gray-800 hover:scale-[1.02] transition-all shadow-2xl flex items-center justify-center gap-3"
+                 className="hero-btn px-8 py-5 rounded-2xl bg-black text-white font-black uppercase tracking-widest text-sm hover:bg-gray-800 hover:scale-[1.02] transition-all shadow-2xl flex items-center justify-center gap-3"
               >
                 <Sparkles size={18} /> {lang === 'es' ? 'Apple' : 'Apple'}
               </button>

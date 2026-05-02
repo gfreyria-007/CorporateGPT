@@ -68,7 +68,8 @@ export function LandingEditor({ onClose }: LandingEditorProps) {
   };
 
   const handleContentChange = (field: string, lang: Lang, value: string) => {
-    const newContent = { ...config.content, [field]: { ...config.content[field as keyof typeof config.content], [lang]: value } };
+    const fieldContent = config.content[field as keyof typeof config.content] as unknown as Record<string, any>;
+    const newContent = { ...config.content, [field]: { ...fieldContent, [lang]: value } };
     saveLandingConfig({ content: newContent });
     setConfig(getLandingConfig());
   };

@@ -40,7 +40,7 @@ if (firebaseConfig) {
       try {
         app = getApp();
       } catch {
-        existingApp.delete().catch(() => {});
+        (existingApp as any).delete().catch(() => {});
         app = initializeApp(firebaseConfig);
       }
     } else {
@@ -53,7 +53,7 @@ if (firebaseConfig) {
   console.warn("Firebase not initialized due to missing configuration. Please set all required VITE_FIREBASE_* environment variables.");
 }
 
-export const analytics = typeof window !== 'undefined' && app ? getAnalytics(app) : null;
+export const analytics = null;
 export const db = app ? getFirestore(app) : null as any;
 export const auth = app ? getAuth(app) : { onAuthStateChanged: (cb: any) => { cb(null); return () => {}; } } as any;
 export const googleProvider = new GoogleAuthProvider();
