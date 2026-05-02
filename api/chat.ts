@@ -7,7 +7,6 @@ const MAX_TOKENS = 8000;
 
 // ─── EFFICIENT CHAINS (Free → Cheap → Reliable) ───────────────────────────────────────
 // May 2026 - Priority: FREE > Cheap > Value
-// Data Protection: ZDR models only
 const PROTECTED_CHAIN = [
   { model: 'qwen/qwen3.6-plus', provider: 'openrouter', speed: 1, free: true },
   { model: 'minimax/minimax-m2.7', provider: 'openrouter', speed: 2 },
@@ -16,28 +15,6 @@ const PROTECTED_CHAIN = [
   { model: 'gemini-2.0-flash', provider: 'gemini-direct', speed: 5 },
 ];
 
-// Default chain - Try FREE first
-const DEFAULT_CHAIN = [
-  { model: 'qwen/qwen3.6-plus', provider: 'openrouter', speed: 1, free: true },
-  { model: 'stepfun/step-3.5-flash', provider: 'openrouter', speed: 2 },
-  { model: 'deepseek/deepseek-v3-2', provider: 'openrouter', speed: 3 },
-  { model: 'xiaomi/mimo-v2-pro', provider: 'openrouter', speed: 4 },
-  { model: 'minimax/minimax-m2.7', provider: 'openrouter', speed: 5 },
-];
-
-// ─── EFFICIENT CHAINS (Free → Cheap → Reliable) ───────────────────────────────────────
-// May 2026 - Priority: FREE > Cheap > Value
-
-// Data Protection: ZDR models only
-const PROTECTED_CHAIN = [
-  { model: 'qwen/qwen3.6-plus', provider: 'openrouter', speed: 1, free: true },
-  { model: 'minimax/minimax-m2.7', provider: 'openrouter', speed: 2 },
-  { model: 'deepseek/deepseek-v3-2', provider: 'openrouter', speed: 3 },
-  { model: 'google/gemini-2.0-flash-lite', provider: 'openrouter', speed: 4 },
-  { model: 'gemini-2.0-flash', provider: 'gemini-direct', speed: 5 },
-];
-
-// Default chain - Try FREE first
 const DEFAULT_CHAIN = [
   { model: 'qwen/qwen3.6-plus', provider: 'openrouter', speed: 1, free: true },
   { model: 'stepfun/step-3.5-flash', provider: 'openrouter', speed: 2 },
@@ -141,6 +118,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     for (const attempt of activeChain) {
       try {
         if (attempt.provider === 'openrouter' && OPENROUTER_KEY) {
+          console.log(`[Chain] Trying openrouter/${attempt.model}...`);
           const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -166,11 +144,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             if (resultText) {
               usedModel = `openrouter/${attempt.model}`;
               success = true;
+              console.log(`[Chain] SUCCESS: ${attempt.model}`);
               break;
             }
+          } else {
+            const err = await orRes.text();
+            console.log(`[Chain] ${attempt.model} failed: ${orRes.status} - ${err.substring(0, 100)}`);
           }
         } 
         else if (attempt.provider === 'gemini-direct' && GEMINI_KEY) {
+          console.log(`[Chain] Trying gemini-direct/${attempt.model}...`);
           const gemRes = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/${attempt.model}:generateContent?key=${GEMINI_KEY}`,
             {
@@ -193,17 +176,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             if (resultText) {
               usedModel = attempt.model;
               success = true;
+              console.log(`[Chain] SUCCESS: ${attempt.model}`);
               break;
             }
+          } else {
+            const err = await gemRes.text();
+            console.log(`[Chain] ${attempt.model} failed: ${gemRes.status} - ${err.substring(0, 100)}`);
           }
         }
       } catch (e) {
-        console.log(`[Chain] ${attempt.provider}/${attempt.model} failed, trying next...`);
+        console.log(`[Chain] ${attempt.provider}/${attempt.model} exception: ${e}`);
         continue;
       }
     }
 
     if (!success) {
+      console.error('[Chain] TOTAL FAILURE - all models failed');
       return res.status(503).json({ error: 'All models unavailable. Please try again.' });
     }
 
