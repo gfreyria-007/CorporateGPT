@@ -5,38 +5,17 @@ import { checkRateLimit, getIdentifier } from './rateLimit';
 const MAX_MESSAGE_SIZE = 50 * 1024;
 const MAX_TOKENS = 8000;
 
-// ─── DATA PROTECTION MODELS ─────────────────────────────────────────────────────
-// ZDR = Zero Data Retention - models that don't train on your data
-// These are the ONLY models allowed when Data Protection is enabled
-
-const ZDR_MODELS = [
-  'gemini-1.5-flash',
-  'gemini-1.5-flash-8b', 
-  'gemini-2.0-flash',
-  'gemini-2.0-flash-lite',
-  'gemini-2.5-flash',
-  'claude-3-haiku',
-  'claude-3.5-sonnet',
-  'claude-3-sonnet',
-  'gpt-4o-mini',
-  'gpt-4o',
-];
-
-const PROTECTED_CHAIN = [
+// ─── DATA PROTECTION CHAIN (ZDR = Zero Data Retention) ────────────────────────────
   { model: 'minimax/minimax-m2.5-free', provider: 'openrouter', speed: 1 },
   { model: 'google/gemini-2.0-flash', provider: 'openrouter', speed: 2 },
   { model: 'google/gemini-1.5-flash', provider: 'openrouter', speed: 3 },
-  { model: 'anthropic/claude-3-haiku', provider: 'openrouter', speed: 4 },
   { model: 'gemini-1.5-flash', provider: 'gemini-direct', speed: 3 },
-  { model: 'gemini-2.0-flash', provider: 'gemini-direct', speed: 4 },
 ];
 
-// ─── DEFAULT CHAIN (All cheap models) ────────────────────────────────────────
 const DEFAULT_CHAIN = [
   { model: 'minimax/minimax-m2.5-free', provider: 'openrouter', speed: 1 },
   { model: 'qwen/qwen2.5-7b-instruct', provider: 'openrouter', speed: 2 },
   { model: 'google/gemini-2.0-flash-lite', provider: 'openrouter', speed: 3 },
-  { model: 'gemini-1.5-flash', provider: 'gemini-direct', speed: 3 },
   { model: 'gemini-2.0-flash', provider: 'gemini-direct', speed: 4 },
 ];
 
