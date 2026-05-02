@@ -36,10 +36,10 @@ import * as gameAudio from './utils/gameAudio';
 
 const BUDGETS = {
     FREE: 0,
-    MAESTRO: 50,
-    LEYENDA: 125,
-    FAMILY_STARTER: 100,
-    FAMILY_MEGA: 250
+    MAESTRO: 500,
+    LEYENDA: 1000,
+    FAMILY_STARTER: 1500,
+    FAMILY_MEGA: 2500
 };
 
 const COSTS = {
@@ -106,7 +106,6 @@ export const TechieMain: React.FC = () => {
   const [isMuted, setIsMuted] = useState(false);
   const [showMathLab, setShowMathLab] = useState(false);
 
-  const isTrialActive = userProfile?.trialExpiresAt ? new Date() < new Date(userProfile.trialExpiresAt) : true;
   const isSubscribed = ['explorador', 'maestro', 'leyenda', 'family_starter', 'family_mega'].includes(userProfile?.subscriptionLevel || '') || userProfile?.role === 'admin';
   const isEmailVerified = true; // Bypassed per user request
   const hasPersonalKey = !!userProfile?.personalApiKey;
@@ -115,7 +114,7 @@ export const TechieMain: React.FC = () => {
   // Explorador users must use their own key (BYOK).
   const metaEnv = (import.meta as any).env || {};
   const systemKeyExists = !!metaEnv.VITE_GEMINI_API_KEY;
-  const canUseSystemKey = (isTrialActive || ['maestro', 'leyenda', 'family_starter', 'family_mega'].includes(userProfile?.subscriptionLevel || '') || userProfile?.role === 'admin') && systemKeyExists;
+  const canUseSystemKey = (isSubscribed || userProfile?.role === 'admin') && systemKeyExists;
   
   const getMonthlyBudget = () => {
     if (userProfile?.role === 'admin') return Infinity;
@@ -137,8 +136,18 @@ export const TechieMain: React.FC = () => {
 
   useEffect(() => {
     const handleOpenBackpack = () => setShowBackpack(true);
+    const handleOpenArcade = () => setShowArcade(true);
+    const handleOpenMathLab = () => setShowMathLab(true);
+    
     document.addEventListener('openBackpack', handleOpenBackpack);
-    return () => document.removeEventListener('openBackpack', handleOpenBackpack);
+    document.addEventListener('openArcade', handleOpenArcade);
+    document.addEventListener('openMathLab', handleOpenMathLab);
+    
+    return () => {
+      document.removeEventListener('openBackpack', handleOpenBackpack);
+      document.removeEventListener('openArcade', handleOpenArcade);
+      document.removeEventListener('openMathLab', handleOpenMathLab);
+    };
   }, []);
 
   useEffect(() => {
@@ -543,37 +552,11 @@ export const TechieMain: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-pattern text-[#1e3a8a] font-sans pt-20 sm:pt-24 md:pt-28">
-        <Header 
-          onResetProfile={handleResetProfile} 
-          onIncreaseFont={() => setFontScale(p => Math.min(p+0.1, 1.3))} 
-          onDecreaseFont={() => setFontScale(p => Math.max(p-0.1, 0.7))}
-          canIncrease={fontScale < 1.3}
-          canDecrease={fontScale > 0.7}
-          onOpenAdmin={() => setShowAdminDashboard(true)}
-          onOpenSettings={() => setShowSettingsModal(true)}
-          onOpenFAQ={() => setShowFAQ(true)}
-          onOpenArcade={() => setShowArcade(true)}
-          onOpenMathLab={() => setShowMathLab(true)}
-          isMuted={isMuted}
-          onToggleMute={() => setIsMuted(!isMuted)}
-        />
+    <div className="flex flex-col min-h-screen bg-pattern text-[#1e3a8a] font-sans">
 
 
         <main className="flex-1 flex flex-col relative">
-          {userProfile && !isSubscribed && isTrialActive && (
-            <div className="bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest py-2 text-center shadow-lg z-[60] flex items-center justify-center gap-2">
-              <span>🌟 Periodo de prueba: 1 semana de acceso premium gratis</span>
-              <span className="opacity-60 hidden sm:inline">•</span>
-              <span className="opacity-80">Expira: {new Date(userProfile.trialExpiresAt!).toLocaleDateString()}</span>
-            </div>
-          )}
-          {userProfile && !isSubscribed && !isTrialActive && (
-            <div className="bg-red-600 text-white text-[10px] font-black uppercase tracking-widest py-2 text-center shadow-lg z-[60] flex items-center justify-center gap-2">
-              <span>🚨 Tu prueba ha terminado. Configura tu propia llave para seguir.</span>
-              <button onClick={() => setShowSettingsModal(true)} className="bg-white text-red-600 px-3 py-0.5 rounded-full hover:bg-red-50 transition-colors">Configurar</button>
-            </div>
-          )}
+          {/* Trial banners removed - follows Corporate GPT trial/sub state */}
 
           {!canUseApp ? (
             <div className="flex-1 flex items-center justify-center p-4 bg-slate-50">
@@ -581,35 +564,38 @@ export const TechieMain: React.FC = () => {
                     <div className="text-6xl mb-6">🚀</div>
                     <h2 className="text-3xl font-black text-[#1e3a8a] mb-2 uppercase tracking-tight">Potencia tu Aprendizaje</h2>
                     <p className="text-gray-500 mb-8 text-sm leading-relaxed">
-                        {isBudgetExceeded ? 'Has agotado tu crédito mensual.' : 'Tu prueba gratuita ha terminado.'} Elige cómo quieres seguir explorando:
+                        {isBudgetExceeded ? 'Has agotado tu crédito mensual.' : 'Tu acceso premium está inactivo.'} Elige cómo quieres seguir explorando:
                     </p>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                        {/* Maestro */}
-                        <div className="p-5 bg-blue-50 rounded-3xl border border-blue-100 text-left relative overflow-hidden group">
-                            <h4 className="font-black text-[#1e3a8a] uppercase text-[10px] mb-1">Maestro</h4>
-                            <p className="text-[8px] text-gray-500 mb-3">Tokens incluidos (50 MXN).</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        {/* Family Coverage */}
+                        <div className="p-8 bg-blue-50 rounded-[2rem] border border-blue-100 text-left relative overflow-hidden group">
+                            <div className="absolute top-4 right-4 text-[10px] bg-blue-200 text-blue-700 px-3 py-1 rounded-full font-black uppercase tracking-widest">Recomendado</div>
+                            <h4 className="font-black text-[#1e3a8a] uppercase text-sm mb-2">Plan Familiar</h4>
+                            <p className="text-xs text-gray-600 mb-6 leading-relaxed">
+                                Techie Tutor está incluido en los planes **Family Starter** y **Family Mega** de Corporate GPT. Obtén acceso para toda tu familia.
+                            </p>
                             <div className="mt-auto">
-                                <span className="block font-black text-blue-700 text-xs mb-2">$100 <span className="text-[8px]">MXN/mes</span></span>
-                                <a href="https://buy.stripe.com/test_maestro" className="block w-full py-2 bg-blue-600 text-white text-center font-black rounded-xl text-[8px] uppercase tracking-widest">Elegir</a>
+                                <button 
+                                  onClick={() => window.location.href = '/?mode=corporate&upgrade=true'}
+                                  className="block w-full py-4 bg-blue-600 text-white text-center font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:scale-[1.02] transition-all"
+                                >
+                                  Ver Planes Familiares
+                                </button>
                             </div>
                         </div>
-                        {/* Leyenda */}
-                        <div className="p-5 bg-purple-50 rounded-3xl border border-purple-100 text-left relative overflow-hidden group">
-                            <div className="absolute top-2 right-2 text-[8px] bg-purple-200 text-purple-700 px-2 py-0.5 rounded-full font-black">TOP</div>
-                            <h4 className="font-black text-purple-800 uppercase text-[10px] mb-1">Leyenda</h4>
-                            <p className="text-[8px] text-gray-500 mb-3">Máximo crédito (125 MXN).</p>
+                        {/* BYOK / Sync */}
+                        <div className="p-8 bg-slate-50 rounded-[2rem] border border-slate-200 text-left relative overflow-hidden group">
+                            <h4 className="font-black text-slate-800 uppercase text-sm mb-2">Sync Corporate</h4>
+                            <p className="text-xs text-gray-600 mb-6 leading-relaxed">
+                                Si ya tienes un plan activo en Corporate GPT, sincroniza tu sesión para desbloquear Techie Tutor inmediatamente.
+                            </p>
                             <div className="mt-auto">
-                                <span className="block font-black text-purple-700 text-xs mb-2">$200 <span className="text-[8px]">MXN/mes</span></span>
-                                <a href="https://buy.stripe.com/test_leyenda" className="block w-full py-2 bg-purple-600 text-white text-center font-black rounded-xl text-[8px] uppercase tracking-widest">Elegir</a>
-                            </div>
-                        </div>
-                        {/* Explorador */}
-                        <div className="p-5 bg-indigo-50 rounded-3xl border border-indigo-100 text-left">
-                            <h4 className="font-black text-indigo-800 uppercase text-[10px] mb-1">Explorador</h4>
-                            <p className="text-[8px] text-gray-500 mb-3">Bring Your Own Key (BYOK).</p>
-                            <div className="mt-auto">
-                                <span className="block font-black text-indigo-700 text-xs mb-2">$50 <span className="text-[8px]">MXN/mes</span></span>
-                                <a href="https://buy.stripe.com/test_explorador" className="block w-full py-2 bg-indigo-600 text-white text-center font-black rounded-xl text-[8px] uppercase tracking-widest">Elegir</a>
+                                <button 
+                                  onClick={() => window.location.reload()}
+                                  className="block w-full py-4 bg-white text-slate-800 border border-slate-200 text-center font-black rounded-2xl text-xs uppercase tracking-widest hover:bg-slate-50 transition-all"
+                                >
+                                  Sincronizar Ahora
+                                </button>
                             </div>
                         </div>
                     </div>

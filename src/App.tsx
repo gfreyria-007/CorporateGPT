@@ -507,25 +507,55 @@ export default function App() {
                     </motion.div>
                   )}
 
-                 {[
-                   { id: 'chat', label: appMode === 'corporate' ? t.intelligentChat : 'Techie Tutor', icon: <MessageSquare size={18} /> },
-                   { id: 'creative', label: appMode === 'corporate' ? 'Asset Studio' : 'Taller de Arte', icon: <Palette size={18} /> },
-                   { id: 'knowledge', label: appMode === 'corporate' ? 'Knowledge Bank' : 'Biblioteca', icon: <Database size={18} /> },
-                   { id: 'ppt', label: appMode === 'corporate' ? t.pptStudio : 'Presentaciones', icon: <Presentation size={18} /> }
-                 ].map(item => (
-                   <motion.button 
-                    key={item.id}
-                    variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setActivePanel(item.id as any)}
-                    className={cn("flex items-center gap-3 px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all",
-                      activePanel === item.id ? (appMode === 'corporate' ? 'bg-blue-600 text-white shadow-2xl shadow-blue-500/40 translate-x-2' : 'bg-emerald-500 text-white shadow-2xl shadow-emerald-500/40 translate-x-2') : 'text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-corporate-900'
-                    )}
-                   >
-                      {item.icon} {item.label}
-                   </motion.button>
-                 ))}
+                  {appMode === 'corporate' ? (
+                    [
+                      { id: 'chat', label: t.intelligentChat, icon: <MessageSquare size={18} /> },
+                      { id: 'creative', label: 'Asset Studio', icon: <Palette size={18} /> },
+                      { id: 'knowledge', label: 'Knowledge Bank', icon: <Database size={18} /> },
+                      { id: 'ppt', label: t.pptStudio, icon: <Presentation size={18} /> }
+                    ].map(item => (
+                      <motion.button 
+                        key={item.id}
+                        variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => setActivePanel(item.id as any)}
+                        className={cn("flex items-center gap-3 px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all",
+                          activePanel === item.id ? 'bg-blue-600 text-white shadow-2xl shadow-blue-500/40 translate-x-2' : 'text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-corporate-900'
+                        )}
+                      >
+                        {item.icon} {item.label}
+                      </motion.button>
+                    ))
+                  ) : (
+                    [
+                      { id: 'chat', label: 'Techie Tutor', icon: <MessageSquare size={18} /> },
+                      { id: 'arcade', label: 'Zona Arcade', icon: <LayoutGrid size={18} />, action: () => document.dispatchEvent(new CustomEvent('openArcade')) },
+                      { id: 'math', label: 'Laboratorio de Mate', icon: <Activity size={18} />, action: () => document.dispatchEvent(new CustomEvent('openMathLab')) },
+                      { id: 'backpack', label: 'Mi Mochila', icon: <Database size={18} />, action: () => document.dispatchEvent(new CustomEvent('openBackpack')) },
+                      { id: 'creative', label: 'Taller de Arte', icon: <Palette size={18} /> }
+                    ].map(item => (
+                      <motion.button 
+                        key={item.id}
+                        variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          if (item.action) {
+                            setActivePanel('chat');
+                            item.action();
+                          } else {
+                            setActivePanel(item.id as any);
+                          }
+                        }}
+                        className={cn("flex items-center gap-3 px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all",
+                          (activePanel === item.id || (item.id === 'chat' && activePanel === 'chat')) ? 'bg-emerald-500 text-white shadow-2xl shadow-emerald-500/40 translate-x-2' : 'text-slate-500 hover:text-emerald-500 hover:bg-white dark:hover:bg-corporate-900'
+                        )}
+                      >
+                        {item.icon} {item.label}
+                      </motion.button>
+                    ))
+                  )}
                  
                  {isSuperAdmin && (
                    <motion.button 
@@ -608,7 +638,30 @@ export default function App() {
             </div>
 
             <div className="p-6 border-t border-inherit">
-               <div className="flex flex-col gap-4">
+                   <div className="flex flex-col gap-1.5 mb-8">
+                      <div className="flex p-1 bg-slate-100 dark:bg-white/5 rounded-[1.5rem] border border-corporate-200 dark:border-white/10 shadow-inner">
+                         <button 
+                           onClick={() => setAppMode('corporate')}
+                           className={cn("flex-1 py-3 rounded-[1.2rem] text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2", 
+                             appMode === 'corporate' 
+                               ? "bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-lg shadow-blue-500/20" 
+                               : "text-slate-500 hover:text-blue-600"
+                           )}
+                         >
+                           <Shield size={12} /> Corporate
+                         </button>
+                         <button 
+                           onClick={() => setAppMode('junior')}
+                           className={cn("flex-1 py-3 rounded-[1.2rem] text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2", 
+                             appMode === 'junior' 
+                               ? "bg-white dark:bg-emerald-500 text-emerald-600 dark:text-white shadow-lg shadow-emerald-500/20" 
+                               : "text-slate-500 hover:text-emerald-500"
+                           )}
+                         >
+                           <Zap size={12} /> Junior
+                         </button>
+                      </div>
+                   </div>
                  <button onClick={() => setShowPrivacyPolicy(true)} className="flex items-center gap-3 px-3 py-2 text-[9px] font-black text-slate-400 hover:text-blue-600 uppercase tracking-widest transition-all">
                    <Shield size={14} /> Privacy & Compliance
                  </button>
@@ -720,16 +773,23 @@ export default function App() {
 
         <div className="flex-1 overflow-y-auto custom-scrollbar relative z-10" ref={scrollRef}>
           <AnimatePresence mode="wait">
-            {activePanel === 'admin' && (
-              <motion.div key="admin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0">
-                <SuperAdminPanel user={user} onClose={() => setActivePanel('chat')} />
-              </motion.div>
-            )}
-
-            {activePanel === 'chat' && appMode === 'junior' && (
-               <motion.div key="junior" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0">
-                  <TechieWorkspace />
+            {appMode === 'junior' ? (
+              <motion.div key="junior" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0">
+                  <TechieWorkspace 
+                    user={user}
+                    profile={profile}
+                    theme={theme}
+                    onLogout={logout}
+                  />
                </motion.div>
+            ) : (
+              <>
+                {activePanel === 'admin' && (
+                  <motion.div key="admin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0">
+                    <SuperAdminPanel user={user} onClose={() => setActivePanel('chat')} />
+                  </motion.div>
+                )}
+              </>
             )}
 
             {activePanel === 'chat' && appMode === 'corporate' && (
