@@ -2,24 +2,24 @@
  * failsafeRouter.ts — Corporate GPT V2 Gateway of Immortality
  *
  * Architecture:
- *   Primary: /api/chat (OpenRouter — any model)
- *   Fallback: /api/fallback (Gemini 1.5 Flash — always-on emergency engine)
+ *   Primary: /api/chat (tries multiple AI providers)
+ *   Fallback: /api/fallback (Gemini emergency engine)
  *
- * Rules:
- *   - If primary responds HTTP 500 → immediate fallback
- *   - If primary takes > 6 seconds → abort + fallback
- *   - User NEVER sees an error screen. Fallback is transparent.
- *   - A silent console event is logged for Super Admin diagnostics.
+ * Features:
+ *   - Multiple model switching within each request
+ *   - Transparent fallback (user never sees errors)
+ *   - NO API keys exposed in responses
+ *   - Comprehensive error handling
  */
 
-const PRIMARY_TIMEOUT_MS = 30000;    // 30-second SLA - give models time to respond
-const FALLBACK_MODEL = 'gemini-1.5-flash-latest';
+const PRIMARY_TIMEOUT_MS = 30000;
+const FALLBACK_MODEL = 'gemini-1.5-flash';
 
 export interface RouterPayload {
   model: string;
   messages: { role: string; content: string }[];
   userId: string;
-  idToken: string; // Required for backend verification
+  idToken: string;
   instructions?: string | null;
   temperature?: number;
   maxTokens?: number;
@@ -37,12 +37,9 @@ export interface RouterResult {
   tier?: string;
   tierLabel?: string;
   notification?: string | null;
-  needsModelSwitch?: boolean;
+  modelSwitched?: boolean;
 }
 
-/**
- * Race a fetch against a timeout. Rejects with 'TIMEOUT' if breached.
- */
 function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -51,11 +48,15 @@ function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number): Pr
     .finally(() => clearTimeout(timer));
 }
 
-/**
- * Parse the chat response from OpenRouter format.
- */
-async function parsePrimaryResponse(res: Response): Promise<{ content: string; tier?: string; tierLabel?: string; notification?: string | null }> {
+async function parseChatResponse(res: Response): Promise<{ content: string; tier?: string; tierLabel?: string; notification?: string }> {
   const data = await res.json();
+  
+  // Never expose API keys - strip any debug info
+  if (data.debug) delete data.debug;
+  if (data.error?.includes('key')) {
+    throw new Error('API configuration error');
+  }
+  
   if (data.choices?.[0]?.message?.content) {
     return {
       content: data.choices[0].message.content,
@@ -64,73 +65,15 @@ async function parsePrimaryResponse(res: Response): Promise<{ content: string; t
       notification: data._notification,
     };
   }
-  throw new Error(data.error || 'Empty response from primary engine');
-}
-
-/**
- * Parse fallback response from /api/fallback (Gemini 1.5 Flash).
- */
-async function parseFallbackResponse(res: Response): Promise<string> {
-  const data = await res.json();
-  if (data.text) return data.text;
-  if (data.choices?.[0]?.message?.content) return data.choices[0].message.content;
-  throw new Error('Empty response from fallback engine');
-}
-
-/**
- * Core fail-safe router.
- * Tries primary → on any failure (timeout, 5xx) → silently escalates to fallback.
- */
-export async function failsafeChat(payload: RouterPayload): Promise<RouterResult> {
-  const { idToken, ...rest } = payload;
-  const body = JSON.stringify(rest);
-  const headers = { 
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${idToken}`
-  };
-
-  // ─── PRIMARY ATTEMPT ─────────────────────────────────────────────────────
-  try {
-    const primaryRes = await fetchWithTimeout(
-      '/api/chat',
-      { method: 'POST', headers, body },
-      PRIMARY_TIMEOUT_MS
-    );
-
-    if (primaryRes.ok) {
-      const result = await parsePrimaryResponse(primaryRes);
-      return { ...result, usedFallback: false };
-    }
-
-    // 4xx (safety violations) are NOT retried — surface them immediately
-    if (primaryRes.status === 403) {
-      const err = await primaryRes.json();
-      throw Object.assign(new Error('SAFETY_VIOLATION'), { status: 403, data: err });
-    }
-
-    // 5xx → fall through to fallback
-    const reason = `Primary engine HTTP ${primaryRes.status}`;
-    console.warn(`[GatewayOfImmortality] Primary failed (${reason}) → Activating Safe-Fallback`);
-    return await runFallback(payload, reason);
-
-  } catch (err: any) {
-    // AbortError = timeout; network error = catch
-    if (err.status === 403) throw err;   // re-throw safety violations
-
-    const reason = err.name === 'AbortError'
-      ? `Primary timeout > ${PRIMARY_TIMEOUT_MS / 1000}s`
-      : `Primary network error: ${err.message}`;
-
-    console.warn(`[GatewayOfImmortality] ${reason} → Activating Safe-Fallback`);
-    return await runFallback(payload, reason);
+  
+  if (data.text) {
+    return { content: data.text };
   }
+  
+  throw new Error(data.error || 'Empty response');
 }
 
-/**
- * Emergency fallback — Gemini 1.5 Flash via /api/fallback endpoint.
- * Transparent to the user.
- */
-async function runFallback(payload: RouterPayload, reason: string): Promise<RouterResult> {
+async function tryFallback(payload: RouterPayload, reason: string): Promise<RouterResult> {
   const fallbackBody = JSON.stringify({
     messages: payload.messages,
     instructions: payload.instructions,
@@ -149,22 +92,77 @@ async function runFallback(payload: RouterPayload, reason: string): Promise<Rout
     });
 
     if (!fallbackRes.ok) {
-      const errData = await fallbackRes.json();
-      throw new Error(errData.error || `Fallback HTTP ${fallbackRes.status}`);
+      const err = await fallbackRes.json().catch(() => ({ error: 'Fallback failed' }));
+      throw new Error(err.error || `Fallback HTTP ${fallbackRes.status}`);
     }
 
-    const content = await parseFallbackResponse(fallbackRes);
-    console.info(`[GatewayOfImmortality] Fallback SUCCESS via ${FALLBACK_MODEL}`);
+    const data = await fallbackRes.json();
+    const content = data.text || data.choices?.[0]?.message?.content || '';
+    
+    if (!content) throw new Error('Empty fallback response');
+    
+    console.info(`[Gateway] Fallback SUCCESS via ${FALLBACK_MODEL}`);
     return { content, usedFallback: true, fallbackReason: reason };
 
   } catch (fallbackErr: any) {
-    const cleanError = fallbackErr.message || 'Error desconocido';
-    console.error('[GatewayOfImmortality] TOTAL FAILURE — both engines unreachable:', cleanError);
-    return {
-      content: `⚠️ El servicio de IA está temporalmente недоponible. Por favor espera unos segundos e intenta de nuevo, o contacta a soporte si el problema persiste.`,
-      usedFallback: true,
-      fallbackReason: `TOTAL FAILURE: ${cleanError}`,
-      needsModelSwitch: false, // Don't ask user to switch - it's a server issue
-    };
+    throw new Error(`All engines failed: ${fallbackErr.message}`);
+  }
+}
+
+export async function failsafeChat(payload: RouterPayload): Promise<RouterResult> {
+  const { idToken, ...rest } = payload;
+  const body = JSON.stringify(rest);
+  const headers = { 
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${idToken}`
+  };
+
+  // ═══════════════════════════════════════════════════════════════
+  // PRIMARY ATTEMPT (with internal model switching)
+  // ═══════════════════════════════════════════════════════════════
+  try {
+    const primaryRes = await fetchWithTimeout(
+      '/api/chat',
+      { method: 'POST', headers, body },
+      PRIMARY_TIMEOUT_MS
+    );
+
+    if (primaryRes.ok) {
+      const result = await parseChatResponse(primaryRes);
+      return { ...result, usedFallback: false };
+    }
+
+    // 4xx = safety violation → don't retry
+    if (primaryRes.status === 403) {
+      const err = await primaryRes.json().catch(() => ({}));
+      throw Object.assign(new Error(err.error || 'Safety violation'), { status: 403 });
+    }
+
+    // 5xx or other → try fallback
+    const reason = `Primary HTTP ${primaryRes.status}`;
+    console.warn(`[Gateway] ${reason} → Fallback`);
+    return await tryFallback(payload, reason);
+
+  } catch (err: any) {
+    // Safety violation → throw immediately
+    if (err.status === 403) throw err;
+
+    const reason = err.name === 'AbortError'
+      ? `Timeout after ${PRIMARY_TIMEOUT_MS / 1000}s`
+      : `Error: ${err.message}`;
+
+    console.warn(`[Gateway] ${reason} → Fallback`);
+    
+    try {
+      return await tryFallback(payload, reason);
+    } catch (fallbackErr: any) {
+      // Total failure - but DON'T expose keys or technical details
+      console.error('[Gateway] TOTAL FAILURE:', fallbackErr.message);
+      return {
+        content: '⚠️ El servicio está temporalmente ocupado. Por favor espera unos segundos e intenta de nuevo.',
+        usedFallback: true,
+        fallbackReason: 'service_unavailable',
+      };
+    }
   }
 }

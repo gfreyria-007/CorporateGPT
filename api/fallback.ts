@@ -15,10 +15,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
     const apiKey = process.env.GEMINI_API_KEY;
-    console.log('[Fallback] API Key exists:', !!apiKey);
     
     if (!apiKey) {
-      return res.status(503).json({ error: 'Fallback engine offline — API key missing' });
+      console.error('[Fallback] API key not configured');
+      return res.status(503).json({ error: 'Service unavailable' });
     }
 
     const { messages, instructions, temperature, model, userId } = req.body;
@@ -81,19 +81,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (!success) {
-      console.error('[Fallback] All models failed:', lastError);
-      return res.status(502).json({ error: `All models failed: ${lastError}` });
+      console.error('[Fallback] All models failed - check server logs');
+      return res.status(503).json({ error: 'Service unavailable. Please try again.' });
     }
 
     return res.status(200).json({
       text: resultText,
-      choices: [{ message: { role: 'assistant', content: resultText } }],
       model: targetModel,
       fallback: true,
     });
 
   } catch (err: any) {
-    console.error('[Fallback] Fatal error:', err?.message || err);
-    return res.status(500).json({ error: `Fallback error: ${(err?.message || 'Unknown').substring(0, 100)}` });
+    console.error('[Fallback] Error:', err?.message);
+    return res.status(500).json({ error: 'Service error. Please try again.' });
   }
 }
