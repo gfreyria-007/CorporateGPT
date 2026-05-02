@@ -529,9 +529,11 @@ export default function App() {
                     ))
                   ) : (
                     [
-                      { id: 'chat', label: 'Techie Tutor', icon: <MessageSquare size={18} /> },
-                      { id: 'arcade', label: 'Zona Arcade', icon: <LayoutGrid size={18} />, action: () => document.dispatchEvent(new CustomEvent('openArcade')) },
+                      { id: 'chat', label: 'Tutor Socrático', icon: <Sparkles size={18} />, action: () => document.dispatchEvent(new CustomEvent('setDefaultMode')) },
+                      { id: 'research', label: 'Junior PhD Research', icon: <ChevronRight size={18} />, action: () => document.dispatchEvent(new CustomEvent('setResearcherMode')) },
+                      { id: 'quiz', label: 'Desafío de Saber', icon: <Crown size={18} />, action: () => document.dispatchEvent(new CustomEvent('setQuizMode')) },
                       { id: 'math', label: 'Laboratorio de Mate', icon: <Activity size={18} />, action: () => document.dispatchEvent(new CustomEvent('openMathLab')) },
+                      { id: 'arcade', label: 'Zona Arcade', icon: <LayoutGrid size={18} />, action: () => document.dispatchEvent(new CustomEvent('openArcade')) },
                       { id: 'backpack', label: 'Mi Mochila', icon: <Database size={18} />, action: () => document.dispatchEvent(new CustomEvent('openBackpack')) },
                       { id: 'creative', label: 'Taller de Arte', icon: <Palette size={18} /> }
                     ].map(item => (

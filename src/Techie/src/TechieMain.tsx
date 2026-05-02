@@ -138,15 +138,24 @@ export const TechieMain: React.FC = () => {
     const handleOpenBackpack = () => setShowBackpack(true);
     const handleOpenArcade = () => setShowArcade(true);
     const handleOpenMathLab = () => setShowMathLab(true);
+    const handleSetResearcher = () => setChatMode('researcher');
+    const handleSetQuiz = () => setChatMode('quiz-master');
+    const handleSetDefault = () => setChatMode('default');
     
     document.addEventListener('openBackpack', handleOpenBackpack);
     document.addEventListener('openArcade', handleOpenArcade);
     document.addEventListener('openMathLab', handleOpenMathLab);
+    document.addEventListener('setResearcherMode', handleSetResearcher);
+    document.addEventListener('setQuizMode', handleSetQuiz);
+    document.addEventListener('setDefaultMode', handleSetDefault);
     
     return () => {
       document.removeEventListener('openBackpack', handleOpenBackpack);
       document.removeEventListener('openArcade', handleOpenArcade);
       document.removeEventListener('openMathLab', handleOpenMathLab);
+      document.removeEventListener('setResearcherMode', handleSetResearcher);
+      document.removeEventListener('setQuizMode', handleSetQuiz);
+      document.removeEventListener('setDefaultMode', handleSetDefault);
     };
   }, []);
 
