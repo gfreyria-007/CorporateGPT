@@ -12,13 +12,11 @@ const MAX_TOKENS = 8000;
 const MODEL_CHAIN = [
   // 1. FASTEST & CHEAPEST - Try first
   { model: 'google/gemini-1.5-flash-8b', provider: 'openrouter', speed: 1, cost: 1 },
-  // 2. BALANCED - If above fails
+  // 2. BALANCED - If above fails  
   { model: 'google/gemini-2.0-flash', provider: 'openrouter', speed: 2, cost: 2 },
-  // 3. PREMIUM - If still failing
-  { model: 'anthropic/claude-3-haiku', provider: 'openrouter', speed: 3, cost: 3 },
-  // 4. GEMINI DIRECT - If OpenRouter fails
-  { model: 'gemini-1.5-flash-8b', provider: 'gemini-direct', speed: 1, cost: 1 },
-  // 5. LAST RESORT - Gemini 2.0 direct
+  // 3. GEMINI DIRECT - If OpenRouter fails
+  { model: 'gemini-1.5-flash', provider: 'gemini-direct', speed: 1, cost: 1 },
+  // 4. LAST RESORT - Gemini 2.0 direct
   { model: 'gemini-2.0-flash', provider: 'gemini-direct', speed: 2, cost: 2 },
 ];
 
