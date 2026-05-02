@@ -228,6 +228,14 @@ export default function App() {
   const fetchModels = async () => {
     try {
       const response = await fetch('/api/models');
+      if (!response.ok) {
+        // Fallback to default models if API fails
+        setModels([
+          { id: 'openrouter/auto', name: 'Auto Router', description: 'Best available model', pricing: { prompt: '0', completion: '0' }, context_length: 128000 },
+          { id: 'google/gemini-2.0-flash', name: 'Gemini 2.0 Flash', description: 'Fast & capable', pricing: { prompt: '0', completion: '0' }, context_length: 1000000 },
+        ]);
+        return;
+      }
       const data = await response.json();
       if (data.data) {
         const uniqueModels = Array.from(new Map(data.data.map((m: any) => [m.id, m])).values()) as ModelMetadata[];
@@ -235,6 +243,11 @@ export default function App() {
       }
     } catch (error) {
       console.error('Failed to fetch models:', error);
+      // Fallback to default models
+      setModels([
+        { id: 'openrouter/auto', name: 'Auto Router', description: 'Best available model', pricing: { prompt: '0', completion: '0' }, context_length: 128000 },
+        { id: 'google/gemini-2.0-flash', name: 'Gemini 2.0 Flash', description: 'Fast & capable', pricing: { prompt: '0', completion: '0' }, context_length: 1000000 },
+      ]);
     } finally {
       setIsLoadingModels(false);
     }
