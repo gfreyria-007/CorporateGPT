@@ -21,6 +21,7 @@ interface EcoModeBannerProps {
   ecoModeActive: boolean;
   tokenPercent: number;
   multimediaRemaining: number;
+  lang?: 'en' | 'es';
   isSuperAdmin?: boolean;
 }
 
@@ -29,6 +30,7 @@ export function EcoModeBanner({
   ecoModeActive,
   tokenPercent,
   multimediaRemaining,
+  lang = 'es',
   isSuperAdmin = false,
 }: EcoModeBannerProps) {
   const hoursLeft = Math.ceil(hoursUntilMexicoMidnight());

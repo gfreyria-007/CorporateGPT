@@ -615,6 +615,7 @@ export default function App() {
                       ecoModeActive={ecoModeActive}
                       tokenPercent={tokenPercent}
                       multimediaRemaining={multimediaRemaining}
+                      lang={lang}
                       isSuperAdmin={isSuperAdmin}
                     />
                   </div>

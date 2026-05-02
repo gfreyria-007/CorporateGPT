@@ -1,6 +1,6 @@
 export type Lang = 'en' | 'es';
 
-const translationsData = {
+const translationsData: Record<Lang, any> = {
   en: {
     appName: 'CorporateGPT',
     slogan: 'Secure Intelligence Pipeline',
