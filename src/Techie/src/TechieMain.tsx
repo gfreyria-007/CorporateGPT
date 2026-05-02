@@ -434,8 +434,7 @@ export const TechieMain: React.FC = () => {
 
           }
       } catch (error: any) {
-          console.error("Critical Chat Error:", error);
-          setLastErrorMsg(error.message);
+          console.error("[Chat] Error:", error.message);
           
           if (error.message?.includes('API key is missing')) {
             addMessage(Role.MODEL, {
@@ -447,7 +446,7 @@ export const TechieMain: React.FC = () => {
                 ]
             });
           } else {
-            addMessage(Role.MODEL, `Hubo un problema al conectar con la biblioteca (${error.message || 'Error Desconocido'}). Inténtalo de nuevo.`);
+            addMessage(Role.MODEL, "La conexión está tardando más de lo normal. Intenta de nuevo en segundos.");
           }
       } finally {
           setIsChatLoading(false);

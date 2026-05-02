@@ -119,8 +119,8 @@ export const PricingSection = () => {
       }, 1500);
 
     } catch (error: any) {
-      console.error('Stripe Error:', error);
-      alert(`Error de conexión con la pasarela: ${error.message}`);
+      console.error('[Stripe] Error:', error.message);
+      alert('Error de conexión. Intenta de nuevo.');
       setIsRedirecting(null);
     }
   };

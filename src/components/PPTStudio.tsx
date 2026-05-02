@@ -233,8 +233,8 @@ const PPTStudio: React.FC<{
       setSlides(skeleton.map(s => ({ ...s, rendered: false, visualLayout: 'split' })));
       setStep('skeleton');
     } catch (error: any) {
-      console.error("[Studio] Generation Error:", error);
-      setGenError(`Error: ${error.message || 'Error al conectar con el motor de IA'}`);
+      console.error("[Studio] Error:", error.message);
+      setGenError('La presentación tardó más de lo normal. Intenta de nuevo.');
     } finally {
       setIsGenerating(false);
     }

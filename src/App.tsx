@@ -339,10 +339,11 @@ export default function App() {
       incrementQueryCount(user.uid).catch(e => console.error("Failed to increment count:", e));
 
     } catch (error: any) {
+      console.error('[Chat] Error:', error.message);
       const errorMessage: Message = {
         id: `error-${Date.now()}-${Math.random().toString(36).substr(2, 7)}`,
         role: 'assistant',
-        content: `System Error: ${error.message}. Secure pipeline remains intact.`,
+        content: 'Conexión momentary lenta. Intenta de nuevo en segundos.',
         timestamp: Date.now()
       };
       setMessages(prev => [...prev, errorMessage]);

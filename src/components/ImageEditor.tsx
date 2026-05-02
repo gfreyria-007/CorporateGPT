@@ -539,8 +539,8 @@ Make it look like a premium, professionally designed asset that could be used in
 
       incrementImageCount(user.uid).catch(e => console.error(e));
     } catch (error: any) {
-      console.error('Native image generation failed:', error);
-      alert(`Image generation failed: ${error.message}`);
+      console.error('[Image] Error:', error.message);
+      alert('La imagen tardó más de lo normal. Intenta de nuevo.');
     } finally {
       setIsGenerating(false);
     }
@@ -832,8 +832,8 @@ Make it look like a premium, professionally designed asset that could be used in
       setMaskPrompt('');
       incrementImageCount(user.uid).catch(e => console.error(e));
     } catch (error: any) {
-      console.error('Inpaint failed:', error);
-      alert(`Inpaint failed: ${error.message}`);
+      console.error('[Inpaint] Error:', error.message);
+      alert('La edición tardó más de lo normal. Intenta de nuevo.');
     } finally {
       setIsGenerating(false);
     }
