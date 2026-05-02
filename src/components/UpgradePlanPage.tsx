@@ -8,7 +8,7 @@ interface UpgradePlanPageProps {
   lang: 'en' | 'es';
 }
 
-export const UpgradePlanPage = ({ onClose, lang }: UpgradePlanPageProps) => {
+export const UpgradePlanPage = ({ onClose, lang = 'es' }: UpgradePlanPageProps) => {
   return (
     <div className="fixed inset-0 z-[200] bg-white dark:bg-black overflow-y-auto">
       {/* Background Gradients */}

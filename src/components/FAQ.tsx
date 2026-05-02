@@ -259,8 +259,8 @@ const content = {
   }
 };
 
-export function FAQ({ onClose, lang, theme }: FAQProps) {
-  const c = content[lang];
+export function FAQ({ onClose, lang = 'es', theme }: FAQProps) {
+  const c = content[lang || 'es'];
   
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4">
