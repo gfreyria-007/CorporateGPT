@@ -154,7 +154,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ];
     const uniqueModelsToTry = [...new Set(modelsToTry)];
 
-    const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1/models';
+    const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
     for (const tryModel of uniqueModelsToTry) {
       try {
