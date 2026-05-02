@@ -326,18 +326,6 @@ async function startServer() {
         return res.status(500).json({ error: 'OPENROUTER_API_KEY is missing on the server' });
       }
 
-      // Check balance and trigger alerts if needed
-      const creditRes = await fetch('https://openrouter.ai/api/v1/credits', {
-        headers: { 'Authorization': `Bearer ${OPENROUTER_API_KEY}` }
-      });
-      if (creditRes.ok) {
-        const creditData = await creditRes.json();
-        const balance = creditData.data?.total_credits - creditData.data?.total_usage;
-        if (balance < 5) {
-          console.log(`[ALERT] LOW CREDITS DETECTED: $${balance.toFixed(2)}. Simulation: Sending email to super-admins...`);
-        }
-      }
-
       const { model, messages, userId, instructions, temperature, maxTokens, deepThink, webSearch, docsOnly } = req.body;
       const currentTime = new Date().toISOString();
 
@@ -442,7 +430,7 @@ async function startServer() {
         const generationConfig = payload.config || payload.generationConfig || {};
         const { systemInstruction, ...restConfig } = generationConfig;
         
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || 'gemini-3.1-pro-preview'}:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || 'gemini-2.0-flash'}:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -482,7 +470,7 @@ async function startServer() {
 
       } else if (action === 'chat') {
          // Simplified chat for local proxy
-         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || 'gemini-3.1-pro-preview'}:generateContent?key=${apiKey}`, {
+         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || 'gemini-2.0-flash'}:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

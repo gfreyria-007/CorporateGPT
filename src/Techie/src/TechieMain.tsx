@@ -310,7 +310,7 @@ export const TechieMain: React.FC = () => {
       const personalApiKey = userProfile.personalApiKey;
 
       if (isBYOKMode && !personalApiKey) {
-          addMessage(Role.MODEL, "¡Hola! Tu periodo de prueba ha terminado. Por favor, ingresa tu API Key de Gemini en tu perfil (BYOK) o suscríbete para continuar.");
+          addMessage(Role.MODEL, "¡Hola! Para continuar aprendiendo con Techie, necesitas activar un Plan Familiar en el Hub de CatalizIA o ingresar tu propia API Key en los ajustes.");
           setShowSettingsModal(true);
           return;
       }
@@ -454,12 +454,14 @@ export const TechieMain: React.FC = () => {
       }
   };
 
-  console.log('Admin Status:', { 
-    email: currentUser?.email, 
-    role: userProfile?.role, 
-    isAdmin: userProfile?.role === 'admin' || currentUser?.email === 'gfreyria@gmail.com',
-    showAdmin: showAdminDashboard 
-  });
+  useEffect(() => {
+    console.log('Admin Status:', { 
+      email: currentUser?.email, 
+      role: userProfile?.role, 
+      isAdmin: isAdmin,
+      showAdmin: showAdminDashboard
+    });
+  }, [currentUser?.email, userProfile?.role, isAdmin, showAdminDashboard]);
 
   if (isAuthLoading || isProfileLoading) {
     return (
@@ -487,7 +489,7 @@ export const TechieMain: React.FC = () => {
               className="mb-12 flex flex-col items-center"
             >
                 <img 
-                  src="https://catalizia.com/wp-content/uploads/2024/05/cropped-CatalizIA-logo-horizontal-sin-dot-com-scaled-1-313x100.png" 
+                  src="https://catalizia.com/images/logo-white.png" 
                   alt="Catalizia" 
                   className="h-12 w-auto object-contain mb-3 brightness-0 invert opacity-90"
                 />

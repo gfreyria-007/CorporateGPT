@@ -70,13 +70,13 @@ const SAFETY_SETTINGS: any[] = [
 const GUARDRAIL_ERROR = "Lo siento, como IA educativa de Catalizia no puedo procesar o responder a esa solicitud porque va en contra de nuestras políticas de seguridad para menores.";
 
 const getAI = (customKey?: string) => {
-    // Check multiple places for the API key to ensure it works locally and on Vercel
     const metaEnv = (import.meta as any).env || {};
     const apiKey = customKey || metaEnv.VITE_GEMINI_API_KEY || (process as any).env?.GEMINI_API_KEY;
     if (!apiKey) {
-        logger.system('GEMINI_API_KEY not found in environment variables');
+        logger.error('GEMINI_API_KEY no configurada. Ve a Settings > API Key para configurar.');
+        throw new Error('GEMINI_API_KEY no configurada. Ve a Settings > API Key para configurar.');
     }
-    return new GoogleGenAI({ apiKey: apiKey || "" });
+    return new GoogleGenAI({ apiKey });
 };
 
 
@@ -126,7 +126,7 @@ export const generateImage = async (
 
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-2.0-flash',
             contents,
             config: { 
                 systemInstruction: "You are the Visual Architect of the NANOBANANA 2 ENGINE (Kids Edition). Generate high-fidelity, professional, and educational artwork. No text allowed in images.",
@@ -214,7 +214,7 @@ export const editImage = async (
 
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-2.0-flash',
             contents: { parts },
             config: { 
                 systemInstruction: "You are an expert digital artist for kids using the NANOBANANA 2 ENGINE. You interpret source images and user sketches with high precision. Your goal is to turn manual annotations into polished, professional artwork while strictly following the prompt and the provided mask logic. Always ensure the output is safe and educational.",
@@ -336,7 +336,7 @@ export const getChatResponse = async (
     }
 
     const result = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.0-flash',
         contents: history,
         config: {
             temperature: (mode === 'explorer' || mode === 'math-viva') ? temperature : 0.3, 
@@ -355,7 +355,7 @@ export const reviewHomework = async (imagePart: any, text: string, grade: Grade,
 
   const prompt = `Revisa esta tarea para nivel ${grade.name}. Usa INTERNET para verificar si la información es correcta. Lenguaje adecuado para ${age} años. JSON format only.`;
   return await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-2.0-flash',
     contents: { parts: [imagePart, { text: prompt }] },
     config: { 
         tools: [{ googleSearch: {} }],
@@ -369,7 +369,7 @@ export const analyzeImage = async (imagePart: any, text: string, grade: Grade, u
 
     let systemInstruction = `Analiza la imagen educativamente para nivel ${grade.name}. Usa ACCESO A INTERNET para identificar hitos o datos reales.`;
     return await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.0-flash',
         contents: { parts: [imagePart, { text: text || "Analiza" }] },
         config: { 
             systemInstruction, 
@@ -411,7 +411,7 @@ export const getDeepResearchResponse = async (topic: string, grade: Grade, userN
     ESTÉTICA: Usa Markdown rico. Este reporte debe ser el mejor documento que el estudiante haya leído sobre el tema.`;
 
     return await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
+        model: 'gemini-2.0-flash',
         contents: topic,
         config: { 
             tools: [{ googleSearch: {} }], 
@@ -426,7 +426,7 @@ export const generateTopicQuiz = async (topic: string, grade: Grade, count: numb
     const ai = getAI(customKey);
     const prompt = `Usa INTERNET para generar un examen de ${count} preguntas REALES y actualizadas sobre: ${topic} para nivel escolar ${grade.name}. JSON format.`;
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.0-flash',
         contents: prompt,
         config: { 
             tools: [{ googleSearch: {} }],
@@ -441,7 +441,7 @@ export const generateFlashcards = async (text: string, customKey?: string): Prom
  
     const prompt = `Genera 5 flashcards educativas basadas en el texto. JSON: [{ "question": "", "answer": "" }]`;
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.0-flash',
         contents: prompt,
         config: { responseMimeType: 'application/json' }
     });

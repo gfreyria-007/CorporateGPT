@@ -187,30 +187,30 @@ export const PricingSection = () => {
               plan="Starter"
               users="3 Usuarios"
               oldPrice="Plan de Lanzamiento"
-              newPrice="$199"
+              newPrice="Contactanos"
               isLoading={isRedirecting === 'Starter'}
               isLoggedIn={!!user}
               features={[
-                "Acceso a modelos de Élite (Gemini 2.0 Pro)",
-                "Smart Economics: Neural Routing Engine",
-                "Neural Studio: Presentaciones en Segundos",
-                "Privacidad Corporativa NDA Proof",
-                "Soporte Estándar"
+                "Acceso a modelos de IA",
+                "Smart Economics: Neural Routing",
+                "Neural Studio: Presentaciones",
+                "Privacidad Corporativa",
+                "Soporte por Email"
               ]}
               onBuy={() => handleBuy('Starter')}
             />
             <PricingCard 
               plan="Professional"
               users={`${professionalUsers} Usuarios`}
-              oldPrice="Precio Corporativo por Usuario"
-              newPrice={`$${179 * professionalUsers}`}
+              oldPrice="Precio por Usuario"
+              newPrice="Contactanos"
               isFeatured
               isLoading={isRedirecting === 'Professional'}
               isLoggedIn={!!user}
               features={[
                  "Todo lo de Starter",
                  "Dashboard Admin para Equipos",
-                 "Gobierno de Datos y Trazabilidad",
+                 "Gobierno de Datos",
                  "API Access para Integraciones",
                  "Soporte Prioritario"
               ]}
@@ -235,17 +235,17 @@ export const PricingSection = () => {
             <PricingCard 
               plan="Top-Up"
               users="Bolsa de Créditos"
-              oldPrice="Uso Ilimitado"
-              newPrice="$50"
-              isLoading={isRedirecting === 'Top-Up'}
+              oldPrice="Créditos Extra"
+              newPrice="Contactanos"
+              isLoading={isRedirecting === 'TopUp'}
               isLoggedIn={!!user}
               features={[
                  "Tokens Extra de Alta Potencia",
                  "Sin fecha de caducidad",
                  "Ideales para tareas complejas",
-                 "Consumo transparente y bajo demanda"
+                 "Consumo transparente"
               ]}
-              onBuy={() => handleBuy('Top-Up')}
+              onBuy={() => handleBuy('TopUp')}
             />
           </>
         ) : (
@@ -254,15 +254,14 @@ export const PricingSection = () => {
               plan="Family Starter"
               users="3 Miembros"
               oldPrice="Protección Educativa"
-              newPrice="$199"
+              newPrice="Contactanos"
               isLoading={isRedirecting === 'Family Starter'}
               isLoggedIn={!!user}
               features={[
-                "3 Perfiles con Techie Tutor (Junior)",
-                "Smart Economics: Máxima Eficiencia",
-                "Filtros de Seguridad Infantil Activos",
-                "Image Studio para tareas creativas",
-                "Privacidad Familiar Garantizada"
+                "3 Perfiles con Techie Tutor",
+                "Smart Economics: Eficiencia",
+                "Filtros de Seguridad Infantil",
+                "Image Studio para tareas"
               ]}
               onBuy={() => handleBuy('Family Starter')}
             />
@@ -270,16 +269,16 @@ export const PricingSection = () => {
               plan="Family Mega"
               users="5 Miembros"
               oldPrice="Espacio Multigeneracional"
-              newPrice="$299"
+              newPrice="Contactanos"
               isFeatured
               isLoading={isRedirecting === 'Family Mega'}
               isLoggedIn={!!user}
               features={[
                  "Hasta 5 miembros de la familia",
-                 "DOBLE DE CAPACIDAD INCLUIDA",
-                 "Techie Tutor (Junior) PRO",
+                 "DOBLE DE CAPACIDAD",
+                 "Techie Tutor PRO",
                  "Reportes de aprendizaje",
-                 "Acceso prioritario familiar"
+                 "Acceso prioritario"
               ]}
               onBuy={() => handleBuy('Family Mega')}
             />

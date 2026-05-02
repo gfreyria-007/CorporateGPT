@@ -85,7 +85,10 @@ const QuizReportMessage: React.FC<QuizReportMessageProps> = ({ content, onAwardB
             {/* Header */}
             <div className="bg-slate-50 border-b border-gray-200 p-6 flex flex-col md:flex-row justify-between items-center gap-4">
                 <div className="flex items-center gap-4">
-                     <img src="https://catalizia.com/wp-content/uploads/2025/10/cropped-CatalizIA-logo-horizontal-sin-dot-com-scaled-1-313x100.png" alt="Catalizia" className="h-8" referrerPolicy="no-referrer" />
+                     <div className="flex items-center gap-1">
+                        <span className="text-lg font-bold text-white">CatalizIA</span>
+                        <span className="text-[10px] px-1.5 rounded-full bg-blue-500/30 text-blue-200">Techie</span>
+                     </div>
                      <div className="h-8 w-px bg-gray-300"></div>
                      <div>
                          <h2 className="text-sm font-bold text-gray-500 uppercase tracking-widest">Reporte de Resultados</h2>

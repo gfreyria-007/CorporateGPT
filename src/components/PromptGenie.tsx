@@ -26,7 +26,7 @@ export function PromptGenie({ isOpen, onClose, onApply, theme }: PromptGenieProp
       Format: Only return the 3 options separated by "---". No preamble.`;
 
       const payload = {
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.0-flash",
         contents: prompt
       };
 

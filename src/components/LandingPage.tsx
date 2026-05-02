@@ -255,7 +255,7 @@ export const LandingPage = ({
             </div>
 
             <p className="hero-p text-xl lg:text-2xl text-slate-400 font-medium leading-relaxed max-w-xl border-l-2 border-blue-500/30 pl-8">
-              {lang === 'es' ? 'Accede a los 100+ mejores modelos del mundo con seguridad NDA total. Ahorra hasta un 70% centralizando el gasto.' : 'Access the world\'s top 100+ models with total NDA security. Save up to 70% by centralizing your team spend.'}
+              {lang === 'es' ? 'Accede a los mejores modelos de IA con seguridad corporativa.' : 'Access the world\'s top 100+ models with total NDA security. Save up to 70% by centralizing your team spend.'}
             </p>
 
             <div className="hero-btns flex flex-wrap gap-6 pt-4">
@@ -268,9 +268,8 @@ export const LandingPage = ({
             </div>
 
             <div className="hero-p flex items-center gap-8 pt-10 text-[11px] font-black uppercase tracking-widest text-slate-500">
-              <span className="flex items-center gap-2 group cursor-help hover:text-emerald-400 transition-colors"><CheckCircle2 size={16} className="text-emerald-500 group-hover:scale-125 transition-transform"/> 100+ LLMs</span>
-              <span className="flex items-center gap-2 group cursor-help hover:text-emerald-400 transition-colors"><CheckCircle2 size={16} className="text-emerald-500 group-hover:scale-125 transition-transform"/> Auto Router</span>
-              <span className="flex items-center gap-2 group cursor-help hover:text-emerald-400 transition-colors"><CheckCircle2 size={16} className="text-emerald-500 group-hover:scale-125 transition-transform"/> NDA PROOF</span>
+              <span className="flex items-center gap-2 group cursor-help hover:text-emerald-400 transition-colors"><CheckCircle2 size={16} className="text-emerald-500 group-hover:scale-125 transition-transform"/> Google Gemini</span>
+              <span className="flex items-center gap-2 group cursor-help hover:text-emerald-400 transition-colors"><CheckCircle2 size={16} className="text-emerald-500 group-hover:scale-125 transition-transform"/> Privacidad</span>
             </div>
           </div>
 
@@ -397,11 +396,10 @@ export const LandingPage = ({
               <div className="text-center">Estándar</div>
             </div>
             {[
-              { feat: 'Acceso 100+ LLMs', catalizia: true, other: false },
-              { feat: 'ZDR (NDA Proof)', catalizia: true, other: 'Parcial' },
-              { feat: 'Auto-Router de Costos', catalizia: true, other: false },
+              { feat: 'Google Gemini Models', catalizia: true, other: true },
+              { feat: 'Privacidad Corporativa', catalizia: true, other: 'Parcial' },
               { feat: 'PPT Studio Builder', catalizia: true, other: false },
-              { feat: 'Filtros de Seguridad Reales', catalizia: true, other: false },
+              { feat: 'Techie Tutor (Junior)', catalizia: true, other: false },
             ].map((row, i) => (
               <div key={i} className="table-row grid grid-cols-3 p-12 border-b border-white/5 items-center hover:bg-white/5 transition-all cursor-default">
                 <div className="text-lg font-bold text-slate-300">{row.feat}</div>

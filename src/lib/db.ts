@@ -122,6 +122,12 @@ export async function incrementQueryCount(uid: string) {
 }
 
 export async function saveGPT(uid: string, gptData: any) {
+  const MAX_GPT_SIZE = 500 * 1024; // 500KB max GPT data
+  const serialized = JSON.stringify(gptData);
+  if (serialized.length > MAX_GPT_SIZE) {
+    throw new Error(`GPT data too large. Max ${MAX_GPT_SIZE / 1024}KB allowed.`);
+  }
+
   const gptId = gptData.id || Math.random().toString(36).substr(2, 9);
   const gptRef = doc(db, 'gpts', gptId);
   const finalData = {

@@ -57,7 +57,7 @@ export interface ClarifyingQuestion {
 
 export async function generateClarifyingQuestions(prompt: string): Promise<ClarifyingQuestion[]> {
   const payload = {
-    model: "gemini-2.5-flash",
+    model: "gemini-2.0-flash",
     contents: [{ role: "user", parts: [{ text: 
 `You are a premium corporate presentation architect. The user wants to generate a high-impact presentation about: "${prompt}"
 
@@ -136,7 +136,7 @@ export async function generateStylePreview(prompt: string, mood: string, lang: '
   Layouts: 'dense_table', 'technical_drawing', 'grid'.`;
 
   const payload = {
-    model: "gemini-2.5-flash",
+    model: "gemini-2.0-flash",
     contents: [{ role: "user", parts: [{ text: `Establish the visual concept for: "${prompt}".` }] }],
     config: {
       systemInstruction,
@@ -186,7 +186,7 @@ export async function generateStylePreview(prompt: string, mood: string, lang: '
 }
 
 export async function generateStudioSlides(prompt: string, mood: string, lang: 'en' | 'es'): Promise<{ slides: StudioSlideData[], finalMood: string }> {
-  const model = "gemini-2.5-flash"; 
+  const model = "gemini-2.0-flash"; 
   
   const systemInstruction = `You are the Neural Studio Engine 5.0 (Cinematic Storyteller). 
   Current Date context: ${new Date().toISOString().split('T')[0]}. The current year is 2026.
@@ -268,7 +268,7 @@ export async function generateStudioSlides(prompt: string, mood: string, lang: '
 
 export async function suggestBetterPrompt(currentPrompt: string): Promise<string> {
   const payload = {
-    model: "gemini-1.5-pro-002",
+    model: "gemini-2.0-flash",
     contents: [{ role: "user", parts: [{ text: `The user wants to generate an AMAZING infographic or visual asset with this prompt: "${currentPrompt}".
     Improve this prompt to be high-density, professional, and visually stunning.
     Instructions:
@@ -288,7 +288,7 @@ export async function suggestBetterPrompt(currentPrompt: string): Promise<string
 }
 
 export async function salesAgentChat(message: string, lang: 'en' | 'es'): Promise<string> {
-  const model = "gemini-2.5-flash"; 
+  const model = "gemini-2.0-flash"; 
   
   const systemInstruction = lang === 'es' ? 
     `ERES EL ASESOR CORPORATIVO DE CORPORATEGPT. 
@@ -328,9 +328,42 @@ export async function salesAgentChat(message: string, lang: 'en' | 'es'): Promis
 }
 
 export async function generateInfographicContent(prompt: string, style: string): Promise<InfographicData> {
+  const styleGuide = {
+    professional: 'Corporate blue/white, clean sans-serif fonts, data visualization style, minimalist',
+    sketch_note: 'Hand-drawn sketch aesthetic, white background, pencil/marker look',
+    kawaii: 'Pinkpastel colors, cute rounded elements, friendly illustrations',
+    scientific: 'Dark blue-black background, neon green/cyan data overlays, technical blueprint',
+    anime: 'Japanese anime style, vibrant colors, dynamic compositions',
+    clay: '3D clay animation style, soft rounded shapes, textured surfaces',
+    editorial: 'Magazine editorial style, elegant typography, bold hierarchies',
+    instructional: 'Educational diagram style, clear labels, step-by-step visuals',
+    bento_grid: 'Modern bento box grid layout, organized sections',
+    bricks: 'LEGO-style building blocks, playful 3D brick elements',
+    whiteboard: 'Whiteboard marker drawing, casual hand-drawn feel',
+    blackboard: 'Chalkboard green background, white chalk drawings',
+    neubrutalist: 'Bold black borders, stark contrasts, raw brutalist design',
+    classic: 'Traditional illustration, muted colors, elegant simplicity',
+    chalkboard: 'Green chalkboard with white handwritten text and diagrams',
+    blueprint: 'Technical blueprint with grid lines, precise architectural drawing',
+    lego: '3D colorful LEGO bricks, playful children toy aesthetic'
+  };
+
   const payload = {
-    model: "gemini-2.5-flash",
-    contents: [{ role: "user", parts: [{ text: `Generate a structured infographic about: "${prompt}". Style: ${style}. Return JSON format only.` }] }],
+    model: "gemini-2.0-flash",
+    contents: [{ role: "user", parts: [{ text: `Generate a stunning professional infographic about: "${prompt}".
+    
+STYLE: ${styleGuide[style as keyof typeof styleGuide] || styleGuide.professional}
+
+REQUIRED JSON RESPONSE:
+{
+  "title": "Main infographic title",
+  "subtitle": "Descriptive subtitle", 
+  "themeColor": "#hexcode matching style",
+  "sections": [
+    {"title": "Section header", "description": "Key insight", "value": 100}
+  ],
+  "conclusions": ["Insight 1", "Insight 2"]
+}` }] }],
     config: {
       responseMimeType: "application/json",
       responseSchema: {
@@ -363,7 +396,6 @@ export async function generateInfographicContent(prompt: string, style: string):
     body: JSON.stringify({ action: 'generateContent', payload })
   });
   const response = await res.json();
-  // Proxy spreads all JSON fields — use them directly
   if (response.title) return response as InfographicData;
   try { return JSON.parse((response.text || '{}').replace(/```json/g,'').replace(/```/g,'').trim()); }
   catch { return { title: '', subtitle: '', sections: [], conclusions: [] }; }
@@ -386,7 +418,7 @@ export async function generateSkeleton(prompt: string, count: number = 10): Prom
   - Return ONLY the JSON object, nothing else.`;
 
   const payload = {
-    model: "gemini-2.5-flash",
+    model: "gemini-2.0-flash",
     contents: [{ role: "user", parts: [{ text: `Generate EXACTLY ${count} content-rich slides for this topic: "${prompt}".
     IMPORTANT: Fill each slide with REAL, SPECIFIC information. No placeholder text.
     For at least 3-4 slides, choose an appropriate chartType (bar, line, pie, etc.) and provide the corresponding REAL DATA in 'tableData' (format: Label,Value\nLabel,Value).
@@ -455,7 +487,7 @@ export async function generateSkeleton(prompt: string, count: number = 10): Prom
 
 export async function regenerateSlideSkeleton(slideIndex: number, fullContext: string): Promise<SlideSkeleton> {
   const payload = {
-    model: "gemini-2.5-flash",
+    model: "gemini-2.0-flash",
     contents: [{ role: "user", parts: [{ text: `Regenerate ONLY slide number ${slideIndex + 1} for this presentation: "${fullContext}". 
     Return ONE slide object.` }] }],
     config: {
@@ -509,7 +541,7 @@ export async function renderSlideVisual(
     : '';
 
   const payload = {
-    model: "gemini-2.5-flash",
+    model: "gemini-2.0-flash",
     contents: [{ role: "user", parts: [{ text: `Title: ${title}. Content: ${content.join(' | ')}. Style: ${style}. ${chartContext}
     Return JSON: { 
       "visualLayout": "...", 
@@ -560,24 +592,44 @@ export async function generateProImageForSlide(
   tableData: string = '',
   userImage?: string
 ): Promise<string> {
-  const prompt = `NANOBANANA INFOGRAPHIC ENGINE: Create a world-class, premium corporate presentation slide.
-Title: "${title}"
-Subtitle: "${subtitle}"
-Visual Concept: Integrated infographic combining data and text.
-Key Points to Include: ${content.join(' | ')}
-Data Context (if any): ${chartType !== 'none' ? `Detailed ${chartType} visualization: ${tableData}` : 'None'}
+  const stylePrompts = {
+    auto: 'Premium corporate presentation, clean modern design, dynamic composition',
+    sketch: 'Hand-drawn sketch on paper, white background, artistic markers, loose lines',
+    kawaii: 'Cute kawaii style, pastel colors, soft rounded illustrations, playful',
+    professional: 'Corporate blue-white palette, clean professional design, data visualization',
+    scientific: 'Dark technical blueprint, neon cyan-green accents, scientific diagram',
+    anime: 'Japanese anime style, vibrant dynamic illustration, detailed background',
+    clay: '3D clay animation style, soft rounded shapes, cute textured surfaces',
+    editorial: 'High-end magazine editorial, elegant typography, bold visual hierarchy',
+    instructional: 'Educational diagram, clear labels, step-by-step visual guide',
+    bento: 'Modern bento grid layout, organized clean sections, minimalist',
+    bricks: 'Colorful LEGO bricks, playful 3D building blocks toy aesthetic'
+  };
 
-Style Requirement: ${style}. 
+  const prompt = `Create a WORLD-CLASS corporate presentation slide infographic.
 
-MANDATORY DESIGN RULES:
-1. PRECISE INTEGRATION: All elements (text, data, icons) must be part of a single cohesive visual architecture.
-2. PREMIUM AESTHETIC: Use breathtaking gradients, shadows, and spacing typical of elite design studios.
-3. DATA DENSITY: Ensure high visual complexity and professional technical fidelity.
-4. COHESION: The slide must look like a complete, finished infographic, not just a picture.
-5. NO ARTIFACTS: Do not include placeholder text. Render actual titles and points in a cinematic 16:9 layout.`;
+TITLE: "${title}"
+SUBTITLE: "${subtitle}"
+KEY POINTS: ${content.join(' | ')}
+
+${chartType !== 'none' && tableData ? `DATA VISUALIZATION: ${chartType} chart with: ${tableData}` : 'NO CHART DATA'}
+
+VISUAL STYLE: ${stylePrompts[style as keyof typeof stylePrompts] || stylePrompts.auto}
+
+CRITICAL REQUIREMENTS:
+1. 16:9 cinematic aspect ratio
+2. Professional typography with hierarchy
+3. Cohesive color scheme (blue/emerald/amber/purple)
+4. No placeholder text - render actual content
+5. High contrast, publication-ready quality
+6. Subtle gradients and shadows for depth
+7. Infographic-style data presentation
+8. Clean whitespace, intentional composition
+9. Visual elements supporting the message
+10. Corporate/professional aesthetic`;
 
   const payload = {
-    model: 'gemini-3.1-flash-image-preview',
+    model: 'gemini-2.0-flash',
     contents: { 
       parts: [
         { text: prompt },

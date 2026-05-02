@@ -637,7 +637,10 @@ const ImageCreationModal: React.FC<ImageCreationModalProps> = ({
 
         <div className="w-full md:w-80 bg-white flex flex-col p-4 md:p-6 overflow-y-auto shrink-0 z-20 shadow-lg order-last md:order-first border-t md:border-t-0 md:border-r border-gray-100">
             <div className="flex justify-between items-center mb-4">
-                <img src="https://catalizia.com/wp-content/uploads/2025/10/cropped-CatalizIA-logo-horizontal-sin-dot-com-scaled-1-313x100.png" className="h-6 md:h-8" referrerPolicy="no-referrer" />
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 md:h-8 md:w-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-black text-xs">C</div>
+                  <span className="text-sm font-black text-blue-900 tracking-tighter uppercase">CatalizIA</span>
+                </div>
                 <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-400">✕</button>
             </div>
 

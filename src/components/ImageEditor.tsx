@@ -476,7 +476,7 @@ Make it look like a premium, professionally designed asset that could be used in
       const resValue = genResolution === '2K' ? 2048 : 1024;
       
       const payload = {
-        model: 'gemini-3-pro-image-preview',
+        model: 'gemini-2.0-flash',
         contents: { parts: [{ text: fullPrompt }] },
         config: {
           temperature: genTemperature,
@@ -765,7 +765,7 @@ Make it look like a premium, professionally designed asset that could be used in
 
       // 3) Send to Gemini: original image + mask + text prompt
       const payload = {
-        model: 'gemini-3-pro-image-preview',
+        model: 'gemini-2.0-flash',
         contents: {
           parts: [
             {

@@ -46,9 +46,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const isTopUp = plan === 'Top-Up';
-    const quantity = plan === 'Professional'
-      ? Math.max(10, parseInt(qty || '10'))
-      : 1;
+    const MAX_QTY = 100;
+    const rawQty = parseInt(qty || '1');
+    const quantity = isTopUp ? 1 : Math.min(Math.max(1, rawQty), MAX_QTY);
 
     console.log(`[STRIPE] Creating session for plan: ${plan}, priceId: ${targetPrice}, userId: ${userId}`);
 

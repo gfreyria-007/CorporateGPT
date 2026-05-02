@@ -10,6 +10,7 @@ import * as XLSX from 'xlsx';
 
 // Max content size (8KB as per original, but now more structured)
 export const MAX_CONTENT_SIZE = 8000;
+export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB max file size
 
 // Dangerous patterns to detect
 const MALICIOUS_PATTERNS = [
@@ -184,6 +185,20 @@ async function parseWord(file: File): Promise<ParseResult> {
 }
 
 export async function processDocument(file: File): Promise<ProcessedFile> {
+  if (file.size > MAX_FILE_SIZE) {
+    return {
+      id: '',
+      name: file.name,
+      type: file.type,
+      size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
+      date: new Date().toLocaleDateString(),
+      content: null,
+      contentType: 'unsupported',
+      isSafe: false,
+      error: `File too large. Max size: ${(MAX_FILE_SIZE / 1024 / 1024).toFixed(0)}MB`
+    };
+  }
+
   const extension = file.name.split('.').pop()?.toLowerCase() || '';
   const fileId = Math.random().toString(36).substr(2, 9);
   

@@ -45,80 +45,83 @@ export function EcoModeBanner({
           className="w-full overflow-hidden"
         >
           <div className={`
-            mx-4 mt-3 mb-1 px-4 py-3 rounded-2xl border
-            flex items-center justify-between gap-3 flex-wrap
+            mx-4 mt-3 mb-1 px-5 py-4 rounded-[1.5rem] border
+            flex flex-col gap-4
             ${ecoModeActive
-              ? 'bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-700/50'
-              : 'bg-blue-50 border-blue-100 dark:bg-blue-950/30 dark:border-blue-800/40'
+              ? 'bg-amber-50 border-amber-200 dark:bg-amber-950/60 dark:border-amber-500/30 shadow-lg shadow-amber-500/5'
+              : 'bg-blue-50 border-blue-100 dark:bg-slate-900/80 dark:border-white/10 backdrop-blur-xl shadow-lg shadow-blue-500/5'
             }
           `}>
-            {/* Left: icon + label */}
-            <div className="flex items-center gap-2.5 min-w-0">
+            {/* Top: icon + label */}
+            <div className="flex items-center gap-3.5">
               <div className={`
-                w-8 h-8 rounded-xl flex items-center justify-center shrink-0
-                ${ecoModeActive ? 'bg-amber-500/20' : 'bg-blue-500/20'}
+                w-10 h-10 rounded-[0.9rem] flex items-center justify-center shrink-0 shadow-sm
+                ${ecoModeActive ? 'bg-amber-500 text-white' : 'bg-blue-600 text-white'}
               `}>
-                <Leaf
-                  size={16}
-                  className={ecoModeActive ? 'text-amber-600 dark:text-amber-400' : 'text-blue-600'}
-                />
+                <Leaf size={18} />
               </div>
-              <div className="min-w-0">
-                <p className={`text-[11px] font-black uppercase tracking-widest leading-tight ${
-                  ecoModeActive ? 'text-amber-700 dark:text-amber-300' : 'text-blue-700 dark:text-blue-300'
+              <div className="flex-1">
+                <p className={`text-[12px] font-black uppercase tracking-[0.15em] leading-none ${
+                  ecoModeActive ? 'text-amber-800 dark:text-amber-400' : 'text-blue-800 dark:text-white'
                 }`}>
                   {ecoModeActive
-                    ? '♻️ Modo Eco Activo: Optimizando tu suscripción'
-                    : `⚡ Neural Budget — ${100 - tokenPercent}% disponible`
+                    ? 'Eco Mode Active'
+                    : 'Neural Budget'
                   }
+                  <span className={`ml-2 opacity-60 font-bold ${ecoModeActive ? 'text-amber-600' : 'text-blue-500 dark:text-blue-400'}`}>
+                    — {100 - tokenPercent}% {lang === 'es' ? 'Disponible' : 'Available'}
+                  </span>
                 </p>
                 {ecoModeActive && (
-                  <p className="text-[10px] text-amber-600/70 dark:text-amber-400/60 mt-0.5">
-                    Usando modelos eficientes · Reset en ~{hoursLeft}h (00:00 MX)
+                  <p className="text-[10px] font-bold text-amber-700/60 dark:text-amber-400/50 mt-1.5 uppercase tracking-widest">
+                    {lang === 'es' ? 'Optimizando recursos' : 'Optimizing resources'}
                   </p>
                 )}
               </div>
-            </div>
-
-            {/* Center: stats */}
-            <div className="flex items-center gap-3 flex-wrap">
-              {/* Token bar */}
-              <div className="flex items-center gap-1.5">
-                <Zap size={12} className="text-slate-400 shrink-0" />
-                <div className="w-20 h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${
-                      tokenPercent >= 90 ? 'bg-amber-500' :
-                      tokenPercent >= 60 ? 'bg-yellow-400' : 'bg-emerald-500'
-                    }`}
-                    style={{ width: `${Math.min(tokenPercent, 100)}%` }}
-                  />
-                </div>
-                <span className="text-[10px] text-slate-500 font-mono tabular-nums">
-                  {quota ? `${(quota.tokensUsed / 1000).toFixed(0)}K/${(quota.tokensLimit / 1000).toFixed(0)}K` : '—'}
-                </span>
-              </div>
-
-              {/* Multimedia credits */}
-              <div className="flex items-center gap-1 text-[10px] text-slate-500">
-                <Image size={11} />
-                <span>{multimediaRemaining}</span>
-                <span className="text-slate-400">créditos</span>
-              </div>
-
-              {/* Hours until reset */}
-              <div className="flex items-center gap-1 text-[10px] text-slate-400">
-                <Clock size={11} />
-                <span>~{hoursLeft}h</span>
+              
+              {/* Reset Clock */}
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-black/5 dark:bg-white/5 rounded-full border border-black/5 dark:border-white/5">
+                <Clock size={12} className="text-slate-400" />
+                <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Reset in ~{hoursLeft}h</span>
               </div>
             </div>
 
-            {/* Right: May promo badge */}
-            {mayPromo && (
-              <div className="shrink-0 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg shadow-sm">
-                🎉 -{Math.round(MAY_2026_PROMO.discount * 100)}% Mayo
-              </div>
-            )}
+            {/* Bottom: Progress + Credits */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-3 border-t border-black/5 dark:border-white/5">
+               <div className="flex items-center gap-4 flex-1">
+                  <div className="w-full max-w-[140px] h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden shadow-inner">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.min(tokenPercent, 100)}%` }}
+                      className={`h-full rounded-full transition-all duration-1000 ${
+                        tokenPercent >= 90 ? 'bg-amber-500' :
+                        tokenPercent >= 60 ? 'bg-yellow-400' : 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]'
+                      }`}
+                    />
+                  </div>
+                  <span className="text-[11px] font-black text-slate-600 dark:text-slate-400 font-mono tracking-tighter">
+                    {quota ? `${(quota.tokensUsed / 1000).toFixed(0)}K/${(quota.tokensLimit / 1000).toFixed(0)}K` : '—'}
+                  </span>
+               </div>
+
+               <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-slate-100 dark:bg-white/5 rounded-lg border border-black/5 dark:border-white/5">
+                      <Image size={12} className="text-blue-500" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-black leading-none dark:text-white">{multimediaRemaining}</span>
+                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{lang === 'es' ? 'Créditos' : 'Credits'}</span>
+                    </div>
+                  </div>
+
+                  {mayPromo && (
+                    <div className="bg-emerald-500 hover:bg-emerald-600 transition-colors text-white text-[9px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-xl shadow-lg shadow-emerald-500/20 cursor-pointer flex items-center gap-2">
+                      <Zap size={10} /> -{Math.round(MAY_2026_PROMO.discount * 100)}% MAYO
+                    </div>
+                  )}
+               </div>
+            </div>
           </div>
         </motion.div>
       )}

@@ -1,32 +1,34 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { validateUserQuota, consumeServerQuota } from './quota';
+import { checkRateLimit, getIdentifier } from './rateLimit';
 
-// ─── Model definitions with cost awareness ────────────────────────────────────
+const MAX_MESSAGE_SIZE = 50 * 1024; // 50KB max
+const MAX_TOKENS = 8000;
 
 const MODELS = {
   elite: {
-    reasoning: 'deepseek/deepseek-r1',
-    creative: 'qwen/qwen-2.5-72b-instruct',
-    general: 'google/gemini-2.5-flash',
-    vision: 'google/gemini-2.5-flash',
+    reasoning: 'google/gemini-2.0-flash-001',
+    creative: 'google/gemini-2.0-flash-001',
+    general: 'google/gemini-2.0-flash-001',
+    vision: 'google/gemini-2.0-flash-001',
   },
   standard: {
-    reasoning: 'qwen/qwen-2.5-72b-instruct',
-    creative: 'google/gemini-2.5-flash',
-    general: 'google/gemini-2.5-flash',
-    vision: 'google/gemini-2.5-flash',
+    reasoning: 'google/gemini-2.0-flash-001',
+    creative: 'google/gemini-2.0-flash-001',
+    general: 'google/gemini-2.0-flash-001',
+    vision: 'google/gemini-2.0-flash-001',
   },
   eco: {
-    reasoning: 'google/gemini-2.5-flash-lite',
-    creative: 'google/gemini-2.5-flash-lite',
-    general: 'google/gemini-2.5-flash-lite',
-    vision: 'google/gemini-2.5-flash-lite',
+    reasoning: 'google/gemini-1.5-flash',
+    creative: 'google/gemini-1.5-flash',
+    general: 'google/gemini-1.5-flash',
+    vision: 'google/gemini-1.5-flash',
   },
   free: {
-    reasoning: 'google/gemini-2.5-flash-lite',
-    creative: 'google/gemini-2.5-flash-lite',
-    general: 'google/gemini-2.5-flash-lite',
-    vision: 'google/gemini-2.5-flash-lite',
+    reasoning: 'google/gemini-1.5-flash',
+    creative: 'google/gemini-1.5-flash',
+    general: 'google/gemini-1.5-flash',
+    vision: 'google/gemini-1.5-flash',
   },
 };
 
@@ -83,6 +85,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { model: userModel, messages, userId, instructions, temperature, maxTokens } = req.body;
     if (!messages?.length) return res.status(400).json({ error: 'No messages' });
 
+    const msgSize = JSON.stringify(messages).length;
+    if (msgSize > MAX_MESSAGE_SIZE) return res.status(400).json({ error: 'Message too large', maxSize: MAX_MESSAGE_SIZE });
+
+    const realMaxTokens = Math.min(maxTokens ?? 4000, MAX_TOKENS);
+
+    const validModel = typeof userModel === 'string' && userModel.length > 0 && userModel.length <= 100;
+    if (userModel && !validModel) return res.status(400).json({ error: 'Invalid model parameter' });
+    if (maxTokens && (typeof maxTokens !== 'number' || maxTokens < 1 || maxTokens > 32000)) return res.status(400).json({ error: 'Invalid maxTokens' });
+    if (temperature && (typeof temperature !== 'number' || temperature < 0 || temperature > 2)) return res.status(400).json({ error: 'Invalid temperature' });
+
+    // Rate limiting
+    const rateLimit = await checkRateLimit(getIdentifier(req));
+    if (!rateLimit.allowed) return res.status(429).json({ error: 'Rate limited', resetIn: rateLimit.resetIn });
+
     const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
     if (!OPENROUTER_API_KEY) return res.status(500).json({ error: 'API key missing' });
 
@@ -95,7 +111,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ecoMode = q.ecoMode;
         fairUseLimit = q.fairUseLimit;
       }
-    } catch { /* quota offline — allow access */ }
+    } catch (e) {
+      console.log('[Quota] Offline - allowing access with defaults');
+    }
 
     if (remainingTokens <= 0) ecoMode = true;
 
@@ -131,7 +149,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let response: Response, data: any;
     let usedModel = modelId;
 
-    response = await callOpenRouter(OPENROUTER_API_KEY, modelId, messages, systemContent, temperature ?? 0.7, maxTokens ?? 4000, process.env.APP_URL || 'http://localhost:3000');
+    response = await callOpenRouter(OPENROUTER_API_KEY, modelId, messages, systemContent, temperature ?? 0.7, realMaxTokens, process.env.APP_URL || 'http://localhost:3000');
 
     if (!response.ok) {
       const errText = await response.text();
@@ -140,7 +158,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Fallback to free model
       const fallbackModel = MODELS.free[type];
       if (fallbackModel !== modelId) {
-        response = await callOpenRouter(OPENROUTER_API_KEY, fallbackModel, messages, systemContent, temperature ?? 0.7, maxTokens ?? 4000, process.env.APP_URL || 'http://localhost:3000');
+        response = await callOpenRouter(OPENROUTER_API_KEY, fallbackModel, messages, systemContent, temperature ?? 0.7, realMaxTokens, process.env.APP_URL || 'http://localhost:3000');
         usedModel = fallbackModel;
       }
 
@@ -156,8 +174,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const estimatedTokens = data.usage?.total_tokens || 100;
     if (userId) {
       try {
-        consumeServerQuota(userId, estimatedTokens).catch(() => {});
-      } catch { /* ok */ }
+        consumeServerQuota(userId, estimatedTokens).then(() => {
+          console.log(`[Quota] Consumed ${estimatedTokens} for ${userId}`);
+        }).catch((e) => console.log('[Quota] Consumption async error:', e.message));
+      } catch (e: any) { 
+        console.log('[Quota] Sync consumption error:', e?.message);
+      }
     }
 
     return res.status(200).json({

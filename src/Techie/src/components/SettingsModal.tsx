@@ -37,13 +37,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, userProf
 
   const getSubLabel = (level?: SubscriptionLevel) => {
     switch (level) {
-      case 'explorador': return 'Plan Explorador ($50)';
-      case 'maestro': return 'Plan Maestro ($100)';
-      case 'leyenda': return 'Plan Leyenda ($200)';
-      case 'family_starter': return 'Plan Familiar Starter ($199)';
-      case 'family_mega': return 'Plan Familiar Mega ($299)';
+      case 'explorador': return 'Plan Explorador';
+      case 'maestro': return 'Plan Maestro';
+      case 'leyenda': return 'Plan Leyenda';
+      case 'family_starter': return 'Familiar Starter ($199)';
+      case 'family_mega': return 'Familiar Mega ($299)';
       case 'admin': return 'Plan Administrador';
-      default: return 'Periodo de Prueba';
+      default: return 'Usuario CatalizIA';
     }
   };
 
@@ -79,9 +79,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, userProf
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-2">Tu Llave de Acceso Personal (BYOK)</label>
                 <p className="text-[9px] text-gray-400 mb-3 ml-2 uppercase font-bold tracking-tight leading-relaxed">
-                  {(userProfile.subscriptionLevel === 'maestro' || userProfile.subscriptionLevel === 'leyenda')
-                    ? `Estás en el Plan ${userProfile.subscriptionLevel === 'leyenda' ? 'Leyenda' : 'Maestro'}. Nosotros ponemos los tokens, pero puedes agregar tu propia llave si prefieres.`
-                    : 'Si estás en el Plan Explorador o tu prueba terminó, necesitas tu propia llave:'
+                  {(userProfile.subscriptionLevel?.includes('family') || userProfile.role === 'admin')
+                    ? `Estás en un Plan Premium de CatalizIA. Nosotros cubrimos tu consumo de inteligencia, pero puedes agregar tu propia llave si prefieres.`
+                    : 'Tu cuenta actual requiere una llave personal o una suscripción activa para continuar:'
                   }
                   <br/>
                   <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-blue-500 underline font-black">Haz clic aquí para obtener tu código Gemini gratuito</a>.
@@ -109,7 +109,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, userProf
             {userProfile.subscriptionLevel === 'free' && (
               <div className="text-center p-4">
                 <p className="text-[10px] text-gray-400 font-bold uppercase leading-relaxed">
-                  ¿Quieres más potencia? Suscríbete al Plan Explorador ($50), Maestro ($100) o Leyenda ($200) en el Hub de CatalizIA.
+                  ¿Quieres más potencia? Suscríbete a un Plan Familiar en el Hub de CatalizIA.
                 </p>
               </div>
             )}

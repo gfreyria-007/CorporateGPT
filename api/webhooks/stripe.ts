@@ -119,6 +119,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const db = getFirestore();
+    const eventId = event.id;
+
+    const processedRef = db.collection('processedEvents').doc(eventId);
+    const existing = await processedRef.get();
+    if (existing.exists) {
+      console.log(`[StripeWebhook] Event ${eventId} already processed, skipping`);
+      return res.status(200).json({ received: true, skipped: true });
+    }
+
+    await processedRef.set({ processedAt: FieldValue.serverTimestamp(), type: event.type });
 
     switch (event.type) {
       case 'checkout.session.completed': {

@@ -33,12 +33,10 @@ const Header: React.FC<HeaderProps> = ({
     <header className="fixed top-2 sm:top-4 left-2 sm:left-4 right-2 sm:right-4 z-[60] bg-white/70 backdrop-blur-2xl px-4 sm:px-6 py-2 sm:py-4 rounded-[2rem] sm:rounded-[2.5rem] border border-white shadow-2xl premium-shadow-lg flex items-center justify-between transition-all duration-300">
       <div className="flex items-center space-x-2 sm:space-x-4">
         <div className="flex flex-col items-start cursor-pointer" onClick={onResetProfile} title="Reiniciar">
-            <img 
-                src="https://catalizia.com/wp-content/uploads/2024/05/cropped-CatalizIA-logo-horizontal-sin-dot-com-scaled-1-313x100.png" 
-                alt="Catalizia" 
-                className="h-8 sm:h-10 w-auto object-contain"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
+            <div className="flex items-center gap-2">
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">CatalizIA</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">Techie</span>
+            </div>
         </div>
         
         <div className="w-px h-8 bg-gray-100"></div>

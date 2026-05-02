@@ -24,8 +24,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       // STEERING: If Fair Use reached, downgrade Pro models to Flash
       if (fairUseLimit && payload.model?.includes('pro')) {
-        console.log(`[GEMINI] FAIR USE ACTIVE: Steering ${payload.model} -> gemini-2.5-flash`);
-        finalModel = 'gemini-2.5-flash';
+        console.log(`[GEMINI] FAIR USE ACTIVE: Steering ${payload.model} -> gemini-2.0-flash`);
+        finalModel = 'gemini-2.0-flash';
       }
     }
 
@@ -36,7 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const generationConfig = payload.config || payload.generationConfig || {};
         const { systemInstruction, ...restConfig } = generationConfig;
         
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${finalModel || "gemini-2.5-flash"}:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${finalModel || "gemini-2.0-flash"}:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -85,11 +85,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Tracking: Increment multimedia counter for images/slides
         if (userId && (hasImage || action === 'generateContent')) {
           try {
-            const db = (await (await import('firebase-admin')).apps[0].firestore());
+            const admin = await import('firebase-admin');
+            const db = admin.apps.length > 0 ? admin.apps[0].firestore() : admin.firestore();
             const quotaRef = db.collection('users').doc(userId).collection('quota').doc('daily');
-            await quotaRef.update({
-              multimediaUsed: (await import('firebase-admin')).firestore.FieldValue.increment(1)
-            });
+            await quotaRef.set({
+              multimediaUsed: admin.firestore.FieldValue.increment(1)
+            }, { merge: true });
           } catch (e) { console.error("[GEMINI] Counter increment failed:", e); }
         }
 
@@ -110,7 +111,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     } else if (action === 'chat') {
       try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || "gemini-2.5-flash"}:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || "gemini-2.0-flash"}:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

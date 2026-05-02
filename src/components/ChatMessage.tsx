@@ -44,24 +44,32 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, lang }) => {
         )}
       </motion.div>
       
-      <div className={`flex-1 p-8 rounded-[2.5rem] rounded-tl-none border transition-all relative overflow-hidden group-hover:shadow-2xl group-hover:shadow-blue-500/5 ${
+      <div className={`flex-1 p-10 rounded-[3rem] rounded-tl-none border transition-all relative overflow-hidden ${
         isUser 
-          ? 'bg-white dark:bg-corporate-900 border-corporate-200 dark:border-white/10 text-corporate-900 dark:text-white shadow-sm' 
-          : 'bg-white dark:bg-corporate-900 border-blue-500/20 dark:border-blue-500/30 text-corporate-900 dark:text-white shadow-xl shadow-blue-500/5'
+          ? 'bg-white/80 dark:bg-white/[0.03] backdrop-blur-3xl border-slate-200 dark:border-white/10 text-slate-900 dark:text-white shadow-sm' 
+          : 'bg-white/90 dark:bg-corporate-900/40 backdrop-blur-3xl border-blue-500/30 dark:border-blue-500/20 text-slate-900 dark:text-white shadow-2xl shadow-blue-500/10'
       }`}>
         {!isUser && (
-          <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none">
-            <Sparkles size={120} />
+          <div className="absolute top-0 right-0 p-6 opacity-[0.05] pointer-events-none group-hover:opacity-10 transition-opacity">
+            <Sparkles size={160} />
           </div>
         )}
-        <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-4 flex items-center gap-2 ${isUser ? 'text-blue-600' : 'text-blue-500'}`}>
-          {isUser ? t.user : t.assistant} 
-          <span className="w-1 h-1 bg-slate-300 rounded-full" />
-          <span className="opacity-50">{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-        </p>
+        <div className="flex items-center justify-between mb-6">
+           <p className={`text-[10px] font-black uppercase tracking-[0.25em] flex items-center gap-2 ${isUser ? 'text-blue-600' : 'text-indigo-500'}`}>
+             {isUser ? t.user : t.assistant} 
+             <span className="w-1.5 h-1.5 bg-slate-200 dark:bg-white/10 rounded-full" />
+             <span className="opacity-40">{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+           </p>
+           {!isUser && (
+              <div className="flex items-center gap-1.5">
+                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                 <span className="text-[8px] font-black text-emerald-500/60 uppercase tracking-widest">Verified Output</span>
+              </div>
+           )}
+        </div>
         <div 
-          className={`leading-relaxed prose max-w-none ${isUser ? 'prose-slate dark:prose-invert font-medium' : 'prose-blue dark:prose-invert font-medium'}`}
-          style={{ fontSize: 'inherit' }}
+          className={`leading-relaxed prose max-w-none ${isUser ? 'prose-slate dark:prose-invert font-semibold' : 'prose-blue dark:prose-invert font-semibold'}`}
+          style={{ fontSize: '15px' }}
         >
           <Markdown>{message.content}</Markdown>
         </div>
