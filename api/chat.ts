@@ -10,14 +10,14 @@ const MAX_TOKENS = 8000;
 // Chain: Try cheapest first, escalate if fail
 
 const MODEL_CHAIN = [
-  // 1. FASTEST & CHEAPEST - Try first
-  { model: 'google/gemini-1.5-flash-8b', provider: 'openrouter', speed: 1, cost: 1 },
-  // 2. BALANCED - If above fails  
-  { model: 'google/gemini-2.0-flash', provider: 'openrouter', speed: 2, cost: 2 },
-  // 3. GEMINI DIRECT - If OpenRouter fails
-  { model: 'gemini-1.5-flash', provider: 'gemini-direct', speed: 1, cost: 1 },
-  // 4. LAST RESORT - Gemini 2.0 direct
-  { model: 'gemini-2.0-flash', provider: 'gemini-direct', speed: 2, cost: 2 },
+  // 1. CHEAP & RELIABLE - Qwen (best price/quality)
+  { model: 'qwen/qwen2.5-7b-instruct', provider: 'openrouter', speed: 1 },
+  // 2. GOOGLE FLASH LITE - Cheap + reliable
+  { model: 'google/gemini-2.0-flash-lite', provider: 'openrouter', speed: 2 },
+  // 3. GEMINI DIRECT - Fallback
+  { model: 'gemini-1.5-flash', provider: 'gemini-direct', speed: 2 },
+  // 4. LAST RESORT - Gemini 2.0
+  { model: 'gemini-2.0-flash', provider: 'gemini-direct', speed: 3 },
 ];
 
 const TIER_LABELS = {
