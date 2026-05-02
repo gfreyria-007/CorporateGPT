@@ -5,27 +5,27 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 const MODELS = {
   elite: {
     reasoning: 'deepseek/deepseek-r1',
-    creative: 'anthropic/claude-3.5-sonnet',
+    creative: 'qwen/qwen3.6-plus',
     general: 'deepseek/deepseek-chat',
     vision: 'google/gemini-2.0-flash-001',
   },
   standard: {
     reasoning: 'qwen/qwen-2.5-72b-instruct',
-    creative: 'qwen/qwen-2.5-72b-instruct',
+    creative: 'qwen/qwen3.6-35b-a3b',
     general: 'qwen/qwen-2.5-72b-instruct',
-    vision: 'google/gemini-2.0-flash-001',
+    vision: 'google/gemini-2.0-flash-lite-001',
   },
   eco: {
-    reasoning: 'deepseek/deepseek-chat',
-    creative: 'deepseek/deepseek-chat',
-    general: 'deepseek/deepseek-chat',
-    vision: 'mistralai/mistral-nemo',
-  },
-  free: {
     reasoning: 'mistralai/mistral-nemo',
     creative: 'mistralai/mistral-nemo',
     general: 'mistralai/mistral-nemo',
-    vision: 'mistralai/mistral-nemo',
+    vision: 'google/gemini-2.0-flash-lite-001',
+  },
+  free: {
+    reasoning: 'meta-llama/llama-3.3-70b-instruct:free',
+    creative: 'meta-llama/llama-3.3-70b-instruct:free',
+    general: 'meta-llama/llama-3.3-70b-instruct:free',
+    vision: 'google/gemini-2.0-flash-lite-001',
   },
 };
 
