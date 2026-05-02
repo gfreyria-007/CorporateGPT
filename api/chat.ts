@@ -136,108 +136,91 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let usedModel = modelId;
     
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-    console.log('[Chat] GEMINI_API_KEY exists:', GEMINI_API_KEY ? 'YES' : 'NO');
-    
     if (!GEMINI_API_KEY) {
-      console.error('[Chat] GEMINI_API_KEY NOT SET!');
-      return res.status(503).json({ error: 'API key not configured - contact admin' });
+      console.error('[Chat] API key missing');
+      return res.status(503).json({ error: 'Service temporarily unavailable' });
     }
 
     // If all Gemini fails, use OpenRouter as backup
     const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
-    console.log('[Chat] OPENROUTER_API_KEY exists:', OPENROUTER_KEY ? 'YES' : 'NO');
     
-    const modelsToTry = [
-      'gemini-2.0-flash',
-      'gemini-1.5-flash',
-      'gemini-1.5-flash-8b'
-    ];
-    const uniqueModelsToTry = [...new Set(modelsToTry)];
-
-    const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
-
-    for (const tryModel of uniqueModelsToTry) {
+    // PRIMARY: Use OpenRouter (more reliable, many models)
+    if (OPENROUTER_KEY) {
       try {
-        const contents = messages.map((m: any) => ({
-          role: m.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: m.content || '' }]
+        const orMessages = messages.map((m: any) => ({
+          role: m.role === 'assistant' ? 'assistant' : 'user',
+          content: m.content
         }));
-
-        const payload = {
-          contents,
-          system_instruction: { parts: [{ text: systemContent }] },
-          generationConfig: { temperature: temperature ?? 0.7, maxOutputTokens: realMaxTokens }
-        };
-
-        const response = await fetch(
-          `${GEMINI_BASE}/${tryModel}:generateContent?key=${GEMINI_API_KEY}`,
-          { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        
+        const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENROUTER_KEY}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://corporategpt.catalizia.com',
+            'X-Title': 'CorporateGPT'
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.0-flash',
+            messages: orMessages,
+            temperature: temperature ?? 0.7,
+            max_tokens: realMaxTokens
+          })
+        });
+        
+        if (orRes.ok) {
+          const orData = await orRes.json();
+          resultText = orData.choices?.[0]?.message?.content || '';
           if (resultText) {
-            usedModel = tryModel;
+            usedModel = 'openrouter/gemini-2.0-flash';
             success = true;
-            break;
           }
-        } else {
-          const errText = await response.text();
-          console.log(`[Chat] Model ${tryModel} failed: ${response.status} - ${errText.substring(0, 100)}`);
-          lastError = `HTTP ${response.status}: ${errText.substring(0, 100)}`;
         }
-      } catch (e: any) {
-        lastError = e?.message || 'Model failed';
-        console.log(`[Chat] Model ${tryModel} exception:`, lastError);
-        continue;
+      } catch (e) {
+        console.log('[Chat] OpenRouter failed, trying Gemini');
+      }
+    }
+    
+    // FALLBACK: Try Gemini directly if OpenRouter failed
+    if (!success && GEMINI_API_KEY) {
+      const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-flash'];
+      
+      for (const tryModel of modelsToTry) {
+        try {
+          const contents = messages.map((m: any) => ({
+            role: m.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: m.content || '' }]
+          }));
+
+          const payload = {
+            contents,
+            system_instruction: { parts: [{ text: systemContent }] },
+            generationConfig: { temperature: temperature ?? 0.7, maxOutputTokens: realMaxTokens }
+          };
+
+          const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${tryModel}:generateContent?key=${GEMINI_API_KEY}`,
+            { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            if (resultText) {
+              usedModel = tryModel;
+              success = true;
+              break;
+            }
+          }
+        } catch (e) {
+          continue;
+        }
       }
     }
 
     if (!success) {
-      // Try OpenRouter as emergency backup
-      if (OPENROUTER_KEY) {
-        try {
-          console.log('[Chat] Trying OpenRouter emergency backup...');
-          const orMessages = messages.map((m: any) => ({
-            role: m.role === 'assistant' ? 'assistant' : 'user',
-            content: m.content
-          }));
-          
-          const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${OPENROUTER_KEY}`,
-              'Content-Type': 'application/json',
-              'HTTP-Referer': 'https://corporategpt.catalizia.com',
-              'X-Title': 'CorporateGPT'
-            },
-            body: JSON.stringify({
-              model: 'google/gemini-2.0-flash',
-              messages: orMessages,
-              temperature: temperature ?? 0.7,
-              max_tokens: realMaxTokens
-            })
-          });
-          
-          if (orRes.ok) {
-            const orData = await orRes.json();
-            resultText = orData.choices?.[0]?.message?.content || '';
-            if (resultText) {
-              usedModel = 'openrouter/gemini-2.0-flash';
-              success = true;
-              console.log('[Chat] OpenRouter backup worked!');
-            }
-          }
-        } catch (orErr) {
-          console.log('[Chat] OpenRouter backup failed:', orErr);
-        }
-      }
-      
-      if (!success) {
-        console.error('[Chat] TOTAL FAILURE:', lastError);
-        return res.status(503).json({ error: 'All AI models currently unavailable. Please try again later.' });
-      }
+      console.error('[Chat] All engines failed');
+      return res.status(503).json({ error: 'Service temporarily unavailable' });
     }
 
     // Consume quota
