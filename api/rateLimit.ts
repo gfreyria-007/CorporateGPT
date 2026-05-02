@@ -80,4 +80,3 @@ export function cleanupExpiredEntries(): void {
   }
 }
 
-setInterval(cleanupExpiredEntries, 5 * 60 * 1000); // Cleanup every 5 minutes

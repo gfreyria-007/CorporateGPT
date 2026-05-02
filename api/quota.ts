@@ -6,7 +6,7 @@
  */
 
 import { VercelRequest } from '@vercel/node';
-import * as admin from 'firebase-admin';
+import admin from 'firebase-admin';
 
 // Removed top-level initialization to prevent Vercel boot crashes
 
