@@ -185,8 +185,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
     if (!OPENROUTER_API_KEY) {
+      console.error('[DIAGNOSTIC] OPENROUTER_API_KEY is MISSING');
       return res.status(500).json({ error: 'OPENROUTER_API_KEY is not set' });
     }
+    console.log(`[DIAGNOSTIC] OpenRouter Key Length: ${OPENROUTER_API_KEY.length}`);
 
     // ─── Server-Side Quota Validation ─────────────────────────────────────────
     if (extractedUserId) {
@@ -310,6 +312,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
       
       return res.status(200).json({ ...data, _tier: tier, _model: modelId });
+    } else {
+      const errorText = await primaryRes.text();
+      console.error(`[DIAGNOSTIC] OpenRouter Error (${primaryRes.status}):`, errorText);
     }
 
     // ─── TIER 2 FALLBACK: USA Premium if Tier 1 fails ────────────────────

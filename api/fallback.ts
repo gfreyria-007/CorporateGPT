@@ -41,6 +41,7 @@ logger.security('Rate limit exceeded on fallback', { rateLimitId }, fallbackUser
     logger.system('CRITICAL: GEMINI_API_KEY missing - fallback offline');
     return res.status(503).json({ error: 'Fallback engine offline — API key missing' });
   }
+  console.log(`[DIAGNOSTIC] Gemini Key Length: ${apiKey.length}`);
 
   // Extract userId for logging (declared outside try for catch block access)
   let validatedUserId: string | null = null;
