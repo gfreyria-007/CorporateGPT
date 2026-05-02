@@ -32,6 +32,9 @@ export interface RouterResult {
   content: string;
   usedFallback: boolean;
   fallbackReason?: string;
+  tier?: string;
+  tierLabel?: string;
+  notification?: string | null;
 }
 
 /**
@@ -48,10 +51,15 @@ function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number): Pr
 /**
  * Parse the chat response from OpenRouter format.
  */
-async function parsePrimaryResponse(res: Response): Promise<string> {
+async function parsePrimaryResponse(res: Response): Promise<{ content: string; tier?: string; tierLabel?: string; notification?: string | null }> {
   const data = await res.json();
   if (data.choices?.[0]?.message?.content) {
-    return data.choices[0].message.content;
+    return {
+      content: data.choices[0].message.content,
+      tier: data._tier,
+      tierLabel: data._tierLabel,
+      notification: data._notification,
+    };
   }
   throw new Error(data.error || 'Empty response from primary engine');
 }
@@ -87,8 +95,8 @@ export async function failsafeChat(payload: RouterPayload): Promise<RouterResult
     );
 
     if (primaryRes.ok) {
-      const content = await parsePrimaryResponse(primaryRes);
-      return { content, usedFallback: false };
+      const result = await parsePrimaryResponse(primaryRes);
+      return { ...result, usedFallback: false };
     }
 
     // 4xx (safety violations) are NOT retried — surface them immediately

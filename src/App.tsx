@@ -299,6 +299,16 @@ export default function App() {
 
         // Track engine health for Super Admin diagnostics
         setEngineStatus(result.usedFallback ? 'fallback' : 'primary', result.fallbackReason);
+
+        // Show tier notification as a system message
+        if (result.notification) {
+          setMessages(prev => [...prev, {
+            id: `tier-${Date.now()}`,
+            role: 'system' as const,
+            content: `🛡️ ${result.notification}`,
+            timestamp: Date.now(),
+          }]);
+        }
       } catch (routerErr: any) {
         // 403 safety violations bubble up cleanly
         if (routerErr.status === 403) {
