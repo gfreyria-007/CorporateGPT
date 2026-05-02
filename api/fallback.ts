@@ -15,6 +15,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
     const apiKey = process.env.GEMINI_API_KEY;
+    console.log('[Fallback] API Key exists:', !!apiKey);
+    
     if (!apiKey) {
       return res.status(503).json({ error: 'Fallback engine offline — API key missing' });
     }

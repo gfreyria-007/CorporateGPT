@@ -161,10 +161,10 @@ async function runFallback(payload: RouterPayload, reason: string): Promise<Rout
     const cleanError = fallbackErr.message || 'Error desconocido';
     console.error('[GatewayOfImmortality] TOTAL FAILURE — both engines unreachable:', cleanError);
     return {
-      content: `⚠️ Modelo no disponible actualmente. Por favor selecciona otro modelo del menú o intenta de nuevo en unos segundos.`,
+      content: `⚠️ El servicio de IA está temporalmente недоponible. Por favor espera unos segundos e intenta de nuevo, o contacta a soporte si el problema persiste.`,
       usedFallback: true,
       fallbackReason: `TOTAL FAILURE: ${cleanError}`,
-      needsModelSwitch: true,
+      needsModelSwitch: false, // Don't ask user to switch - it's a server issue
     };
   }
 }

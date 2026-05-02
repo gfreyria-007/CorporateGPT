@@ -130,8 +130,9 @@ export default async function chat(req: VercelRequest, res: VercelResponse) {
   // All chains failed
   if (!resultText) {
     console.log('[Chain] TOTAL FAILURE:', errorLog.join(', '));
+    console.log('[Debug] Keys - Gemini:', !!GEMINI_KEY, 'OpenRouter:', !!OPENROUTER_KEY);
     return res.status(503).json({ 
-      error: 'All models unavailable. Please try again.',
+      error: 'All models unavailable. Please try again later.',
       details: errorLog,
       debug: {
         hasGeminiKey: !!GEMINI_KEY,
