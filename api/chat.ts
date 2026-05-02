@@ -344,11 +344,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Both tiers failed
-    const errData = await primaryRes.json();
-    throw new Error(errData.error?.message || `Chat completion failed (HTTP ${primaryRes.status})`);
+    // Both tiers failed
+    let errorMessage = `Chat completion failed (HTTP ${primaryRes.status})`;
+    try {
+      const errText = await primaryRes.text();
+      try {
+        const errData = JSON.parse(errText);
+        errorMessage = errData.error?.message || errorMessage;
+      } catch {
+        errorMessage = errText.substring(0, 200) || errorMessage;
+      }
+    } catch (e2) {
+      // Ignore
+    }
+    throw new Error(errorMessage);
 
   } catch (error: any) {
-    console.error('[EliteRouter] Fatal error:', error.message);
-    return res.status(500).json({ error: error.message });
+    console.error('[EliteRouter] Fatal error:', error);
+    if (!res.headersSent) {
+      return res.status(500).json({ 
+        error: error.message || 'Internal Server Error',
+        _diagnostic: {
+          code: error.code || 'UNKNOWN',
+          trigger: 'Fatal-Catch-Block'
+        }
+      });
+    }
   }
 }
