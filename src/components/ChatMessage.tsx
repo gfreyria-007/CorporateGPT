@@ -11,9 +11,9 @@ interface ChatMessageProps {
   lang: 'en' | 'es';
 }
 
-export const ChatMessage: React.FC<ChatMessageProps> = ({ message, lang }) => {
+export const ChatMessage: React.FC<ChatMessageProps> = ({ message, lang = 'es' }) => {
   const isUser = message.role === 'user';
-  const t = translations[lang];
+  const t = translations[lang || 'es'];
 
   return (
     <motion.div

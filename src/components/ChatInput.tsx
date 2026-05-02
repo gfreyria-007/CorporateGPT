@@ -26,7 +26,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [attachments, setAttachments] = React.useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textInputRef = useRef<HTMLInputElement>(null);
-  const t = translations[lang];
+  const t = translations[lang || 'es'];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);

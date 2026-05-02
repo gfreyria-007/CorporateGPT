@@ -352,7 +352,7 @@ export default function App() {
     }
   };
 
-  const t = translations[lang];
+  const t = translations[lang || 'es'];
 
   const currentModelData = models.find(m => m.id === selectedModel);
 

@@ -29,8 +29,8 @@ interface SalesLandingProps {
   onContact?: () => void;
 }
 
-export const SalesLanding = ({ lang, onContact }: SalesLandingProps) => {
-  const t = translations[lang];
+export const SalesLanding = ({ lang = 'es', onContact }: SalesLandingProps) => {
+  const t = translations[lang || 'es'];
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant', content: string }[]>([
     { role: 'assistant', content: lang === 'es' ? 'Hola. Soy su Asesor de CorporateGPT. ¿Cómo puedo ayudarle a optimizar la inteligencia de su empresa hoy?' : 'Hello. I am your CorporateGPT Advisor. How can I help you optimize your company intelligence today?' }
   ]);

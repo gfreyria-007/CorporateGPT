@@ -24,7 +24,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const t = translations[lang];
+  const t = translations[lang || 'es'];
 
   const currentModel = models.find(m => m.id === selectedModel) || {
     id: 'openrouter/auto',
