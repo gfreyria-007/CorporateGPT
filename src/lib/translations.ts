@@ -1,6 +1,6 @@
 export type Lang = 'en' | 'es';
 
-export const translations = {
+const translationsData = {
   en: {
     appName: 'CorporateGPT',
     slogan: 'Secure Intelligence Pipeline',
@@ -234,3 +234,14 @@ export const translations = {
     ctaSubtitle: 'Únete a 500+ equipos ya protegidos.',
   }
 };
+
+export const translations = new Proxy({} as Record<Lang, any>, {
+  get(target, key) {
+    const lang = key as Lang;
+    if (lang === 'en' || lang === 'es') {
+      return translationsData[lang];
+    }
+    console.warn('[translations] Invalid lang:', key, '- defaulting to es');
+    return translationsData.es;
+  }
+});

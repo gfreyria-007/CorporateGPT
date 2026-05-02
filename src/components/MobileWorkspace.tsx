@@ -32,7 +32,7 @@ import { EcoModeBanner } from './EcoModeBanner';
 
 export function MobileWorkspace({ 
   theme, 
-  lang, 
+  lang = 'es', 
   user, 
   profile,
   onOpenPanel,
