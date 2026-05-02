@@ -33,7 +33,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const geminiPayload = {
       contents,
-      systemInstruction: { parts: [{ text: systemText }] },
+      system_instruction: { parts: [{ text: systemText }] },
       generationConfig: { temperature: temperature ?? 0.7, maxOutputTokens: 2048 },
     };
 

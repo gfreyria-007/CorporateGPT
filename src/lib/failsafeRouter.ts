@@ -35,6 +35,7 @@ export interface RouterResult {
   tier?: string;
   tierLabel?: string;
   notification?: string | null;
+  needsModelSwitch?: boolean;
 }
 
 /**
@@ -155,13 +156,13 @@ async function runFallback(payload: RouterPayload, reason: string): Promise<Rout
     return { content, usedFallback: true, fallbackReason: reason };
 
   } catch (fallbackErr: any) {
-    // Both engines failed — surface a clean user-facing message
     const cleanError = fallbackErr.message || 'Error desconocido';
     console.error('[GatewayOfImmortality] TOTAL FAILURE — both engines unreachable:', cleanError);
     return {
-      content: `El sistema está experimentando alta demanda (Error: ${cleanError.substring(0, 50)}). Por favor intenta de nuevo en unos segundos.`,
+      content: `⚠️ Modelo no disponible actualmente. Por favor selecciona otro modelo del menú o intenta de nuevo en unos segundos.`,
       usedFallback: true,
       fallbackReason: `TOTAL FAILURE: ${cleanError}`,
+      needsModelSwitch: true,
     };
   }
 }
