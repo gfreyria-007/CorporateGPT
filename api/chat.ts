@@ -7,20 +7,19 @@ const MAX_TOKENS = 8000;
 
 // ─── EFFICIENT CHAINS (Free → Cheap → Reliable) ───────────────────────────────────────
 // May 2026 - Priority: FREE > Cheap > Value
+// Note: Use :free suffix for FREE models
 const PROTECTED_CHAIN = [
-  { model: 'qwen/qwen3.6-plus', provider: 'openrouter', speed: 1, free: true },
-  { model: 'minimax/minimax-m2.7', provider: 'openrouter', speed: 2 },
-  { model: 'deepseek/deepseek-v3-2', provider: 'openrouter', speed: 3 },
-  { model: 'google/gemini-2.0-flash-lite', provider: 'openrouter', speed: 4 },
-  { model: 'gemini-2.0-flash', provider: 'gemini-direct', speed: 5 },
+  { model: 'qwen/qwen3.6-plus:free', provider: 'openrouter', speed: 1 },
+  { model: 'deepseek/deepseek-v3-2', provider: 'openrouter', speed: 2 },
+  { model: 'google/gemini-2.0-flash-lite', provider: 'openrouter', speed: 3 },
+  { model: 'gemini-2.0-flash', provider: 'gemini-direct', speed: 4 },
 ];
 
 const DEFAULT_CHAIN = [
-  { model: 'qwen/qwen3.6-plus', provider: 'openrouter', speed: 1, free: true },
+  { model: 'qwen/qwen3.6-plus:free', provider: 'openrouter', speed: 1 },
   { model: 'stepfun/step-3.5-flash', provider: 'openrouter', speed: 2 },
   { model: 'deepseek/deepseek-v3-2', provider: 'openrouter', speed: 3 },
-  { model: 'xiaomi/mimo-v2-pro', provider: 'openrouter', speed: 4 },
-  { model: 'minimax/minimax-m2.7', provider: 'openrouter', speed: 5 },
+  { model: 'minimax/minimax-m2.7', provider: 'openrouter', speed: 4 },
 ];
 
 const TIER_LABELS = {
