@@ -120,37 +120,33 @@ async function startServer() {
             const userDoc = await userRef.get();
             const userData = userDoc.data();
 
-            // 1. Update User Status
-            await userRef.update({
+            // 3. Provisioning Logic per Plan
+            const updateData: any = {
               subscriptionStatus: 'active',
               plan: plan,
               role: plan === 'Professional' ? 'admin' : 'user',
               stripeCustomerId: session.customer,
               stripeSubscriptionId: session.subscription,
               updatedAt: admin.firestore.FieldValue.serverTimestamp()
-            });
+            };
 
-            // 3. Token Bonus for Family Mega
-            if (plan === 'Family Mega') {
-              console.log(`[BONUS] Provisioning $100 MXN token bonus for user ${userId}`);
-              await userRef.update({
-                credits: admin.firestore.FieldValue.increment(100), // Assuming 'credits' field for extra tokens
-                permissions: {
-                  corporate: true,
-                  junior: true
-                }
-              });
+            if (plan === 'Top-Up') {
+              // Top-Up: Grant 25,000 purchased credits ($25 MXN worth of tokens)
+              console.log(`[TOP-UP] Provisioning 25,000 credits for user ${userId}`);
+              const quotaRef = userRef.collection('quota').doc('daily');
+              await quotaRef.set({
+                purchased_credits: admin.firestore.FieldValue.increment(25000),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+              }, { merge: true });
+            } else if (plan === 'Family Mega') {
+              console.log(`[BONUS] Provisioning Family Mega benefits for user ${userId}`);
+              updateData.permissions = { corporate: true, junior: true };
+              updateData.multimediaLimit = 50; // High limit for mega plan
+            } else if (plan?.startsWith('Family')) {
+              updateData.permissions = { corporate: true, junior: true };
             }
 
-            // 4. Set default permissions for Family plans
-            if (plan?.startsWith('Family')) {
-              await userRef.update({
-                permissions: {
-                  corporate: true,
-                  junior: true
-                }
-              });
-            }
+            await userRef.update(updateData);
 
             // 5. Send Confirmation Email (Simulation)
             console.log(`[EMAIL DISPATCH] Sending confirmation to ${session.customer_details?.email || userId}`);

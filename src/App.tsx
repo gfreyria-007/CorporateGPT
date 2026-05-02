@@ -130,9 +130,17 @@ export default function App() {
   );
 
   // V2 Quota Engine — daily tokens + multimedia credits + eco mode
+  const resolveTier = () => {
+    const plan = profile?.plan;
+    if (plan === 'Family Mega') return 'family_mega';
+    if (plan === 'Professional') return 'professional';
+    if (plan === 'Starter' || plan === 'Family Starter') return 'starter';
+    return (profile as any)?.companyTier ?? 'trial';
+  };
+
   const { quota, ecoModeActive, tokenPercent, multimediaRemaining, deductTokens } = useQuota(
     user?.uid,
-    (profile as any)?.companyTier ?? 'trial'
+    resolveTier()
   );
   
   const scrollRef = useRef<HTMLDivElement>(null);

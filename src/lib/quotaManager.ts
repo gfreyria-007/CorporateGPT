@@ -34,6 +34,7 @@ export const MAY_2026_PROMO = {
 export const DAILY_QUOTA_LIMITS = {
   starter:      { tokens: 20_000, multimedia: 5 },
   professional: { tokens: 20_000, multimedia: 5 },
+  family_mega:  { tokens: 95_000, multimedia: 50 }, // $75 more in tokens than Starter
   enterprise:   { tokens: 100_000, multimedia: 30 },
   trial:        { tokens: 5_000, multimedia: 2 },
 };
@@ -199,8 +200,8 @@ export async function consumeTokens(
  * Top-Up $50 MXN logic: adds 50,000 purchased credits that never expire.
  */
 export async function purchaseTopUp(uid: string, amountMXN: number = 50): Promise<void> {
-  // $50 MXN = 50,000 credits
-  const creditsToAdd = (amountMXN / 50) * 50_000;
+  // $50 MXN = 25,000 credits ($25 MXN worth of tokens)
+  const creditsToAdd = (amountMXN / 50) * 25_000;
   const ref = quotaRef(uid);
   
   try {

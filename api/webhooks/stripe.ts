@@ -130,11 +130,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const plan = session.metadata?.plan || 'Starter';
 
         if (userId) {
-          await updateUserSubscription(db, userId, {
+          const userRef = db.collection('users').doc(userId);
+          const updateData: any = {
             stripeCustomerId: customerId,
             stripeSubscriptionId: subscriptionId,
             plan: plan,
             subscriptionStatus: 'active',
+          };
+
+          if (plan === 'Top-Up') {
+            console.log(`[StripeWebhook] Provisioning 25,000 credits for user ${userId}`);
+            const quotaRef = userRef.collection('quota').doc('daily');
+            await quotaRef.set({
+              purchased_credits: admin.firestore.FieldValue.increment(25000),
+              updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+          } else if (plan === 'Family Mega') {
+            updateData.permissions = { corporate: true, junior: true };
+            updateData.multimediaLimit = 50;
+          } else if (plan?.startsWith('Family')) {
+            updateData.permissions = { corporate: true, junior: true };
+          }
+
+          await userRef.update({
+            ...updateData,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           });
         }
 

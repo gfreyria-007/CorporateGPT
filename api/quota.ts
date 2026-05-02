@@ -113,18 +113,57 @@ export async function consumeServerQuota(userId: string, tokensUsed: number): Pr
       .collection('quota').doc('daily');
 
     await db.runTransaction(async (transaction: any) => {
-      const quotaDoc = await transaction.get(quotaRef);
+      const userRef = db.collection('users').doc(userId);
+      const [userDoc, quotaDoc] = await Promise.all([
+        transaction.get(userRef),
+        transaction.get(quotaRef)
+      ]);
       
+      const userData = userDoc.data();
+      const plan = userData?.plan;
+      
+      let tokensLimit = 20000;
+      let multimediaLimit = 5;
+      
+      if (plan === 'Family Mega') {
+        tokensLimit = 95000;
+        multimediaLimit = 50;
+      } else if (plan === 'enterprise') {
+        tokensLimit = 100000;
+        multimediaLimit = 30;
+      } else if (plan === 'trial') {
+        tokensLimit = 5000;
+        multimediaLimit = 2;
+      }
+
       if (!quotaDoc.exists) {
         transaction.set(quotaRef, {
-          date: todayMX, tokensUsed, tokensLimit: 20000,
-          multimediaUsed: 0, multimediaLimit: 5,
-          ecoModeActive: false, purchased_credits: 0,
+          date: todayMX, 
+          tokensUsed, 
+          tokensLimit,
+          multimediaUsed: 0, 
+          multimediaLimit,
+          ecoModeActive: false, 
+          purchased_credits: 0,
         });
         return;
       }
 
       const quota = quotaDoc.data() as UserQuota;
+      
+      // If date is different, reset to today with correct limits
+      if (quota.date !== todayMX) {
+        transaction.update(quotaRef, {
+          date: todayMX,
+          tokensUsed: tokensUsed,
+          tokensLimit,
+          multimediaUsed: 0,
+          multimediaLimit,
+          ecoModeActive: false
+        });
+        return;
+      }
+
       let newTokensUsed = quota.tokensUsed + tokensUsed;
       let newPurchasedCredits = quota.purchased_credits || 0;
       let remainingToConsume = 0;
