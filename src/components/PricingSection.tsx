@@ -185,15 +185,16 @@ export const PricingSection = () => {
           <>
             <PricingCard 
               plan="Starter"
-              users="1 Usuario"
-              oldPrice="Suscripción Individual"
+              users="3 Usuarios"
+              oldPrice="Plan de Lanzamiento"
               newPrice="$199"
               isLoading={isRedirecting === 'Starter'}
               isLoggedIn={!!user}
               features={[
-                "Acceso a modelos de Élite (GPT-4, Claude 3)",
-                "Privacidad NDA Proof (Retención Cero)",
-                "OpenRouter de Costos Inteligente",
+                "Acceso a modelos de Élite (Gemini 2.0 Pro)",
+                "Smart Economics: Neural Routing Engine",
+                "Neural Studio: Presentaciones en Segundos",
+                "Privacidad Corporativa NDA Proof",
                 "Soporte Estándar"
               ]}
               onBuy={() => handleBuy('Starter')}
@@ -252,15 +253,15 @@ export const PricingSection = () => {
             <PricingCard 
               plan="Family Starter"
               users="3 Miembros"
-              oldPrice="Acceso Familiar"
+              oldPrice="Protección Educativa"
               newPrice="$199"
               isLoading={isRedirecting === 'Family Starter'}
               isLoggedIn={!!user}
               features={[
-                "Saldo compartido para 3 usuarios",
-                "Techie Tutor (Junior) Incluido",
-                "Filtros de Seguridad Infantil",
-                "Entorno de Aprendizaje Mentor",
+                "3 Perfiles con Techie Tutor (Junior)",
+                "Smart Economics: Máxima Eficiencia",
+                "Filtros de Seguridad Infantil Activos",
+                "Image Studio para tareas creativas",
                 "Privacidad Familiar Garantizada"
               ]}
               onBuy={() => handleBuy('Family Starter')}

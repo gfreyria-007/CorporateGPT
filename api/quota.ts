@@ -59,6 +59,7 @@ export async function validateUserQuota(userId: string): Promise<{
   reason?: string;
   remainingTokens: number;
   ecoMode: boolean;
+  fairUseLimit: boolean;
 }> {
   try {
     const todayMX = getMexicoDateString();
@@ -67,20 +68,20 @@ export async function validateUserQuota(userId: string): Promise<{
     const admin = await getAdmin();
     const db = admin?.apps?.length ? admin.firestore() : null;
     if (!db) {
-      return { allowed: true, remainingTokens: 5000, ecoMode: false };
+      return { allowed: true, remainingTokens: 5000, ecoMode: false, fairUseLimit: false };
     }
     
     const quotaDoc = await db.collection('users').doc(userId)
       .collection('quota').doc('daily').get();
 
     if (!quotaDoc.exists) {
-      return { allowed: true, remainingTokens: 5000, ecoMode: false };
+      return { allowed: true, remainingTokens: 5000, ecoMode: false, fairUseLimit: false };
     }
 
     const quota = quotaDoc.data() as UserQuota;
 
     if (quota.date !== todayMX) {
-      return { allowed: true, remainingTokens: 20000, ecoMode: false };
+      return { allowed: true, remainingTokens: 20000, ecoMode: false, fairUseLimit: false };
     }
 
     const availableTokens = Math.max(0, quota.tokensLimit - quota.tokensUsed);
@@ -88,12 +89,14 @@ export async function validateUserQuota(userId: string): Promise<{
     const totalAvailable = availableTokens + availablePurchased;
 
     if (totalAvailable <= 0) {
-      return { allowed: false, reason: 'QUOTA_EXHAUSTED', remainingTokens: 0, ecoMode: true };
+      return { allowed: false, reason: 'QUOTA_EXHAUSTED', remainingTokens: 0, ecoMode: true, fairUseLimit: true };
     }
+    
+    const fairUseLimit = (quota as any).multimediaUsed >= (quota as any).multimediaLimit;
 
-    return { allowed: true, remainingTokens: totalAvailable, ecoMode: quota.ecoModeActive };
+    return { allowed: true, remainingTokens: totalAvailable, ecoMode: quota.ecoModeActive, fairUseLimit };
   } catch {
-    return { allowed: true, remainingTokens: 5000, ecoMode: false };
+    return { allowed: true, remainingTokens: 5000, ecoMode: false, fairUseLimit: false };
   }
 }
 

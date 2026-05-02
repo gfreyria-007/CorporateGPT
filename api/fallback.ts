@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-const FALLBACK_MODEL = 'gemini-2.0-flash-001';
+const FALLBACK_MODEL = 'gemini-2.5-flash';
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -18,7 +18,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Normalize model names for v1beta
     if (targetModel.includes('gemini-1.5-flash-latest')) targetModel = 'gemini-1.5-flash';
-    if (targetModel.includes('gemini-2.0-flash')) targetModel = 'gemini-2.0-flash-001';
+    if (targetModel.includes('gemini-2.0-flash')) targetModel = 'gemini-2.5-flash';
 
     const contents = (messages || [])
       .filter((m: any) => m.role !== 'system')

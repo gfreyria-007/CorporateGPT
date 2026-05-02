@@ -10,10 +10,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'GEMINI_API_KEY is missing in backend' });
     }
 
-    const { action, payload } = req.body;
+    const { action, payload, userId: providedUserId } = req.body;
+    
+    // Auth & Quota check
+    let fairUseLimit = false;
+    let finalModel = payload.model;
+    const { extractUserId, validateUserQuota, consumeServerQuota } = await import('./quota');
+    const userId = providedUserId || extractUserId(req);
 
-    if (!action || !payload) {
-      return res.status(400).json({ error: 'Missing action or payload' });
+    if (userId) {
+      const q = await validateUserQuota(userId);
+      fairUseLimit = q.fairUseLimit;
+      
+      // STEERING: If Fair Use reached, downgrade Pro models to Flash
+      if (fairUseLimit && payload.model?.includes('pro')) {
+        console.log(`[GEMINI] FAIR USE ACTIVE: Steering ${payload.model} -> gemini-2.5-flash`);
+        finalModel = 'gemini-2.5-flash';
+      }
     }
 
     console.log(`[GEMINI] Action: ${action}, Model: ${payload.model}`);
@@ -23,7 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const generationConfig = payload.config || payload.generationConfig || {};
         const { systemInstruction, ...restConfig } = generationConfig;
         
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || "gemini-2.0-flash-exp"}:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${finalModel || "gemini-2.5-flash"}:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -69,7 +82,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           console.warn("[GEMINI] JSON Parse warning (may be plain text):", e);
         }
 
-        return res.status(200).json({ text: rawText, ...parsedFields, candidates: result.candidates });
+        // Tracking: Increment multimedia counter for images/slides
+        if (userId && (hasImage || action === 'generateContent')) {
+          try {
+            const db = (await (await import('firebase-admin')).apps[0].firestore());
+            const quotaRef = db.collection('users').doc(userId).collection('quota').doc('daily');
+            await quotaRef.update({
+              multimediaUsed: (await import('firebase-admin')).firestore.FieldValue.increment(1)
+            });
+          } catch (e) { console.error("[GEMINI] Counter increment failed:", e); }
+        }
+
+        return res.status(200).json({ 
+          text: rawText, 
+          ...parsedFields, 
+          candidates: result.candidates,
+          _fairUseActive: fairUseLimit 
+        });
       } catch (genError: any) {
         console.error('--- GEMINI SDK ERROR ---', genError);
         return res.status(500).json({ 
@@ -81,7 +110,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     } else if (action === 'chat') {
       try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || "gemini-2.0-flash-exp"}:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || "gemini-2.5-flash"}:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

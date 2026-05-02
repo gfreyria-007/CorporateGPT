@@ -6,26 +6,26 @@ const MODELS = {
   elite: {
     reasoning: 'deepseek/deepseek-r1',
     creative: 'qwen/qwen-2.5-72b-instruct',
-    general: 'google/gemini-2.0-flash-001',
-    vision: 'google/gemini-2.0-flash-001',
+    general: 'google/gemini-2.5-flash',
+    vision: 'google/gemini-2.5-flash',
   },
   standard: {
     reasoning: 'qwen/qwen-2.5-72b-instruct',
-    creative: 'google/gemini-2.0-flash-001',
-    general: 'google/gemini-2.0-flash-001',
-    vision: 'google/gemini-2.0-flash-001',
+    creative: 'google/gemini-2.5-flash',
+    general: 'google/gemini-2.5-flash',
+    vision: 'google/gemini-2.5-flash',
   },
   eco: {
-    reasoning: 'google/gemini-flash-1.5-8b',
-    creative: 'google/gemini-flash-1.5-8b',
-    general: 'google/gemini-flash-1.5-8b',
-    vision: 'google/gemini-flash-1.5-8b',
+    reasoning: 'google/gemini-2.5-flash-lite',
+    creative: 'google/gemini-2.5-flash-lite',
+    general: 'google/gemini-2.5-flash-lite',
+    vision: 'google/gemini-2.5-flash-lite',
   },
   free: {
-    reasoning: 'google/gemini-flash-1.5-8b',
-    creative: 'google/gemini-flash-1.5-8b',
-    general: 'google/gemini-flash-1.5-8b',
-    vision: 'google/gemini-flash-1.5-8b',
+    reasoning: 'google/gemini-2.5-flash-lite',
+    creative: 'google/gemini-2.5-flash-lite',
+    general: 'google/gemini-2.5-flash-lite',
+    vision: 'google/gemini-2.5-flash-lite',
   },
 };
 
@@ -34,6 +34,7 @@ const TIER_LABELS = {
   standard: 'Standard',
   eco: 'Eco',
   free: 'Free',
+  fairuse: 'Basic (Fair Use)',
 };
 
 type Tier = 'elite' | 'standard' | 'eco' | 'free';
@@ -51,7 +52,8 @@ function classifyQuery(text: string): QueryClass {
 
 // ─── Resolve tier from quota data ─────────────────────────────────────────────
 
-function resolveTier(remaining: number, ecoMode: boolean, userModel?: string): { tier: Tier; label: string } {
+function resolveTier(remaining: number, ecoMode: boolean, fairUseLimit?: boolean): { tier: Tier | 'fairuse'; label: string } {
+  if (fairUseLimit) return { tier: 'fairuse', label: TIER_LABELS.fairuse };
   if (ecoMode && remaining <= 0) return { tier: 'free', label: TIER_LABELS.free };
   if (ecoMode || remaining < 2000) return { tier: 'eco', label: TIER_LABELS.eco };
   if (remaining < 8000) return { tier: 'standard', label: TIER_LABELS.standard };
@@ -84,13 +86,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!OPENROUTER_API_KEY) return res.status(500).json({ error: 'API key missing' });
 
     // Lazy load quota
-    let remainingTokens = 5000, ecoMode = false;
+    let remainingTokens = 5000, ecoMode = false, fairUseLimit = false;
     try {
       const { validateUserQuota } = await import('./quota');
       if (userId) {
         const q = await validateUserQuota(userId);
         remainingTokens = q.remainingTokens;
         ecoMode = q.ecoMode;
+        fairUseLimit = q.fairUseLimit;
       }
     } catch { /* quota offline — allow access */ }
 
@@ -101,12 +104,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const queryClass: QueryClass = classifyQuery(messages[messages.length - 1]?.content || '');
     const type = hasImage ? 'vision' : queryClass === 'reasoning' ? 'reasoning' : queryClass === 'creative' ? 'creative' : 'general';
 
-    const { tier, label } = resolveTier(remainingTokens, ecoMode, userModel);
+    const { tier, label } = resolveTier(remainingTokens, ecoMode, fairUseLimit);
 
     const modelId =
-      userModel && !['openrouter/auto', 'auto', ''].includes(userModel as string)
+      userModel && !['openrouter/auto', 'auto', ''].includes(userModel as string) && tier !== 'fairuse'
         ? userModel
-        : (MODELS[tier] as Record<string, string>)[type] || MODELS.free[type];
+        : (MODELS[tier === 'fairuse' ? 'eco' : tier] as Record<string, string>)[type] || MODELS.free[type];
 
     const systemContent = instructions
       ? `${instructions} You are Catalizia CorporateGPT. Respond in the same language as the user.`
@@ -114,8 +117,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Notify user on downgrade
     let notification: string | null = null;
-    if (tier === 'eco') notification = 'Modo Eco activado — usando modelos eficientes para ahorrar créditos.';
-    else if (tier === 'free') notification = 'Créditos agotados — modo gratuito activado sin interrupción del servicio.';
+    if (tier === 'fairuse') {
+      notification = 'Elite tokens have run out for the day as per fair use policy. You are now on the Basic Engine. Add $50 MXN credits or upgrade to stay Elite!';
+    } else if (tier === 'eco') {
+      notification = 'Modo Eco activado — usando modelos eficientes para ahorrar créditos.';
+    } else if (tier === 'free') {
+      notification = 'Créditos agotados — modo gratuito activado sin interrupción del servicio.';
+    }
 
     console.log(`[Router] tier=${tier} model=${modelId} remaining=${remainingTokens}`);
 
