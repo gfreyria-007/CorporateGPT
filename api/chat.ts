@@ -5,27 +5,27 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 const MODELS = {
   elite: {
     reasoning: 'deepseek/deepseek-r1',
-    creative: 'qwen/qwen3.6-plus',
-    general: 'deepseek/deepseek-chat',
+    creative: 'qwen/qwen-2.5-72b-instruct',
+    general: 'google/gemini-2.0-flash-001',
     vision: 'google/gemini-2.0-flash-001',
   },
   standard: {
     reasoning: 'qwen/qwen-2.5-72b-instruct',
-    creative: 'qwen/qwen3.6-35b-a3b',
-    general: 'qwen/qwen-2.5-72b-instruct',
-    vision: 'google/gemini-2.0-flash-lite-001',
+    creative: 'google/gemini-2.0-flash-001',
+    general: 'google/gemini-2.0-flash-001',
+    vision: 'google/gemini-2.0-flash-001',
   },
   eco: {
-    reasoning: 'mistralai/mistral-nemo',
-    creative: 'mistralai/mistral-nemo',
-    general: 'mistralai/mistral-nemo',
-    vision: 'google/gemini-2.0-flash-lite-001',
+    reasoning: 'google/gemini-flash-1.5-8b',
+    creative: 'google/gemini-flash-1.5-8b',
+    general: 'google/gemini-flash-1.5-8b',
+    vision: 'google/gemini-flash-1.5-8b',
   },
   free: {
-    reasoning: 'meta-llama/llama-3.3-70b-instruct:free',
-    creative: 'meta-llama/llama-3.3-70b-instruct:free',
-    general: 'meta-llama/llama-3.3-70b-instruct:free',
-    vision: 'google/gemini-2.0-flash-lite-001',
+    reasoning: 'google/gemini-flash-1.5-8b',
+    creative: 'google/gemini-flash-1.5-8b',
+    general: 'google/gemini-flash-1.5-8b',
+    vision: 'google/gemini-flash-1.5-8b',
   },
 };
 
