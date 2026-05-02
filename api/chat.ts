@@ -136,7 +136,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let usedModel = modelId;
     
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-    console.log('[Chat] GEMINI_API_KEY exists:', !!GEMINI_API_KEY);
+    console.log('[Chat] GEMINI_API_KEY exists:', GEMINI_API_KEY ? 'YES' : 'NO');
     
     if (!GEMINI_API_KEY) {
       console.error('[Chat] GEMINI_API_KEY NOT SET!');
@@ -145,7 +145,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // If all Gemini fails, use OpenRouter as backup
     const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
-    console.log('[Chat] OPENROUTER_API_KEY exists:', !!OPENROUTER_KEY);
+    console.log('[Chat] OPENROUTER_API_KEY exists:', OPENROUTER_KEY ? 'YES' : 'NO');
     
     const modelsToTry = [
       'gemini-2.0-flash',
