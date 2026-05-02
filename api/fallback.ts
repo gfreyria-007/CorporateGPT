@@ -7,50 +7,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
-    const rateLimitMod = await import('./rateLimit');
-    const loggerMod = await import('./logger');
-    const quotaMod = await import('./quota');
-
-    const { checkRateLimit, getIdentifier } = rateLimitMod;
-    const { logger, extractUserIdFromRequest } = loggerMod;
-    const { validateUserQuota, consumeServerQuota } = quotaMod;
-
-    const rateLimitId = getIdentifier(req);
-    const rateCheck = checkRateLimit(rateLimitId);
-
-    if (!rateCheck.allowed) {
-      const { userId: fallbackUserId } = extractUserIdFromRequest(req);
-      logger.security('Rate limit exceeded on fallback', { rateLimitId }, fallbackUserId);
-      return res.status(429).json({
-        error: 'RATE_LIMIT_EXCEEDED',
-        message: 'Demasiadas solicitudes. Por favor espera un momento.',
-        retryAfter: Math.ceil(rateCheck.resetIn / 1000)
-      });
-    }
-
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return res.status(503).json({ error: 'Fallback engine offline — API key missing' });
     }
 
-    let validatedUserId: string | null = null;
-    try {
-      const { userId } = extractUserIdFromRequest(req);
-      validatedUserId = userId;
-    } catch {
-      validatedUserId = req.body?.userId || null;
-    }
-
-    const { messages, instructions, temperature, model } = req.body;
-
-    if (validatedUserId) {
-      const quotaCheck = await validateUserQuota(validatedUserId);
-      if (!quotaCheck.allowed) {
-        return res.status(403).json({ error: 'QUOTA_EXHAUSTED', reason: quotaCheck.reason, ecoMode: quotaCheck.ecoMode });
-      }
-    }
-
-    logger.api('Fallback engine activated', { model: model || FALLBACK_MODEL }, validatedUserId);
+    const { messages, instructions, temperature, model, userId } = req.body;
+    const currentTime = new Date().toISOString();
+    const targetModel = model || FALLBACK_MODEL;
 
     const contents = (messages || [])
       .filter((m: any) => m.role !== 'system')
@@ -63,8 +27,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'No valid messages for fallback' });
     }
 
-    const currentTime = new Date().toISOString();
-    const targetModel = model || FALLBACK_MODEL;
     const systemText = instructions
       ? `${instructions}\n\nCurrent time: ${currentTime}. You are Catalizia CorporateGPT. Respond in the same language as the user.`
       : `You are Catalizia CorporateGPT, a premium corporate AI assistant. Current time: ${currentTime}. Always respond in the same language the user uses.`;
@@ -85,19 +47,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       try {
         const errText = await geminiRes.text();
         try { const errData = JSON.parse(errText); errorMessage = errData.error?.message || errorMessage; }
-        catch { errorMessage = errText.substring(0, 200) || errorMessage; }
+        catch { errorMessage = errText.substring(0, 200); }
       } catch { }
-      logger.error('Gemini API error in fallback', new Error(errorMessage), { model: targetModel });
+      console.error('[Fallback] Gemini error:', errorMessage);
       return res.status(502).json({ error: errorMessage });
     }
 
     const geminiData = await geminiRes.json();
     const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const estimatedTokens = Math.ceil(text.length / 4);
-
-    if (validatedUserId && estimatedTokens > 0) {
-      consumeServerQuota(validatedUserId, estimatedTokens).catch(() => { });
-    }
 
     return res.status(200).json({
       text,
