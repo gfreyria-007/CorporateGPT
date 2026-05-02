@@ -51,26 +51,26 @@ function resolveEliteModel(requestedModel: string, queryClass: QueryClass, ecoMo
   const MODELS = {
     reasoning: [
       'deepseek/deepseek-r1',
+      'deepseek/deepseek-chat',
       'qwen/qwen-2.5-72b-instruct',
-      'google/gemini-2.0-flash-exp',
-      'cognitivecomputations/dolphin3.5-mistral'
+      'mistralai/mistral-nemo'
     ],
     creative: [
       'deepseek/deepseek-chat',
-      'google/gemini-2.0-flash-exp',
-      'qwen/qwen-2.5-coder-32b',
-      'google/gemini-1.5-flash-8b'
+      'qwen/qwen-2.5-72b-instruct',
+      'mistralai/mistral-nemo',
+      'google/gemini-2.0-flash-001'
     ],
     vision: [
-      'google/gemini-2.0-flash-exp',
-      'google/gemini-1.5-flash-8b',
+      'google/gemini-2.0-flash-001',
+      'mistralai/mistral-nemo',
       'anthropic/claude-3.5-sonnet'
     ],
     general: [
       'deepseek/deepseek-chat',
       'qwen/qwen-2.5-72b-instruct',
-      'google/gemini-1.5-flash',
-      'meta-llama/llama-3.1-70b-instruct'
+      'google/gemini-2.0-flash-001',
+      'mistralai/mistral-nemo'
     ]
   };
 
