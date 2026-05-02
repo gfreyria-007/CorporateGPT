@@ -45,8 +45,7 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     operationType,
     path
   };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  console.warn('Firestore unavailable (non-fatal):', errInfo.error);
 }
 
 export const SUPER_ADMIN_EMAIL = 'gfreyria@gmail.com';
