@@ -8,6 +8,9 @@ import { UserProfile, Grade } from '../types';
 import { GRADES } from '../constants';
 import { logger } from '../logger';
 
+// Use unified trial system (3 days) - shared with Corporate GPT
+const TRIAL_DAYS = 3;
+
 interface AuthContextType {
   user: FirebaseUser | null;
   profile: UserProfile | null;
@@ -142,7 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode, mainUser?: Fire
           const updates: any = {};
           if (!data.trialExpiresAt) {
             const trialExpires = new Date(data.createdAt || Date.now());
-            trialExpires.setDate(trialExpires.getDate() + 7);
+            trialExpires.setDate(trialExpires.getDate() + TRIAL_DAYS);
             updates.trialExpiresAt = trialExpires.toISOString();
             data.trialExpiresAt = trialExpires.toISOString();
           }
@@ -188,7 +191,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode, mainUser?: Fire
         }
 
         const trialExpires = new Date();
-        trialExpires.setDate(trialExpires.getDate() + 7);
+        trialExpires.setDate(trialExpires.getDate() + TRIAL_DAYS);
 
         const newProfile: UserProfile = {
           uid: u.uid,
