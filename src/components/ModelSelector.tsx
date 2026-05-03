@@ -50,6 +50,10 @@ const FILTERED_MODELS = [
   'x-ai/grok-4.1-fast',
 ];
 
+const BLOCKED_MODELS = [
+  'meta-llama/llama-3.2-11b-vision-instruct', // Provider returns error
+];
+
 const isDataProtected = (id: string) => {
   const lowerId = id.toLowerCase();
   return FILTERED_MODELS.some(m => lowerId.includes(m.toLowerCase())) ||
@@ -95,10 +99,10 @@ const filteredModels = models
   };
 
   const displayModels = search === '' 
-    ? [{ id: 'openrouter/auto', name: t.autoRouter, description: t.optimizedSwitching, pricing: { prompt: '0', completion: '0' }, context_length: 128000 } as any, ...models.filter(m => m.id !== 'openrouter/auto')]
+    ? [{ id: 'openrouter/auto', name: t.autoRouter, description: t.optimizedSwitching, pricing: { prompt: '0', completion: '0' }, context_length: 128000 } as any, ...models.filter(m => m.id !== 'openrouter/auto' && !BLOCKED_MODELS.includes(m.id))]
         .filter(m => dataProtected ? isDataProtected(m.id) : true)
         .slice(0, 101)
-    : filteredModels;
+    : filteredModels.filter(m => !BLOCKED_MODELS.includes(m.id));
 
   return (
     <div className="relative w-full" id="model-selector-container">

@@ -54,8 +54,8 @@ export const ELITE_ECO_MODELS: EliteModel[] = [
 // ─── TIER 2: USA Premium Backup ───────────────────────────────────────────────
 export const USA_PREMIUM_MODELS: EliteModel[] = [
   {
-    id: 'anthropic/claude-3.5-sonnet',
-    displayName: 'Claude 3.5 Sonnet',
+    id: 'anthropic/claude-3.7-sonnet',
+    displayName: 'Claude 3.7 Sonnet',
     tier: 'usa-premium',
     bestFor: ['creative', 'legal', 'nuanced', 'long-form', 'compliance'],
     inputCostPer1M: 3.0,
