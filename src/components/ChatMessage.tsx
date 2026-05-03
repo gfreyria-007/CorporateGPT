@@ -74,11 +74,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, lang = 'es' }
                  </div>
                  <button 
                   onClick={handleCopy}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-all text-slate-400 hover:text-white group/copy flex items-center gap-2"
+                  className="p-3 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-xl transition-all text-slate-500 dark:text-white/40 hover:text-blue-600 dark:hover:text-white group/copy flex items-center gap-2 border border-transparent dark:border-white/5 shadow-sm"
                   title="Copy response"
                  >
                     {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
-                    <span className="text-[8px] font-black uppercase tracking-widest hidden group-hover/copy:inline">{copied ? 'Copied' : 'Copy'}</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest">{copied ? 'Copiado' : 'Copiar'}</span>
                  </button>
               </div>
            )}

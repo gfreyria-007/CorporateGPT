@@ -461,7 +461,10 @@ export const LandingPage = ({
             <button onClick={onStartSession} className="magnetic-btn px-16 py-8 rounded-[2rem] bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-[0.3em] text-sm transition-all shadow-[0_0_70px_rgba(37,99,235,0.5)] active:scale-95">
               🚀 {lang === 'es' ? 'Iniciar Sesión Segura' : 'Start Sesión Segura'}
             </button>
-            <button className="magnetic-btn px-16 py-8 rounded-[2rem] bg-white/5 border border-white/10 text-white font-black uppercase tracking-[0.3em] text-sm hover:bg-white/10 transition-all backdrop-blur-3xl">
+            <button 
+              onClick={onStartSession}
+              className="magnetic-btn px-16 py-8 rounded-[2rem] bg-white/5 border border-white/10 text-white font-black uppercase tracking-[0.3em] text-sm hover:bg-white/10 transition-all backdrop-blur-3xl"
+            >
               📞 {lang === 'es' ? 'Hablar con Humano' : 'Talk to Human'}
             </button>
           </div>

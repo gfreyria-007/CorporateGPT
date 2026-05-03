@@ -115,12 +115,12 @@ export const generateImage = async (
         finalPrompt += ` Style: ${STUDIO_STYLES[style].prompt}.`;
     }
 
-    const contents: any = { parts: [{ text: finalPrompt }] };
+    const contents: any = [{ parts: [{ text: finalPrompt }] }];
     
     if (sourceImage) {
         const mimeType = sourceImage.split(';')[0].split(':')[1];
         const base64Data = sourceImage.split(',')[1];
-        contents.parts.unshift({ inlineData: { data: base64Data, mimeType: mimeType } });
+        contents[0].parts.unshift({ inlineData: { data: base64Data, mimeType: mimeType } });
         finalPrompt = `Based on the provided sketch/image, generate a final professional version of: ${prompt}. ${strictConstraints}`;
     }
 
@@ -215,7 +215,7 @@ export const editImage = async (
     try {
         const response = await ai.models.generateContent({
             model: 'gemini-2.0-flash',
-            contents: { parts },
+            contents: [{ parts }],
             config: { 
                 systemInstruction: "You are an expert digital artist for kids using the NANOBANANA 2 ENGINE. You interpret source images and user sketches with high precision. Your goal is to turn manual annotations into polished, professional artwork while strictly following the prompt and the provided mask logic. Always ensure the output is safe and educational.",
                 safetySettings: SAFETY_SETTINGS
@@ -356,7 +356,7 @@ export const reviewHomework = async (imagePart: any, text: string, grade: Grade,
   const prompt = `Revisa esta tarea para nivel ${grade.name}. Usa INTERNET para verificar si la información es correcta. Lenguaje adecuado para ${age} años. JSON format only.`;
   return await ai.models.generateContent({
     model: 'gemini-2.0-flash',
-    contents: { parts: [imagePart, { text: prompt }] },
+    contents: [{ parts: [imagePart, { text: prompt }] }],
     config: { 
         tools: [{ googleSearch: {} }],
         responseMimeType: 'application/json' 
@@ -370,7 +370,7 @@ export const analyzeImage = async (imagePart: any, text: string, grade: Grade, u
     let systemInstruction = `Analiza la imagen educativamente para nivel ${grade.name}. Usa ACCESO A INTERNET para identificar hitos o datos reales.`;
     return await ai.models.generateContent({
         model: 'gemini-2.0-flash',
-        contents: { parts: [imagePart, { text: text || "Analiza" }] },
+        contents: [{ parts: [imagePart, { text: text || "Analiza" }] }],
         config: { 
             systemInstruction, 
             tools: [{ googleSearch: {} }], 

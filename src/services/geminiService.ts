@@ -630,12 +630,12 @@ CRITICAL REQUIREMENTS:
 
   const payload = {
     model: 'gemini-2.0-flash',
-    contents: { 
+    contents: [{ 
       parts: [
         { text: prompt },
         ...(userImage ? [{ inlineData: { mimeType: 'image/jpeg', data: userImage.includes('base64,') ? userImage.split('base64,')[1] : userImage } }] : [])
       ]
-    },
+    }],
     config: {
       temperature: 1,
       responseModalities: ['IMAGE'],

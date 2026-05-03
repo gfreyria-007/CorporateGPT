@@ -120,7 +120,7 @@ export const PricingSection = () => {
 
     } catch (error: any) {
       console.error('[Stripe] Error:', error.message);
-      alert('Error de conexión. Intenta de nuevo.');
+      alert(`Error de conexión: ${error.message}. Verifica la configuración de Stripe.`);
       setIsRedirecting(null);
     }
   };

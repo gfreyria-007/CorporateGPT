@@ -41,13 +41,10 @@ export const SupportFooter = () => {
             <h5 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.4em]">Soporte y Ventas</h5>
             <div className="p-8 bg-white dark:bg-corporate-900 rounded-[2.5rem] border border-corporate-200 dark:border-white/10 space-y-4">
                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Dudas comerciales o ventas personalizadas:</p>
-               <a 
-                href="mailto:contacto@catalizia.com" 
-                className="flex items-center gap-3 text-blue-600 font-display font-black text-lg tracking-tight hover:underline"
-               >
-                 <Mail size={18} />
-                 contacto@catalizia.com
-               </a>
+               <div className="flex items-center gap-3 text-blue-600 font-display font-black text-lg tracking-tight">
+                 <Shield size={18} />
+                 Soporte Premium 24/7
+               </div>
             </div>
           </div>
         </div>
