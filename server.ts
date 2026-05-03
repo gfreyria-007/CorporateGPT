@@ -499,7 +499,13 @@ async function startServer() {
           throw new Error(result.error?.message || 'Gemini generation failed');
         }
         
-        // Extract text and parse JSON if needed
+        // Handle Multimodal (Image) responses
+        const hasImage = result.candidates?.[0]?.content?.parts?.some((p: any) => p.inlineData);
+        if (hasImage) {
+          return res.status(200).json(result);
+        }
+
+        // Extract text and parse JSON if needed for text-only responses
         let rawText = '';
         if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
           rawText = result.candidates[0].content.parts[0].text;
@@ -513,7 +519,11 @@ async function startServer() {
           console.warn("[GEMINI PROXY] JSON Parse warning:", e);
         }
 
-        return res.status(200).json({ text: rawText, ...parsedFields });
+        return res.status(200).json({ 
+          text: rawText, 
+          ...parsedFields,
+          candidates: result.candidates // Ensure candidates are returned for client-side processing
+        });
 
       } else if (action === 'chat') {
          // Simplified chat for local proxy
