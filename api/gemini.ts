@@ -43,19 +43,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             contents: payload.contents,
             generationConfig: {
               ...restConfig,
-              responseMimeType: restConfig.responseMimeType || "application/json"
+              // Only default to application/json if we are NOT asking for images
+              responseMimeType: restConfig.responseMimeType || (restConfig.responseModalities?.includes('IMAGE') ? undefined : "application/json")
             },
-            systemInstruction: payload.systemInstruction || systemInstruction ? { role: 'user', parts: [{ text: payload.systemInstruction || systemInstruction }] } : undefined,
+            systemInstruction: payload.systemInstruction || systemInstruction ? { parts: [{ text: payload.systemInstruction || systemInstruction }] } : undefined,
             tools: payload.tools || [{ googleSearch: {} }]
           })
         });
 
-        if (!response.ok) {
-          const err = await response.json();
-          throw new Error(err.error?.message || 'Gemini API Error');
+        let result;
+        const responseText = await response.text();
+        try {
+          result = JSON.parse(responseText);
+        } catch (e) {
+          console.error("[GEMINI PROXY] Failed to parse response as JSON:", responseText.substring(0, 500));
+          throw new Error(`Gemini returned invalid response: ${responseText.substring(0, 100)}...`);
         }
 
-        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error?.message || `Gemini API Error (Status ${response.status})`);
+        }
         
         // Handle Image Generation responses (binary/inlineData)
         const hasImage = result.candidates?.[0]?.content?.parts?.some((p: any) => p.inlineData);

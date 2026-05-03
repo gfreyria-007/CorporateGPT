@@ -14,7 +14,8 @@ import {
   Rocket,
   CreditCard,
   Mail,
-  ArrowRight
+  ArrowRight,
+  Copy
 } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -227,7 +228,7 @@ export const SalesLanding = ({ lang = 'es', onContact, onBuyNow }: SalesLandingP
                     <div className={`max-w-[85%] p-5 rounded-2xl text-sm leading-relaxed font-bold relative ${
                       m.role === 'user' 
                         ? 'bg-blue-600 text-white rounded-tr-none shadow-lg shadow-blue-600/20' 
-                        : 'bg-slate-200 border border-slate-300 text-slate-900 rounded-tl-none shadow-sm'
+                        : 'bg-blue-900/90 border border-blue-800/50 text-white rounded-tl-none shadow-lg shadow-blue-900/20'
                     }`}>
                       {m.content}
                       {m.role === 'assistant' && (

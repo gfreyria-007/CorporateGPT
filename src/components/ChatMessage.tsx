@@ -53,7 +53,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, lang = 'es' }
       <div className={`flex-1 p-10 rounded-[3rem] rounded-tl-none border transition-all relative overflow-hidden ${
         isUser 
           ? 'bg-white/95 dark:bg-white/[0.05] backdrop-blur-3xl border-slate-200 dark:border-white/20 text-slate-900 dark:text-white shadow-sm' 
-          : 'bg-white dark:bg-corporate-900/80 backdrop-blur-3xl border-blue-500/40 dark:border-blue-500/40 text-slate-900 dark:text-white shadow-2xl shadow-blue-500/20'
+          : 'bg-white dark:bg-blue-950/90 backdrop-blur-3xl border-blue-500/40 dark:border-blue-500/40 text-slate-900 dark:text-white shadow-2xl shadow-blue-500/20'
       }`}>
         {!isUser && (
           <div className="absolute top-0 right-0 p-6 opacity-[0.05] pointer-events-none group-hover:opacity-10 transition-opacity">

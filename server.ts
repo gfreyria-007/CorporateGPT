@@ -478,20 +478,26 @@ async function startServer() {
             contents: payload.contents,
             generationConfig: {
               ...restConfig,
-              responseMimeType: restConfig.responseMimeType || "application/json"
+              responseMimeType: restConfig.responseMimeType || (restConfig.responseModalities?.includes('IMAGE') ? undefined : "application/json")
             },
-            systemInstruction: payload.systemInstruction || systemInstruction ? { role: 'user', parts: [{ text: payload.systemInstruction || systemInstruction }] } : undefined,
+            systemInstruction: payload.systemInstruction || systemInstruction ? { parts: [{ text: payload.systemInstruction || systemInstruction }] } : undefined,
             tools: payload.tools || [{ googleSearch: {} }]
           })
         });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error("[GEMINI PROXY] Gemini Error:", JSON.stringify(errorData));
-          throw new Error(errorData.error?.message || 'Gemini generation failed');
+        const responseText = await response.text();
+        let result;
+        try {
+          result = JSON.parse(responseText);
+        } catch (e) {
+          console.error("[SERVER] Failed to parse Gemini response:", responseText.substring(0, 500));
+          throw new Error(`Invalid response from Gemini: ${responseText.substring(0, 100)}`);
         }
 
-        const result = await response.json();
+        if (!response.ok) {
+          console.error("[GEMINI PROXY] Gemini Error:", JSON.stringify(result));
+          throw new Error(result.error?.message || 'Gemini generation failed');
+        }
         
         // Extract text and parse JSON if needed
         let rawText = '';

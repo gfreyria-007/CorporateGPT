@@ -479,7 +479,7 @@ Make it look like a premium, professionally designed asset that could be used in
         try {
           const payload = {
             model,
-            contents: { parts: [{ text: fullPrompt }] },
+            contents: [{ parts: [{ text: fullPrompt }] }],
             config: {
               temperature: genTemperature,
               responseModalities: genOutputFormat === 'images_only' ? ['IMAGE'] : ['TEXT', 'IMAGE'],
@@ -770,19 +770,21 @@ Make it look like a premium, professionally designed asset that could be used in
         try {
           const payload = {
             model,
-            contents: {
-              parts: [
-                {
-                  text: `Edit this image. I am providing the original image and a mask image. The white areas in the mask indicate the zones that need to be edited. Replace ONLY the white-masked areas with: ${maskPrompt}. Keep everything outside the mask EXACTLY as it is. The result must be seamless and photorealistic.`
-                },
-                {
-                  inlineData: { mimeType: 'image/png', data: originalBase64 }
-                },
-                {
-                  inlineData: { mimeType: 'image/png', data: maskBase64 }
-                }
-              ]
-            },
+            contents: [
+              {
+                parts: [
+                  {
+                    text: `Edit this image. I am providing the original image and a mask image. The white areas in the mask indicate the zones that need to be edited. Replace ONLY the white-masked areas with: ${maskPrompt}. Keep everything outside the mask EXACTLY as it is. The result must be seamless and photorealistic.`
+                  },
+                  {
+                    inlineData: { mimeType: 'image/png', data: originalBase64 }
+                  },
+                  {
+                    inlineData: { mimeType: 'image/png', data: maskBase64 }
+                  }
+                ]
+              }
+            ],
             config: {
               temperature: genTemperature,
               responseModalities: ['IMAGE'],
