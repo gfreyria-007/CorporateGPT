@@ -390,11 +390,14 @@ export default function App() {
     );
   }
 
-  if (trialEnded) {
+  if (trialEnded && !isSuperAdmin) {
     return (
       <SalesLanding 
         lang={lang} 
-        onContact={() => window.location.href = 'mailto:gfreyria@gmail.com'} 
+        onBuyNow={() => {
+          setTrialEnded(false);
+          setShowUpgradePlan(true);
+        }}
       />
     );
   }

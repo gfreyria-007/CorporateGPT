@@ -1,9 +1,8 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Markdown from 'react-markdown';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Copy, Check } from 'lucide-react';
 import { Message } from '../types';
-
 import { translations } from '../lib/translations';
 
 interface ChatMessageProps {
@@ -14,6 +13,13 @@ interface ChatMessageProps {
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message, lang = 'es' }) => {
   const isUser = message.role === 'user';
   const t = translations[lang || 'es'];
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(message.content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <motion.div
@@ -46,8 +52,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, lang = 'es' }
       
       <div className={`flex-1 p-10 rounded-[3rem] rounded-tl-none border transition-all relative overflow-hidden ${
         isUser 
-          ? 'bg-white/80 dark:bg-white/[0.03] backdrop-blur-3xl border-slate-200 dark:border-white/10 text-slate-900 dark:text-white shadow-sm' 
-          : 'bg-white/90 dark:bg-corporate-900/40 backdrop-blur-3xl border-blue-500/30 dark:border-blue-500/20 text-slate-900 dark:text-white shadow-2xl shadow-blue-500/10'
+          ? 'bg-white/95 dark:bg-white/[0.05] backdrop-blur-3xl border-slate-200 dark:border-white/20 text-slate-900 dark:text-white shadow-sm' 
+          : 'bg-white dark:bg-corporate-900/80 backdrop-blur-3xl border-blue-500/40 dark:border-blue-500/40 text-slate-900 dark:text-white shadow-2xl shadow-blue-500/20'
       }`}>
         {!isUser && (
           <div className="absolute top-0 right-0 p-6 opacity-[0.05] pointer-events-none group-hover:opacity-10 transition-opacity">
@@ -55,15 +61,25 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, lang = 'es' }
           </div>
         )}
         <div className="flex items-center justify-between mb-6">
-           <p className={`text-[10px] font-black uppercase tracking-[0.25em] flex items-center gap-2 ${isUser ? 'text-blue-600' : 'text-indigo-500'}`}>
+           <p className={`text-[10px] font-black uppercase tracking-[0.25em] flex items-center gap-2 ${isUser ? 'text-blue-600' : 'text-blue-500 dark:text-blue-400'}`}>
              {isUser ? t.user : t.assistant} 
-             <span className="w-1.5 h-1.5 bg-slate-200 dark:bg-white/10 rounded-full" />
-             <span className="opacity-40">{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+             <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-white/30 rounded-full" />
+             <span className="opacity-70 dark:opacity-60">{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
            </p>
            {!isUser && (
-              <div className="flex items-center gap-1.5">
-                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                 <span className="text-[8px] font-black text-emerald-500/60 uppercase tracking-widest">Verified Output</span>
+              <div className="flex items-center gap-4">
+                 <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Verified Output</span>
+                 </div>
+                 <button 
+                  onClick={handleCopy}
+                  className="p-2 hover:bg-white/10 rounded-lg transition-all text-slate-400 hover:text-white group/copy flex items-center gap-2"
+                  title="Copy response"
+                 >
+                    {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                    <span className="text-[8px] font-black uppercase tracking-widest hidden group-hover/copy:inline">{copied ? 'Copied' : 'Copy'}</span>
+                 </button>
               </div>
            )}
         </div>

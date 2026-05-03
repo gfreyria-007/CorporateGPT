@@ -27,9 +27,10 @@ gsap.registerPlugin(ScrollTrigger);
 interface SalesLandingProps {
   lang: 'en' | 'es';
   onContact?: () => void;
+  onBuyNow?: () => void;
 }
 
-export const SalesLanding = ({ lang = 'es', onContact }: SalesLandingProps) => {
+export const SalesLanding = ({ lang = 'es', onContact, onBuyNow }: SalesLandingProps) => {
   const t = translations[lang || 'es'];
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant', content: string }[]>([
     { role: 'assistant', content: lang === 'es' ? 'Hola. Soy su Asesor de CorporateGPT. ¿Cómo puedo ayudarle a optimizar la inteligencia de su empresa hoy?' : 'Hello. I am your CorporateGPT Advisor. How can I help you optimize your company intelligence today?' }
@@ -158,17 +159,13 @@ export const SalesLanding = ({ lang = 'es', onContact }: SalesLandingProps) => {
           </div>
 
 <div className="flex flex-col sm:flex-row gap-4">
-              <button className="h-16 px-8 bg-blue-600 hover:bg-blue-700 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-xl shadow-blue-600/30 active:scale-95 group">
+              <button 
+                onClick={onBuyNow}
+                className="h-16 px-8 bg-blue-600 hover:bg-blue-700 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-xl shadow-blue-600/30 active:scale-95 group"
+              >
                  <CreditCard size={18} />
                  {t.buyNow}
                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-              </button>
-              <button 
-                 onClick={onContact}
-                 className="h-16 px-8 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 active:scale-95 shadow-sm"
-              >
-                 <Mail size={18} />
-                 {t.contactSales}
               </button>
            </div>
 
@@ -225,14 +222,26 @@ export const SalesLanding = ({ lang = 'es', onContact }: SalesLandingProps) => {
                     key={i}
                     initial={{ opacity: 0, x: m.role === 'user' ? 20 : -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} group/msg`}
                   >
-                    <div className={`max-w-[85%] p-5 rounded-2xl text-sm leading-relaxed font-medium ${
+                    <div className={`max-w-[85%] p-5 rounded-2xl text-sm leading-relaxed font-bold relative ${
                       m.role === 'user' 
                         ? 'bg-blue-600 text-white rounded-tr-none shadow-lg shadow-blue-600/20' 
-                        : 'bg-slate-100 border border-slate-200 text-slate-700 rounded-tl-none'
+                        : 'bg-slate-200 border border-slate-300 text-slate-900 rounded-tl-none shadow-sm'
                     }`}>
                       {m.content}
+                      {m.role === 'assistant' && (
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(m.content);
+                            alert(lang === 'es' ? 'Copiado al portapapeles' : 'Copied to clipboard');
+                          }}
+                          className="absolute -right-12 top-0 p-2 opacity-0 group-hover/msg:opacity-100 transition-opacity text-slate-400 hover:text-blue-600"
+                          title="Copy"
+                        >
+                          <Copy size={14} />
+                        </button>
+                      )}
                     </div>
                   </motion.div>
                 ))}
