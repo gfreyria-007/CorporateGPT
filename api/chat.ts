@@ -6,23 +6,23 @@ const MAX_TOKENS = 8000;
 // Multiple fallbacks: if one fails, try next. Never leave user stranded.
 
 const CHAINS = [
-  // 1. PRIMARY: Gemini 1.5 Flash direct (fastest, most reliable)
+  // 1. PRIMARY: Gemini 2.5 Flash (fastest, most reliable)
   { 
-    id: 'gemini-1.5-flash', 
+    id: 'gemini-2.5-flash', 
     provider: 'gemini',
-    url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
+    url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent'
   },
-  // 2. FALLBACK: OpenRouter - try cheap models
+  // 2. FALLBACK: OpenRouter - DeepSeek R1 (cheap & reliable)
   { 
-    id: 'minimax/m2.5-free', 
+    id: 'deepseek/deepseek-r1', 
     provider: 'openrouter',
     url: 'https://openrouter.ai/api/v1/chat/completions'
   },
-  // 3. LAST RESORT: Gemini 2.0 Flash
+  // 3. LAST RESORT: Gemini 2.5 Flash (duplicate for redundancy)
   { 
-    id: 'gemini-2.0-flash', 
+    id: 'gemini-2.5-flash', 
     provider: 'gemini',
-    url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+    url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent'
   },
 ];
 

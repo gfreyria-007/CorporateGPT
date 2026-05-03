@@ -1,13 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-const FALLBACK_MODEL = 'gemini-2.0-flash';
+const FALLBACK_MODEL = 'gemini-2.5-flash';
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 const AVAILABLE_MODELS = [
-  'gemini-2.0-flash',
-  'gemini-1.5-flash',
-  'gemini-2.0-flash-latest',
-  'gemini-1.5-pro'
+  'gemini-2.5-flash',
+  'gemini-2.5-flash',
 ];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -33,7 +31,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     for (const tryModel of AVAILABLE_MODELS) {
       if (targetModel && !AVAILABLE_MODELS.includes(targetModel)) continue;
       
-      const modelToTry = tryModel === 'gemini-1.5-flash' ? 'gemini-1.5-flash-8b' : tryModel;
+      const modelToTry = tryModel;
       
       try {
         const contents = (messages || [])
