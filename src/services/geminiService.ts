@@ -628,27 +628,16 @@ CRITICAL REQUIREMENTS:
 9. Visual elements supporting the message
 10. Corporate/professional aesthetic`;
 
-  const payload = {
-    model: 'gemini-2.0-flash',
-    contents: [{ 
-      parts: [
-        { text: prompt },
-        ...(userImage ? [{ inlineData: { mimeType: 'image/jpeg', data: userImage.includes('base64,') ? userImage.split('base64,')[1] : userImage } }] : [])
-      ]
-    }],
-    config: {
-      temperature: 1,
-      responseModalities: ['IMAGE'],
-      imageConfig: { 
-        aspectRatio: '16:9'
-      }
-    }
-  };
-
+  // Use Imagen for PPT slide image generation
   const res = await fetch('/api/gemini', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'generateContent', payload })
+    body: JSON.stringify({
+      action: 'generateImage',
+      model: 'imagen-4.0-fast-generate-001',
+      prompt: prompt,
+      aspectRatio: '16:9'
+    })
   });
   
   const imgRes = await res.json();
@@ -656,11 +645,11 @@ CRITICAL REQUIREMENTS:
     throw new Error(imgRes.error);
   }
 
-  const imgPart = imgRes.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData);
-  if (!imgPart) {
-    throw new Error('No image was generated. The model returned text only.');
+  const imageBase64 = imgRes.predictions?.[0]?.bytesBase64Encoded;
+  if (!imageBase64) {
+    throw new Error('No image was generated.');
   }
 
-  return `data:${imgPart.inlineData.mimeType || 'image/png'};base64,${imgPart.inlineData.data}`;
+  return `data:image/png;base64,${imageBase64}`;
 }
 

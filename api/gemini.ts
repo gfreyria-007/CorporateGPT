@@ -31,20 +31,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log(`[GEMINI] Action: ${action}, Model: ${payload.model}`);
 
-    // Handle Imagen image generation
+    // Handle Imagen image generation (including image-to-image)
     if (action === 'generateImage' || payload.model?.startsWith('imagen-')) {
       try {
         const imagenModel = payload.model || 'imagen-4.0-fast-generate-001';
+        
+        // Build instances for image generation
+        const instance: any = { prompt: payload.prompt };
+        
+        // Add source image for image-to-image
+        if (payload.sourceImage) {
+          instance.image = { bytesBase64Encoded: payload.sourceImage };
+        }
+        
+        const parameters: any = { 
+          sampleCount: 1,
+          aspectRatio: payload.aspectRatio || '1:1'
+        };
+        
+        // Add mask for inpainting
+        if (payload.maskImage) {
+          parameters.mask = { image: { bytesBase64Encoded: payload.maskImage } };
+        }
         
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${imagenModel}:predict?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            instances: [{ prompt: payload.prompt }],
-            parameters: { 
-              sampleCount: 1,
-              aspectRatio: payload.aspectRatio || '1:1'
-            }
+            instances: [instance],
+            parameters
           })
         });
 

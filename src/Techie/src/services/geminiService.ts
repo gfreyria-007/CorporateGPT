@@ -125,17 +125,23 @@ export const generateImage = async (
     }
 
     try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents,
-            config: { 
-                systemInstruction: "You are the Visual Architect of the NANOBANANA 2 ENGINE (Kids Edition). Generate high-fidelity, professional, and educational artwork. No text allowed in images.",
-                imageConfig: { aspectRatio },
-                safetySettings: SAFETY_SETTINGS
-            }
+        // Use API endpoint with Imagen model
+        const res = await fetch('/api/gemini', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'generateImage',
+                model: 'imagen-4.0-fast-generate-001',
+                prompt: finalPrompt,
+                aspectRatio: aspectRatio === '1:1' ? '1:1' : '16:9'
+            })
         });
-        const part = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
-        if (part) return { url: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`, enhancedPrompt: 'Generación de Imagen' };
+        
+        const imgRes = await res.json();
+        const imageBase64 = imgRes.predictions?.[0]?.bytesBase64Encoded;
+        if (imageBase64) {
+            return { url: `data:image/png;base64,${imageBase64}`, enhancedPrompt: 'Generación de Imagen' };
+        }
     } catch (e: any) {
         console.error("Image generation failed", e);
     }
@@ -213,17 +219,37 @@ export const editImage = async (
     parts.push({ text: finalInstruction });
 
     try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents: [{ parts }],
-            config: { 
-                systemInstruction: "You are an expert digital artist for kids using the NANOBANANA 2 ENGINE. You interpret source images and user sketches with high precision. Your goal is to turn manual annotations into polished, professional artwork while strictly following the prompt and the provided mask logic. Always ensure the output is safe and educational.",
-                safetySettings: SAFETY_SETTINGS
-            }
-        });
+        // For image-to-image editing, we need to send to API endpoint
+        // Get base64 of source image
+        let sourceBase64 = '';
+        if (typeof source === 'string') {
+            sourceBase64 = source.split(',')[1];
+        } else {
+            // File - convert to base64
+            sourceBase64 = await new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+                reader.readAsDataURL(source);
+            });
+        }
 
-        const part = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
-        return part ? `data:${part.inlineData.mimeType};base64,${part.inlineData.data}` : null;
+        const res = await fetch('/api/gemini', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'generateImage',
+                model: 'imagen-4.0-fast-generate-001',
+                prompt: finalInstruction,
+                sourceImage: sourceBase64,
+                maskImage: maskBase64 ? maskBase64.split(',')[1] : undefined
+            })
+        });
+        
+        const imgRes = await res.json();
+        const imageBase64 = imgRes.predictions?.[0]?.bytesBase64Encoded;
+        if (imageBase64) {
+            return `data:image/png;base64,${imageBase64}`;
+        }
     } catch (e: any) {
         console.error("Image editing failed", e);
         throw e;
