@@ -472,49 +472,45 @@ The image must fill the entire frame with no empty space.
 Text should be crisp and readable. Use a ${currentStyle.name} aesthetic.
 Make it look like a premium, professionally designed asset that could be used in a real corporate presentation.`;
 
-      const IMAGE_MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
+      const IMAGE_MODELS = ['imagen-4.0-fast-generate-001', 'imagen-4.0-generate-001'];
       let imgRes: any = null;
 
       for (const model of IMAGE_MODELS) {
         try {
+          // Imagen uses different API format
           const payload = {
+            action: 'generateImage',
             model,
-            contents: [{ parts: [{ text: fullPrompt }] }],
-            config: {
-              temperature: genTemperature,
-              responseModalities: genOutputFormat === 'images_only' ? ['IMAGE'] : ['TEXT', 'IMAGE'],
-              imageConfig: { aspectRatio }
-            }
+            prompt: fullPrompt,
+            aspectRatio
           };
 
           const res = await fetch('/api/gemini', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'generateContent', payload })
+            body: JSON.stringify(payload)
           });
           
           imgRes = await res.json();
           
-          if (!imgRes.error) {
-            const imgPart = imgRes.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData);
-            if (imgPart) {
-              console.log(`[Image] Success with model: ${model}`);
-              break;
-            }
+          if (!imgRes.error && (imgRes.imageBase64 || imgRes.predictions?.[0]?.bytesBase64Encoded)) {
+            console.log(`[Image] Success with model: ${model}`);
+            break;
           }
         } catch (e) {
           console.warn(`[Image] Model ${model} failed:`, e);
         }
       }
 
-      if (!imgRes?.candidates?.[0]?.content?.parts?.some((p: any) => p.inlineData)) {
+      // Handle imagen response (predict endpoint returns predictions with bytesBase64Encoded)
+      const imageBase64 = imgRes.imageBase64 || imgRes.predictions?.[0]?.bytesBase64Encoded;
+      if (!imageBase64) {
         throw new Error('Image generation failed. Try again.');
       }
 
-      const imgPart = imgRes.candidates[0].content.parts.find((p: any) => p.inlineData);
       const imgElement = new window.Image();
       imgElement.crossOrigin = 'anonymous';
-      imgElement.src = `data:${imgPart.inlineData.mimeType || 'image/png'};base64,${imgPart.inlineData.data}`;
+      imgElement.src = `data:image/png;base64,${imageBase64}`;
 
       await new Promise<void>((resolve, reject) => {
         imgElement.onload = () => resolve();

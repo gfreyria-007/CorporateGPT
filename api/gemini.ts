@@ -31,6 +31,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log(`[GEMINI] Action: ${action}, Model: ${payload.model}`);
 
+    // Handle Imagen image generation
+    if (action === 'generateImage' || payload.model?.startsWith('imagen-')) {
+      try {
+        const imagenModel = payload.model || 'imagen-4.0-fast-generate-001';
+        
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${imagenModel}:predict?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            instances: [{ prompt: payload.prompt }],
+            parameters: { 
+              sampleCount: 1,
+              aspectRatio: payload.aspectRatio || '1:1'
+            }
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Imagen API Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return res.status(200).json(result);
+      } catch (err: any) {
+        console.error('[IMAGEN] Error:', err.message);
+        return res.status(500).json({ error: err.message });
+      }
+    }
+
     if (action === 'generateContent') {
       try {
         const generationConfig = payload.config || payload.generationConfig || {};
