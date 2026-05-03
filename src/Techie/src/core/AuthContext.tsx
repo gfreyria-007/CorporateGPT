@@ -9,7 +9,43 @@ import { GRADES } from '../constants';
 import { logger } from '../logger';
 
 // Use unified trial system (3 days) - shared with Corporate GPT
+// Trial status is stored in CorporateGPT's 'trials' collection
 const TRIAL_DAYS = 3;
+
+async function checkCorporateTrial(email: string): Promise<{ eligible: boolean; daysLeft?: number }> {
+  try {
+    const trialRef = doc(db, 'trials', email.toLowerCase());
+    const snap = await getDoc(trialRef);
+    
+    if (!snap.exists()) {
+      return { eligible: false };
+    }
+    
+    const data = snap.data();
+    
+    // Check if used
+    if (data.used) {
+      return { eligible: false };
+    }
+    
+    // Check if expired
+    if (data.trialEnds) {
+      const end = data.trialEnds.toDate ? data.trialEnds.toDate() : new Date(data.trialEnds);
+      const daysLeft = Math.ceil((end.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      
+      if (daysLeft <= 0) {
+        return { eligible: false };
+      }
+      
+      return { eligible: true, daysLeft };
+    }
+    
+    return { eligible: false };
+  } catch (error) {
+    console.error('[Techie] Error checking corporate trial:', error);
+    return { eligible: false };
+  }
+}
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -140,15 +176,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode, mainUser?: Fire
           }
         }
 
-        // Ensure trial field exists for legacy users and they are marked as approved
+        // Check CorporateGPT trial status for existing users
+        let corporateTrialStatus = { eligible: false, daysLeft: 0 };
+        if (u.email) {
+          corporateTrialStatus = await checkCorporateTrial(u.email);
+        }
+
+        // Ensure trial field exists for legacy users
         if (!data.trialExpiresAt || !data.isApproved || !data.subscriptionLevel) {
           const updates: any = {};
-          if (!data.trialExpiresAt) {
+          
+          // If corporate trial is active, use it
+          if (corporateTrialStatus.eligible) {
+            const trialExpires = new Date();
+            trialExpires.setDate(trialExpires.getDate() + TRIAL_DAYS);
+            updates.trialExpiresAt = trialExpires.toISOString();
+            data.trialExpiresAt = trialExpires.toISOString();
+            updates.subscriptionLevel = 'trial';
+            data.subscriptionLevel = 'trial';
+            updates.isSubscribed = true;
+            data.isSubscribed = true;
+            console.log(`[Techie] Synced corporate trial: ${corporateTrialStatus.daysLeft} days`);
+          } else if (!data.trialExpiresAt) {
             const trialExpires = new Date(data.createdAt || Date.now());
             trialExpires.setDate(trialExpires.getDate() + TRIAL_DAYS);
             updates.trialExpiresAt = trialExpires.toISOString();
             data.trialExpiresAt = trialExpires.toISOString();
           }
+          
           if (!data.isApproved) {
             updates.isApproved = true;
             data.isApproved = true;
@@ -190,22 +245,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode, mainUser?: Fire
           }
         }
 
+        // Check CorporateGPT's trial status for this email
+        let trialStatus = { eligible: false, daysLeft: 0 };
+        if (u.email) {
+          trialStatus = await checkCorporateTrial(u.email);
+        }
+
         const trialExpires = new Date();
         trialExpires.setDate(trialExpires.getDate() + TRIAL_DAYS);
+
+        // Use corporate trial status - if eligible, set as trial user
+        const subscriptionLevel = trialStatus.eligible ? 'trial' : 'free';
+        // Override isApproved based on corporate trial eligibility
+        isApproved = trialStatus.eligible || u.email === 'gfreyria@gmail.com';
 
         const newProfile: UserProfile = {
           uid: u.uid,
           email: u.email || '',
           name: u.displayName || 'Estudiante',
           role: u.email === 'gfreyria@gmail.com' ? 'admin' : 'user',
-          isApproved: true, // Auto-approve, logic is now handled by trial/sub
-          trialExpiresAt: trialExpires.toISOString(),
-          isSubscribed: false,
-          tokensPerDay: 100,
+          isApproved,
+          trialExpiresAt: trialStatus.eligible ? trialExpires.toISOString() : undefined,
+          isSubscribed: trialStatus.eligible,
+          tokensPerDay: trialStatus.eligible ? 100 : 20,
           dailyUsageCount: 0,
           lastUsageDate: new Date().toISOString().split('T')[0],
-          subscriptionLevel: 'free'
+          subscriptionLevel
         };
+
+        if (trialStatus.eligible) {
+          console.log(`[Techie] Corporate trial active: ${trialStatus.daysLeft} days left`);
+        }
 
         await setDoc(doc(db, 'users', u.uid), newProfile);
         setProfile(newProfile);
