@@ -12,6 +12,7 @@ import Stripe from 'stripe';
 import { getAuth } from 'firebase-admin/auth';
 // @ts-ignore
 import admin from 'firebase-admin';
+import { extractUserId, validateUserQuota } from './api/quota';
 
 // Initialize Firebase Admin for Secure Verification
 let isAdminInitialized = false;
@@ -40,6 +41,33 @@ try {
 } catch (error: any) {
   console.error('❌ Firebase Admin initialization failed:', error.message);
 }
+
+// Atomic Usage Tracking (Server-Side Source of Truth)
+const trackUsage = async (userId: string | null | undefined, isImage: boolean) => {
+  if (!userId || !isAdminInitialized) return;
+  try {
+    const db = admin.firestore();
+    const batch = db.batch();
+    
+    // Update Daily Quota (V2)
+    if (isImage) {
+      const quotaRef = db.collection('users').doc(userId).collection('quota').doc('daily');
+      batch.set(quotaRef, { multimediaUsed: admin.firestore.FieldValue.increment(1) }, { merge: true });
+    }
+    
+    // Update Global Legacy Counter (V1)
+    const userRef = db.collection('users').doc(userId);
+    batch.update(userRef, { 
+      [isImage ? 'imagesUsed' : 'queriesUsed']: admin.firestore.FieldValue.increment(1),
+      lastActive: admin.firestore.FieldValue.serverTimestamp()
+    });
+    
+    await batch.commit();
+    console.log(`[QUOTA] Successfully tracked ${isImage ? 'multimedia' : 'query'} for user ${userId}`);
+  } catch (e) {
+    console.error("[GEMINI PROXY] Usage tracking failed:", e);
+  }
+};
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -371,6 +399,7 @@ async function startServer() {
       }
 
       const data = await response.json();
+      if (userId) await trackUsage(userId, false);
       res.json(data);
     } catch (error: any) {
       clearTimeout(timeout);
@@ -439,6 +468,10 @@ async function startServer() {
       const result = await response.json();
       const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "";
       console.log('[FALLBACK] SUCCESS');
+      
+      const { userId } = req.body;
+      if (userId) await trackUsage(userId, false);
+      
       res.json({ text });
 
     } catch (error: any) {
@@ -467,63 +500,159 @@ async function startServer() {
 
       console.log(`[GEMINI PROXY] Action: ${action}, Model: ${payload.model}`);
 
-      if (action === 'generateContent') {
-        const generationConfig = payload.config || payload.generationConfig || {};
-        const { systemInstruction, ...restConfig } = generationConfig;
-        
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || 'gemini-2.0-flash'}:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: payload.contents,
-            generationConfig: {
-              ...restConfig,
-              responseMimeType: restConfig.responseMimeType || (restConfig.responseModalities?.includes('IMAGE') ? undefined : "application/json")
-            },
-            systemInstruction: payload.systemInstruction || systemInstruction ? { parts: [{ text: payload.systemInstruction || systemInstruction }] } : undefined,
-            tools: payload.tools || [{ googleSearch: {} }]
-          })
-        });
+      // 1. Auth & Quota check
+      const userId = payload.userId || extractUserId(req as any);
+      let fairUseLimit = false;
+      let finalModel = payload.model;
 
-        const responseText = await response.text();
-        let result;
+      if (userId) {
         try {
-          result = JSON.parse(responseText);
+          const q = await validateUserQuota(userId);
+          fairUseLimit = q.fairUseLimit;
+          
+          // STEERING: If Fair Use reached, downgrade Pro models to Flash
+          if (fairUseLimit && payload.model?.includes('pro')) {
+            console.log(`[GEMINI] FAIR USE ACTIVE: Steering ${payload.model} -> gemini-2.0-flash`);
+            finalModel = 'gemini-2.0-flash';
+          }
         } catch (e) {
-          console.error("[SERVER] Failed to parse Gemini response:", responseText.substring(0, 500));
-          throw new Error(`Invalid response from Gemini: ${responseText.substring(0, 100)}`);
+          console.warn("[GEMINI] Quota check failed, proceeding anyway:", e);
+        }
+      }
+
+        // 4. Handle Imagen image generation with Bulletproof Fallbacks
+        if (action === 'generateImage' || (payload.model && payload.model.startsWith('imagen-'))) {
+          const IMAGE_MODELS = [
+            finalModel,
+            'imagen-4.0-fast-generate-001',
+            'imagen-4.0-generate-001',
+            'imagen-3.0-fast-generate-001',
+            'imagen-3.0-generate-001'
+          ].filter(Boolean) as string[];
+
+          let lastError = null;
+          for (const model of IMAGE_MODELS) {
+            try {
+              console.log(`[IMAGEN] Attempting model: ${model}`);
+              const instance: any = { prompt: payload.prompt };
+              if (payload.sourceImage) instance.image = { bytesBase64Encoded: payload.sourceImage };
+              
+              const parameters: any = { 
+                sampleCount: 1,
+                aspectRatio: payload.aspectRatio || '1:1',
+                safetySetting: 'block_none'
+              };
+              if (payload.maskImage) parameters.mask = { image: { bytesBase64Encoded: payload.maskImage } };
+              
+              const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:predict?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ instances: [instance], parameters })
+              });
+
+              if (response.ok) {
+                const result = await response.json();
+                if (result.predictions?.[0]?.bytesBase64Encoded || result.imageBase64) {
+                  console.log(`[IMAGEN] Success with ${model}`);
+                  await trackUsage(userId, true);
+                  return res.status(200).json(result);
+                }
+              }
+              const errBody = await response.json().catch(() => ({}));
+              console.warn(`[IMAGEN] Model ${model} failed:`, errBody.error?.message || response.status);
+              lastError = errBody.error?.message || `Status ${response.status}`;
+            } catch (err: any) {
+              console.error(`[IMAGEN] Request failed for ${model}:`, err.message);
+              lastError = err.message;
+            }
+          }
+
+          // LAST RESORT: Fallback to Gemini 2.0 Flash Multimodal
+          console.log(`[IMAGEN] All dedicated models failed. Falling back to Gemini 2.0 Flash multimodal...`);
+          try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ role: 'user', parts: [{ text: payload.prompt }] }],
+                generationConfig: {
+                  responseModalities: ['IMAGE'],
+                  imageConfig: { aspectRatio: payload.aspectRatio === '16:9' ? '16:9' : '1:1' }
+                }
+              })
+            });
+            if (response.ok) {
+              const result = await response.json();
+              const hasImage = result.candidates?.[0]?.content?.parts?.some((p: any) => p.inlineData);
+              if (hasImage) {
+                 console.log(`[IMAGEN] Success with Gemini 2.0 Flash Fallback`);
+                 await trackUsage(userId, true);
+                 return res.status(200).json(result);
+              }
+            }
+          } catch (e: any) {
+            console.error(`[IMAGEN] Fallback also failed:`, e.message);
+          }
+
+          return res.status(500).json({ error: 'IMAGE_GEN_FAILED', details: lastError || 'All models exhausted' });
         }
 
-        if (!response.ok) {
-          console.error("[GEMINI PROXY] Gemini Error:", JSON.stringify(result));
-          throw new Error(result.error?.message || 'Gemini generation failed');
-        }
-        
-        // Handle Multimodal (Image) responses
-        const hasImage = result.candidates?.[0]?.content?.parts?.some((p: any) => p.inlineData);
-        if (hasImage) {
-          return res.status(200).json(result);
-        }
+        // 5. Handle regular Content Generation
+        if (action === 'generateContent') {
+          const generationConfig = payload.config || payload.generationConfig || {};
+          const { systemInstruction, ...restConfig } = generationConfig;
+          
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || 'gemini-2.0-flash'}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: payload.contents,
+              generationConfig: {
+                ...restConfig,
+                responseMimeType: restConfig.responseMimeType || (restConfig.responseModalities?.includes('IMAGE') ? undefined : "application/json")
+              },
+              systemInstruction: payload.systemInstruction || systemInstruction ? { parts: [{ text: payload.systemInstruction || systemInstruction }] } : undefined,
+              tools: payload.tools || [{ googleSearch: {} }]
+            })
+          });
 
-        // Extract text and parse JSON if needed for text-only responses
-        let rawText = '';
-        if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
-          rawText = result.candidates[0].content.parts[0].text;
-        }
+          const responseText = await response.text();
+          let result;
+          try {
+            result = JSON.parse(responseText);
+          } catch (e) {
+            console.error("[SERVER] Failed to parse Gemini response:", responseText.substring(0, 500));
+            throw new Error(`Invalid response from Gemini: ${responseText.substring(0, 100)}`);
+          }
 
-        const cleanJson = (rawText || '').replace(/```json/g, '').replace(/```/g, '').trim();
-        let parsedFields = {};
-        try {
-          if (cleanJson) parsedFields = JSON.parse(cleanJson);
-        } catch (e) {
-          console.warn("[GEMINI PROXY] JSON Parse warning:", e);
-        }
+          if (!response.ok) {
+            console.error("[GEMINI PROXY] Gemini Error:", JSON.stringify(result));
+            throw new Error(result.error?.message || 'Gemini generation failed');
+          }
+          
+          const hasImage = result.candidates?.[0]?.content?.parts?.some((p: any) => p.inlineData);
+          await trackUsage(userId, !!hasImage);
 
-        return res.status(200).json({ 
-          text: rawText, 
-          ...parsedFields,
-          candidates: result.candidates // Ensure candidates are returned for client-side processing
-        });
+          let rawText = '';
+          if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
+            rawText = result.candidates[0].content.parts[0].text;
+          }
+
+          const cleanJson = (rawText || '').replace(/```json/g, '').replace(/```/g, '').trim();
+          let parsedFields = {};
+          try {
+            if (cleanJson) parsedFields = JSON.parse(cleanJson);
+          } catch (e) {
+            console.warn("[GEMINI PROXY] JSON Parse warning:", e);
+          }
+
+          return res.status(200).json({ 
+            text: rawText, 
+            ...parsedFields,
+            candidates: result.candidates,
+            _fairUseActive: fairUseLimit 
+          });
+        }
 
       } else if (action === 'chat') {
          // Simplified chat for local proxy

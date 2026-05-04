@@ -44,7 +44,6 @@ import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PromptGenie } from './PromptGenie';
 import { useAuth } from '../lib/AuthContext';
-import { incrementImageCount } from '../lib/db';
 import { generateInfographicContent, suggestBetterPrompt } from '../services/geminiService';
 
 
@@ -477,7 +476,6 @@ Make it look like a premium, professionally designed asset that could be used in
 
       for (const model of IMAGE_MODELS) {
         try {
-          // Imagen uses different API format
           const payload = {
             action: 'generateImage',
             model,
@@ -496,14 +494,46 @@ Make it look like a premium, professionally designed asset that could be used in
           if (!imgRes.error && (imgRes.imageBase64 || imgRes.predictions?.[0]?.bytesBase64Encoded)) {
             console.log(`[Image] Success with model: ${model}`);
             break;
+          } else if (imgRes.error) {
+            console.warn(`[Image] Model ${model} returned error:`, imgRes.error);
           }
         } catch (e) {
-          console.warn(`[Image] Model ${model} failed:`, e);
+          console.warn(`[Image] Model ${model} fetch failed:`, e);
         }
       }
 
-      // Handle imagen response (predict endpoint returns predictions with bytesBase64Encoded)
-      const imageBase64 = imgRes.imageBase64 || imgRes.predictions?.[0]?.bytesBase64Encoded;
+      // Fallback: Use Gemini 2.0 Flash multimodal generation if Imagen fails
+      if (!imgRes || imgRes.error || (!imgRes.imageBase64 && !imgRes.predictions?.[0]?.bytesBase64Encoded)) {
+        console.log("[Image] Falling back to Gemini 2.0 Flash multimodal...");
+        try {
+          const payload = {
+            action: 'generateContent',
+            payload: {
+              model: 'gemini-2.0-flash',
+              contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
+              config: {
+                temperature: 1.0,
+                responseModalities: ['IMAGE'],
+                imageConfig: { aspectRatio: aspectRatio === '16:9' ? '16:9' : aspectRatio === '9:16' ? '9:16' : '1:1' }
+              }
+            }
+          };
+
+          const res = await fetch('/api/gemini', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          imgRes = await res.json();
+        } catch (fallbackError) {
+          console.error("[Image] Fallback failed:", fallbackError);
+        }
+      }
+
+      // Handle response (could be from Imagen predict or Gemini generateContent)
+      const imageBase64 = imgRes.imageBase64 || 
+                         imgRes.predictions?.[0]?.bytesBase64Encoded || 
+                         imgRes.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData)?.inlineData?.data;
       if (!imageBase64) {
         throw new Error('Image generation failed. Try again.');
       }
@@ -538,10 +568,12 @@ Make it look like a premium, professionally designed asset that could be used in
       fabricCanvas.add(fabImg);
       fabricCanvas.renderAll();
 
-      incrementImageCount(user.uid).catch(e => console.error(e));
     } catch (error: any) {
       console.error('[Image] Error:', error.message);
-      alert('La imagen tardó más de lo normal. Intenta de nuevo.');
+      const errorMsg = error.message && error.message.length < 100 
+        ? error.message 
+        : 'La síntesis de imagen falló. Intenta con un prompt diferente o verifica tu conexión.';
+      alert(errorMsg);
     } finally {
       setIsGenerating(false);
     }
@@ -648,7 +680,6 @@ Make it look like a premium, professionally designed asset that could be used in
       }
 
       fabricCanvas.renderAll();
-      incrementImageCount(user.uid).catch(e => console.error(e));
     } catch (error) {
       console.error("Generation failed", error);
       alert("Asset synthesis failed. Please try a more specific prompt.");
@@ -843,7 +874,6 @@ Make it look like a premium, professionally designed asset that could be used in
 
       setOriginalSnapshot(null);
       setMaskPrompt('');
-      incrementImageCount(user.uid).catch(e => console.error(e));
     } catch (error: any) {
       console.error('[Inpaint] Error:', error.message);
       alert('La edición tardó más de lo normal. Intenta de nuevo.');

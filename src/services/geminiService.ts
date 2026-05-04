@@ -641,15 +641,21 @@ CRITICAL REQUIREMENTS:
   });
   
   const imgRes = await res.json();
+  
   if (imgRes.error) {
-    throw new Error(imgRes.error);
+    console.error("[GEMINI] Image Error:", imgRes.error);
+    throw new Error(imgRes.details || imgRes.error);
   }
 
-  const imageBase64 = imgRes.predictions?.[0]?.bytesBase64Encoded;
+  // Multi-format extraction for Bulletproof fallback support
+  const imageBase64 = imgRes.imageBase64 || 
+                     imgRes.predictions?.[0]?.bytesBase64Encoded || 
+                     imgRes.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData)?.inlineData?.data;
+
   if (!imageBase64) {
-    throw new Error('No image was generated.');
+    throw new Error('No se pudo extraer la imagen generada. Revisa los logs del servidor.');
   }
 
-  return `data:image/png;base64,${imageBase64}`;
+  return imageBase64.startsWith('data:') ? imageBase64 : `data:image/png;base64,${imageBase64}`;
 }
 

@@ -138,9 +138,19 @@ export const generateImage = async (
         });
         
         const imgRes = await res.json();
-        const imageBase64 = imgRes.predictions?.[0]?.bytesBase64Encoded;
+        if (imgRes.error) {
+            console.error("[TECHIE] Image Error:", imgRes.error);
+            return null;
+        }
+
+        // Multi-format extraction for Bulletproof fallback support
+        const imageBase64 = imgRes.imageBase64 || 
+                           imgRes.predictions?.[0]?.bytesBase64Encoded || 
+                           imgRes.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData)?.inlineData?.data;
+
         if (imageBase64) {
-            return { url: `data:image/png;base64,${imageBase64}`, enhancedPrompt: 'Generación de Imagen' };
+            const finalUrl = imageBase64.startsWith('data:') ? imageBase64 : `data:image/png;base64,${imageBase64}`;
+            return { url: finalUrl, enhancedPrompt: 'Generación de Imagen' };
         }
     } catch (e: any) {
         console.error("Image generation failed", e);
@@ -246,14 +256,24 @@ export const editImage = async (
         });
         
         const imgRes = await res.json();
-        const imageBase64 = imgRes.predictions?.[0]?.bytesBase64Encoded;
+        if (imgRes.error) {
+            console.error("[TECHIE] Edit Error:", imgRes.error);
+            throw new Error(imgRes.details || imgRes.error);
+        }
+
+        // Multi-format extraction for Bulletproof fallback support
+        const imageBase64 = imgRes.imageBase64 || 
+                           imgRes.predictions?.[0]?.bytesBase64Encoded || 
+                           imgRes.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData)?.inlineData?.data;
+
         if (imageBase64) {
-            return `data:image/png;base64,${imageBase64}`;
+            return imageBase64.startsWith('data:') ? imageBase64 : `data:image/png;base64,${imageBase64}`;
         }
     } catch (e: any) {
         console.error("Image editing failed", e);
         throw e;
     }
+    return null;
 };
 
 export const getChatResponse = async (

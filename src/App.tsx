@@ -56,7 +56,7 @@ import { LandingPage } from './components/LandingPage';
 import { SalesLanding } from './components/SalesLanding';
 import { Message, ModelMetadata } from './types';
 import { useAuth } from './lib/AuthContext';
-import { incrementQueryCount, flagUser, SUPER_ADMIN_EMAIL } from './lib/db';
+import { flagUser, SUPER_ADMIN_EMAIL } from './lib/db';
 import { db } from './lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { cn } from './lib/utils';
@@ -358,9 +358,6 @@ export default function App() {
         timestamp: Date.now()
       };
       setMessages(prev => [...prev, assistantMessage]);
-      // Quota is now deducted server-side in api/chat.ts for accurate counting
-      incrementQueryCount(user.uid).catch(e => console.error("Failed to increment count:", e));
-
     } catch (error: any) {
       console.error('[Chat] Error:', error.message);
       const errorMessage: Message = {
