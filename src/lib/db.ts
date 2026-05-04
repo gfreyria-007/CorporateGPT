@@ -121,7 +121,7 @@ export async function incrementQueryCount(uid: string) {
   }
 }
 
-export async function saveGPT(uid: string, gptData: any) {
+export async function saveGPT(uid: string, gptData: any, companyId?: string) {
   const MAX_GPT_SIZE = 500 * 1024; // 500KB max GPT data
   const serialized = JSON.stringify(gptData);
   if (serialized.length > MAX_GPT_SIZE) {
@@ -133,12 +133,13 @@ export async function saveGPT(uid: string, gptData: any) {
   const finalData = {
     ...gptData,
     id: gptId,
-    userId: uid, // Ensure owner is tracked
+    userId: uid,
+    companyId: companyId || gptData.companyId || null,
+    visibility: companyId ? 'company' : (gptData.visibility || 'personal'),
     updatedAt: serverTimestamp(),
     createdAt: gptData.createdAt || serverTimestamp()
   };
   
-  // Firestore rejects undefined values, so we sanitize the object
   Object.keys(finalData).forEach(key => finalData[key] === undefined && delete finalData[key]);
 
   try {
@@ -149,16 +150,53 @@ export async function saveGPT(uid: string, gptData: any) {
   }
 }
 
-export function subscribeToGPTs(uid: string, callback: (gpts: any[]) => void) {
+interface GPTSnapshot {
+  id: string;
+  userId: string;
+  companyId?: string;
+  visibility?: string;
+  isPublic?: boolean;
+  updatedAt?: { seconds: number };
+  [key: string]: any;
+}
+
+export function subscribeToGPTs(uid: string, callback: (gpts: GPTSnapshot[]) => void, companyId?: string) {
   const gptsRef = collection(db, 'gpts');
-  const q = query(gptsRef, or(
-    where('userId', '==', uid),
-    where('isPublic', '==', true)
-  ));
+  
+  let q;
+  if (companyId) {
+    q = query(gptsRef, or(
+      where('userId', '==', uid),
+      where('companyId', '==', companyId),
+      where('visibility', '==', 'company')
+    ));
+  } else {
+    q = query(gptsRef, or(
+      where('userId', '==', uid),
+      where('isPublic', '==', true)
+    ));
+  }
   
   return onSnapshot(q, (snapshot) => {
-    const gpts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    callback(gpts);
+    const allGPTs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as GPTSnapshot);
+    
+    let filteredGPTs: GPTSnapshot[];
+    if (companyId) {
+      filteredGPTs = allGPTs.filter(gpt => 
+        gpt.userId === uid || 
+        gpt.companyId === companyId || 
+        gpt.visibility === 'company'
+      );
+    } else {
+      filteredGPTs = allGPTs.filter(gpt => 
+        gpt.userId === uid || 
+        gpt.isPublic === true
+      );
+    }
+    
+    const uniqueGpts = Array.from(new Map(filteredGPTs.map(g => [g.id, g])).values());
+    uniqueGpts.sort((a, b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
+    callback(uniqueGpts);
   }, (error) => {
     handleFirestoreError(error, OperationType.LIST, `gpts`);
   });
@@ -167,11 +205,68 @@ export function subscribeToGPTs(uid: string, callback: (gpts: any[]) => void) {
 export async function deleteGPT(uid: string, gptId: string) {
   const gptRef = doc(db, 'gpts', gptId);
   try {
-    // Only owner should delete - rules will enforce this, 
-    // but we can check here too if we want.
     await deleteDoc(gptRef);
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, `gpts`);
   }
+}
+
+const GPT_KEYWORDS: Record<string, string[]> = {
+  'analyze': ['analyze', 'analysis', 'examine', 'review', 'evaluate', 'assess', 'check'],
+  'write': ['write', 'draft', 'create', 'compose', 'generate', 'make', 'create document'],
+  'code': ['code', 'program', 'function', 'script', 'debug', 'developer', 'developer'],
+  'data': ['data', ' spreadsheet', 'excel', 'csv', 'calculate', ' numbers', 'metrics'],
+  'research': ['research', 'search', 'find', 'information', 'learn about', 'investigate'],
+  'summarize': ['summarize', 'summary', 'overview', 'recap', 'brief'],
+  'translate': ['translate', 'language', 'español', 'english', 'spanish'],
+  'presentation': ['presentation', 'slides', 'powerpoint', 'pptx', 'deck'],
+  'email': ['email', 'correo', 'reply', 'message'],
+  'contract': ['contract', 'legal', 'agreement', 'terms', 'clause'],
+};
+
+export function matchGPTByIntent(userMessage: string, gpts: GPTSnapshot[]): GPTSnapshot | null {
+  if (!gpts || gpts.length === 0) return null;
+  
+  const lowerMessage = userMessage.toLowerCase();
+  const messageWords = lowerMessage.replace(/[^\w\s]/g, '').split(/\s+/);
+  
+  for (const [category, keywords] of Object.entries(GPT_KEYWORDS)) {
+    const matchedKeywords = keywords.filter(kw => {
+      const cleanKw = kw.replace(' ', '');
+      return messageWords.some(w => w.includes(cleanKw) || cleanKw.includes(w));
+    });
+    
+    if (matchedKeywords.length > 0) {
+      const matchedGPT = gpts.find(gpt => {
+        const gptDesc = (gpt.description || '').toLowerCase();
+        const gptName = (gpt.name || '').toLowerCase();
+        const gptInstr = (gpt.instructions || '').toLowerCase();
+        const combined = `${gptName} ${gptDesc} ${gptInstr}`;
+        
+        const categoryMatch = 
+          (category === 'code' && (combined.includes('code') || combined.includes('programming') || combined.includes('developer'))) ||
+          (category === 'write' && (combined.includes('write') || combined.includes('content') || combined.includes('draft'))) ||
+          (category === 'data' && (combined.includes('data') || combined.includes('excel') || combined.includes('analytics') || combined.includes('spreadsheet'))) ||
+          (category === 'research' && (combined.includes('research') || combined.includes('search') || combined.includes('web'))) ||
+          (category === 'analyze' && (combined.includes('analyze') || combined.includes('review') || combined.includes('audit') || combined.includes('examine'))) ||
+          (category === 'translate' && (combined.includes('translate') || combined.includes('language') || combined.includes('spanish') || combined.includes('english'))) ||
+          (category === 'presentation' && (combined.includes('presentation') || combined.includes('slides') || combined.includes('deck') || combined.includes('powerpoint'))) ||
+          (category === 'email' && (combined.includes('email') || combined.includes('correo') || combined.includes('mail'))) ||
+          (category === 'contract' && (combined.includes('legal') || combined.includes('contract') || combined.includes('agreement'))) ||
+          (category === 'summarize' && (combined.includes('summary') || combined.includes('overview') || combined.includes('recap')));
+        
+        const keywordMatch = matchedKeywords.some(kw => {
+          const cleanKw = kw.replace(/[^\w]/g, '');
+          return combined.includes(cleanKw);
+        });
+        
+        return categoryMatch || keywordMatch;
+      });
+      
+      if (matchedGPT) return matchedGPT;
+    }
+  }
+  
+  return null;
 }
 

@@ -29,6 +29,7 @@ export function GPTsGenerator({ onClose, onSelect, theme, isMobile = false }: { 
   const [description, setDescription] = useState('');
   const [instructions, setInstructions] = useState('');
   const [isPublic, setIsPublic] = useState(false);
+  const [visibility, setVisibility] = useState<'personal' | 'company'>('personal');
   const [files, setFiles] = useState<ProcessedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -40,15 +41,17 @@ export function GPTsGenerator({ onClose, onSelect, theme, isMobile = false }: { 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
 
   const isAdmin = profile?.role === 'admin' || profile?.role === 'super-admin';
+  const companyId = profile?.companyId;
+  const canCreateCompanyGPT = isAdmin && companyId;
 
   useEffect(() => {
     if (!user) return;
     const unsubscribe = subscribeToGPTs(user.uid, (gpts) => {
       const uniqueGpts = Array.from(new Map(gpts.map(g => [g.id, g])).values());
       setSavedGPTs(uniqueGpts.sort((a, b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0)));
-    });
+    }, companyId);
     return () => unsubscribe();
-  }, [user]);
+  }, [user, companyId]);
 
 const handleSave = async () => {
     if (!user || !name) return;
@@ -56,12 +59,13 @@ const handleSave = async () => {
     setSaveStatus('idle');
     try {
       const gptData: any = {
-        // Only include id if we're updating an existing GPT (not null for new ones)
         ...(currentGptId && { id: currentGptId }),
         name: name || '',
         description: description || '',
         instructions: instructions || '',
         isPublic: isAdmin ? isPublic : false,
+        visibility: visibility,
+        companyId: visibility === 'company' ? companyId : null,
         files: files.map(f => ({ 
           name: f.name || '', 
           size: f.size || '', 
@@ -70,18 +74,15 @@ const handleSave = async () => {
         }))
       };
       
-      // Remove any undefined values just to be absolutely safe
       Object.keys(gptData).forEach(key => gptData[key] === undefined && delete gptData[key]);
       
-      // Add a timeout to prevent infinite hanging
-      const savePromise = saveGPT(user.uid, gptData);
+      const savePromise = saveGPT(user.uid, gptData, visibility === 'company' ? companyId : undefined);
       const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout saving GPT")), 10000));
       
       const id = await Promise.race([savePromise, timeoutPromise]) as string;
       if (id) { 
         setCurrentGptId(id); 
         setSaveStatus('saved'); 
-        // Reset to idle after showing success
         setTimeout(() => setSaveStatus('idle'), 2000);
       }
     } catch (error) {
@@ -91,14 +92,15 @@ const handleSave = async () => {
       setIsSaving(false);
       setTimeout(() => setSaveStatus('idle'), 3000);
     }
-};
+  };
 
-  const handleNew = () => {
+const handleNew = () => {
     setCurrentGptId(null);
     setName('');
     setDescription('');
     setInstructions('');
     setIsPublic(false);
+    setVisibility('personal');
     setFiles([]);
   };
 
@@ -108,6 +110,7 @@ const handleSave = async () => {
     setDescription(gpt.description || '');
     setInstructions(gpt.instructions || '');
     setIsPublic(gpt.isPublic || false);
+    setVisibility(gpt.visibility || 'personal');
     setFiles(gpt.files || []);
   };
 
@@ -171,7 +174,10 @@ const handleSave = async () => {
     }
   };
 
-  const GPTCard = ({ gpt }: { gpt: any }) => (
+  const GPTCard = ({ gpt }: { gpt: any }) => {
+    const isCompanyGPT = gpt.visibility === 'company' && gpt.companyId;
+    const canDelete = gpt.userId === user?.uid || profile?.role === 'super-admin';
+    return (
     <button 
       onClick={() => loadGPT(gpt)}
       className={cn("w-full p-4 rounded-2xl border text-left transition-all group relative",
@@ -181,10 +187,13 @@ const handleSave = async () => {
       )}
     >
       <div className="flex justify-between items-start mb-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <p className="text-xs font-black tracking-tight">{gpt.name}</p>
             {gpt.isPublic && (
-              <span className="text-[7px] font-black bg-emerald-500/10 text-emerald-500 px-1.5 py-0.5 rounded uppercase tracking-tighter">Shared</span>
+              <span className="text-[7px] font-black bg-blue-500/10 text-blue-500 px-1.5 py-0.5 rounded uppercase tracking-tighter">Global</span>
+            )}
+            {isCompanyGPT && (
+              <span className="text-[7px] font-black bg-emerald-500/10 text-emerald-500 px-1.5 py-0.5 rounded uppercase tracking-tighter">Company</span>
             )}
           </div>
           <div className="flex items-center gap-1">
@@ -198,7 +207,7 @@ const handleSave = async () => {
             >
                 <Sparkles size={14} />
             </button>
-            {(gpt.userId === user?.uid || profile?.role === 'super-admin') && (
+            {canDelete && (
               <button 
                 onClick={(e) => handleDelete(e, gpt.id)}
                 className="opacity-0 group-hover:opacity-100 p-1 text-slate-600 hover:text-red-500 transition-all"
@@ -211,6 +220,7 @@ const handleSave = async () => {
       <p className="text-[10px] opacity-60 line-clamp-2 leading-relaxed font-medium">{gpt.description || 'No description provided'}</p>
     </button>
   );
+};
 
   return (
     <div className={cn("flex-1 flex flex-col h-full transition-colors duration-500 relative z-50",
@@ -342,22 +352,39 @@ const handleSave = async () => {
                   />
                </div>
 
-               {isAdmin && (
-                 <div className={cn("p-6 rounded-3xl border flex items-center justify-between",
-                   theme === 'dark' ? "bg-white/5 border-white/5 shadow-xl" : "bg-white border-slate-100 shadow-sm"
-                 )}>
-                    <div className="flex items-center gap-4">
-                       <ShieldCheck size={20} className="text-blue-600" />
-                       <div>
-                          <p className="text-[10px] font-black uppercase text-blue-600 tracking-widest">Enterprise Availability</p>
-                          <p className="text-xs font-bold text-slate-500">Make this global for all users.</p>
-                       </div>
-                    </div>
-                    <button onClick={() => setIsPublic(!isPublic)} className={cn("px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", isPublic ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-400")}>
-                       {isPublic ? 'GLOBAL ACTIVE' : 'PRIVATE'}
-                    </button>
-                 </div>
-               )}
+{isAdmin && (
+                  <div className={cn("p-6 rounded-3xl border flex items-center justify-between",
+                    theme === 'dark' ? "bg-white/5 border-white/5 shadow-xl" : "bg-white border-slate-100 shadow-sm"
+                  )}>
+                     <div className="flex items-center gap-4">
+                        <ShieldCheck size={20} className="text-blue-600" />
+                        <div>
+                           <p className="text-[10px] font-black uppercase text-blue-600 tracking-widest">Enterprise Availability</p>
+                           <p className="text-xs font-bold text-slate-500">Make this global for all users.</p>
+                        </div>
+                     </div>
+                     <button onClick={() => setIsPublic(!isPublic)} className={cn("px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", isPublic ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-400")}>
+                        {isPublic ? 'GLOBAL ACTIVE' : 'PRIVATE'}
+                     </button>
+                  </div>
+                )}
+
+                {canCreateCompanyGPT && (
+                  <div className={cn("p-6 rounded-3xl border flex items-center justify-between",
+                    theme === 'dark' ? "bg-white/5 border-white/5 shadow-xl" : "bg-white border-slate-100 shadow-sm"
+                  )}>
+                     <div className="flex items-center gap-4">
+                        <Database size={20} className="text-emerald-600" />
+                        <div>
+                           <p className="text-[10px] font-black uppercase text-emerald-600 tracking-widest">Company GPT</p>
+                           <p className="text-xs font-bold text-slate-500">Share with your company team.</p>
+                        </div>
+                     </div>
+                     <button onClick={() => setVisibility(visibility === 'company' ? 'personal' : 'company')} className={cn("px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", visibility === 'company' ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-400")}>
+                        {visibility === 'company' ? 'COMPANY' : 'PERSONAL'}
+                     </button>
+                  </div>
+                )}
 
                <div className="space-y-4">
                   <div className="flex items-center justify-between px-2">

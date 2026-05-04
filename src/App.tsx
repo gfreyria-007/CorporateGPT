@@ -56,7 +56,7 @@ import { LandingPage } from './components/LandingPage';
 import { SalesLanding } from './components/SalesLanding';
 import { Message, ModelMetadata } from './types';
 import { useAuth } from './lib/AuthContext';
-import { flagUser, SUPER_ADMIN_EMAIL } from './lib/db';
+import { flagUser, SUPER_ADMIN_EMAIL, subscribeToGPTs, matchGPTByIntent } from './lib/db';
 import { db } from './lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { cn } from './lib/utils';
@@ -101,6 +101,7 @@ export default function App() {
   const [safetyAlert, setSafetyAlert] = useState<string | null>(null);
   const [dataProtectionEnabled, setDataProtectionEnabled] = useState(false);
   const [selectedGPT, setSelectedGPT] = useState<any | null>(null);
+  const [availableGPTs, setAvailableGPTs] = useState<any[]>([]);
   const [isPromptGenieOpen, setIsPromptGenieOpen] = useState(false);
   const [isAdvancedPanelOpen, setIsAdvancedPanelOpen] = useState(false);
   const [advancedSettings, setAdvancedSettings] = useState({
@@ -225,6 +226,15 @@ export default function App() {
     document.documentElement.classList.toggle('dark', theme === 'dark');
   }, [theme]);
 
+  useEffect(() => {
+    if (!user?.uid) return;
+    const companyId = profile?.companyId;
+    const unsubscribe = subscribeToGPTs(user.uid, (gpts) => {
+      setAvailableGPTs(gpts);
+    }, companyId);
+    return () => unsubscribe();
+  }, [user?.uid, profile?.companyId]);
+
   const fetchModels = async () => {
     try {
       const response = await fetch('/api/models');
@@ -303,8 +313,17 @@ export default function App() {
       if (appMode === 'junior') {
         juniorContext = "\n\n[PERSONA: JUNIOR TUTOR]\nActúa como un tutor educativo amigable, paciente y alentador para niños. Utiliza lenguaje sencillo, ejemplos creativos y evita temas complejos o inapropiados para menores. Fomenta la curiosidad y explica conceptos paso a paso.";
       }
+
+      let activeGPT = selectedGPT;
+      if (!activeGPT && availableGPTs.length > 0 && finalContent.length > 10) {
+        const matchedGPT = matchGPTByIntent(finalContent, availableGPTs);
+        if (matchedGPT) {
+          activeGPT = matchedGPT;
+          setSelectedGPT(matchedGPT);
+        }
+      }
       
-      const fullInstructions = [selectedGPT?.instructions, fileContext, juniorContext]
+      const fullInstructions = [activeGPT?.instructions, fileContext, juniorContext]
         .filter(Boolean)
         .join('\n\n[KNOWLEDGE_BASE_ATTACHMENT]\n');
 
