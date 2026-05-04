@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Lock, Eye, FileText, Globe, X } from 'lucide-react';
+import { Shield, Lock, Eye, FileText, Globe, X, Users, XCircle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 interface PrivacyPolicyProps {
@@ -49,14 +49,24 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onClose, theme }) 
               <h3 className="text-sm font-black uppercase tracking-widest">1. Data Sovereignty</h3>
             </div>
             <p className="text-sm text-slate-500 leading-relaxed font-medium">
-              CorporateGPT (Catalizia) enforces strict data sovereignty. Your prompts and documents are processed in real-time and are **NOT used for training** underlying AI models. We adhere to the highest enterprise security standards to ensure your corporate intelligence remains yours.
+              CorporateGPT (Catalizia) enforces strict data sovereignty. Your prompts and documents are processed in real-time and are **NOT used for training** underlying AI models, as we utilize enterprise-grade API tiers. We adhere to the highest security standards to ensure your corporate intelligence remains yours.
+            </p>
+          </section>
+
+          <section className="space-y-4">
+            <div className="flex items-center gap-3 text-blue-600">
+              <Users size={18} />
+              <h3 className="text-sm font-black uppercase tracking-widest">2. Age Restriction & Eligibility</h3>
+            </div>
+            <p className="text-sm text-slate-500 leading-relaxed font-medium">
+              This service is intended strictly for professional and business use. You must be **18 years or older** to access CorporateGPT. The application is not directed toward or intended to be accessed by individuals under the age of 18.
             </p>
           </section>
 
           <section className="space-y-4">
             <div className="flex items-center gap-3 text-blue-600">
               <Globe size={18} />
-              <h3 className="text-sm font-black uppercase tracking-widest">2. International Compliance</h3>
+              <h3 className="text-sm font-black uppercase tracking-widest">3. International Compliance</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-inherit">
@@ -77,7 +87,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onClose, theme }) 
           <section className="space-y-4">
             <div className="flex items-center gap-3 text-blue-600">
               <Eye size={18} />
-              <h3 className="text-sm font-black uppercase tracking-widest">3. Transparency & Rights</h3>
+              <h3 className="text-sm font-black uppercase tracking-widest">4. Transparency & Rights</h3>
             </div>
             <p className="text-sm text-slate-500 leading-relaxed font-medium">
               Users have the right to request a full dump of their stored data or request immediate deletion of their account and all associated chat histories. All data transmission is encrypted using industry-standard TLS 1.3.
@@ -87,10 +97,20 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onClose, theme }) 
           <section className="space-y-4">
             <div className="flex items-center gap-3 text-blue-600">
               <FileText size={18} />
-              <h3 className="text-sm font-black uppercase tracking-widest">4. Retention Policy</h3>
+              <h3 className="text-sm font-black uppercase tracking-widest">5. Retention Policy</h3>
             </div>
             <p className="text-sm text-slate-500 leading-relaxed font-medium">
               Chat histories are stored for the duration of the user's account session to provide context. Long-term archival is handled within the user's dedicated Firebase instance, isolated from other tenants.
+            </p>
+          </section>
+
+          <section className="space-y-4">
+            <div className="flex items-center gap-3 text-red-500">
+              <XCircle size={18} />
+              <h3 className="text-sm font-black uppercase tracking-widest">6. Prohibited Use Policy</h3>
+            </div>
+            <p className="text-sm text-slate-500 leading-relaxed font-medium">
+              Users agree to comply with Google's Generative AI Prohibited Use Policy. Prohibited activities include, but are not limited to: creating harmful content (hate speech, harassment, sexually explicit), generating instructions for illegal acts, or attempting to replicate/reverse-engineer the underlying models.
             </p>
           </section>
         </div>

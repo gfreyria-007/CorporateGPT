@@ -374,35 +374,54 @@ async function startServer() {
 
       console.log(`[API/CHAT] Requesting model: ${model || 'openrouter/auto'}`);
 
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-          'HTTP-Referer': process.env.APP_URL || 'https://corporategpt.catalizia.com',
-          'X-Title': 'Catalizia CorporateGPT',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: model || 'openrouter/auto',
-          messages: [{ role: 'system', content: systemContent }, ...messages],
-          temperature: temperature ?? 0.7,
-          max_tokens: maxTokens ?? 4000,
-        }),
-        signal: controller.signal
-      });
+      const fallbackModels = [
+        model || 'openrouter/auto',
+        'anthropic/claude-3.5-sonnet',
+        'openai/gpt-4o',
+        'google/gemini-2.0-pro-exp-02-05:free',
+        'mistralai/mistral-large'
+      ];
 
-      clearTimeout(timeout);
+      let lastError = null;
+      for (const currentModel of fallbackModels) {
+        try {
+          console.log(`[API/CHAT] Trying Option: ${currentModel}`);
+          const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+              'HTTP-Referer': process.env.APP_URL || 'https://corporategpt.catalizia.com',
+              'X-Title': 'Catalizia CorporateGPT',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: currentModel,
+              messages: [{ role: 'system', content: systemContent }, ...messages],
+              temperature: temperature ?? 0.7,
+              max_tokens: maxTokens ?? 4000,
+            }),
+            signal: controller.signal
+          });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('[OPENROUTER ERROR]:', response.status, JSON.stringify(errorData));
-        const errMsg = errorData.error?.message || errorData.error || `OpenRouter failed with status ${response.status}`;
-        throw new Error(typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error?.message || `Model ${currentModel} failed`);
+          }
+
+          const data = await response.json();
+          if (userId) await trackUsage(userId, false);
+          
+          clearTimeout(timeout);
+          return res.json({ ...data, modelUsed: currentModel });
+
+        } catch (err: any) {
+          console.warn(`[API/CHAT] Option ${currentModel} failed:`, err.message);
+          lastError = err.message;
+        }
       }
 
-      const data = await response.json();
-      if (userId) await trackUsage(userId, false);
-      res.json(data);
+      throw new Error(`All Chat models failed. Last error: ${lastError}`);
+
     } catch (error: any) {
       clearTimeout(timeout);
       const isTimeout = error.name === 'AbortError';
@@ -440,41 +459,56 @@ async function startServer() {
       }
 
       const { messages, instructions, temperature, model } = req.body;
-      const targetModel = model || 'gemini-1.5-flash-latest';
-      
-      console.log(`[FALLBACK] Engine: ${targetModel}`);
+      const fallbackModels = [
+        model || 'gemini-1.5-flash-latest',
+        'gemini-2.0-flash-lite-preview-02-05:free',
+        'gemini-1.5-flash',
+        'gemini-1.5-pro'
+      ];
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: messages.map((m: any) => ({
-            role: m.role === 'assistant' ? 'model' : 'user',
-            parts: [{ text: m.content }]
-          })),
-          generationConfig: { temperature: temperature ?? 0.7 },
-          systemInstruction: instructions ? { parts: [{ text: instructions }] } : undefined
-        }),
-        signal: controller.signal
-      });
+      let lastError = null;
+      for (const targetModel of fallbackModels) {
+        try {
+          console.log(`[FALLBACK] Attempting Engine: ${targetModel}`);
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: messages.map((m: any) => ({
+                role: m.role === 'assistant' ? 'model' : 'user',
+                parts: [{ text: m.content }]
+              })),
+              generationConfig: { temperature: temperature ?? 0.7 },
+              systemInstruction: instructions ? { parts: [{ text: instructions }] } : undefined
+            }),
+            signal: controller.signal
+          });
 
-      clearTimeout(timeout);
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error?.message || `Fallback ${targetModel} failed`);
+          }
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        console.error('[FALLBACK ENGINE ERROR]:', response.status, JSON.stringify(errData));
-        const errMsg = errData.error?.message || errData.error || response.statusText || 'Unknown failure';
-        throw new Error(`Fallback failed: ${typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg)}`);
+          const result = await response.json();
+          const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "";
+          
+          if (!text) throw new Error(`Empty response from ${targetModel}`);
+
+          console.log(`[FALLBACK] SUCCESS via ${targetModel}`);
+          clearTimeout(timeout);
+          
+          const { userId } = req.body;
+          if (userId) await trackUsage(userId, false);
+          
+          return res.json({ text, modelUsed: targetModel });
+
+        } catch (err: any) {
+          console.warn(`[FALLBACK] Engine ${targetModel} failed:`, err.message);
+          lastError = err.message;
+        }
       }
 
-      const result = await response.json();
-      const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      console.log('[FALLBACK] SUCCESS');
-      
-      const { userId } = req.body;
-      if (userId) await trackUsage(userId, false);
-      
-      res.json({ text });
+      throw new Error(`All emergency fallback engines failed. Last error: ${lastError}`);
 
     } catch (error: any) {
       clearTimeout(timeout);
@@ -610,58 +644,98 @@ async function startServer() {
         // 5. Handle regular Content Generation
         } else if (action === 'generateContent') {
           const generationConfig = payload.config || payload.generationConfig || {};
-          const { systemInstruction, ...restConfig } = generationConfig;
+          const { systemInstruction: configSystemInstruction, ...restConfig } = generationConfig;
           
-          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || 'gemini-2.0-flash'}:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: payload.contents,
-              generationConfig: {
-                ...restConfig,
-                responseMimeType: restConfig.responseMimeType || (restConfig.responseModalities?.includes('IMAGE') ? undefined : "application/json")
-              },
-              systemInstruction: payload.systemInstruction || systemInstruction ? { parts: [{ text: payload.systemInstruction || systemInstruction }] } : undefined,
-              tools: payload.tools || [{ googleSearch: {} }]
-            })
-          });
+          const CHAT_MODELS = [
+            payload.model || 'gemini-2.0-flash',
+            'gemini-2.0-flash-lite',
+            'gemini-1.5-pro',
+            'gemini-1.5-flash'
+          ];
 
-          const responseText = await response.text();
-          let result;
-          try {
-            result = JSON.parse(responseText);
-          } catch (e) {
-            console.error("[SERVER] Failed to parse Gemini response:", responseText.substring(0, 500));
-            throw new Error(`Invalid response from Gemini: ${responseText.substring(0, 100)}`);
+          let lastError = null;
+          for (const model of CHAT_MODELS) {
+            try {
+              console.log(`[GEMINI PROXY] Trying Corporate Option: ${model}`);
+              const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  contents: payload.contents,
+                  generationConfig: {
+                    ...restConfig,
+                    responseMimeType: restConfig.responseMimeType || (restConfig.responseModalities?.includes('IMAGE') ? undefined : "application/json")
+                  },
+                  systemInstruction: payload.systemInstruction || configSystemInstruction ? { parts: [{ text: payload.systemInstruction || configSystemInstruction }] } : undefined,
+                  tools: payload.tools || [{ googleSearch: {} }]
+                })
+              });
+
+              if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.error?.message || `Model ${model} failed`);
+              }
+
+              const result = await response.json();
+              const hasImage = result.candidates?.[0]?.content?.parts?.some((p: any) => p.inlineData);
+              await trackUsage(userId, !!hasImage);
+
+              let rawText = '';
+              if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
+                rawText = result.candidates[0].content.parts[0].text;
+              }
+
+              const cleanJson = (rawText || '').replace(/```json/g, '').replace(/```/g, '').trim();
+              let parsedFields = {};
+              try {
+                if (cleanJson) parsedFields = JSON.parse(cleanJson);
+              } catch (e) {
+                console.warn("[GEMINI PROXY] JSON Parse warning:", e);
+              }
+
+              return res.status(200).json({ 
+                text: rawText, 
+                ...parsedFields,
+                candidates: result.candidates,
+                modelUsed: model,
+                _fairUseActive: fairUseLimit 
+              });
+            } catch (err: any) {
+              console.warn(`[GEMINI PROXY] Option ${model} failed:`, err.message);
+              lastError = err.message;
+            }
           }
 
-          if (!response.ok) {
-            console.error("[GEMINI PROXY] Gemini Error:", JSON.stringify(result));
-            throw new Error(result.error?.message || 'Gemini generation failed');
+          // ULTIMATE FAILOVER: Try OpenRouter if Google is completely down
+          if (process.env.OPENROUTER_API_KEY) {
+            console.warn("[GEMINI PROXY] GOOGLE DOWN. INITIATING OPENROUTER FAILOVER...");
+            try {
+              const orResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                },
+                body: JSON.stringify({
+                  model: 'google/gemini-2.0-flash',
+                  messages: payload.contents.map((m: any) => ({
+                    role: m.role === 'model' ? 'assistant' : m.role,
+                    content: m.parts[0].text
+                  })),
+                  temperature: restConfig.temperature || 0.7
+                })
+              });
+              const orResult = await orResponse.json();
+              if (orResponse.ok) {
+                const text = orResult.choices?.[0]?.message?.content || '';
+                return res.status(200).json({ text, modelUsed: 'openrouter/failover' });
+              }
+            } catch (e: any) {
+              console.error("[GEMINI PROXY] Ultimate failover failed:", e.message);
+            }
           }
-          
-          const hasImage = result.candidates?.[0]?.content?.parts?.some((p: any) => p.inlineData);
-          await trackUsage(userId, !!hasImage);
 
-          let rawText = '';
-          if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
-            rawText = result.candidates[0].content.parts[0].text;
-          }
-
-          const cleanJson = (rawText || '').replace(/```json/g, '').replace(/```/g, '').trim();
-          let parsedFields = {};
-          try {
-            if (cleanJson) parsedFields = JSON.parse(cleanJson);
-          } catch (e) {
-            console.warn("[GEMINI PROXY] JSON Parse warning:", e);
-          }
-
-          return res.status(200).json({ 
-            text: rawText, 
-            ...parsedFields,
-            candidates: result.candidates,
-            _fairUseActive: fairUseLimit 
-          });
+          return res.status(500).json({ error: 'GEN_FAILED', details: lastError || 'All models exhausted' });
         } else if (action === 'chat') {
          // Simplified chat for local proxy
          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || 'gemini-2.0-flash'}:generateContent?key=${apiKey}`, {
@@ -688,6 +762,132 @@ async function startServer() {
     } catch (error: any) {
       console.error('Gemini proxy error:', error);
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  // --- 7. TECHIE PROXY (OpenRouter for Junior/Kid-friendly) ---
+  app.post('/api/techie', async (req, res) => {
+    const userId = await extractUserId(req);
+    const { action, payload } = req.body;
+
+    if (!OPENROUTER_API_KEY) {
+      console.error("[TECHIE PROXY] Missing OPENROUTER_API_KEY");
+      return res.status(500).json({ error: 'OPENROUTER_KEY_MISSING' });
+    }
+
+    try {
+      console.log(`[TECHIE PROXY] Action: ${action}`);
+
+      // --- IMMORTAL FALLBACK SYSTEM FOR TEXT (NON-GEMINI FOR TECHIE) ---
+      if (action === 'chat' || action === 'generateContent') {
+        const textModels = [
+          payload.model || 'meta-llama/llama-3.1-8b-instruct:free',      // Option A
+          'mistralai/mistral-7b-instruct:free',                          // Option B
+          'meta-llama/llama-3.3-70b-instruct',                             // Option C
+          'anthropic/claude-3-haiku',                                      // Option D
+          'mistralai/pixtral-12b'                                          // Last Resort
+        ];
+
+        let lastError = null;
+        for (const model of textModels) {
+          try {
+            console.log(`[TECHIE PROXY] Trying Text Option: ${model}`);
+            const messages = payload.contents || payload.history || [];
+            const formattedMessages = messages.map((m: any) => ({
+              role: m.role === 'model' ? 'assistant' : m.role,
+              content: typeof m.parts?.[0]?.text === 'string' ? m.parts[0].text : m.content
+            }));
+
+            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+                'HTTP-Referer': 'https://catalizia.com',
+                'X-Title': 'Catalizia Techie'
+              },
+              body: JSON.stringify({
+                model,
+                messages: [
+                  { role: 'system', content: payload.systemInstruction || 'You are Techie, a helpful educational assistant for children.' },
+                  ...formattedMessages
+                ],
+                response_format: payload.useJson ? { type: 'json_object' } : undefined,
+                temperature: payload.temperature || 0.7
+              })
+            });
+
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error?.message || `Model ${model} failed`);
+
+            await trackUsage(userId, false);
+            const text = result.choices?.[0]?.message?.content || '';
+            return res.status(200).json({ text, modelUsed: model });
+          } catch (err: any) {
+            console.warn(`[TECHIE PROXY] Option ${model} failed:`, err.message);
+            lastError = err.message;
+          }
+        }
+        throw new Error(`All Techie Text models failed. Last error: ${lastError}`);
+      }
+
+      // --- IMMORTAL FALLBACK SYSTEM FOR IMAGES (NON-GEMINI FOR TECHIE) ---
+      if (action === 'generateImage') {
+        const imageModels = [
+          payload.model || 'black-forest-labs/flux-1-schnell', // Option A
+          'black-forest-labs/flux-pro',                        // Option B
+          'openai/dall-e-3',                                   // Option C
+          'stabilityai/stable-diffusion-xl-base-1.0'           // Option D
+        ];
+
+        let lastError = null;
+        for (const model of imageModels) {
+          try {
+            console.log(`[TECHIE PROXY] Trying Image Option: ${model}`);
+            const isMultimodal = model.includes('gemini');
+            
+            const body: any = {
+              model,
+              messages: [{ role: 'user', content: payload.prompt }]
+            };
+
+            if (isMultimodal) {
+              body.modalities = ["image"];
+              body.image_config = { aspect_ratio: payload.aspectRatio || '1:1' };
+            } else {
+              body.image_config = { aspect_ratio: payload.aspectRatio || '1:1' };
+            }
+
+            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`,
+              },
+              body: JSON.stringify(body)
+            });
+
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error?.message || `Model ${model} failed`);
+
+            await trackUsage(userId, true);
+            const imageBase64 = result.choices?.[0]?.message?.content || result.choices?.[0]?.message?.image_url;
+            if (!imageBase64) throw new Error("No image data returned");
+
+            return res.status(200).json({ imageBase64, modelUsed: model });
+          } catch (err: any) {
+            console.warn(`[TECHIE PROXY] Image Option ${model} failed:`, err.message);
+            lastError = err.message;
+          }
+        }
+        throw new Error(`All Techie Image models failed. Last error: ${lastError}`);
+      }
+
+      return res.status(400).json({ error: 'INVALID_ACTION' });
+
+    } catch (error: any) {
+      console.error("[TECHIE PROXY] Critical Error:", error.message);
+      return res.status(500).json({ error: 'TECHIE_FAILED', details: error.message });
     }
   });
 

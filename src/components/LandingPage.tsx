@@ -289,6 +289,12 @@ export const LandingPage = ({
               </button>
             </div>
 
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest pt-4">
+              {lang === 'es' 
+                ? 'Al iniciar sesión, confirmas que eres mayor de 18 años y aceptas nuestras Políticas de Privacidad y Cumplimiento.' 
+                : 'By signing in, you confirm you are 18+ years old and agree to our Privacy & Compliance policies.'}
+            </p>
+
             <div className="hero-p flex items-center gap-8 pt-10 text-[11px] font-black uppercase tracking-widest text-slate-500">
               <span className="flex items-center gap-2 group cursor-help hover:text-emerald-400 transition-colors"><CheckCircle2 size={16} className="text-emerald-500 group-hover:scale-125 transition-transform"/> Google Gemini</span>
               <span className="flex items-center gap-2 group cursor-help hover:text-emerald-400 transition-colors"><CheckCircle2 size={16} className="text-emerald-500 group-hover:scale-125 transition-transform"/> Privacidad</span>
