@@ -32,11 +32,11 @@ export const MAY_2026_PROMO = {
 
 // ─── Daily Quota Limits per Tier ─────────────────────────────────────────────
 export const DAILY_QUOTA_LIMITS = {
-  starter:      { tokens: 20_000, multimedia: 5 },
-  professional: { tokens: 20_000, multimedia: 5 },
-  family_mega:  { tokens: 95_000, multimedia: 50 }, // $75 more in tokens than Starter
+  starter:      { tokens: 50_000, multimedia: 15 },
+  professional: { tokens: 75_000, multimedia: 25 },
+  family_mega:  { tokens: 150_000, multimedia: 75 }, // family bundle
   enterprise:   { tokens: 100_000, multimedia: 30 },
-  trial:        { tokens: 5_000, multimedia: 2 },
+  trial:        { tokens: 10_000, multimedia: 5 },
 };
 
 // ─── Multimedia Credit Costs ──────────────────────────────────────────────────
