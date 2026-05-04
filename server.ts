@@ -50,17 +50,19 @@ const trackUsage = async (userId: string | null | undefined, isImage: boolean) =
     const batch = db.batch();
     
     // Update Daily Quota (V2)
+    const quotaRef = db.collection('users').doc(userId).collection('quota').doc('daily');
     if (isImage) {
-      const quotaRef = db.collection('users').doc(userId).collection('quota').doc('daily');
       batch.set(quotaRef, { multimediaUsed: admin.firestore.FieldValue.increment(1) }, { merge: true });
+    } else {
+      batch.set(quotaRef, { tokensUsed: admin.firestore.FieldValue.increment(1000) }, { merge: true }); // Default increment for chat if not specified
     }
     
     // Update Global Legacy Counter (V1)
     const userRef = db.collection('users').doc(userId);
-    batch.update(userRef, { 
+    batch.set(userRef, { 
       [isImage ? 'imagesUsed' : 'queriesUsed']: admin.firestore.FieldValue.increment(1),
       lastActive: admin.firestore.FieldValue.serverTimestamp()
-    });
+    }, { merge: true });
     
     await batch.commit();
     console.log(`[QUOTA] Successfully tracked ${isImage ? 'multimedia' : 'query'} for user ${userId}`);
@@ -493,8 +495,16 @@ async function startServer() {
         return res.status(500).json({ error: 'GEMINI_API_KEY is missing in local server' });
       }
 
-      const { action, payload } = req.body;
+      let { action, payload } = req.body;
+      
+      // AUTO-NORMALIZATION: If payload is missing but action exists, treat req.body as payload
+      if (!payload && action) {
+        const { action: _, ...rest } = req.body;
+        payload = rest;
+      }
+
       if (!action || !payload) {
+        console.warn("[GEMINI] Missing action or payload in request:", JSON.stringify(req.body));
         return res.status(400).json({ error: 'Missing action or payload' });
       }
 
@@ -526,6 +536,7 @@ async function startServer() {
             finalModel,
             'imagen-4.0-fast-generate-001',
             'imagen-4.0-generate-001',
+            'imagen-4.0-ultra-generate-001',
             'imagen-3.0-fast-generate-001',
             'imagen-3.0-generate-001'
           ].filter(Boolean) as string[];
@@ -539,12 +550,12 @@ async function startServer() {
               
               const parameters: any = { 
                 sampleCount: 1,
-                aspectRatio: payload.aspectRatio || '1:1',
-                safetySetting: 'block_none'
+                aspectRatio: payload.aspectRatio || '1:1'
               };
               if (payload.maskImage) parameters.mask = { image: { bytesBase64Encoded: payload.maskImage } };
               
-              const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:predict?key=${apiKey}`, {
+              const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:predict?key=${apiKey}`;
+              const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ instances: [instance], parameters })
@@ -557,10 +568,11 @@ async function startServer() {
                   await trackUsage(userId, true);
                   return res.status(200).json(result);
                 }
+              } else {
+                const errBody = await response.json().catch(() => ({}));
+                console.warn(`[IMAGEN] Model ${model} failed with status ${response.status}:`, JSON.stringify(errBody));
+                lastError = errBody.error?.message || `Status ${response.status}`;
               }
-              const errBody = await response.json().catch(() => ({}));
-              console.warn(`[IMAGEN] Model ${model} failed:`, errBody.error?.message || response.status);
-              lastError = errBody.error?.message || `Status ${response.status}`;
             } catch (err: any) {
               console.error(`[IMAGEN] Request failed for ${model}:`, err.message);
               lastError = err.message;
@@ -595,10 +607,8 @@ async function startServer() {
           }
 
           return res.status(500).json({ error: 'IMAGE_GEN_FAILED', details: lastError || 'All models exhausted' });
-        }
-
         // 5. Handle regular Content Generation
-        if (action === 'generateContent') {
+        } else if (action === 'generateContent') {
           const generationConfig = payload.config || payload.generationConfig || {};
           const { systemInstruction, ...restConfig } = generationConfig;
           
@@ -652,9 +662,7 @@ async function startServer() {
             candidates: result.candidates,
             _fairUseActive: fairUseLimit 
           });
-        }
-
-      } else if (action === 'chat') {
+        } else if (action === 'chat') {
          // Simplified chat for local proxy
          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${payload.model || 'gemini-2.0-flash'}:generateContent?key=${apiKey}`, {
           method: 'POST',

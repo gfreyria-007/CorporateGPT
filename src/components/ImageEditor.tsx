@@ -531,6 +531,10 @@ Make it look like a premium, professionally designed asset that could be used in
       }
 
       // Handle response (could be from Imagen predict or Gemini generateContent)
+      if (!imgRes) {
+        throw new Error('Servidor no respondió. Por favor intenta de nuevo.');
+      }
+
       const imageBase64 = imgRes.imageBase64 || 
                          imgRes.predictions?.[0]?.bytesBase64Encoded || 
                          imgRes.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData)?.inlineData?.data;

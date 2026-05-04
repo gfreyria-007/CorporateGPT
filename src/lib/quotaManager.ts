@@ -34,7 +34,9 @@ export const MAY_2026_PROMO = {
 export const DAILY_QUOTA_LIMITS = {
   starter:      { tokens: 50_000, multimedia: 15 },
   professional: { tokens: 75_000, multimedia: 25 },
-  family_mega:  { tokens: 150_000, multimedia: 75 }, // family bundle
+  starter_family: { tokens: 75_000, multimedia: 30 },   // +25 MXN = Starter + Family
+  professional_family: { tokens: 125_000, multimedia: 50 }, // +75 MXN = Professional + Family
+  family_mega:  { tokens: 150_000, multimedia: 75 },   // $299 MXN - full family bundle
   enterprise:   { tokens: 100_000, multimedia: 30 },
   trial:        { tokens: 10_000, multimedia: 5 },
 };
@@ -99,9 +101,18 @@ export interface DailyQuota {
  * Get or initialize today's quota for a user.
  * If the stored date differs from today (Mexico), auto-resets the counters.
  */
+/**
+ * Get daily quota limits for a given tier.
+ */
+export function getDailyQuotaLimit(tier: SubscriptionTier): { tokens: number; multimedia: number } {
+  return DAILY_QUOTA_LIMITS[tier] || DAILY_QUOTA_LIMITS.trial;
+}
+
+export type SubscriptionTier = 'starter' | 'professional' | 'starter_family' | 'professional_family' | 'family_mega' | 'enterprise' | 'trial';
+
 export async function getDailyQuota(
   uid: string,
-  tier: 'starter' | 'professional' | 'enterprise' | 'trial' = 'trial'
+  tier: SubscriptionTier = 'trial'
 ): Promise<DailyQuota> {
   const ref = quotaRef(uid);
   const todayMX = getMexicoDateString();
@@ -152,7 +163,7 @@ export async function getDailyQuota(
 export async function consumeTokens(
   uid: string,
   tokensConsumed: number,
-  tier: 'starter' | 'professional' | 'enterprise' | 'trial' = 'trial'
+  tier: SubscriptionTier = 'trial'
 ): Promise<DailyQuota> {
   const ref = quotaRef(uid);
   const quota = await getDailyQuota(uid, tier);
@@ -226,7 +237,7 @@ export async function purchaseTopUp(uid: string, amountMXN: number = 50): Promis
 export async function consumeMultimediaCredits(
   uid: string,
   credits: number,
-  tier: 'starter' | 'professional' | 'enterprise' | 'trial' = 'trial'
+  tier: SubscriptionTier = 'trial'
 ): Promise<{ success: boolean; remaining: number }> {
   const ref = quotaRef(uid);
   const quota = await getDailyQuota(uid, tier);
