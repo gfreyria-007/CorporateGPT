@@ -3,7 +3,7 @@ import {
   auth, db, googleProvider, appleProvider, signInWithPopup, signOut, onAuthStateChanged, 
   doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, FirebaseUser,
   collection, query, where, getDocs, sendEmailVerification
-} from '../firebase';
+} from '../../../lib/firebase';
 import { UserProfile, Grade } from '../types';
 import { GRADES } from '../constants';
 import { logger } from '../logger';
