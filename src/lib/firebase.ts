@@ -16,7 +16,9 @@ const firebaseConfig = {
 
 // Log initialization source for debugging
 if (typeof window !== 'undefined') {
-  console.log(`[FIREBASE] Initialized with config source: ${config.VITE_FIREBASE_API_KEY ? 'Server' : 'Build'}`);
+  const source = config.VITE_FIREBASE_API_KEY ? 'Server' : 'Build';
+  const maskedKey = firebaseConfig.apiKey ? `${firebaseConfig.apiKey.substring(0, 5)}...` : 'MISSING';
+  console.log(`[FIREBASE] Source: ${source} | Key: ${maskedKey} | Domain: ${firebaseConfig.authDomain}`);
 }
 
 let app;

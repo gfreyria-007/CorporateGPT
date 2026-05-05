@@ -981,7 +981,11 @@ async function startServer() {
         };
 
         const configScript = `<script>window.ENV_CONFIG = ${JSON.stringify(envConfig)};</script>`;
-        html = html.replace('</title>', `</title>${configScript}`);
+        if (html.includes('<head>')) {
+          html = html.replace('<head>', `<head>${configScript}`);
+        } else {
+          html = configScript + html;
+        }
         
         res.send(html);
       } catch (e) {
