@@ -486,6 +486,9 @@ export const LandingPage = ({
       />
 
       {showEditor && <LandingEditor onClose={() => setShowEditor(false)} />}
+      <div className="py-8 text-center opacity-20 pointer-events-none">
+        <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">Neural Synthesis: REDIRECT_V1</p>
+      </div>
     </div>
   );
 };

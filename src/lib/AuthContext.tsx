@@ -121,44 +121,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async () => {
     if (isSigningIn) return;
     setIsSigningIn(true);
+    console.log("[AUTH] MODE: REDIRECT_V1 - Initiating Google Handshake...");
     try {
-      console.log("Initializing Google Auth Synthesis...");
-      const result = await signInWithPopup(auth, googleProvider);
-      const email = result.user.email;
-      console.log("Auth Success:", email);
-      
-      // Check trial status before allowing full access
-      if (email) {
-        const trialCheck = await checkTrialStatus(email);
-        if (!trialCheck.eligible) {
-          // Already used trial - log them out and show pricing
-          console.log("[Trial] Already used or expired for:", email);
-          await signOut(auth);
-          // Show trial ended modal by setting a flag in localStorage
-          localStorage.setItem('trial_blocked', 'true');
-          localStorage.setItem('blocked_email', email);
-          window.location.href = '/?status=trial_ended';
-          return;
-        }
-        
-        // Start new trial if eligible
-        await startTrial(email);
-      }
+      const { signInWithRedirect, GoogleAuthProvider } = await import('firebase/auth');
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      await signInWithRedirect(auth, provider);
     } catch (error: any) {
-      console.error("Neural Auth Error Details:", {
-        code: error.code,
-        message: error.message,
-        custom: "If you see 'auth/unauthorized-domain', please add 'corporate-gpt.vercel.app' to Firebase Authorized Domains."
-      });
-      
-      // Handle cancelled or closed popup gracefully
-      if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
-        console.log("Sign in cancelled by user or pending request.");
-      }
+      console.error("[AUTH] Fatal Neural Error:", error.code, error.message);
+      alert(`Error de Conexión: ${error.message}`);
     } finally {
       setIsSigningIn(false);
     }
   };
+
 
   const signInWithApple = async () => {
     if (isSigningIn) return;
