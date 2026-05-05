@@ -3,6 +3,7 @@ import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import { readFileSync } from 'fs';
 dotenv.config();
 import helmet from 'helmet';
 import cors from 'cors';
