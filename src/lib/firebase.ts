@@ -8,6 +8,8 @@ import {
   signOut, 
   onAuthStateChanged, 
   sendEmailVerification,
+  setPersistence,
+  browserLocalPersistence,
   User as FirebaseUser 
 } from 'firebase/auth';
 import { 
@@ -55,8 +57,12 @@ try {
   app = {} as FirebaseApp;
 }
 
-export const db: Firestore = getFirestore(app);
+export const db = getFirestore(app);
 export const auth = getAuth(app);
+
+// Set auth persistence to local (default, but explicit)
+setPersistence(auth, browserLocalPersistence).catch(e => console.warn("[FIREBASE] Persistence warning:", e));
+
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 export const appleProvider = new OAuthProvider('apple.com');

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, User, signInWithPopup, signOut, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, getRedirectResult } from 'firebase/auth';
+import { onAuthStateChanged, User, signInWithPopup, signOut, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
 import { auth, googleProvider, appleProvider } from './firebase';
 import { ensureUserRecord } from './db';
 import { handleFirestoreError, OperationType } from './db';
@@ -63,18 +63,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearTimeout(safetyTimer);
       return;
     }
-
-    const handleRedirectResult = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result?.user) {
-          console.log("[AUTH] Redirect result captured:", result.user.email);
-        }
-      } catch (error) {
-        console.error("[AUTH] Redirect result error:", error);
-      }
-    };
-    handleRedirectResult();
 
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
       clearTimeout(safetyTimer);
