@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { db, collection, query, where, getDocs, updateDoc, doc, setDoc, deleteDoc, onSnapshot, addDoc, serverTimestamp } from '../../../lib/firebase';
+import { db, collection, query, where, getDocs, updateDoc, doc, setDoc, deleteDoc, onSnapshot, addDoc, serverTimestamp, handleFirestoreError, OperationType } from '../../../lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import Papa from 'papaparse';
 
