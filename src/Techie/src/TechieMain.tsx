@@ -21,7 +21,7 @@ import SpaceAliensGame from './components/SpaceAliensGame';
 import MathLabModal from './components/MathLabModal';
 import MonthlyQuotaBanner from './components/MonthlyQuotaBanner';
 
-import { FirebaseUser } from './firebase';
+import { FirebaseUser } from '../../lib/firebase';
 
 import { 
   Role, Grade, ChatMode, ChatMessage, ExplorerSettings, 
