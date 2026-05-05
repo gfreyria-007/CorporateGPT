@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, User, signInWithPopup, signOut, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
-import { auth, googleProvider, appleProvider } from './firebase';
+import { onAuthStateChanged, User, signInWithPopup, signOut, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, GoogleAuthProvider } from 'firebase/auth';
+import { auth, appleProvider } from './firebase';
 import { ensureUserRecord } from './db';
 import { handleFirestoreError, OperationType } from './db';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -136,7 +136,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsSigningIn(true);
     console.log("[AUTH] MODE: POPUP - Initiating Google Handshake...");
     try {
-      const result = await signInWithPopup(auth, googleProvider);
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({
+        prompt: 'select_account',
+        ux_mode: 'popup'
+      });
+      const result = await signInWithPopup(auth, provider);
       console.log("[AUTH] Popup result:", result.user.email);
     } catch (error: any) {
       console.error("[AUTH] Fatal Neural Error:", error.code, error.message);
