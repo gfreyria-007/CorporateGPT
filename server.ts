@@ -84,7 +84,7 @@ if (process.env.NODE_ENV === 'production') {
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = process.env.PORT || 8080;
 
   // 1. Security Headers (CSP, HSTS, etc.)
   app.use(helmet({
