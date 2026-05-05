@@ -974,14 +974,15 @@ async function startServer() {
           VITE_FIREBASE_STORAGE_BUCKET: process.env.VITE_FIREBASE_STORAGE_BUCKET,
           VITE_FIREBASE_MESSAGING_SENDER_ID: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
           VITE_FIREBASE_APP_ID: process.env.VITE_FIREBASE_APP_ID,
-          STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
-          STRIPE_PROFESSIONAL_PRICE_ID: process.env.STRIPE_PROFESSIONAL_PRICE_ID,
-          STRIPE_STARTER_PRICE_ID: process.env.STRIPE_STARTER_PRICE_ID,
-          APP_URL: process.env.APP_URL || 'https://catalizia.com'
+          VITE_STRIPE_PUBLISHABLE_KEY: process.env.VITE_STRIPE_PUBLISHABLE_KEY,
         };
 
         const configScript = `<script>window.ENV_CONFIG = ${JSON.stringify(envConfig)};</script>`;
-        if (html.includes('<head>')) {
+        
+        // Try both locations for max compatibility
+        if (html.includes('</title>')) {
+          html = html.replace('</title>', `</title>${configScript}`);
+        } else if (html.includes('<head>')) {
           html = html.replace('<head>', `<head>${configScript}`);
         } else {
           html = configScript + html;
