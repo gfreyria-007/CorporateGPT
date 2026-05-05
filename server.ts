@@ -87,19 +87,27 @@ async function startServer() {
   const app = express();
   const PORT = process.env.PORT || 8080;
 
-  // 1. Security Headers (CSP, HSTS, etc.)
+// 1. Security Headers (CSP, HSTS, etc.)
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
         "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://*.googleapis.com", "https://apis.google.com", "https://*.firebaseapp.com", "https://www.googletagmanager.com"],
         "connect-src": ["'self'", "https://openrouter.ai", "https://*.googleapis.com", "https://*.firebaseio.com", "wss://*.firebaseio.com", "https://*.firebaseapp.com", "https://*.google-analytics.com", "ws://localhost:*", "http://localhost:*"],
-        "frame-src": ["'self'", "https://*.firebaseapp.com", "https://*.googleapis.com", "https://*.firebase.com"],
+        "frame-src": ["'self'", "https://*.firebaseapp.com", "https://*.googleapis.com", "https://*.google.com", "https://*.google.com/accounts", "https://accounts.google.com"],
         "img-src": ["'self'", "data:", "https:", "blob:", "https://*.googleusercontent.com"],
       },
     },
-    crossOriginEmbedderPolicy: false,
+    crossOriginEmbedderPolicy: { policy: "require-corp" },
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
   }));
+
+  // 1b. Additional headers for Firebase popup auth
+  app.use((req, res, next) => {
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+    res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+    next();
+  });
 
   // 2. CORS - Restrict to your domain in production
   app.use(cors({
