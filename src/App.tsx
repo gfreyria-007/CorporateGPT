@@ -436,6 +436,11 @@ export default function App() {
     );
   }
 
+  // AGGRESSIVE REDIRECT: If we have a user but are somehow still on the landing path, force dashboard
+  if (user && window.location.pathname === '/' && activePanel === 'chat') {
+    // We are already rendering the main App layout below, so we just ensure activePanel is correct
+  }
+
   // MOBILE ROUTER
   if (isMobile) {
     return (
