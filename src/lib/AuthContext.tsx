@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, User, signInWithPopup, signOut, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, GoogleAuthProvider } from 'firebase/auth';
+import { onAuthStateChanged, User, signInWithPopup, signOut, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, GoogleAuthProvider, getRedirectResult } from 'firebase/auth';
 import { auth, appleProvider } from './firebase';
 import { ensureUserRecord } from './db';
 import { handleFirestoreError, OperationType } from './db';
@@ -63,6 +63,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearTimeout(safetyTimer);
       return;
     }
+
+    // Handle redirect result from signInWithRedirect
+    getRedirectResult(auth).then(result => {
+      if (result?.user) {
+        console.log("[AUTH] Redirect result captured:", result.user.email);
+      }
+    }).catch(error => {
+      console.log("[AUTH] No redirect result (normal if using popup)");
+    });
 
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
       clearTimeout(safetyTimer);
@@ -134,15 +143,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async () => {
     if (isSigningIn) return;
     setIsSigningIn(true);
-    console.log("[AUTH] MODE: POPUP - Initiating Google Handshake...");
+    console.log("[AUTH] MODE: REDIRECT - Initiating Google Handshake...");
     try {
+      const { signInWithRedirect, GoogleAuthProvider } = await import('firebase/auth');
       const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({
-        prompt: 'select_account',
-        ux_mode: 'popup'
-      });
-      const result = await signInWithPopup(auth, provider);
-      console.log("[AUTH] Popup result:", result.user.email);
+      provider.setCustomParameters({ prompt: 'select_account' });
+      await signInWithRedirect(auth, provider);
     } catch (error: any) {
       console.error("[AUTH] Fatal Neural Error:", error.code, error.message);
       alert(`Error de Conexión: ${error.message}`);
