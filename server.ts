@@ -862,7 +862,7 @@ async function startServer() {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`,
+                'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
               },
               body: JSON.stringify(body)
             });
@@ -963,7 +963,30 @@ async function startServer() {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      try {
+        const htmlPath = path.join(distPath, 'index.html');
+        let html = readFileSync(htmlPath, 'utf-8');
+        
+        const envConfig = {
+          VITE_FIREBASE_API_KEY: process.env.VITE_FIREBASE_API_KEY,
+          VITE_FIREBASE_AUTH_DOMAIN: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+          VITE_FIREBASE_PROJECT_ID: process.env.VITE_FIREBASE_PROJECT_ID,
+          VITE_FIREBASE_STORAGE_BUCKET: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+          VITE_FIREBASE_MESSAGING_SENDER_ID: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+          VITE_FIREBASE_APP_ID: process.env.VITE_FIREBASE_APP_ID,
+          STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
+          STRIPE_PROFESSIONAL_PRICE_ID: process.env.STRIPE_PROFESSIONAL_PRICE_ID,
+          STRIPE_STARTER_PRICE_ID: process.env.STRIPE_STARTER_PRICE_ID,
+          APP_URL: process.env.APP_URL || 'https://catalizia.com'
+        };
+
+        const configScript = `<script>window.ENV_CONFIG = ${JSON.stringify(envConfig)};</script>`;
+        html = html.replace('</title>', `</title>${configScript}`);
+        
+        res.send(html);
+      } catch (e) {
+        res.sendFile(path.join(distPath, 'index.html'));
+      }
     });
   }
 

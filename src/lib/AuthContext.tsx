@@ -135,7 +135,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-
   const signInWithApple = async () => {
     if (isSigningIn) return;
     setIsSigningIn(true);

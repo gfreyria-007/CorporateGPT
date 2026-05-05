@@ -1,78 +1,36 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAnalytics } from "firebase/analytics";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
+import { getAuth, GoogleAuthProvider, OAuthProvider, EmailAuthProvider } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
-const getFirebaseConfig = () => {
-  const requiredVars = [
-    'NEXT_PUBLIC_FIREBASE_API_KEY',
-    'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
-    'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
-    'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
-    'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
-    'NEXT_PUBLIC_FIREBASE_APP_ID',
-  ];
+// Server-side injected config fallback for production
+const config = (window as any).ENV_CONFIG || {};
 
-  const missing = requiredVars.filter(v => !import.meta.env[v]);
-  if (missing.length > 0) {
-    console.error(`Firebase configuration error: ${missing.join(', ')}`);
-    return null;
-  }
-
-  return {
-    apiKey: import.meta.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-    authDomain: import.meta.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: import.meta.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    storageBucket: import.meta.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: import.meta.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: import.meta.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-    measurementId: import.meta.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || undefined
-  };
+const firebaseConfig = {
+  apiKey: config.VITE_FIREBASE_API_KEY || import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: config.VITE_FIREBASE_AUTH_DOMAIN || import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: config.VITE_FIREBASE_PROJECT_ID || import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: config.VITE_FIREBASE_STORAGE_BUCKET || import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: config.VITE_FIREBASE_MESSAGING_SENDER_ID || import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: config.VITE_FIREBASE_APP_ID || import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-const firebaseConfig = getFirebaseConfig();
-
-let app = null;
-if (firebaseConfig) {
-  try {
-    const existingApp = getApps().find(a => a.name === '[DEFAULT]');
-    if (existingApp) {
-      try {
-        app = getApp();
-      } catch {
-        (existingApp as any).delete().catch(() => {});
-        app = initializeApp(firebaseConfig);
-      }
-    } else {
-      app = initializeApp(firebaseConfig);
-    }
-  } catch (error) {
-    console.error("Firebase initialization error:", error);
-  }
-} else {
-  console.warn("Firebase not initialized due to missing configuration. Please set all required VITE_FIREBASE_* environment variables.");
+// Log initialization source for debugging
+if (typeof window !== 'undefined') {
+  console.log(`[FIREBASE] Initialized with config source: ${config.VITE_FIREBASE_API_KEY ? 'Server' : 'Build'}`);
 }
 
-export const analytics = null;
+let app;
+try {
+  app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+} catch (error) {
+  console.error("Firebase initialization failed:", error);
+}
+
 export const db = app ? getFirestore(app) : null as any;
-export const auth = app ? getAuth(app) : { onAuthStateChanged: (cb: any) => { cb(null); return () => {}; } } as any;
+export const auth = app ? getAuth(app) : null as any;
 export const googleProvider = new GoogleAuthProvider();
-import { OAuthProvider, EmailAuthProvider } from 'firebase/auth';
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 export const appleProvider = new OAuthProvider('apple.com');
 export const emailProvider = new EmailAuthProvider();
 
-export async function testConnection() {
-  try {
-    if (!app) return;
-    await getDocFromServer(doc(db, 'test', 'connection'));
-  } catch (error) {
-    if (error instanceof Error && (error.message.includes('the client is offline') || error.message.includes('permission-denied'))) {
-      console.warn("Firebase connection restricted or offline. Check configuration or network.");
-    }
-  }
-}
-
-if (typeof window !== 'undefined') {
-  testConnection();
-}
-
+export default app;
