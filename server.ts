@@ -961,7 +961,7 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
+    app.use(express.static(distPath, { index: false }));
     app.get('*', (req, res) => {
       try {
         const htmlPath = path.join(distPath, 'index.html');
@@ -988,8 +988,9 @@ async function startServer() {
         }
         
         res.send(html);
-      } catch (e) {
-        res.sendFile(path.join(distPath, 'index.html'));
+      } catch (e: any) {
+        console.error('[SERVER ERROR] Injection failed:', e.message);
+        res.status(500).send("Critical Server Error: Configuration injection failed.");
       }
     });
   }
