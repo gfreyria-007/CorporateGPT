@@ -11,6 +11,7 @@ import { logger } from '../logger';
 // Use unified trial system (3 days) - shared with Corporate GPT
 // Trial status is stored in CorporateGPT's 'trials' collection
 const TRIAL_DAYS = 3;
+const ALLOWED_EMAILS = ['gfreyria@gmail.com'];
 
 async function checkCorporateTrial(email: string): Promise<{ eligible: boolean; daysLeft?: number }> {
   try {
@@ -87,6 +88,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode, mainUser?: Fire
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       if (u) {
+        // Strict Security Gate: Only allow gfreyria@gmail.com
+        if (u.email && !ALLOWED_EMAILS.includes(u.email.toLowerCase())) {
+          console.error(`[SECURITY] Access denied for ${u.email} in Techie module.`);
+          signOut(auth);
+          setUser(null);
+          setProfile(null);
+          setLoading(false);
+          return;
+        }
+
         logger.auth('User authenticated', { uid: u.uid, email: u.email }, u.uid);
         setIsProfileLoading(true);
         await loadUserProfile(u);

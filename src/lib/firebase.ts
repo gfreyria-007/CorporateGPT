@@ -1,6 +1,31 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, OAuthProvider, EmailAuthProvider } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  OAuthProvider, 
+  EmailAuthProvider, 
+  signInWithPopup, 
+  signOut, 
+  onAuthStateChanged, 
+  sendEmailVerification,
+  User as FirebaseUser 
+} from 'firebase/auth';
+import { 
+  getFirestore, 
+  doc, 
+  getDoc, 
+  setDoc, 
+  updateDoc, 
+  deleteDoc, 
+  onSnapshot, 
+  collection, 
+  query, 
+  where, 
+  getDocs, 
+  addDoc, 
+  serverTimestamp,
+  Firestore
+} from 'firebase/firestore';
 
 // Server-side injected config fallback for production
 const config = (window as any).ENV_CONFIG || {};
@@ -21,18 +46,64 @@ if (typeof window !== 'undefined') {
   console.log(`[FIREBASE] Source: ${source} | Key: ${maskedKey} | Domain: ${firebaseConfig.authDomain}`);
 }
 
-let app;
+let app: FirebaseApp;
 try {
   app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 } catch (error) {
   console.error("Firebase initialization failed:", error);
+  // Fallback to avoid crash during build or SSR
+  app = {} as FirebaseApp;
 }
 
-export const db = app ? getFirestore(app) : null as any;
-export const auth = app ? getAuth(app) : null as any;
+export const db: Firestore = getFirestore(app);
+export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 export const appleProvider = new OAuthProvider('apple.com');
 export const emailProvider = new EmailAuthProvider();
+
+// Re-export Auth functions
+export { signInWithPopup, signOut, onAuthStateChanged, sendEmailVerification };
+export type { FirebaseUser };
+
+// Re-export Firestore functions
+export { 
+  doc, getDoc, setDoc, updateDoc, deleteDoc, 
+  onSnapshot, collection, query, where, getDocs, 
+  addDoc, serverTimestamp 
+};
+
+/**
+ * Shared Firestore Error Handling for unified diagnostics
+ */
+export enum OperationType {
+  READ = 'READ',
+  WRITE = 'WRITE',
+  DELETE = 'DELETE',
+  QUERY = 'QUERY'
+}
+
+export const handleFirestoreError = async (error: any, operation: OperationType, collectionName: string) => {
+  console.error(`[Firestore Error] ${operation} on ${collectionName}:`, error);
+  
+  const errorData = {
+    code: error.code || 'unknown',
+    message: error.message || 'No message',
+    operation,
+    collection: collectionName,
+    timestamp: new Date().toISOString(),
+    userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'server',
+    url: typeof window !== 'undefined' ? window.location.href : 'server'
+  };
+
+  try {
+    const errorLogsRef = collection(db, 'errors');
+    await addDoc(errorLogsRef, errorLogsRef);
+  } catch (logError) {
+    console.error('Failed to log error to Firestore:', logError);
+  }
+
+  return errorData;
+};
 
 export default app;

@@ -7,6 +7,8 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase';
 import { checkTrialStatus, startTrial } from './trialManager';
 
+const ALLOWED_EMAILS = ['gfreyria@gmail.com'];
+
 interface AuthContextType {
   user: User | null;
   profile: any;
@@ -90,6 +92,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(u);
       
       if (u) {
+        // Strict Security Gate: Only allow gfreyria@gmail.com
+        if (u.email && !ALLOWED_EMAILS.includes(u.email.toLowerCase())) {
+          console.error(`[SECURITY] Access denied for ${u.email}. Unauthorized entity.`);
+          signOut(auth);
+          setUser(null);
+          setProfile(null);
+          setLoading(false);
+          alert("Acceso restringido. Solo personal autorizado.");
+          return;
+        }
+
         try {
           ensureUserRecord(u).catch(e => console.error("ensureUserRecord failed", e));
           unsubProfile = onSnapshot(doc(db, 'users', u.uid), (snap) => {
