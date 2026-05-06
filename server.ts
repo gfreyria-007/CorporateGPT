@@ -831,7 +831,6 @@ async function startServer() {
                   { role: 'system', content: payload.systemInstruction || 'You are Techie, a helpful educational assistant for children.' },
                   ...formattedMessages
                 ],
-                response_format: payload.useJson ? { type: 'json_object' } : undefined,
                 temperature: payload.temperature || 0.7
               })
             });
