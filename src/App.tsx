@@ -641,7 +641,7 @@ export default function App() {
   }
 
   if ((showLanding || !user) && !isEmailSuperAdmin) {
-    const isLandingSuperAdmin = SUPER_ADMIN_EMAILS.includes(user?.email || '') || profile?.role === 'super-admin';
+    const isLandingSuperAdmin = SUPER_ADMIN_EMAILS.includes((user?.email || '').toLowerCase()) || profile?.role === 'super-admin';
     return (
       <LandingPage 
         onStartSession={signIn} 
