@@ -384,7 +384,7 @@ export const getChatResponse = async (
             body: JSON.stringify({
                 action: 'chat',
                 payload: {
-                    model: 'meta-llama/llama-3.1-8b-instruct:free',
+                    model: 'openrouter/auto',
                     history,
                     temperature: (mode === 'explorer' || mode === 'math-viva') ? temperature : 0.3,
                     systemInstruction: (SAFETY_MANDATE + "\n" + systemInstruction).trim(),
@@ -412,7 +412,7 @@ export const reviewHomework = async (imagePart: any, text: string, grade: Grade,
         body: JSON.stringify({
             action: 'generateContent',
             payload: {
-                model: 'google/gemini-2.0-flash-lite-preview-02-05:free',
+                model: 'openrouter/auto',
                 contents: [{ parts: [imagePart, { text: prompt }] }],
                 useJson: true
             }
@@ -434,7 +434,7 @@ export const analyzeImage = async (imagePart: any, text: string, grade: Grade, u
             body: JSON.stringify({
                 action: 'generateContent',
                 payload: {
-                    model: 'google/gemini-2.0-flash-lite-preview-02-05:free',
+                    model: 'openrouter/auto',
                     contents: [{ parts: [imagePart, { text: text || "Analiza" }] }],
                     systemInstruction,
                     useJson: true
@@ -467,7 +467,7 @@ export const getDeepResearchResponse = async (topic: string, grade: Grade, userN
             body: JSON.stringify({
                 action: 'generateContent',
                 payload: {
-                    model: 'google/gemini-2.0-flash-lite-preview-02-05:free',
+                    model: 'openrouter/auto',
                     contents: [{ parts: [{ text: topic }] }],
                     systemInstruction: systemPrompt,
                     temperature: 0.4
@@ -490,7 +490,7 @@ export const generateTopicQuiz = async (topic: string, grade: Grade, count: numb
             body: JSON.stringify({
                 action: 'generateContent',
                 payload: {
-                    model: 'google/gemini-2.0-flash-lite-preview-02-05:free',
+                    model: 'openrouter/auto',
                     contents: [{ parts: [{ text: prompt }] }],
                     useJson: true
                 }
@@ -505,13 +505,24 @@ export const generateTopicQuiz = async (topic: string, grade: Grade, count: numb
 };
 
 export const generateFlashcards = async (text: string, customKey?: string): Promise<Flashcard[]> => {
-    const ai = getAI(customKey);
- 
     const prompt = `Genera 5 flashcards educativas basadas en el texto. JSON: [{ "question": "", "answer": "" }]`;
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.0-flash',
-        contents: prompt,
-        config: { responseMimeType: 'application/json' }
-    });
-    return JSON.parse(cleanJsonString(getResponseText(response) || '[]'));
+    try {
+        const res = await fetch('/api/techie', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'generateContent',
+                payload: {
+                    model: 'openrouter/auto',
+                    contents: [{ parts: [{ text: prompt }] }],
+                    useJson: true
+                }
+            })
+        });
+        const data = await res.json();
+        return JSON.parse(cleanJsonString(data.text || '[]'));
+    } catch (e) {
+        console.error("Flashcards generation failed", e);
+        return [];
+    }
 };

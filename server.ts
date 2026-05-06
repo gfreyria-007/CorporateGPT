@@ -800,11 +800,11 @@ async function startServer() {
       // --- IMMORTAL FALLBACK SYSTEM FOR TEXT (NON-GEMINI FOR TECHIE) ---
       if (action === 'chat' || action === 'generateContent') {
         const textModels = [
-          payload.model || 'meta-llama/llama-3.1-8b-instruct:free',      // Option A
-          'mistralai/mistral-7b-instruct:free',                          // Option B
-          'meta-llama/llama-3.3-70b-instruct',                             // Option C
-          'anthropic/claude-3-haiku',                                      // Option D
-          'mistralai/pixtral-12b'                                          // Last Resort
+          payload.model || 'openrouter/auto',
+          'anthropic/claude-3.5-sonnet',
+          'openai/gpt-4o',
+          'google/gemini-2.0-pro-exp-02-05:free',
+          'mistralai/mistral-large'
         ];
 
         let lastError = null;
