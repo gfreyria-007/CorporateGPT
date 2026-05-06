@@ -75,6 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
       clearTimeout(safetyTimer);
+      
       // Clean up previous profile listener if it exists
       if (unsubProfile) {
         unsubProfile();
@@ -101,28 +102,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(u);
       
       if (u) {
-        // Strict Security Gate removed temporarily so you can access it
-        // if (u.email && !ALLOWED_EMAILS.includes(u.email.toLowerCase())) {
-        //   console.error(`[SECURITY] Access denied for ${u.email}. Unauthorized entity.`);
-        //   signOut(auth);
-        //   setUser(null);
-        //   setProfile(null);
-        //   setLoading(false);
-        //   alert("Acceso restringido. Solo personal autorizado.");
-        //   return;
-        // }
-
-      setUser(u);
-      
-      if (u) {
         try {
-          ensureUserRecord(u).catch(e => console.error("ensureUserRecord failed", e));
+          // Initialize user record
+          await ensureUserRecord(u).catch(e => console.error("ensureUserRecord failed", e));
+          
+          // Listen to profile updates
           unsubProfile = onSnapshot(doc(db, 'users', u.uid), (snap) => {
             if (snap.exists()) {
               setProfile(snap.data());
-              setLoading(false); // Only set loading false once profile is here
+              setLoading(false);
             } else {
-              setLoading(false); // Set false if doc doesn't exist
+              setLoading(false);
             }
           }, (error) => {
             if (auth.currentUser) {
@@ -171,8 +161,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const result = await signInWithPopup(auth, appleProvider);
       const email = result.user.email;
       
-      // Check trial status
-      if (email) {
+      // Check trial status (Bypass for Super Admins)
+      if (email && !ALLOWED_EMAILS.includes(email.toLowerCase())) {
         const trialCheck = await checkTrialStatus(email);
         if (!trialCheck.eligible) {
           await signOut(auth);
