@@ -104,7 +104,7 @@ export const handleFirestoreError = async (error: any, operation: OperationType,
 
   try {
     const errorLogsRef = collection(db, 'errors');
-    await addDoc(errorLogsRef, errorLogsRef);
+    await addDoc(errorLogsRef, errorData);
   } catch (logError) {
     console.error('Failed to log error to Firestore:', logError);
   }

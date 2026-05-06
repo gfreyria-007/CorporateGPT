@@ -79,7 +79,17 @@ export async function ensureUserRecord(user: any) {
         lastActive: Timestamp.now()
       });
     } else {
-      await updateDoc(userRef, { lastActive: Timestamp.now() });
+      // For existing users, ensure Super Admin privileges are always up to date if they match the admin emails
+      const isAdmin = SUPER_ADMIN_EMAILS.includes(user.email?.toLowerCase() || '');
+      const existingData = snap.data();
+      
+      const updates: any = { lastActive: Timestamp.now() };
+      if (isAdmin && (existingData.role !== 'super-admin' || !existingData.unlimitedUsage)) {
+        updates.role = 'super-admin';
+        updates.unlimitedUsage = true;
+      }
+      
+      await updateDoc(userRef, updates);
     }
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, 'users');
