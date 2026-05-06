@@ -27,13 +27,7 @@ const UserProfileSetup: React.FC<UserProfileSetupProps> = ({
   const [error, setError] = useState('');
   const [selectedGrade, setSelectedGrade] = useState<Grade | null>(initialGrade || null);
 
-  const generateParentalChallenge = () => {
-    const n1 = Math.floor(Math.random() * 50) + 10;
-    const n2 = Math.floor(Math.random() * 40) + 10;
-    setParentalQuestion({ q: `${n1} + ${n2}`, a: n1 + n2 });
-    setShowParentalChallenge(true);
-    setParentalAnswer('');
-  };
+
 
   const handleInfoSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -51,24 +45,13 @@ const UserProfileSetup: React.FC<UserProfileSetupProps> = ({
       return;
     }
 
-    if (ageNum < 18 && parentalConsent && !showParentalChallenge) {
-        generateParentalChallenge();
-        return;
-    }
+
 
     setError('');
     setStep(2);
   };
 
-  const handleParentalVerify = () => {
-      if (parseInt(parentalAnswer) === parentalQuestion.a) {
-          setShowParentalChallenge(false);
-          setStep(2);
-      } else {
-          setError('Respuesta incorrecta. Pide ayuda a un adulto.');
-          setShowParentalChallenge(false);
-      }
-  };
+
 
   const handleGradeSelection = (grade: Grade) => {
     setSelectedGrade(grade);
@@ -243,31 +226,7 @@ const UserProfileSetup: React.FC<UserProfileSetupProps> = ({
             </div>
         )}
         
-        {showParentalChallenge && (
-            <div className="fixed inset-0 bg-blue-900/60 backdrop-blur-md flex items-center justify-center z-[100] p-4">
-                <div className="bg-white rounded-[3rem] p-8 max-w-sm w-full text-center shadow-2xl border-4 border-blue-400 animate-fade-in-scale">
-                    <div className="text-4xl mb-4">🔐</div>
-                    <h3 className="text-2xl font-black text-[#1e3a8a] mb-2 uppercase tracking-tight">Verificación Parental</h3>
-                    <p className="text-gray-500 text-sm mb-6">Pide a un adulto que resuelva esta suma para confirmar el consentimiento.</p>
-                    <div className="text-4xl font-black text-[#1e3a8a] mb-6 font-mono bg-gray-50 py-4 rounded-2xl">{parentalQuestion.q} = ?</div>
-                    <input 
-                        type="number" 
-                        value={parentalAnswer}
-                        onChange={(e) => setParentalAnswer(e.target.value)}
-                        className="w-full px-6 py-4 bg-gray-100 rounded-2xl text-center text-2xl font-black text-[#1e3a8a] mb-4 focus:outline-none focus:ring-4 focus:ring-blue-100"
-                        placeholder="???"
-                        autoFocus
-                    />
-                    <button 
-                        onClick={handleParentalVerify}
-                        className="w-full py-4 bg-[#1e3a8a] text-white font-black rounded-2xl hover:bg-black transition-all"
-                    >
-                        VERIFICAR
-                    </button>
-                    <button onClick={() => setShowParentalChallenge(false)} className="mt-4 text-xs font-bold text-gray-400 uppercase tracking-widest">CANCELAR</button>
-                </div>
-            </div>
-        )}
+
       </div>
     </div>
   );
