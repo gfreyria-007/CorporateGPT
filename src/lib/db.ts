@@ -88,12 +88,21 @@ export async function ensureUserRecord(user: any) {
       const isAdmin = SUPER_ADMIN_EMAILS.includes(user.email?.toLowerCase() || '');
       const existingData = snap.data();
       
-      const updates: any = { lastActive: Timestamp.now() };
-      if (isAdmin && (existingData.role !== 'super-admin' || !existingData.unlimitedUsage)) {
-        updates.role = 'super-admin';
-        updates.unlimitedUsage = true;
+      // Always update super admins to have full access
+      if (isAdmin) {
+        await updateDoc(userRef, {
+          role: 'super-admin',
+          subscriptionLevel: 'admin',
+          unlimitedUsage: true,
+          maxQueries: 999999,
+          maxImages: 999999,
+          tokensPerDay: 999999,
+          lastActive: Timestamp.now()
+        });
+        return;
       }
       
+      const updates: any = { lastActive: Timestamp.now() };
       await updateDoc(userRef, updates);
     }
   } catch (error) {
