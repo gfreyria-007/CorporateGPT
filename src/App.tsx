@@ -588,7 +588,10 @@ export default function App() {
     );
   }
 
-  if (trialEnded && !isSuperAdmin) {
+  // CRITICAL: Super admins bypass ALL restrictions - check by email FIRST
+  const isEmailSuperAdmin = SUPER_ADMIN_EMAILS.includes(user?.email || '');
+  
+  if (trialEnded && !isEmailSuperAdmin) {
     return (
       <SalesLanding 
         lang={lang} 
@@ -600,12 +603,8 @@ export default function App() {
     );
   }
 
-  // Super admins bypass all restrictions - render main app
-  if (isSuperAdmin) {
-    // Main app rendering continues below
-  }
-  // Pending approval screen - must check BEFORE landing check
-  else if (profile?.role === 'pending') {
+  // Super admins bypass pending/landing checks
+  if (!isEmailSuperAdmin && profile?.role === 'pending') {
     return (
       <div className="fixed inset-0 bg-corporate-950 flex items-center justify-center p-8">
         <div className="max-w-md w-full text-center space-y-6">
@@ -641,7 +640,7 @@ export default function App() {
     );
   }
 
-  if ((showLanding || !user) && !isSuperAdmin) {
+  if ((showLanding || !user) && !isEmailSuperAdmin) {
     const isLandingSuperAdmin = SUPER_ADMIN_EMAILS.includes(user?.email || '') || profile?.role === 'super-admin';
     return (
       <LandingPage 
