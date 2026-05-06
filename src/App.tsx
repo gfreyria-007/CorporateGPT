@@ -281,23 +281,22 @@ export default function App() {
       return;
     }
 
-    // Detect image generation request
-    const imageKeywords = [
-      'genera una imagen', 'generar imagen', 'crear imagen', 'crea una imagen',
-      'dibuja', 'dibujar', 'haz un dibujo', 'make an image', 'generate image',
-      'create image', 'draw', 'genera una imagen de', 'generate an image',
-      'create a picture', 'dibuja algo', 'imagen de', 'imagen sobre',
-      'synthetic image', 'synthesize image', 'create a visual', 'visual de'
+    // Detect image generation request - IMMORTAL BULLETPROOF
+    const imagePatterns = [
+      /\b(genera|crear|crea|hacer|produce|diseña|draw|make)\s+(un[oa]?\s+)?(imagen|dibujo|picture|image)\b/i,
+      /\b(imagen|dibujo|picture|image)\s+(de|about|sobre)\b/i,
+      /\b(dibuja|dibujar|dessin|zeichne)\b/i,
+      /\b(generate|create|synthesize)\s+(an?\s+)?(image|picture)\b/i,
+      /\b(visual|ilustración|ilustration)\b/i,
+      /\bfoto\s+(de|about)\b/i,
+      /\bpicture\s+of\b/i
     ];
     
-    const isImageRequest = imageKeywords.some(keyword => 
-      content.toLowerCase().includes(keyword.toLowerCase())
-    );
+    const lowerContent = content.toLowerCase().trim();
+    const isImageRequest = imagePatterns.some(pattern => pattern.test(lowerContent));
     
-    // Check if it looks like a standalone image request (not a general chat with image context)
-    const isStandaloneImageRequest = isImageRequest && content.length < 500;
-    
-    if (isStandaloneImageRequest) {
+    if (isImageRequest) {
+      console.log('[IMMORTAL] Image request detected:', lowerContent.substring(0, 50));
       setPendingImagePrompt(content);
       setShowImageModelSelector(true);
       return;
