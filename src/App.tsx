@@ -634,18 +634,9 @@ export default function App() {
     );
   }
 
-  // 2. Authenticated but Over Quota/Expired -> Sales/Upgrade Lobby (Admins bypass)
-  if (trialEnded && !isAdmin) {
-    return (
-      <SalesLanding 
-        lang={lang} 
-        onBuyNow={() => {
-          setTrialEnded(false);
-          setShowUpgradePlan(true);
-        }}
-      />
-    );
-  }
+  // 2. Authenticated but trial expired - user can still access
+  // Show banner to invite upgrade (don't block)
+  const showUpgradeInvite = trialEnded && !isAdmin;
 
   // 3. Pending Approval State (Admins bypass)
   if (profile?.role === 'pending' && !isAdmin) {
@@ -738,11 +729,42 @@ export default function App() {
                     <h1 className="text-xl font-display font-black tracking-tighter leading-none uppercase text-slate-900">
                       {appMode === 'junior' ? 'Techie Tutor' : (appConfig?.appName || t.appName)}
                     </h1>
-                    <p className="text-[9px] font-black text-blue-600 uppercase tracking-[0.2em] mt-1">
+<p className="text-[9px] font-black text-blue-600 uppercase tracking-[0.2em] mt-1">
                       {appMode === 'junior' ? 'Potenciando mentes brillantes' : 'Inteligencia que Empodera'}
                     </p>
                   </div>
-               </div>
+                </div>
+
+                {/* ✨ Friendly Upgrade Banner - When trial expired */}
+                {showUpgradeInvite && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mx-2 p-4 bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/30 rounded-2xl"
+                  >
+                    <div className="flex items-start gap-3">
+                      <Sparkles className="text-purple-400 shrink-0 mt-0.5" size={16} />
+                      <div className="flex-1 space-y-2">
+                        <p className="text-xs font-bold text-purple-300">
+                          {lang === 'es' 
+                            ? 'Tu viaje complimentary ✨' 
+                            : 'Your complimentary journey ✨'}
+                        </p>
+                        <p className="text-[10px] text-slate-400 leading-relaxed">
+                          {lang === 'es'
+                            ? 'Listo para desbloquear poder AI ilimitado?'
+                            : 'Ready to unlock unlimited AI power?'}
+                        </p>
+                        <button
+                          onClick={() => setShowUpgradePlan(true)}
+                          className="w-full py-2 bg-purple-600 text-white text-[10px] font-black uppercase rounded-lg hover:bg-purple-500 transition-colors"
+                        >
+                          {lang === 'es' ? 'Desbloquear' : 'Unlock'}
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
 
                <motion.div 
                 initial="hidden"
