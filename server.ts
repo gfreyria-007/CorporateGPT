@@ -100,12 +100,14 @@ async function startServer() {
     },
     crossOriginEmbedderPolicy: false,
     crossOriginOpenerPolicy: false,
+    crossOriginResourcePolicy: false,
   }));
 
   // 1b. Additional headers for Firebase popup auth
   app.use((req, res, next) => {
     res.removeHeader('Cross-Origin-Opener-Policy');
     res.removeHeader('Cross-Origin-Embedder-Policy');
+    res.removeHeader('Cross-Origin-Resource-Policy');
     next();
   });
 
@@ -467,12 +469,15 @@ async function startServer() {
         return res.status(500).json({ error: 'Fallback engine key missing' });
       }
 
-      const { messages, instructions, temperature, model } = req.body;
+      let requestedModel = model || 'gemini-2.0-flash';
+      if (requestedModel === 'gemini-1.5-flash') requestedModel = 'gemini-1.5-flash-latest';
+      if (requestedModel === 'gemini-1.5-pro') requestedModel = 'gemini-1.5-pro-latest';
+      
       const fallbackModels = [
-        model || 'gemini-1.5-flash-latest',
-        'gemini-2.0-flash-lite-preview-02-05:free',
-        'gemini-1.5-flash',
-        'gemini-1.5-pro'
+        requestedModel,
+        'gemini-2.0-flash',
+        'gemini-1.5-flash-latest',
+        'gemini-1.5-pro-latest'
       ];
 
       let lastError = null;
@@ -653,13 +658,16 @@ async function startServer() {
         // 5. Handle regular Content Generation
         } else if (action === 'generateContent') {
           const generationConfig = payload.config || payload.generationConfig || {};
-          const { systemInstruction: configSystemInstruction, ...restConfig } = generationConfig;
-          
+          let requestedChatModel = payload.model || 'gemini-2.0-flash';
+          if (requestedChatModel === 'gemini-1.5-flash') requestedChatModel = 'gemini-1.5-flash-latest';
+          if (requestedChatModel === 'gemini-1.5-pro') requestedChatModel = 'gemini-1.5-pro-latest';
+
           const CHAT_MODELS = [
-            payload.model || 'gemini-2.0-flash',
+            requestedChatModel,
+            'gemini-2.0-flash',
             'gemini-2.0-flash-lite',
-            'gemini-1.5-pro',
-            'gemini-1.5-flash'
+            'gemini-1.5-pro-latest',
+            'gemini-1.5-flash-latest'
           ];
 
           let lastError = null;
