@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Markdown from 'react-markdown';
-import { Sparkles, Copy, Check } from 'lucide-react';
+import { Sparkles, Copy, Check, Image as ImageIcon, Download } from 'lucide-react';
 import { Message } from '../types';
 import { translations } from '../lib/translations';
 
@@ -20,6 +20,85 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, lang = 'es' }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const handleDownloadImage = () => {
+    if (message.imageData) {
+      const link = document.createElement('a');
+      link.href = message.imageData;
+      link.download = `generated-image-${message.id}.png`;
+      link.click();
+    }
+  };
+
+  // Render image message
+  if (message.isImage && message.imageData) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 30 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ 
+          type: 'spring', 
+          stiffness: 260, 
+          damping: 20
+        }}
+        className="flex gap-6 mb-8 max-w-4xl mx-auto w-full group relative"
+        id={`message-${message.id}`}
+      >
+        <motion.div 
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', delay: 0.2 }}
+          className="w-12 h-12 rounded-2xl flex-shrink-0 flex items-center justify-center text-[11px] font-black shadow-lg transition-transform group-hover:rotate-6 bg-purple-600 text-white shadow-purple-500/30 ring-4 ring-purple-600/10"
+        >
+          <ImageIcon size={18} />
+        </motion.div>
+        
+        <div className="flex-1 p-6 rounded-[2rem] border bg-white dark:bg-blue-950/90 backdrop-blur-3xl border-purple-500/40 dark:border-purple-500/40 text-slate-900 dark:text-white shadow-2xl shadow-purple-500/20">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.25em] flex items-center gap-2 text-purple-500 dark:text-purple-400">
+              <ImageIcon size={14} />
+              {lang === 'es' ? 'Imagen Generada' : 'Generated Image'}
+              <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-white/30 rounded-full" />
+              <span className="opacity-70 dark:opacity-60">{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            </p>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">{lang === 'es' ? 'IA Generativa' : 'Generative AI'}</span>
+              </div>
+              <button 
+                onClick={handleDownloadImage}
+                className="p-2 bg-purple-100 dark:bg-purple-500/20 hover:bg-purple-200 dark:hover:bg-purple-500/30 rounded-xl transition-all text-purple-600 dark:text-purple-400 group/download flex items-center gap-2 border border-transparent dark:border-purple-500/20 shadow-sm"
+                title={lang === 'es' ? 'Descargar imagen' : 'Download image'}
+              >
+                <Download size={14} />
+                <span className="text-[9px] font-black uppercase tracking-widest">{lang === 'es' ? 'Descargar' : 'Download'}</span>
+              </button>
+            </div>
+          </div>
+          
+          <div className="relative rounded-xl overflow-hidden border border-purple-500/20 shadow-inner">
+            <img 
+              src={message.imageData} 
+              alt={lang === 'es' ? 'Imagen generada por IA' : 'AI generated image'}
+              className="w-full h-auto max-h-[600px] object-contain bg-slate-100 dark:bg-slate-900"
+            />
+          </div>
+          
+          {message.content.startsWith('![') && (
+            <div className="mt-4 pt-4 border-t border-purple-500/10">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {lang === 'es' ? 'Prompt: ' : 'Prompt: '}
+                <span className="font-medium text-slate-700 dark:text-slate-300">
+                  {message.content.replace('![Generated Image](data:image/png;base64,)', '').replace('![Generated Image](', '').replace(')', '') || (lang === 'es' ? 'Imagen solicitada por el usuario' : 'Image requested by user')}
+                </span>
+              </p>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div

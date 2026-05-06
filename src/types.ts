@@ -24,6 +24,8 @@ export interface Message {
   content: string;
   id: string;
   timestamp: number;
+  isImage?: boolean;
+  imageData?: string;
 }
 
 // ─── V2 Multi-Tenant Types ────────────────────────────────────────────────────

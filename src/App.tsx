@@ -69,6 +69,7 @@ import { UpgradePlanPage } from './components/UpgradePlanPage';
 import { TechieWorkspace } from './components/TechieWorkspace';
 import { translations } from './lib/translations';
 import { canAccessTechie } from './lib/permissions';
+import { ImageModelSelector } from './components/ImageModelSelector';
 
 export default function App() {
   // Auth & Profile
@@ -119,6 +120,11 @@ export default function App() {
   const [fontSize, setFontSize] = useState(14);
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [appMode, setAppMode] = useState<'corporate' | 'junior'>('corporate');
+  
+  // Image Generation in Chat
+  const [showImageModelSelector, setShowImageModelSelector] = useState(false);
+  const [pendingImagePrompt, setPendingImagePrompt] = useState('');
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
   // Permissions block removed to allow free switching between apps
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -275,6 +281,28 @@ export default function App() {
       return;
     }
 
+    // Detect image generation request
+    const imageKeywords = [
+      'genera una imagen', 'generar imagen', 'crear imagen', 'crea una imagen',
+      'dibuja', 'dibujar', 'haz un dibujo', 'make an image', 'generate image',
+      'create image', 'draw', 'genera una imagen de', 'generate an image',
+      'create a picture', 'dibuja algo', 'imagen de', 'imagen sobre',
+      'synthetic image', 'synthesize image', 'create a visual', 'visual de'
+    ];
+    
+    const isImageRequest = imageKeywords.some(keyword => 
+      content.toLowerCase().includes(keyword.toLowerCase())
+    );
+    
+    // Check if it looks like a standalone image request (not a general chat with image context)
+    const isStandaloneImageRequest = isImageRequest && content.length < 500;
+    
+    if (isStandaloneImageRequest) {
+      setPendingImagePrompt(content);
+      setShowImageModelSelector(true);
+      return;
+    }
+
     if (!isSuperAdmin && !appConfig?.isProduction) {
       if (!profile?.unlimitedUsage) {
         const maxQueries = profile?.maxQueries || 10;
@@ -394,6 +422,138 @@ export default function App() {
   const t = translations[lang || 'es'];
 
   const currentModelData = models.find(m => m.id === selectedModel);
+
+  // Handle image model selection and generation
+  const handleImageModelSelect = async (modelId: string, prompt: string) => {
+    if (!user) return;
+    
+    setShowImageModelSelector(false);
+    setIsGeneratingImage(true);
+    setChatInputValue('');
+
+    // Add user's image request as a message
+    const userMessage: Message = {
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 7)}`,
+      role: 'user',
+      content: prompt,
+      timestamp: Date.now()
+    };
+    setMessages(prev => [...prev, userMessage]);
+
+    // Add a thinking message
+    const thinkingMessage: Message = {
+      id: `thinking-${Date.now()}`,
+      role: 'assistant',
+      content: lang === 'es' ? '🎨 Generando imagen con ' + modelId + '... Esto puede tomar unos segundos.' : '🎨 Generating image with ' + modelId + '... This may take a few seconds.',
+      timestamp: Date.now()
+    };
+    setMessages(prev => [...prev, thinkingMessage]);
+
+    try {
+      const idToken = await user.getIdToken();
+      
+      // Try Imagen models first
+      let imgRes: any = null;
+      const imagenModels = ['imagen-4.0-fast-generate-001', 'imagen-4.0-generate-001'];
+      
+      for (const model of imagenModels) {
+        if (modelId !== model && !modelId.includes('gemini')) continue;
+        
+        try {
+          const res = await fetch('/api/gemini', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'generateImage',
+              model: modelId,
+              prompt: prompt,
+              aspectRatio: '1:1'
+            })
+          });
+          
+          imgRes = await res.json();
+          
+          if (!imgRes.error && (imgRes.imageBase64 || imgRes.predictions?.[0]?.bytesBase64Encoded)) {
+            console.log(`[Image] Success with model: ${model}`);
+            break;
+          }
+        } catch (e) {
+          console.warn(`[Image] Model ${model} failed:`, e);
+        }
+      }
+
+      // Fallback to Gemini 2.0 Flash if Imagen fails
+      if (!imgRes || imgRes.error || (!imgRes.imageBase64 && !imgRes.predictions?.[0]?.bytesBase64Encoded)) {
+        console.log("[Image] Falling back to Gemini 2.0 Flash multimodal...");
+        try {
+          const res = await fetch('/api/gemini', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'generateContent',
+              payload: {
+                model: 'gemini-2.0-flash',
+                contents: [{ role: 'user', parts: [{ text: `Create a high-quality image of: ${prompt}. Make it look professional and visually stunning.` }] }],
+                config: {
+                  temperature: 1.0,
+                  responseModalities: ['IMAGE'],
+                  imageConfig: { aspectRatio: '1:1' }
+                }
+              }
+            })
+          });
+          imgRes = await res.json();
+        } catch (fallbackError) {
+          console.error("[Image] Fallback failed:", fallbackError);
+        }
+      }
+
+      // Remove thinking message
+      setMessages(prev => prev.filter(m => m.id !== `thinking-${Date.now()}`));
+
+      if (!imgRes) {
+        throw new Error(lang === 'es' ? 'Servidor no respondió. Por favor intenta de nuevo.' : 'Server did not respond. Please try again.');
+      }
+
+      const imageBase64 = imgRes.imageBase64 || 
+                         imgRes.predictions?.[0]?.bytesBase64Encoded || 
+                         imgRes.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData)?.inlineData?.data;
+      
+      if (!imageBase64) {
+        throw new Error(lang === 'es' ? 'La generación de imagen falló. Intenta con un prompt diferente.' : 'Image generation failed. Try a different prompt.');
+      }
+
+      // Add the generated image as a message
+      const imageMessage: Message = {
+        id: `img-${Date.now()}-${Math.random().toString(36).substr(2, 7)}`,
+        role: 'assistant',
+        content: `![Generated Image](data:image/png;base64,${imageBase64})`,
+        timestamp: Date.now(),
+        isImage: true,
+        imageData: `data:image/png;base64,${imageBase64}`
+      };
+      setMessages(prev => [...prev, imageMessage]);
+
+    } catch (error: any) {
+      console.error('[Image] Error:', error.message);
+      
+      // Remove thinking message
+      setMessages(prev => prev.filter(m => m.id !== `thinking-${Date.now()}`));
+      
+      const errorMessage: Message = {
+        id: `error-${Date.now()}-${Math.random().toString(36).substr(2, 7)}`,
+        role: 'assistant',
+        content: lang === 'es' 
+          ? 'La síntesis de imagen falló. Intenta con un prompt diferente o verifica tu conexión.'
+          : 'Image synthesis failed. Try a different prompt or check your connection.',
+        timestamp: Date.now()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsGeneratingImage(false);
+      setPendingImagePrompt('');
+    }
+  };
 
   if (loading) {
     return (
@@ -978,6 +1138,15 @@ export default function App() {
       </main>
 
       <PromptGenie isOpen={isPromptGenieOpen} onClose={() => setIsPromptGenieOpen(false)} onApply={setChatInputValue} theme={theme} />
+      <ImageModelSelector 
+        isOpen={showImageModelSelector}
+        onClose={() => { setShowImageModelSelector(false); setPendingImagePrompt(''); }}
+        onSelectModel={handleImageModelSelect}
+        pendingPrompt={pendingImagePrompt}
+        theme={theme}
+        lang={lang}
+        isGenerating={isGeneratingImage}
+      />
       <AnimatePresence>
         {isAdvancedPanelOpen && <AdvancedPanel isOpen={isAdvancedPanelOpen} onClose={() => setIsAdvancedPanelOpen(false)} settings={advancedSettings} setSettings={setAdvancedSettings} onPromptGenie={() => setIsPromptGenieOpen(true)} theme={theme} />}
         {showFAQ && <FAQ onClose={() => setShowFAQ(false)} lang={lang} theme={theme} />}
