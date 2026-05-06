@@ -73,7 +73,7 @@ const getAI = (customKey?: string) => {
 // metaEnv removed
     const apiKey = customKey;
     if (!apiKey) {
-        logger.error('GEMINI_API_KEY no configurada. Ve a Settings > API Key para configurar.');
+        logger.error('GEMINI_API_KEY no configurada. Ve a Settings > API Key para configurar.', new Error('Missing API key'));
         throw new Error('GEMINI_API_KEY no configurada. Ve a Settings > API Key para configurar.');
     }
     return new GoogleGenAI({ apiKey });
@@ -281,7 +281,8 @@ export const getChatResponse = async (
     temperature: number, 
     persona: string | null, 
     customInstruction: string,
-    customKey?: string
+    customKey?: string,
+    selectedModel?: string
 ) => {
     // Verificar si el último mensaje del usuario viola las reglas de seguridad
     const lastUserMessage = [...history].reverse().find((msg: any) => msg.role === 'user');
@@ -384,7 +385,7 @@ export const getChatResponse = async (
             body: JSON.stringify({
                 action: 'chat',
                 payload: {
-                    model: 'openrouter/auto',
+                    model: selectedModel || 'openrouter/auto',
                     history,
                     temperature: (mode === 'explorer' || mode === 'math-viva') ? temperature : 0.3,
                     systemInstruction: (SAFETY_MANDATE + "\n" + systemInstruction).trim(),

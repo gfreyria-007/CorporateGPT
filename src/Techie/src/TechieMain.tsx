@@ -22,6 +22,9 @@ import MathLabModal from './components/MathLabModal';
 import MonthlyQuotaBanner from './components/MonthlyQuotaBanner';
 
 import { FirebaseUser } from '../../lib/firebase';
+import { ModelSelector } from '../../components/ModelSelector';
+import { ImageModelSelector } from '../../components/ImageModelSelector';
+import { ModelMetadata } from '../../types';
 
 import { 
   Role, Grade, ChatMode, ChatMessage, ExplorerSettings, 
@@ -108,6 +111,14 @@ export const TechieMain: React.FC = () => {
   const [isMuted, setIsMuted] = useState(false);
   const [showMathLab, setShowMathLab] = useState(false);
 
+  // --- Shared Model Selector State (same as CorporateGPT) ---
+  const [selectedModel, setSelectedModel] = useState('openrouter/auto');
+  const [models, setModels] = useState<ModelMetadata[]>([]);
+  const [isLoadingModels, setIsLoadingModels] = useState(true);
+  const [showImageModelSelector, setShowImageModelSelector] = useState(false);
+  const [pendingImagePrompt, setPendingImagePrompt] = useState('');
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+
   const isAdminRole = userProfile?.role === 'admin' || userProfile?.role === 'super-admin' || (userProfile as any)?.role === 'owner' || currentUser?.email === 'gfreyria@gmail.com';
   const isSubscribed = ['trial', 'explorador', 'maestro', 'leyenda', 'family_starter', 'family_mega'].includes(userProfile?.subscriptionLevel || '') || isAdminRole;
   const isEmailVerified = true; // Bypassed per user request
@@ -134,6 +145,35 @@ const canUseSystemKey = (isSubscribed || isAdminRole);
   useEffect(() => {
     gameAudio.setMuted(isMuted);
   }, [isMuted]);
+
+  // Fetch models from same API as CorporateGPT
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const response = await fetch('/api/models');
+        if (!response.ok) {
+          setModels([
+            { id: 'openrouter/auto', name: 'Auto Router', description: 'Best available model', pricing: { prompt: '0', completion: '0', request: '0', image: '0' }, context_length: 128000 } as ModelMetadata,
+            { id: 'google/gemini-2.0-flash', name: 'Gemini 2.0 Flash', description: 'Fast & capable', pricing: { prompt: '0', completion: '0', request: '0', image: '0' }, context_length: 1000000 } as ModelMetadata,
+          ]);
+          return;
+        }
+        const data = await response.json();
+        if (data.data) {
+          const uniqueModels = Array.from(new Map(data.data.map((m: any) => [m.id, m])).values()) as ModelMetadata[];
+          setModels(uniqueModels.sort((a: any, b: any) => b.context_length - a.context_length));
+        }
+      } catch (error) {
+        console.error('Failed to fetch models:', error);
+        setModels([
+          { id: 'openrouter/auto', name: 'Auto Router', description: 'Best available model', pricing: { prompt: '0', completion: '0', request: '0', image: '0' }, context_length: 128000 } as ModelMetadata,
+        ]);
+      } finally {
+        setIsLoadingModels(false);
+      }
+    };
+    fetchModels();
+  }, []);
 
   useEffect(() => {
     const handleOpenBackpack = () => setShowBackpack(true);
@@ -387,7 +427,7 @@ const canUseSystemKey = (isSubscribed || isAdminRole);
           } else if (chatMode === 'researcher' && !isInitialGreeting) {
              response = await geminiService.getDeepResearchResponse(text, selectedGrade, userName, userAge, customKey);
           } else {
-             response = await geminiService.getChatResponse(history, selectedGrade, userName, userAge, chatMode, explorerSettings.temperature, explorerSettings.persona, explorerSettings.customSystemInstruction || '', customKey);
+             response = await geminiService.getChatResponse(history, selectedGrade, userName, userAge, chatMode, explorerSettings.temperature, explorerSettings.persona, explorerSettings.customSystemInstruction || '', customKey, selectedModel);
           }
 
 
@@ -557,10 +597,10 @@ const canUseSystemKey = (isSubscribed || isAdminRole);
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-pattern text-[#1e3a8a] font-sans">
+    <div className="flex flex-col h-screen overflow-hidden bg-pattern text-[#1e3a8a] font-sans">
 
 
-        <main className="flex-1 flex flex-col relative">
+        <main className="flex-1 flex flex-col relative overflow-hidden">
           {/* Trial banners removed - follows Corporate GPT trial/sub state */}
 
           {!canUseApp ? (
@@ -653,30 +693,42 @@ const canUseSystemKey = (isSubscribed || isAdminRole);
             />
           ) : (
             <>
-              <GradeSelector selectedGrade={selectedGrade} activeTool={TOOL_DEFINITIONS.find(t => t.id === chatMode)} onGradeChange={setSelectedGrade} />
-              
-              {/* Monthly Quota Display */}
-              <MonthlyQuotaBanner 
-                userProfile={userProfile} 
-                monthlyCostUsed={userProfile?.monthlyCostUsed || 0} 
-                monthlyBudget={getMonthlyBudget()} 
-              />
-
-              <div className="flex-1 relative flex-col bg-white">
-                  <ChatWindow messages={messages} isLoading={isChatLoading} loadingText={loadingText} onQuizAnswer={(q, o) => o.isCorrect && chatMode === 'default' && handleSendMessage(`Siguiente paso?`)} onSelection={(t) => handleSendMessage(t)} onImageClick={(u,p)=> { setPopupImage(u); setPopupPrompt(p); setShowImagePopup(true); }} onCreateFlashcards={async (t)=> { const cards = await geminiService.generateFlashcards(t); setFlashcards(cards); setShowFlashcards(true); }} onEditImage={(u) => { setImageCreationUrl(u); setShowImageCreationModal(true); setShowImagePopup(false); }} onQuizFinished={(res) => addMessage(Role.MODEL, res)} onAwardBadge={handleAwardBadge} onSaveProject={handleSaveProject} grade={selectedGrade || undefined} userName={userName} customKey={getCustomKey()} />
+              {/* Top controls: Grade + Model on one compact row */}
+              <div className="shrink-0 px-2 sm:px-4 pt-2">
+                <div className="flex items-center justify-center gap-2 flex-wrap">
+                  <GradeSelector selectedGrade={selectedGrade} activeTool={TOOL_DEFINITIONS.find(t => t.id === chatMode)} onGradeChange={setSelectedGrade} />
+                  <div className="w-48 sm:w-56">
+                    <ModelSelector 
+                      models={models} 
+                      selectedModel={selectedModel} 
+                      onSelect={setSelectedModel} 
+                      isLoading={isLoadingModels} 
+                      lang="es"
+                      dataProtected={false}
+                    />
+                  </div>
+                </div>
               </div>
-              <ChatInput 
-                onSendMessage={handleSendMessage} 
-                onDefaultMode={() => handleModeChange('default')} 
-                onModeChange={handleModeChange}
-                chatMode={chatMode} 
-                isLoading={isChatLoading} 
-                explorerSettings={explorerSettings} 
-                onUpdateExplorerSettings={setExplorerSettings} 
-                selectedGrade={selectedGrade} 
-                onOpenFAQ={() => setShowFAQ(true)}
-              />
-              <Footer sessionTokensUsed={sessionTokensUsed} subscriptionLevel={userProfile?.subscriptionLevel} onOpenFAQ={() => setShowFAQ(true)} />
+
+              <div className="flex-1 relative flex flex-col min-h-0 bg-white overflow-hidden">
+                  <div className="flex-1 overflow-y-auto">
+                    <ChatWindow messages={messages} isLoading={isChatLoading} loadingText={loadingText} onQuizAnswer={(q, o) => o.isCorrect && chatMode === 'default' && handleSendMessage(`Siguiente paso?`)} onSelection={(t) => handleSendMessage(t)} onImageClick={(u,p)=> { setPopupImage(u); setPopupPrompt(p); setShowImagePopup(true); }} onCreateFlashcards={async (t)=> { const cards = await geminiService.generateFlashcards(t); setFlashcards(cards); setShowFlashcards(true); }} onEditImage={(u) => { setImageCreationUrl(u); setShowImageCreationModal(true); setShowImagePopup(false); }} onQuizFinished={(res) => addMessage(Role.MODEL, res)} onAwardBadge={handleAwardBadge} onSaveProject={handleSaveProject} grade={selectedGrade || undefined} userName={userName} customKey={getCustomKey()} />
+                  </div>
+              </div>
+              <div className="shrink-0">
+                <ChatInput 
+                  onSendMessage={handleSendMessage} 
+                  onDefaultMode={() => handleModeChange('default')} 
+                  onModeChange={handleModeChange}
+                  chatMode={chatMode} 
+                  isLoading={isChatLoading} 
+                  explorerSettings={explorerSettings} 
+                  onUpdateExplorerSettings={setExplorerSettings} 
+                  selectedGrade={selectedGrade} 
+                  onOpenFAQ={() => setShowFAQ(true)}
+                />
+                <Footer sessionTokensUsed={sessionTokensUsed} subscriptionLevel={userProfile?.subscriptionLevel} onOpenFAQ={() => setShowFAQ(true)} />
+              </div>
 
             </>
           )}
@@ -826,6 +878,29 @@ lastError: lastErrorMsg,
                 />
             )}
         </AnimatePresence>
+
+        {/* Image Model Selector — same as CorporateGPT */}
+        <ImageModelSelector 
+          isOpen={showImageModelSelector}
+          onClose={() => { setShowImageModelSelector(false); setPendingImagePrompt(''); }}
+          onSelectModel={(modelId, prompt) => {
+            setShowImageModelSelector(false);
+            setIsGeneratingImage(true);
+            // Route through image studio flow
+            if (selectedGrade && userName) {
+              geminiService.generateImage(prompt, '1:1' as any, selectedGrade, userName, undefined, undefined, undefined, undefined, undefined, getCustomKey())
+                .then(res => {
+                  if (res) addMessage(Role.MODEL, { type: 'image', url: res.url, prompt });
+                })
+                .catch(err => addMessage(Role.MODEL, err.message))
+                .finally(() => setIsGeneratingImage(false));
+            }
+          }}
+          pendingPrompt={pendingImagePrompt}
+          theme="light"
+          lang="es"
+          isGenerating={isGeneratingImage}
+        />
     </div>
   );
 };
