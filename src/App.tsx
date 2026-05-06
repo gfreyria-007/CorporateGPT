@@ -55,7 +55,7 @@ import { LandingPage } from './components/LandingPage';
 import { SalesLanding } from './components/SalesLanding';
 import { Message, ModelMetadata } from './types';
 import { useAuth } from './lib/AuthContext';
-import { flagUser, SUPER_ADMIN_EMAIL, subscribeToGPTs, matchGPTByIntent } from './lib/db';
+import { flagUser, SUPER_ADMIN_EMAILS, subscribeToGPTs, matchGPTByIntent } from './lib/db';
 import { db } from './lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { cn } from './lib/utils';
@@ -128,7 +128,7 @@ export default function App() {
   // Permissions block removed to allow free switching between apps
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  const isSuperAdmin = user?.email === SUPER_ADMIN_EMAIL || profile?.role === 'admin' || profile?.role === 'super-admin' || (profile as any)?.role === 'owner';
+  const isSuperAdmin = SUPER_ADMIN_EMAILS.includes(user?.email || '') || profile?.role === 'admin' || profile?.role === 'super-admin' || (profile as any)?.role === 'owner';
 
   // V2 Version Gatekeeper — reads appVersion from company tenant
   const { appVersion, engineStatus, setEngineStatus } = useVersionGatekeeper(
@@ -596,7 +596,7 @@ export default function App() {
   }
 
   if (showLanding || !user) {
-    const isLandingSuperAdmin = user?.email === SUPER_ADMIN_EMAIL || profile?.role === 'super-admin';
+    const isLandingSuperAdmin = SUPER_ADMIN_EMAILS.includes(user?.email || '') || profile?.role === 'super-admin';
     return (
       <LandingPage 
         onStartSession={signIn} 

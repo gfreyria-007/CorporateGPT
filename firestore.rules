@@ -41,7 +41,7 @@ service cloud.firestore {
     /** Platform-level Super Admin (Catalizia internal) */
     function isSuperAdmin() {
       return isSignedIn() && isEmailVerified() && (
-        request.auth.token.email == 'gfreyria@gmail.com' ||
+        request.auth.token.email in ['gfreyria@gmail.com', 'gabrielfreyria@gmail.com'] ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'super-admin')
       );

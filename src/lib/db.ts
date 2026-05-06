@@ -48,7 +48,7 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   console.warn('Firestore unavailable (non-fatal):', errInfo.error);
 }
 
-export const SUPER_ADMIN_EMAIL = 'gfreyria@gmail.com';
+export const SUPER_ADMIN_EMAILS = ['gfreyria@gmail.com', 'gabrielfreyria@gmail.com'];
 
 /**
  * ensureUserRecord — V2 Multi-Tenant aware.
@@ -66,7 +66,7 @@ export async function ensureUserRecord(user: any) {
         email: user.email,
         displayName: user.displayName,
         photoURL: user.photoURL,
-        role: user.email === SUPER_ADMIN_EMAIL ? 'super-admin' : 'user',
+        role: SUPER_ADMIN_EMAILS.includes(user.email?.toLowerCase() || '') ? 'super-admin' : 'user',
         companyId: null,          // V2: assigned later via invite or self-onboard
         companyRole: null,        // V2: 'owner' | 'admin' | 'member'
         isBanned: false,
@@ -74,7 +74,7 @@ export async function ensureUserRecord(user: any) {
         imagesUsed: 0,
         maxQueries: 10,
         maxImages: 10,
-        unlimitedUsage: user.email === SUPER_ADMIN_EMAIL,
+        unlimitedUsage: SUPER_ADMIN_EMAILS.includes(user.email?.toLowerCase() || ''),
         createdAt: Timestamp.now(),
         lastActive: Timestamp.now()
       });
