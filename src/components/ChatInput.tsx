@@ -109,7 +109,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               whileTap={{ scale: 0.9 }}
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="p-3 text-slate-400 hover:text-blue-600 rounded-xl transition-colors border border-transparent hover:border-blue-600/10"
+              className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-blue-600 rounded-xl transition-colors border border-transparent hover:border-blue-600/10 active:bg-blue-600/10 tap-target touch-manipulation"
               id="attach-button"
             >
               <Paperclip size={20} />
@@ -119,7 +119,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               whileTap={{ scale: 0.9 }}
               type="button"
               onClick={onAdvancedToggle}
-              className="p-3 text-slate-400 hover:text-blue-600 rounded-xl transition-colors border border-transparent hover:border-blue-600/10"
+              className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-blue-600 rounded-xl transition-colors border border-transparent hover:border-blue-600/10 active:bg-blue-600/10 tap-target touch-manipulation"
               id="advanced-settings-button"
               title="Advanced Settings"
             >
