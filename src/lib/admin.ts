@@ -45,7 +45,7 @@ export async function approveUserSubscription(uid: string, type: SubscriptionTyp
       unlimitedUsage: true,
       tokensPerDay: 999999
     },
-admin: { 
+    admin: { 
       role: 'super-admin', 
       subscriptionLevel: 'admin', 
       maxQueries: 999999, 
@@ -88,11 +88,6 @@ export async function rejectUser(uid: string, reason?: string) {
 }
 
 // Legacy functions kept for backwards compatibility
-export async function updateUserRole(uid: string, role: 'trial' | 'user' | 'paid' | 'admin' | 'super-admin') {
-  const userRef = doc(db, 'users', uid);
-  await updateDoc(userRef, { role });
-}
-
 export async function updateUserRole(uid: string, role: 'trial' | 'user' | 'paid' | 'admin' | 'super-admin') {
   const userRef = doc(db, 'users', uid);
   await updateDoc(userRef, { role });

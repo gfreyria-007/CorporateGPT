@@ -32,7 +32,7 @@ import { EcoModeBanner } from './EcoModeBanner';
 import PPTcreator from './PPTcreator';
 import { SuperAdminPanel } from './SuperAdminPanel';
 import { CompanyPanel } from './CompanyPanel';
-import { LogOut, Terminal, Users, Presentation } from 'lucide-react';
+import { LogOut, Terminal, Users } from 'lucide-react';
 
 const useHaptic = () => {
   const trigger = useCallback((type: 'light' | 'medium' | 'heavy' = 'light') => {
