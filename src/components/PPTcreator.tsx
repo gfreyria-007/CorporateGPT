@@ -1094,14 +1094,13 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          {isLoading && (
-            <button 
-              onClick={() => window.location.reload()}
-              className="text-[10px] font-black uppercase px-2 py-1 bg-red-500/10 text-red-500 rounded border border-red-500/20"
-            >
-              Reset
-            </button>
-          )}
+          <button 
+            onClick={() => window.location.reload()}
+            className="text-[10px] font-black uppercase px-2 py-1 hover:bg-slate-500/10 text-slate-500 rounded border border-slate-500/20"
+          >
+            {lang === 'es' ? 'Reiniciar' : 'Reset'}
+          </button>
+          
           <button 
             onClick={onClose} 
             className="p-2 rounded-lg sm:rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
