@@ -45,7 +45,7 @@ const content = {
           },
           {
             q: "Can I create images?",
-            a: "Yes. Use the Asset Studio (palette icon in the sidebar) to generate professional infographics and slides using AI."
+            a: "Yes. Simply describe what you want to create in the chat and the AI will generate it for you using our image synthesis models."
           }
         ]
       },
@@ -77,7 +77,7 @@ const content = {
           },
           {
             q: "Can I generate PowerPoint presentations?",
-            a: "Yes. Use the PPT Studio to generate slide decks. Describe your topic and the AI will create professional slides with charts and data visualizations."
+            a: "Yes. Simply describe what you need in the chat and the AI will help you create professional presentations."
           },
           {
             q: "What about the Junior (Techie) mode?",
@@ -201,7 +201,7 @@ const content = {
           },
           {
             q: "¿Puedo generar presentaciones de PowerPoint?",
-            a: "Sí. Usa el Estudio de PPT para generar juegos de diapositivas. Describe tu tema y la IA creará diapositivas profesionales con gráficos y visualizaciones de datos."
+            a: "Sí. Simplemente describe lo que necesitas en el chat y la IA te ayudará a crear presentaciones profesionales."
           },
           {
             q: "¿Qué pasa con el modo Junior (Techie)?",

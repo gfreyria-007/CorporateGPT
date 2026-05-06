@@ -362,10 +362,10 @@ export const LandingPage = ({
               <p className="text-slate-400 text-lg leading-relaxed mb-10">
                 {lang === 'es' ? 'Nuestra IA decide cuál es el mejor modelo (Pro o Flash) para tu tarea específica. Máximo rendimiento, mínimo costo.' : 'Our AI decides the best model (Pro or Flash) for your specific task. Maximum performance, minimum cost.'}
               </p>
-              <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-slate-900/50 group-hover:scale-105 transition-transform duration-700">
-                <img src="/landing/ppt.png" alt="PPT Studio" className="w-full h-auto opacity-50 group-hover:opacity-100 transition-opacity" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-[#020617]/20 to-transparent" />
-              </div>
+<div className="relative rounded-3xl overflow-hidden border border-white/10 bg-slate-900/50 group-hover:scale-105 transition-transform duration-700">
+                 <img src="/landing/dashboard.png" alt="Corporate Chat" className="w-full h-auto opacity-50 group-hover:opacity-100 transition-opacity" />
+                 <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-[#020617]/20 to-transparent" />
+               </div>
             </div>
 
             <div className="feature-card glass-card p-12 rounded-[3.5rem] hover:bg-white/10 transition-all group overflow-hidden border border-white/5">
@@ -426,7 +426,6 @@ export const LandingPage = ({
             {[
               { feat: 'Google Gemini Models', catalizia: true, other: true },
               { feat: 'Privacidad Corporativa', catalizia: true, other: 'Parcial' },
-              { feat: 'PPT Studio Builder', catalizia: true, other: false },
               { feat: 'Techie Tutor (Junior)', catalizia: true, other: false },
             ].map((row, i) => (
               <div key={i} className="table-row grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-0 p-4 sm:p-12 border-b border-white/5 items-center hover:bg-white/5 transition-all cursor-default">
