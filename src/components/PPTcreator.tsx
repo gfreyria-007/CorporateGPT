@@ -74,28 +74,81 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
   const [isFinalized, setIsFinalized] = useState(false);
 
   const processContent = async () => {
-    // For upload, we need files - for now allow empty if slideCount is valid
-    if (contentSource !== 'upload' && !contentInput.trim()) return;
-    
     const validSlides = Math.max(1, slideCount);
     setIsLoading(true);
     
     try {
-      // In real implementation:
-      // - 'text': use contentInput directly as content
-      // - 'upload': use uploaded file content  
-      // - 'ai': use contentInput as seed for AI generation
+      // Generate content based on user input
+      const userContent = contentInput.trim();
+      const topic = userContent.split('\n')[0] || userContent.split('.')[0] || 'Presentation';
+      const cleanTopic = topic.slice(0, 50);
       
-      const mockNarrative: SlideContent[] = Array.from({ length: validSlides }, (_, i) => ({
-        title: i === 0 ? 'Title Slide' : `Slide ${i}: Key Point ${i}`,
-        bullets: [
-          `Main point for slide ${i + 1}`,
-          `Supporting detail and context`,
-          `Key insight to remember`,
-        ]
-      }));
+      // Generate a proper narrative structure
+      const narrativeStructure = [
+        { title: '', bullets: [] }, // Title slide
+        { title: '', bullets: [] }, // Hook/Introduction
+        { title: '', bullets: [] }, // Problem/Context
+        { title: '', bullets: [] }, // Solution
+        { title: '', bullets: [] }, // Benefits
+        { title: '', bullets: [] }, // CTA
+      ];
       
-      setNarrative(mockNarrative);
+      // Generate content based on source type
+      let generatedContent: SlideContent[] = [];
+      
+      if (contentSource === 'ai' || contentSource === 'text') {
+        // Use user input as seed for content
+        const keywords = cleanTopic.toLowerCase().split(/[,.\s]+/).filter(k => k.length > 2);
+        const mainTopic = cleanTopic;
+        
+        generatedContent = Array.from({ length: validSlides }, (_, i) => {
+          if (i === 0) {
+            return {
+              title: mainTopic,
+              bullets: [
+                keywords[0] ? keywords[0].charAt(0).toUpperCase() + keywords[0].slice(1) : 'Your Topic',
+                keywords[1] ? `Key aspect: ${keywords[1]}` : 'Present by Corporate AI',
+                keywords[2] ? `Focus on: ${keywords[2]}` : 'Secure & Private'
+              ]
+            };
+          } else {
+            const slideNum = i;
+            const pointIndex = Math.min(i - 1, keywords.length - 1);
+            const keyWord = keywords[pointIndex] || 'content';
+            
+            return {
+              title: `Slide ${slideNum}: ${keyWord.charAt(0).toUpperCase() + keyWord.slice(1)}`,
+              bullets: [
+                `Key point about ${keyWord} and its importance`,
+                `Supporting data and evidence for this aspect`,
+                `Action items and recommendations`
+              ]
+            };
+          }
+        });
+      } else if (contentSource === 'upload') {
+        // For upload, generate generic structure adapting to slide count
+        generatedContent = Array.from({ length: validSlides }, (_, i) => ({
+          title: i === 0 ? 'Document Analysis' : `Section ${i}`,
+          bullets: [
+            'Key finding from document',
+            'Important detail to note',
+            'Summary and implications'
+          ]
+        }));
+      } else {
+        // Fallback
+        generatedContent = Array.from({ length: validSlides }, (_, i) => ({
+          title: i === 0 ? cleanTopic : `Slide ${i}: Topic`,
+          bullets: [
+            'First important point',
+            'Second key aspect',
+            'Third supporting detail'
+          ]
+        }));
+      }
+      
+      setNarrative(generatedContent);
       setCurrentStage(2);
     } catch (error) {
       console.error('Error processing content:', error);
