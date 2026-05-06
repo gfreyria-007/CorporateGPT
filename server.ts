@@ -658,6 +658,8 @@ async function startServer() {
         // 5. Handle regular Content Generation
         } else if (action === 'generateContent') {
           const generationConfig = payload.config || payload.generationConfig || {};
+          const { systemInstruction, ...restConfig } = generationConfig;
+          
           let requestedChatModel = payload.model || 'gemini-2.0-flash';
           if (requestedChatModel === 'gemini-1.5-flash') requestedChatModel = 'gemini-1.5-flash-latest';
           if (requestedChatModel === 'gemini-1.5-pro') requestedChatModel = 'gemini-1.5-pro-latest';
@@ -683,7 +685,7 @@ async function startServer() {
                     ...restConfig,
                     responseMimeType: restConfig.responseMimeType || (restConfig.responseModalities?.includes('IMAGE') ? undefined : "application/json")
                   },
-                  systemInstruction: payload.systemInstruction || configSystemInstruction ? { parts: [{ text: payload.systemInstruction || configSystemInstruction }] } : undefined,
+                  systemInstruction: payload.systemInstruction || systemInstruction ? { parts: [{ text: payload.systemInstruction || systemInstruction }] } : undefined,
                   tools: payload.tools || [{ googleSearch: {} }]
                 })
               });
