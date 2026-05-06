@@ -161,16 +161,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const result = await signInWithPopup(auth, appleProvider);
       const email = result.user.email;
       
-      // Check trial status (Bypass for Super Admins)
-      if (email && !ALLOWED_EMAILS.includes(email.toLowerCase())) {
-        const trialCheck = await checkTrialStatus(email);
-        if (!trialCheck.eligible) {
-          await signOut(auth);
-          localStorage.setItem('trial_blocked', 'true');
-          window.location.href = '/?status=trial_ended';
-          return;
-        }
-        await startTrial(email);
+      // We no longer block sign-in during the handshake.
+      // App.tsx handles gating based on the loaded profile.
+      if (email) {
+        await startTrial(email).catch(e => console.error("Trial auto-start failed", e));
       }
     } catch (error) {
       console.error("Apple Auth Error:", error);

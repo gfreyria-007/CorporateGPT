@@ -209,20 +209,30 @@ export default function App() {
   // Enforce Trial Limits (24 Hours OR Quota Exhausted)
   useEffect(() => {
     // Super admins always bypass trial limits
-    if (profile?.unlimitedUsage || SUPER_ADMIN_EMAILS.includes((user?.email || '').toLowerCase())) {
+    const userEmail = (user?.email || '').toLowerCase();
+    const isAdmin = profile?.unlimitedUsage || 
+                    profile?.role === 'super-admin' || 
+                    profile?.role === 'admin' || 
+                    SUPER_ADMIN_EMAILS.includes(userEmail);
+
+    if (isAdmin) {
       if (trialEnded) setTrialEnded(false);
       if (showLanding) setShowLanding(false);
       return;
     }
-    // If isProduction is not explicitly true, enforce trial limits
-    if (!appConfig?.isProduction) {
+
+    // Dynamic Gating for regular users
+    if (user && profile && !appConfig?.isProduction) {
       const maxQueries = profile.maxQueries || 10;
       const maxImages = profile.maxImages || 10;
       
       const createdAt = profile.createdAt?.toDate ? profile.createdAt.toDate() : new Date();
       const hoursSinceCreation = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60);
 
-      if ((profile.queriesUsed || 0) >= maxQueries || (profile.imagesUsed || 0) >= maxImages || hoursSinceCreation >= 24) {
+      const isOverQuota = (profile.queriesUsed || 0) >= maxQueries || (profile.imagesUsed || 0) >= maxImages;
+      const isExpired = hoursSinceCreation >= 24;
+
+      if (isOverQuota || isExpired) {
         setTrialEnded(true);
       }
     }
@@ -590,13 +600,42 @@ export default function App() {
     );
   }
 
-  const isEmailSuperAdmin = SUPER_ADMIN_EMAILS.includes((user?.email || '').toLowerCase()) || profile?.role === 'super-admin' || (profile as any)?.role === 'owner';
-  
-  // GOD MODE: If user is super admin, FORCE CLEAR all restrictions immediately
-  if (isEmailSuperAdmin) {
-    if (trialEnded) setTrialEnded(false);
-    if (showLanding) setShowLanding(false);
-  } else if (trialEnded) {
+  const isAdmin = (user?.email && SUPER_ADMIN_EMAILS.includes(user.email.toLowerCase())) || 
+                  profile?.role === 'super-admin' || 
+                  profile?.role === 'admin' || 
+                  profile?.unlimitedUsage;
+
+  if (loading) {
+    return (
+      <div className="h-screen w-screen bg-slate-950 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-6">
+           <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-[1.5rem] animate-spin" />
+           <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.5em]">Securing Connection...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 1. Unauthenticated Users -> Landing Page
+  if (!user || (showLanding && !isAdmin)) {
+    return (
+      <LandingPage 
+        onStartSession={signIn} 
+        onSignInWithApple={signInWithApple}
+        onSignInWithEmail={signInWithEmail}
+        isSigningIn={isSigningIn}
+        showTrialModal={trialEnded && !isAdmin}
+        lang={lang}
+        setLang={setLang}
+        appConfig={appConfig}
+        appMode={appMode}
+        isSuperAdmin={isAdmin}
+      />
+    );
+  }
+
+  // 2. Authenticated but Over Quota/Expired -> Sales/Upgrade Lobby (Admins bypass)
+  if (trialEnded && !isAdmin) {
     return (
       <SalesLanding 
         lang={lang} 
@@ -608,8 +647,8 @@ export default function App() {
     );
   }
 
-  // Super admins bypass pending/landing checks
-  if (!isEmailSuperAdmin && profile?.role === 'pending') {
+  // 3. Pending Approval State (Admins bypass)
+  if (profile?.role === 'pending' && !isAdmin) {
     return (
       <div className="fixed inset-0 bg-corporate-950 flex items-center justify-center p-8">
         <div className="max-w-md w-full text-center space-y-6">
@@ -626,40 +665,11 @@ export default function App() {
                 : 'Your request is being reviewed. We will notify you when an administrator approves your access.'}
             </p>
           </div>
-          <div className="p-4 bg-slate-800/50 rounded-xl space-y-2">
-            <p className="text-xs text-slate-500 uppercase font-black">
-              {lang === 'es' ? 'Estado de Solicitud' : 'Request Status'}
-            </p>
-            <p className="text-yellow-500 font-black text-sm uppercase">
-              {lang === 'es' ? 'En revisión' : 'Under Review'}
-            </p>
-          </div>
-          <button
-            onClick={logout}
-            className="w-full py-3 border border-slate-700 text-slate-400 rounded-xl font-black uppercase text-sm"
-          >
+          <button onClick={logout} className="w-full py-3 border border-slate-700 text-slate-400 rounded-xl font-black uppercase text-sm">
             {lang === 'es' ? 'Cerrar Sesión' : 'Sign Out'}
           </button>
         </div>
       </div>
-    );
-  }
-
-  if ((showLanding || !user) && !isEmailSuperAdmin) {
-    const isLandingSuperAdmin = SUPER_ADMIN_EMAILS.includes((user?.email || '').toLowerCase()) || profile?.role === 'super-admin';
-    return (
-      <LandingPage 
-        onStartSession={signIn} 
-        onSignInWithApple={signInWithApple}
-        onSignInWithEmail={signInWithEmail}
-        isSigningIn={isSigningIn}
-        showTrialModal={trialEnded}
-        lang={lang}
-        setLang={setLang}
-        appConfig={appConfig}
-        appMode={appMode}
-        isSuperAdmin={isLandingSuperAdmin}
-      />
     );
   }
 
