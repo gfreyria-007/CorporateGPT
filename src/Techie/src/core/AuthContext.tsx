@@ -263,7 +263,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode, mainUser?: Fire
         }
 
         // Check for pre-configured family profile
-        let familyProfile: { name: string; age: number; gradeId: string } | null = null;
+        let familyProfile: { name: string; age: number; gradeId: string; accessLevel: string } | null = null;
         if (u.email) {
           try {
             // Check if this user is a pre-registered family member
@@ -278,7 +278,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode, mainUser?: Fire
               familyProfile = {
                 name: familyData.name || 'Estudiante',
                 age: familyData.age || 10,
-                gradeId: familyData.gradeId || 'primaria1'
+                gradeId: familyData.gradeId || 'primaria1',
+                accessLevel: familyData.accessLevel || 'techie_only'
               };
               console.log('[Auth] Found pre-configured family profile:', familyProfile);
             }
@@ -329,7 +330,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode, mainUser?: Fire
           tokensPerDay: (trialStatus.eligible || familyProfile) ? 100 : 20,
           dailyUsageCount: 0,
           lastUsageDate: new Date().toISOString().split('T')[0],
-          subscriptionLevel: familyProfile ? parentSubscriptionLevel : subscriptionLevel
+          subscriptionLevel: familyProfile ? parentSubscriptionLevel : subscriptionLevel,
+          // Set permissions based on access level
+          ...(familyProfile?.accessLevel === 'both' && {
+            permissions: { corporate: true, techie: true }
+          })
         };
 
         if (trialStatus.eligible) {

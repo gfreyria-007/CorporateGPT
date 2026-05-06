@@ -24,6 +24,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, onOpenDiagnost
   const [newChildAge, setNewChildAge] = useState('');
   const [newChildGrade, setNewChildGrade] = useState('');
   const [newChildEmail, setNewChildEmail] = useState('');
+  const [newChildAccess, setNewChildAccess] = useState<'techie_only' | 'both'>('techie_only');
   const [isAddingUser, setIsAddingUser] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [importStatus, setImportStatus] = useState<{ success: number; errors: string[] } | null>(null);
@@ -101,6 +102,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, onOpenDiagnost
         gradeId: newChildGrade,
         childEmail: newChildEmail.toLowerCase(),
         parentEmail: parentEmail,
+        accessLevel: newChildAccess, // 'techie_only' or 'both'
         status: 'pending',
         createdAt: serverTimestamp()
       });
@@ -108,6 +110,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, onOpenDiagnost
       setNewChildAge('');
       setNewChildGrade('');
       setNewChildEmail('');
+      setNewChildAccess('techie_only');
     } catch (error) {
       console.error('Error adding family member:', error);
     } finally {
@@ -433,7 +436,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, onOpenDiagnost
                       className="bg-white/5 border border-purple-500/20 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-1 focus:ring-purple-400"
                     />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <input 
                       type="number" 
                       value={newChildAge}
@@ -465,6 +468,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, onOpenDiagnost
                       <option value="preparatoria3" className="bg-[#0f172a]">3° Preparatoria</option>
                       <option value="universidad" className="bg-[#0f172a]">Universidad</option>
                     </select>
+                    <select 
+                      value={newChildAccess}
+                      onChange={(e) => setNewChildAccess(e.target.value as 'techie_only' | 'both')}
+                      className="bg-white/5 border border-purple-500/20 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-1 focus:ring-purple-400"
+                    >
+                      <option value="techie_only" className="bg-[#0f172a]">🎮 Solo Techie</option>
+                      <option value="both" className="bg-[#0f172a]">🌐 Techie + Corporate</option>
+                    </select>
                   </div>
                   <button 
                     type="submit"
@@ -488,15 +499,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, onOpenDiagnost
                     <div key={member.id} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between group hover:bg-white/10 transition-all">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center text-2xl">
-                          👶
+                          {member.age >= 13 ? '🧑' : '👶'}
                         </div>
                         <div>
                           <h3 className="text-white font-bold">{member.name}</h3>
                           <p className="text-[10px] text-white/40 font-mono">
                             {member.age} años • {member.gradeId || 'Sin grado'}
                           </p>
-                          <p className="text-[8px] text-purple-400 font-mono">
-                            Pending login
+                          <p className={`text-[8px] font-mono ${member.accessLevel === 'both' ? 'text-green-400' : 'text-amber-400'}`}>
+                            {member.accessLevel === 'both' ? '🌐 Techie + Corporate' : '🎮 Solo Techie'}
                           </p>
                         </div>
                       </div>

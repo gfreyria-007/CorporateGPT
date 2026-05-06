@@ -237,4 +237,8 @@ export interface UserProfile {
   createdAt?: any;
   familyId?: string;
   parentEmail?: string;
+  permissions?: {
+    corporate?: boolean;
+    techie?: boolean;
+  };
 }
