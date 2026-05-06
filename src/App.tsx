@@ -600,8 +600,12 @@ export default function App() {
     );
   }
 
-  // Pending approval screen - new users must wait for admin approval
-  if (profile?.role === 'pending' && !isSuperAdmin) {
+  // Super admins bypass all restrictions - render main app
+  if (isSuperAdmin) {
+    // Main app rendering continues below
+  }
+  // Pending approval screen - must check BEFORE landing check
+  else if (profile?.role === 'pending') {
     return (
       <div className="fixed inset-0 bg-corporate-950 flex items-center justify-center p-8">
         <div className="max-w-md w-full text-center space-y-6">
