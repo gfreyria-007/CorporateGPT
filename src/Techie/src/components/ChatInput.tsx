@@ -184,8 +184,25 @@ const ChatInput: React.FC<ChatInputProps> = ({
                   {showTools && (
                       <div className="absolute bottom-full left-0 mb-4 w-[calc(100vw-2rem)] sm:w-72 bg-white/80 backdrop-blur-3xl rounded-[2rem] shadow-2xl border border-white overflow-hidden z-50 animate-fade-in-scale transform origin-bottom-left premium-shadow-lg">
                           <div className="max-h-[60vh] overflow-y-auto p-4 space-y-1 custom-scrollbar">
-                              <h4 className="px-3 mb-2 text-[10px] font-black text-blue-900/50 uppercase tracking-[0.2em]">HERRAMIENTAS MÁGICAS</h4>
-                              {TOOL_DEFINITIONS.map(tool => (
+                              <h4 className="px-3 mb-2 text-[10px] font-black text-blue-900/50 uppercase tracking-[0.2em]">{isSpanish ? 'HERRAMIENTAS MÁGICAS' : 'MAGIC TOOLS'}</h4>
+                              {TOOL_DEFINITIONS.map(tool => {
+                                const transTitle = tool.id === 'default' ? (isSpanish ? 'Techie Tutor IA' : 'Techie AI Tutor') :
+                                  tool.id === 'socratic' ? (isSpanish ? 'Tutor Socrático 🎯' : 'Socratic Tutor 🎯') :
+          tool.id === 'math-viva' ? (isSpanish ? 'Laboratorio de Mate 🧪' : 'Math Lab 🧪') :
+          tool.id === 'explorer' ? (isSpanish ? 'Explorador del Mundo 🌍' : 'World Explorer 🌍') :
+          tool.id === 'researcher' ? (isSpanish ? 'Super Reportes 📚' : 'Super Reports 📚') :
+          tool.id === 'quiz-master' ? (isSpanish ? 'Práctica de Exámenes 📝' : 'Exam Practice 📝') :
+          tool.id === 'image-studio' ? (isSpanish ? 'Estudio de Arte Mágico ✨' : 'Magic Art Studio ✨') :
+          tool.id === 'arcade' ? (isSpanish ? 'Zona Arcade 🕹️' : 'Arcade Zone 🕹️') : tool.title;
+                                const transDesc = tool.id === 'default' ? (isSpanish ? 'Tu guía súper inteligente' : 'Your super smart guide') :
+          tool.id === 'socratic' ? (isSpanish ? '¡No da respuestas!' : 'Does not give answers!') :
+          tool.id === 'math-viva' ? (isSpanish ? '¡Juega con números!' : 'Play with numbers!') :
+          tool.id === 'explorer' ? (isSpanish ? 'Pregunta lo que sea' : 'Ask anything') :
+          tool.id === 'researcher' ? (isSpanish ? 'Investiga cualquier tema' : 'Research any topic') :
+          tool.id === 'quiz-master' ? (isSpanish ? 'Prepárate para exámenes' : 'Prepare for exams') :
+          tool.id === 'image-studio' ? (isSpanish ? 'Crea dibujos con IA' : 'Create drawings with AI') :
+          tool.id === 'arcade' ? (isSpanish ? 'Diviértete jugando' : 'Have fun playing') : tool.desc;
+                                return (
                                   <button
                                       key={tool.id}
                                       type="button"
@@ -198,11 +215,12 @@ const ChatInput: React.FC<ChatInputProps> = ({
                                           </svg>
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                          <span className="block text-[11px] font-black text-blue-900 uppercase tracking-wide truncate">{tool.title}</span>
-                                          <span className="block text-[9px] text-gray-500 truncate">{tool.desc}</span>
+                                          <span className="block text-[11px] font-black text-blue-900 uppercase tracking-wide truncate">{transTitle}</span>
+                                          <span className="block text-[9px] text-gray-500 truncate">{transDesc}</span>
                                       </div>
                                   </button>
-                              ))}
+                                );
+                              })}
                               <div className="border-t border-gray-100 my-1"></div>
                               <button
                                   type="button"

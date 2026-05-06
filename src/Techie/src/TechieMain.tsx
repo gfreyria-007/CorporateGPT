@@ -258,7 +258,24 @@ const canUseSystemKey = (isSubscribed || isAdminRole);
     setChatMode(newMode);
     const tool = TOOL_DEFINITIONS.find(t => t.id === newMode);
     if (tool) {
-        addMessage(Role.SYSTEM, `HERRAMIENTA ACTIVADA: ${tool.title.toUpperCase()}`);
+        const toolTrans = isSpanish ? 
+            (newMode === 'default' ? 'Techie Tutor IA' :
+             newMode === 'socratic' ? 'Tutor Socrático' :
+             newMode === 'math-viva' ? 'Laboratorio de Mate' :
+             newMode === 'explorer' ? 'Explorador del Mundo' :
+             newMode === 'researcher' ? 'Super Reportes' :
+             newMode === 'quiz-master' ? 'Práctica de Exámenes' :
+             newMode === 'image-studio' ? 'Estudio de Arte Mágico' :
+             newMode === 'arcade' ? 'Zona Arcade' : tool.title) :
+            (newMode === 'default' ? 'Techie AI Tutor' :
+             newMode === 'socratic' ? 'Socratic Tutor' :
+             newMode === 'math-viva' ? 'Math Lab' :
+             newMode === 'explorer' ? 'World Explorer' :
+             newMode === 'researcher' ? 'Super Reports' :
+             newMode === 'quiz-master' ? 'Exam Practice' :
+             newMode === 'image-studio' ? 'Magic Art Studio' :
+             newMode === 'arcade' ? 'Arcade Zone' : tool.title);
+        addMessage(Role.SYSTEM, isSpanish ? `HERRAMIENTA ACTIVADA: ${toolTrans.toUpperCase()}` : `TOOL ACTIVATED: ${toolTrans.toUpperCase()}`);
     }
 
     if (newMode === 'image-studio') {
@@ -307,8 +324,11 @@ const canUseSystemKey = (isSubscribed || isAdminRole);
 
     if (mode === 'image-studio') setShowImageCreationModal(true);
     else {
-        const toolTitle = TOOL_DEFINITIONS.find(t=>t.id===mode)?.title || "Tutor Socrático";
-        addMessage(Role.MODEL, `¡Hola ${name}! Soy tu **${toolTitle}**. ¿En qué puedo ayudarte?`);
+        const toolTitle = TOOL_DEFINITIONS.find(t=>t.id===mode)?.title || (isSpanish ? 'Tutor Socrático' : 'Socratic Tutor');
+        const welcomeMsg = isSpanish ? 
+            `¡Hola ${name}! Soy tu **${toolTitle}**. ¿En qué puedo ayudarte?` : 
+            `Hello ${name}! I am your **${toolTitle}**. How can I help you?`;
+        addMessage(Role.MODEL, welcomeMsg);
     }
   };
 
@@ -369,11 +389,14 @@ const canUseSystemKey = (isSubscribed || isAdminRole);
       const isBYOKMode = !canUseSystemKey;
       const personalApiKey = userProfile.personalApiKey;
 
-      if (isBYOKMode && !personalApiKey) {
-          addMessage(Role.MODEL, "¡Hola! Para continuar aprendiendo con Techie, necesitas activar un Plan Familiar en el Hub de CatalizIA o ingresar tu propia API Key en los ajustes.");
+if (isBYOKMode && !personalApiKey) {
+          const noPlanMsg = isSpanish ? 
+            '¡Hola! Para continuar aprendiendo con Techie, necesitas activar un Plan Familiar en el Hub de CatalizIA o ingresar tu propia API Key en los ajustes.' : 
+            'Hello! To continue learning with Techie, you need to activate a Family Plan at the CatalizIA Hub or enter your own API Key in settings.';
+          addMessage(Role.MODEL, noPlanMsg);
           setShowSettingsModal(true);
           return;
-      }
+        }
 
       // Check usage limits only if using system key
       if (userProfile.role !== 'admin' && canUseSystemKey) {
@@ -654,20 +677,20 @@ if (parsed.type === 'image-request') {
             <div className="flex-1 flex items-center justify-center p-4 bg-slate-50 custom-scrollbar overflow-y-auto">
                 <div className="bg-white border border-gray-100 rounded-[3rem] p-8 md:p-12 max-w-4xl w-full shadow-2xl text-center my-8">
                     <div className="text-6xl mb-6">🚀</div>
-                    <h2 className="text-4xl font-black text-[#1e3a8a] mb-2 uppercase tracking-tight">Desbloquea el Poder de Techie</h2>
+                    <h2 className="text-4xl font-black text-[#1e3a8a] mb-2 uppercase tracking-tight">{isSpanish ? 'Desbloquea el Poder de Techie' : 'Unlock Techie\'s Power'}</h2>
                     <p className="text-gray-500 mb-12 text-base leading-relaxed max-w-2xl mx-auto">
-                        {isBudgetExceeded ? 'Has agotado tu crédito mensual.' : 'Tu acceso premium está inactivo.'} Techie Tutor es mucho más que un chat: es un ecosistema completo para potenciar el aprendizaje de tu familia.
+                        {isSpanish ? (isBudgetExceeded ? 'Has agotado tu crédito mensual.' : 'Tu acceso premium está inactivo.') : (isBudgetExceeded ? 'You have exhausted your monthly credit.' : 'Your premium access is inactive.')} {isSpanish ? 'Techie Tutor es mucho más que un chat: es un ecosistema completo para potenciar el aprendizaje de tu familia.' : 'Techie Tutor is much more than a chat: it\'s a complete ecosystem to enhance your family\'s learning.'}
                     </p>
 
                     {/* Features Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 text-left">
                         {[
-                            { title: 'Tutor Socrático', desc: 'No solo da respuestas, enseña a pensar con IA.', icon: <Sparkles className="text-amber-500" /> },
-                            { title: 'PhD Research', desc: 'Investigación académica profunda en toda la web.', icon: <Search className="text-blue-500" /> },
-                            { title: 'Math Lab', desc: 'Resolución visual de problemas paso a paso.', icon: <Calculator className="text-emerald-500" /> },
-                            { title: 'Taller de Arte', desc: 'Crea imágenes increíbles para tareas y proyectos.', icon: <ImageIcon className="text-purple-500" /> },
-                            { title: 'Desafíos', desc: 'Quizzes gamificados para medir el progreso.', icon: <Crown className="text-yellow-500" /> },
-                            { title: 'Zona Arcade', desc: 'Juegos educativos para aprender divirtiéndose.', icon: <LayoutGrid className="text-pink-500" /> },
+                            { title: isSpanish ? 'Tutor Socrático' : 'Socratic Tutor', desc: isSpanish ? 'No solo da respuestas, enseña a pensar con IA.' : 'Does not just give answers, teaches to think with AI.', icon: <Sparkles className="text-amber-500" /> },
+                            { title: isSpanish ? 'Investigación' : 'Research', desc: isSpanish ? 'Investigación académica profunda en toda la web.' : 'Deep academic research on the web.', icon: <Search className="text-blue-500" /> },
+                            { title: isSpanish ? 'Laboratorio de Mate' : 'Math Lab', desc: isSpanish ? 'Resolución visual de problemas paso a paso.' : 'Visual problem-solving step by step.', icon: <Calculator className="text-emerald-500" /> },
+                            { title: isSpanish ? 'Taller de Arte' : 'Art Studio', desc: isSpanish ? 'Crea imágenes increíbles para tareas y proyectos.' : 'Create amazing images for homework and projects.', icon: <ImageIcon className="text-purple-500" /> },
+                            { title: isSpanish ? 'Desafíos' : 'Challenges', desc: isSpanish ? 'Quizzes gamificados para medir el progreso.' : 'Gamified quizzes to measure progress.', icon: <Crown className="text-yellow-500" /> },
+                            { title: isSpanish ? 'Zona Arcade' : 'Arcade Zone', desc: isSpanish ? 'Juegos educativos para aprender divirtiéndose.' : 'Educational games to learn while having fun.', icon: <LayoutGrid className="text-pink-500" /> },
                         ].map((f, i) => (
                             <div key={i} className="p-5 bg-slate-50 rounded-2xl border border-slate-100 hover:border-blue-200 transition-colors">
                                 <div className="mb-3">{f.icon}</div>
