@@ -112,25 +112,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         //   return;
         // }
 
+      setUser(u);
+      
+      if (u) {
         try {
           ensureUserRecord(u).catch(e => console.error("ensureUserRecord failed", e));
           unsubProfile = onSnapshot(doc(db, 'users', u.uid), (snap) => {
             if (snap.exists()) {
               setProfile(snap.data());
+              setLoading(false); // Only set loading false once profile is here
+            } else {
+              setLoading(false); // Set false if doc doesn't exist
             }
           }, (error) => {
-            // Only report error if we still have a user (avoid errors on logout)
             if (auth.currentUser) {
               handleFirestoreError(error, OperationType.GET, `users/${u.uid}`);
             }
+            setLoading(false);
           });
         } catch (error) {
           console.error("Error setting up user session:", error);
+          setLoading(false);
         }
       } else {
         setProfile(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => {

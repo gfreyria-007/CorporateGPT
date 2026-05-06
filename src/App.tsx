@@ -592,11 +592,11 @@ export default function App() {
 
   const isEmailSuperAdmin = SUPER_ADMIN_EMAILS.includes((user?.email || '').toLowerCase()) || profile?.role === 'super-admin' || (profile as any)?.role === 'owner';
   
-  if (user) {
-    console.log('[GOD_MODE] User:', user.email, 'isSuperAdmin:', isEmailSuperAdmin, 'trialEnded:', trialEnded, 'showLanding:', showLanding);
-  }
-  
-  if (trialEnded && !isEmailSuperAdmin) {
+  // GOD MODE: If user is super admin, FORCE CLEAR all restrictions immediately
+  if (isEmailSuperAdmin) {
+    if (trialEnded) setTrialEnded(false);
+    if (showLanding) setShowLanding(false);
+  } else if (trialEnded) {
     return (
       <SalesLanding 
         lang={lang} 
