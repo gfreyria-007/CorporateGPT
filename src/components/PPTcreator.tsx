@@ -74,25 +74,24 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
   const [isFinalized, setIsFinalized] = useState(false);
 
   const processContent = async () => {
-    if (!contentInput.trim() && contentSource !== 'ai') return;
+    // For upload, we need files - for now allow empty if slideCount is valid
+    if (contentSource !== 'upload' && !contentInput.trim()) return;
+    
+    const validSlides = Math.max(1, slideCount);
     setIsLoading(true);
     
     try {
-      const systemPrompt = `You are a presentation expert. Create a slide-by-slide outline for a presentation.
-Rules:
-- Start with a compelling title slide
-- Use the 0-100 narrative arc (hook, problem, solution, value, CTA)
-- Each slide should have: title and 3-5 bullet points
-- Return as JSON array with: title (string), bullets (array of strings)`;
-
-      // In real implementation, this would call the AI
-      // For now, generate mock narrative
-      const mockNarrative: SlideContent[] = Array.from({ length: slideCount }, (_, i) => ({
+      // In real implementation:
+      // - 'text': use contentInput directly as content
+      // - 'upload': use uploaded file content  
+      // - 'ai': use contentInput as seed for AI generation
+      
+      const mockNarrative: SlideContent[] = Array.from({ length: validSlides }, (_, i) => ({
         title: i === 0 ? 'Title Slide' : `Slide ${i}: Key Point ${i}`,
         bullets: [
-          `Bullet point 1 for slide ${i}`,
-          `Bullet point 2 for slide ${i}`,
-          `Bullet point 3 for slide ${i}`,
+          `Main point for slide ${i + 1}`,
+          `Supporting detail and context`,
+          `Key insight to remember`,
         ]
       }));
       
@@ -192,7 +191,7 @@ Rules:
           </label>
           <input 
             type="range" 
-            min="3" 
+            min="1" 
             max="20" 
             value={slideCount}
             onChange={(e) => setSlideCount(parseInt(e.target.value))}
@@ -228,18 +227,21 @@ Rules:
           </div>
         </div>
 
-        {contentSource === 'text' && (
+        {(contentSource === 'text' || contentSource === 'ai') && (
           <textarea
             value={contentInput}
             onChange={(e) => setContentInput(e.target.value)}
-            placeholder={lang === 'es' ? 'Describe tu tema, objetivo y contenido principal...' : 'Describe your topic, objective, and main content...'}
+            placeholder={contentSource === 'ai' 
+              ? (lang === 'es' ? 'Dale ideas a la IA: tema, objetivo, público objetivo...' : 'Give AI ideas: topic, goal, target audience...')
+              : (lang === 'es' ? 'Describe tu tema, objetivo y contenido principal...' : 'Describe your topic, objective, and main content...')
+            }
             className="w-full h-32 sm:h-40 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-white/10 bg-transparent resize-none text-sm sm:text-base"
           />
         )}
 
         <button
           onClick={processContent}
-          disabled={isLoading || (!contentInput.trim() && contentSource !== 'ai')}
+          disabled={isLoading}
           className="w-full py-3 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 min-h-[48px]"
         >
           {isLoading ? <RefreshCw className="animate-spin" /> : <ChevronRight />}
