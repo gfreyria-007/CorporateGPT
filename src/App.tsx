@@ -343,11 +343,14 @@ export default function App() {
       }
 
       let activeGPT = selectedGPT;
-      if (!activeGPT && availableGPTs.length > 0 && finalContent.length > 10) {
+      // Auto-match a GPT by intent only when no GPT is manually selected,
+      // and NEVER for image generation requests (those are handled above).
+      if (!activeGPT && !isImageRequest && availableGPTs.length > 0 && finalContent.length > 10) {
         const matchedGPT = matchGPTByIntent(finalContent, availableGPTs);
         if (matchedGPT) {
+          // Use the matched GPT for this message only — do NOT call setSelectedGPT
+          // to avoid it sticking across subsequent unrelated messages.
           activeGPT = matchedGPT;
-          setSelectedGPT(matchedGPT);
         }
       }
       
@@ -440,29 +443,37 @@ export default function App() {
     };
     setMessages(prev => [...prev, userMessage]);
 
-    // Add a thinking message
+    // Capture thinking ID in a const BEFORE async calls so removal filter always matches
+    const thinkingId = `thinking-img-${Date.now()}`;
+    const modelLabel = modelId.includes('imagen-4.0-fast') ? 'Imagen 4 Fast'
+                     : modelId.includes('imagen-4.0-generate') ? 'Imagen 4 Quality'
+                     : 'Gemini 2.0 Flash';
     const thinkingMessage: Message = {
-      id: `thinking-${Date.now()}`,
+      id: thinkingId,
       role: 'assistant',
-      content: lang === 'es' ? '🎨 Generando imagen con ' + modelId + '... Esto puede tomar unos segundos.' : '🎨 Generating image with ' + modelId + '... This may take a few seconds.',
+      content: lang === 'es'
+        ? `🎨 Generando con **${modelLabel}**... Esto puede tomar unos segundos.`
+        : `🎨 Generating with **${modelLabel}**... This may take a few seconds.`,
       timestamp: Date.now()
     };
     setMessages(prev => [...prev, thinkingMessage]);
 
     try {
       const idToken = await user.getIdToken();
-      
-      // Try Imagen models first
       let imgRes: any = null;
-      const imagenModels = ['imagen-4.0-fast-generate-001', 'imagen-4.0-generate-001'];
-      
-      for (const model of imagenModels) {
-        if (modelId !== model && !modelId.includes('gemini')) continue;
-        
+
+      const isImagenModel = modelId.startsWith('imagen-');
+
+      if (isImagenModel) {
+        // ── Imagen path (user selected Imagen 4 Fast / Imagen 4 Quality) ────
+        console.log(`[Image] Calling Imagen API with model: ${modelId}`);
         try {
           const res = await fetch('/api/gemini', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${idToken}`
+            },
             body: JSON.stringify({
               action: 'generateImage',
               model: modelId,
@@ -470,29 +481,34 @@ export default function App() {
               aspectRatio: '1:1'
             })
           });
-          
           imgRes = await res.json();
-          
-          if (!imgRes.error && (imgRes.imageBase64 || imgRes.predictions?.[0]?.bytesBase64Encoded)) {
-            console.log(`[Image] Success with model: ${model}`);
-            break;
+          if (imgRes?.imageBase64 || imgRes?.predictions?.[0]?.bytesBase64Encoded) {
+            console.log(`[Image] ✅ Imagen success: ${modelId}`);
+          } else {
+            console.warn(`[Image] Imagen returned no data — falling back to Gemini`);
+            imgRes = null;
           }
         } catch (e) {
-          console.warn(`[Image] Model ${model} failed:`, e);
+          console.warn(`[Image] Imagen request failed:`, e);
+          imgRes = null;
         }
       }
 
-      // Fallback to Gemini 2.0 Flash if Imagen fails
-      if (!imgRes || imgRes.error || (!imgRes.imageBase64 && !imgRes.predictions?.[0]?.bytesBase64Encoded)) {
-        console.log("[Image] Falling back to Gemini 2.0 Flash multimodal...");
+      // Gemini path — used when: user chose Gemini, OR Imagen failed as fallback
+      if (!imgRes) {
+        const geminiModel = modelId.startsWith('gemini-') ? modelId : 'gemini-2.0-flash';
+        console.log(`[Image] Calling Gemini generateContent with model: ${geminiModel}`);
         try {
           const res = await fetch('/api/gemini', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${idToken}`
+            },
             body: JSON.stringify({
               action: 'generateContent',
               payload: {
-                model: 'gemini-2.0-flash',
+                model: geminiModel,
                 contents: [{ role: 'user', parts: [{ text: `Create a high-quality image of: ${prompt}. Make it look professional and visually stunning.` }] }],
                 config: {
                   temperature: 1.0,
@@ -504,12 +520,12 @@ export default function App() {
           });
           imgRes = await res.json();
         } catch (fallbackError) {
-          console.error("[Image] Fallback failed:", fallbackError);
+          console.error('[Image] Gemini path failed:', fallbackError);
         }
       }
 
-      // Remove thinking message
-      setMessages(prev => prev.filter(m => m.id !== `thinking-${Date.now()}`));
+      // Remove thinking message using the captured const ID (not a new Date.now() call)
+      setMessages(prev => prev.filter(m => m.id !== thinkingId));
 
       if (!imgRes) {
         throw new Error(lang === 'es' ? 'Servidor no respondió. Por favor intenta de nuevo.' : 'Server did not respond. Please try again.');
@@ -536,16 +552,13 @@ export default function App() {
 
     } catch (error: any) {
       console.error('[Image] Error:', error.message);
-      
-      // Remove thinking message
-      setMessages(prev => prev.filter(m => m.id !== `thinking-${Date.now()}`));
-      
+      setMessages(prev => prev.filter(m => m.id !== thinkingId));
       const errorMessage: Message = {
         id: `error-${Date.now()}-${Math.random().toString(36).substr(2, 7)}`,
         role: 'assistant',
-        content: lang === 'es' 
-          ? 'La síntesis de imagen falló. Intenta con un prompt diferente o verifica tu conexión.'
-          : 'Image synthesis failed. Try a different prompt or check your connection.',
+        content: lang === 'es'
+          ? `❌ La síntesis de imagen falló: ${error.message}. Intenta con un prompt diferente.`
+          : `❌ Image synthesis failed: ${error.message}. Try a different prompt.`,
         timestamp: Date.now()
       };
       setMessages(prev => [...prev, errorMessage]);
