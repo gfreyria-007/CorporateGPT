@@ -29,6 +29,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
 import { GPTsGenerator } from './GPTsGenerator';
 import { EcoModeBanner } from './EcoModeBanner';
+import PPTcreator from './PPTcreator';
+import { SuperAdminPanel } from './SuperAdminPanel';
+import { CompanyPanel } from './CompanyPanel';
+import { LogOut, Terminal, Users, Presentation } from 'lucide-react';
 
 const useHaptic = () => {
   const trigger = useCallback((type: 'light' | 'medium' | 'heavy' = 'light') => {
@@ -112,7 +116,8 @@ export function MobileWorkspace({
   tokenPercent,
   multimediaRemaining,
   isSuperAdmin,
-  appMode = 'corporate'
+  appMode = 'corporate',
+  onLogout
 }: any) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
@@ -347,6 +352,26 @@ export function MobileWorkspace({
                   isMobile={true}
                 />
               )}
+              {activePanel === 'ppt' && (
+                <PPTcreator 
+                  user={user}
+                  onClose={() => onOpenPanel('chat')}
+                  lang={lang}
+                  theme={theme}
+                />
+              )}
+              {activePanel === 'admin' && (
+                <SuperAdminPanel 
+                  user={user}
+                  onClose={() => onOpenPanel('chat')}
+                />
+              )}
+              {activePanel === 'team' && (
+                <CompanyPanel 
+                  user={user}
+                  onClose={() => onOpenPanel('chat')}
+                />
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -434,8 +459,47 @@ export function MobileWorkspace({
                 </button>
               </div>
 
-              <nav className="flex-1 space-y-1">
-                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 px-4">Account & Settings</p>
+              <nav className="flex-1 space-y-1 overflow-y-auto custom-scrollbar pr-4">
+                 {appMode === 'corporate' && (
+                   <>
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 mt-6 px-4">Studio Tools</p>
+                     {[
+                       { icon: <Presentation size={18} />, label: 'PPT Creator', id: 'ppt', color: 'text-blue-500' },
+                       { icon: <Database size={18} />, label: 'Knowledge Bank', id: 'knowledge', color: 'text-indigo-500' },
+                     ].map(item => (
+                       <button 
+                         key={item.id}
+                         onClick={() => handleAction(() => { onOpenPanel(item.id); setIsMenuOpen(false); })}
+                         className="w-full flex items-center justify-between p-4 rounded-2xl active:bg-slate-100 dark:active:bg-white/5 transition-all text-sm font-bold uppercase tracking-widest text-slate-500 min-h-[44px]"
+                       >
+                         <div className="flex items-center gap-4">
+                            <span className={item.color}>{item.icon}</span> {item.label}
+                         </div>
+                         <ChevronRight size={14} className="text-slate-300" />
+                       </button>
+                     ))}
+                   </>
+                 )}
+
+                 {isSuperAdmin && (
+                   <>
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 mt-8 px-4">Management</p>
+                     <button 
+                       onClick={() => handleAction(() => { onOpenPanel('admin'); setIsMenuOpen(false); })}
+                       className="w-full flex items-center gap-4 p-4 rounded-2xl active:bg-slate-100 dark:active:bg-white/5 text-sm font-bold uppercase tracking-widest text-slate-500"
+                     >
+                       <Terminal size={18} /> Console
+                     </button>
+                     <button 
+                       onClick={() => handleAction(() => { onOpenPanel('team'); setIsMenuOpen(false); })}
+                       className="w-full flex items-center gap-4 p-4 rounded-2xl active:bg-slate-100 dark:active:bg-white/5 text-sm font-bold uppercase tracking-widest text-slate-500"
+                     >
+                       <Users size={18} /> Team
+                     </button>
+                   </>
+                 )}
+
+                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 mt-8 px-4">Account & Settings</p>
                  {[
                    { icon: <User size={18} />, label: 'Profile', id: 'profile' },
                    { icon: <CreditCard size={18} />, label: 'Subscription', id: 'plan' },
@@ -444,7 +508,7 @@ export function MobileWorkspace({
                  ].map(item => (
                    <button 
                      key={item.id}
-                     className="w-full flex items-center justify-between p-4 rounded-2xl active:bg-slate-100 dark:active:bg-white/5 transition-all text-sm font-bold uppercase tracking-widest text-slate-500 min-h-[44px] tap-target touch-manipulation"
+                     className="w-full flex items-center justify-between p-4 rounded-2xl active:bg-slate-100 dark:active:bg-white/5 transition-all text-sm font-bold uppercase tracking-widest text-slate-500 min-h-[44px]"
                    >
                      <div className="flex items-center gap-4">
                         {item.icon} {item.label}
@@ -464,7 +528,10 @@ export function MobileWorkspace({
                        <p className="text-[10px] font-bold text-blue-500 uppercase tracking-tighter">{profile?.role || 'Premium Access'}</p>
                     </div>
                  </div>
-                 <button className="w-full py-4 bg-red-500/10 text-red-500 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] active:scale-95 active:bg-red-500/20 transition-all min-h-[44px] tap-target touch-manipulation">
+                 <button 
+                   onClick={() => handleAction(onLogout)}
+                   className="w-full py-4 bg-red-500/10 text-red-500 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] active:scale-95 active:bg-red-500/20 transition-all min-h-[44px] tap-target touch-manipulation"
+                 >
                     Secure Logout
                  </button>
               </div>
