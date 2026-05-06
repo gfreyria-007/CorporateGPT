@@ -590,7 +590,8 @@ export async function generateProImageForSlide(
   style: string,
   chartType: string = 'none',
   tableData: string = '',
-  userImage?: string
+  userImage?: string,
+  layout: string = 'split'
 ): Promise<string> {
   const stylePrompts = {
     auto: 'Premium corporate presentation, clean modern design, dynamic composition',
@@ -603,7 +604,13 @@ export async function generateProImageForSlide(
     editorial: 'High-end magazine editorial, elegant typography, bold visual hierarchy',
     instructional: 'Educational diagram, clear labels, step-by-step visual guide',
     bento: 'Modern bento grid layout, organized clean sections, minimalist',
-    bricks: 'Colorful LEGO bricks, playful 3D building blocks toy aesthetic'
+    bricks: 'Colorful LEGO bricks, playful 3D building blocks toy aesthetic',
+    architect: 'Architectural blueprint style, technical drawings, precise lines, professional',
+    isometric: '3D isometric perspective, conceptual metaphors, modern vector style',
+    blueprint: 'Classic blueprint cyanotype, white lines on blue background, technical specifications',
+    cardboard: 'Handcrafted cardboard cutout style, corrugated textures, layered papercraft aesthetic, DIY feel',
+    origami: 'Japanese origami paper folding art, sharp creases, clean geometric shapes, minimalist paper aesthetic',
+    cinematic: 'Cinematic spectacular presentation, epic lighting, high contrast, dramatic shadows, blockbuster film aesthetic'
   };
 
   const prompt = `Create a WORLD-CLASS corporate presentation slide infographic.
@@ -615,6 +622,7 @@ KEY POINTS: ${content.join(' | ')}
 ${chartType !== 'none' && tableData ? `DATA VISUALIZATION: ${chartType} chart with: ${tableData}` : 'NO CHART DATA'}
 
 VISUAL STYLE: ${stylePrompts[style as keyof typeof stylePrompts] || stylePrompts.auto}
+VISUAL LAYOUT STRATEGY: ${layout} (e.g., focal, grid, bento, technical)
 
 CRITICAL REQUIREMENTS:
 1. 16:9 cinematic aspect ratio

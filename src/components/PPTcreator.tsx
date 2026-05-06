@@ -9,16 +9,23 @@ import {
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { translations } from '../lib/translations';
+import * as geminiService from '../services/geminiService';
 
 type Stage = 1 | 2 | 3 | 4 | 5;
 
 interface SlideContent {
   title: string;
+  subtitle?: string;
   bullets: string[];
   imagePrompt?: string;
+  generatedImage?: string;
   chartData?: { label: string; value: number }[];
-  chartType?: 'bar' | 'pie' | 'line';
+  chartType?: 'bar' | 'pie' | 'line' | 'doughnut' | 'radar' | 'scatter' | 'bubble';
+  tableData?: string;
+  hasImage?: boolean;
+  hasChart?: boolean;
   style?: string;
+  visualLayout?: 'split' | 'grid' | 'focal' | 'dense_table' | 'technical_drawing' | 'bento_grid';
 }
 
 interface PPTcreatorProps {
@@ -30,12 +37,29 @@ interface PPTcreatorProps {
 }
 
 const VISUAL_THEMES = [
-  { id: 'bricks', name: 'Bricks', icon: '🧱', color: '#facc15' },
-  { id: 'cinematic', name: 'Cinematic', icon: '🎬', color: '#6366f1' },
-  { id: 'whiteboard', name: 'White Board', icon: '🖊️', color: '#2563eb' },
-  { id: 'blackboard', name: 'Black Board', icon: '🎨', color: '#1e293b' },
+  { id: 'architect', name: 'Architect', icon: '🏛️', color: '#1e293b' },
+  { id: 'isometric', name: 'Isometric', icon: '🧊', color: '#6366f1' },
   { id: 'blueprint', name: 'Blue Print', icon: '📐', color: '#1e3a8a' },
   { id: 'scientific', name: 'Scientific', icon: '🔬', color: '#10b981' },
+  { id: 'clay', name: 'Clay 3D', icon: '🧶', color: '#f43f5e' },
+  { id: 'bento', name: 'Bento Grid', icon: '🍱', color: '#8b5cf6' },
+  { id: 'editorial', name: 'Editorial', icon: '📰', color: '#0f172a' },
+  { id: 'sketch', name: 'Sketch', icon: '✏️', color: '#475569' },
+  { id: 'kawaii', name: 'Kawaii', icon: '🌈', color: '#ff99cc' },
+  { id: 'professional', name: 'Professional', icon: '💼', color: '#2563eb' },
+  { id: 'anime', name: 'Anime', icon: '🎌', color: '#f43f5e' },
+  { id: 'instructional', name: 'Instructional', icon: '📖', color: '#059669' },
+  { id: 'bricks', name: 'Bricks', icon: '🧱', color: '#facc15' },
+  { id: 'cardboard', name: 'Cardboard', icon: '📦', color: '#a8a29e' },
+  { id: 'origami', name: 'Origami', icon: '🦢', color: '#f8fafc' },
+  { id: 'cinematic', name: 'Cinematic', icon: '🎬', color: '#6366f1' },
+];
+
+const CHART_TYPES = [
+  { id: 'bar', name: 'Barras', icon: '📊' },
+  { id: 'line', name: 'Líneas', icon: '📈' },
+  { id: 'pie', name: 'Circular', icon: '🥧' },
+  { id: 'doughnut', name: 'Donut', icon: '🍩' },
 ];
 
 export const PPTcreator: React.FC<PPTcreatorProps> = ({ 
@@ -61,97 +85,193 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
   const [tone, setTone] = useState('professional');
   const [keyTakeaway, setKeyTakeaway] = useState('');
 
-  // Stage 3: Narrative Arc
+  // Stage 3: Narrative Arc - Editable
+  const [isEditingNarrative, setIsEditingNarrative] = useState(false);
+  const [editingSlideIdx, setEditingSlideIdx] = useState<number | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editSubtitle, setEditSubtitle] = useState('');
+  const [editBullets, setEditBullets] = useState('');
   const [narrative, setNarrative] = useState<SlideContent[]>([]);
 
-  // Stage 4: Design Iterations
+  // Stage 4: Design with Chart/Image
+  const [selectedLayout, setSelectedLayout] = useState<'split' | 'grid' | 'focal' | 'dense_table' | 'technical_drawing' | 'bento_grid'>('split');
+  const [selectedChartType, setSelectedChartType] = useState<'bar' | 'pie' | 'line' | 'doughnut' | null>(null);
+  const [chartInput, setChartInput] = useState('');
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [selectedTheme, setSelectedTheme] = useState('bricks');
   const [renderedSlides, setRenderedSlides] = useState<string[]>([]);
   const [renderedSlide, setRenderedSlide] = useState<string | null>(null);
+  
+  // Image generation states
+  const [imageSource, setImageSource] = useState<'upload' | 'ai' | null>(null);
+  const [imagePrompt, setImagePrompt] = useState('');
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Stage 5: Final
   const [isFinalized, setIsFinalized] = useState(false);
+
+  // Helper to update narrative
+  const updateSlideContent = (index: number, updates: Partial<SlideContent>) => {
+    setNarrative(prev => prev.map((slide, i) => 
+      i === index ? { ...slide, ...updates } : slide
+    ));
+  };
+
+  // Start editing a slide in Stage 3
+  const startEditSlide = (index: number) => {
+    setEditingSlideIdx(index);
+    setEditTitle(narrative[index].title);
+    setEditSubtitle(narrative[index].subtitle || '');
+    setEditBullets(narrative[index].bullets.join('\n'));
+    setIsEditingNarrative(true);
+  };
+
+  // Save edited slide
+  const saveEditSlide = () => {
+    if (editingSlideIdx !== null) {
+      const bullets = editBullets.split('\n').filter(b => b.trim());
+      updateSlideContent(editingSlideIdx, { 
+        title: editTitle, 
+        subtitle: editSubtitle,
+        bullets 
+      });
+    }
+    setIsEditingNarrative(false);
+    setEditingSlideIdx(null);
+  };
+
+  // Add chart data to current slide
+  const addChartToSlide = () => {
+    if (!chartInput.trim() || !selectedChartType) return;
+    
+    // Parse "label,value" pairs
+    const dataPairs = chartInput.split('\n').map(line => {
+      const [label, value] = line.split(',').map(s => s.trim());
+      return { label, value: parseFloat(value) || 0 };
+    }).filter(p => p.label && p.value > 0);
+
+    if (dataPairs.length > 0) {
+      updateSlideContent(currentSlideIndex, {
+        chartType: selectedChartType as any,
+        chartData: dataPairs,
+        hasChart: true
+      });
+    }
+  };
+
+  // Toggle image for current slide
+  const toggleImageForSlide = () => {
+    updateSlideContent(currentSlideIndex, {
+      hasImage: !narrative[currentSlideIndex]?.hasImage
+    });
+  };
+
+  // Handle image upload
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      updateSlideContent(currentSlideIndex, {
+        generatedImage: base64,
+        hasImage: true
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Generate image with AI
+  const generateSlideImage = async () => {
+    if (!imagePrompt.trim()) return;
+    setIsGeneratingImage(true);
+    try {
+      const prompt = `${imagePrompt} - Professional presentation slide visual, 16:9 aspect ratio, clean corporate design, infographic style`;
+      
+      // Call the API directly
+      const res = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'generateImage',
+          model: 'imagen-4.0-fast-generate-001',
+          prompt: prompt,
+          aspectRatio: '16:9'
+        })
+      });
+      
+      const imgRes = await res.json();
+      
+      if (imgRes.error) throw new Error(imgRes.error);
+      
+      const imageBase64 = imgRes.imageBase64 || 
+                         imgRes.predictions?.[0]?.bytesBase64Encoded || 
+                         imgRes.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData)?.inlineData?.data;
+      
+      if (imageBase64) {
+        const base64Image = imageBase64.startsWith('data:') ? imageBase64 : `data:image/png;base64,${imageBase64}`;
+        updateSlideContent(currentSlideIndex, {
+          generatedImage: base64Image,
+          imagePrompt: imagePrompt,
+          hasImage: true
+        });
+      }
+    } catch (error) {
+      console.error('Image generation error:', error);
+    }
+    setIsGeneratingImage(false);
+  };
+
+  // Reset image state for current slide
+  const resetImageForSlide = () => {
+    updateSlideContent(currentSlideIndex, {
+      generatedImage: undefined,
+      imagePrompt: undefined,
+      hasImage: false
+    });
+    setImagePrompt('');
+    setImageSource(null);
+  };
 
   const processContent = async () => {
     const validSlides = Math.max(1, slideCount);
     setIsLoading(true);
     
     try {
-      // Generate content based on user input
-      const userContent = contentInput.trim();
-      const topic = userContent.split('\n')[0] || userContent.split('.')[0] || 'Presentation';
-      const cleanTopic = topic.slice(0, 50);
+      const userContent = contentInput.trim() || 'Professional Presentation';
       
-      // Generate a proper narrative structure
-      const narrativeStructure = [
-        { title: '', bullets: [] }, // Title slide
-        { title: '', bullets: [] }, // Hook/Introduction
-        { title: '', bullets: [] }, // Problem/Context
-        { title: '', bullets: [] }, // Solution
-        { title: '', bullets: [] }, // Benefits
-        { title: '', bullets: [] }, // CTA
-      ];
+      // Use real AI to generate a high-quality narrative
+      const skeleton = await geminiService.generateSkeleton(userContent, validSlides);
       
-      // Generate content based on source type
-      let generatedContent: SlideContent[] = [];
-      
-      if (contentSource === 'ai' || contentSource === 'text') {
-        // Use user input as seed for content
-        const keywords = cleanTopic.toLowerCase().split(/[,.\s]+/).filter(k => k.length > 2);
-        const mainTopic = cleanTopic;
-        
-        generatedContent = Array.from({ length: validSlides }, (_, i) => {
-          if (i === 0) {
-            return {
-              title: mainTopic,
-              bullets: [
-                keywords[0] ? keywords[0].charAt(0).toUpperCase() + keywords[0].slice(1) : 'Your Topic',
-                keywords[1] ? `Key aspect: ${keywords[1]}` : 'Present by Corporate AI',
-                keywords[2] ? `Focus on: ${keywords[2]}` : 'Secure & Private'
-              ]
-            };
-          } else {
-            const slideNum = i;
-            const pointIndex = Math.min(i - 1, keywords.length - 1);
-            const keyWord = keywords[pointIndex] || 'content';
-            
-            return {
-              title: `Slide ${slideNum}: ${keyWord.charAt(0).toUpperCase() + keyWord.slice(1)}`,
-              bullets: [
-                `Key point about ${keyWord} and its importance`,
-                `Supporting data and evidence for this aspect`,
-                `Action items and recommendations`
-              ]
-            };
-          }
-        });
-      } else if (contentSource === 'upload') {
-        // For upload, generate generic structure adapting to slide count
-        generatedContent = Array.from({ length: validSlides }, (_, i) => ({
-          title: i === 0 ? 'Document Analysis' : `Section ${i}`,
-          bullets: [
-            'Key finding from document',
-            'Important detail to note',
-            'Summary and implications'
-          ]
+      if (skeleton && skeleton.length > 0) {
+        const mappedContent: SlideContent[] = skeleton.map(s => ({
+          title: s.title,
+          subtitle: s.subtitle,
+          bullets: s.content,
+          chartType: s.chartType === 'none' ? undefined : s.chartType as any,
+          tableData: s.tableData,
+          hasChart: s.chartType !== 'none',
+          visualLayout: 'split' // Default layout
         }));
+        setNarrative(mappedContent);
       } else {
-        // Fallback
-        generatedContent = Array.from({ length: validSlides }, (_, i) => ({
-          title: i === 0 ? cleanTopic : `Slide ${i}: Topic`,
-          bullets: [
-            'First important point',
-            'Second key aspect',
-            'Third supporting detail'
-          ]
-        }));
+        // Fallback if AI fails
+        setNarrative([{
+          title: userContent,
+          bullets: ['Key point 1', 'Key point 2', 'Key point 3']
+        }]);
       }
       
-      setNarrative(generatedContent);
       setCurrentStage(2);
     } catch (error) {
       console.error('Error processing content:', error);
+      // Failsafe
+      setNarrative([{
+        title: 'Error generating content',
+        bullets: ['Please try again', 'Check your connection']
+      }]);
     } finally {
       setIsLoading(false);
     }
@@ -172,16 +292,35 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
     if (index >= narrative.length || isFinalized) return;
     setIsLoading(true);
     
-    // Mock rendering - in real implementation this calls the image generator
-    const mockRendered = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080"><rect fill="${VISUAL_THEMES.find(t => t.id === selectedTheme)?.color || '#2563eb'}" width="1920" height="1080"/><text x="960" y="540" text-anchor="middle" fill="white" font-size="48">${narrative[index]?.title}</text></svg>`;
-    
-    setRenderedSlide(mockRendered);
-    setRenderedSlides(prev => {
-      const updated = [...prev];
-      updated[index] = mockRendered;
-      return updated;
-    });
-    setIsLoading(false);
+    try {
+      const slide = narrative[index];
+      const style = selectedTheme;
+      
+      const rendered = await geminiService.generateProImageForSlide(
+        slide.title,
+        slide.subtitle || '',
+        slide.bullets,
+        style,
+        slide.chartType || 'none',
+        slide.tableData || '',
+        slide.generatedImage,
+        selectedLayout
+      );
+      
+      setRenderedSlide(rendered);
+      setRenderedSlides(prev => {
+        const updated = [...prev];
+        updated[index] = rendered;
+        return updated;
+      });
+    } catch (error) {
+      console.error('Render error:', error);
+      // Fallback to simple SVG
+      const fallback = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080"><rect fill="${VISUAL_THEMES.find(t => t.id === selectedTheme)?.color || '#2563eb'}" width="1920" height="1080"/><text x="960" y="540" text-anchor="middle" fill="white" font-size="48">${narrative[index]?.title}</text></svg>`;
+      setRenderedSlide(fallback);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const nextSlide = () => {
@@ -380,163 +519,431 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
     </div>
   );
 
-  // Stage 3: Narrative Arc (Text Only)
-  const renderStage3 = () => (
-    <div className="flex-1 flex flex-col p-4 sm:p-8 space-y-4 sm:space-y-6 overflow-auto">
-      <div className="text-center space-y-2">
-        <h2 className="text-xl sm:text-2xl font-black uppercase tracking-widest">
-          {lang === 'es' ? 'Etapa 3: Narrativa' : 'Stage 3: Narrative Arc'}
-        </h2>
-        <p className="text-xs sm:text-sm text-slate-400">
-          {lang === 'es' 
-            ? 'Revisa el flujo de texto. Solo texto, sin imágenes aún.' 
-            : 'Review the text flow. Text only, no images yet.'}
-        </p>
-      </div>
-
-      <div className="flex-1 space-y-3 sm:space-y-4 overflow-auto">
-        {narrative.map((slide, i) => (
-          <div key={i} className="p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-white/10">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-6 sm:w-8 h-6 sm:h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs sm:text-sm font-black">
-                {i + 1}
-              </span>
-              <h3 className="font-black uppercase text-sm sm:text-base">{slide.title}</h3>
-            </div>
-            <ul className="space-y-1 ml-8 sm:ml-10">
-              {slide.bullets.map((bullet, j) => (
-                <li key={j} className="text-xs sm:text-sm text-slate-400 flex items-start gap-2">
-                  <span className="text-blue-500 mt-1">•</span>
-                  {bullet}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-
-      <button
-        onClick={confirmNarrative}
-        className="w-full py-3 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest flex items-center justify-center gap-2 min-h-[48px]"
-      >
-        <ChevronRight />
-        {lang === 'es' ? 'Siguiente: Diseñar' : 'Next: Design & Enhance'}
-      </button>
-    </div>
-  );
-
-  // Stage 4: Slide-by-Slide Design
-  const renderStage4 = () => (
-    <div className="flex-1 flex flex-col p-3 sm:p-4 lg:p-8 space-y-3 sm:space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-base sm:text-xl font-black uppercase tracking-widest">
-            {lang === 'es' ? 'Etapa 4: Diseño' : 'Stage 4: Design'}
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-400">
-            {currentSlideIndex + 1} / {narrative.length}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={prevSlide}
-            disabled={currentSlideIndex === 0}
-            className="p-2 rounded-xl border disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center"
-          >
-            <ChevronLeft size={20} />
-          </button>
-          <button
-            onClick={() => setCurrentSlideIndex(currentSlideIndex + 1)}
-            disabled={currentSlideIndex >= narrative.length - 1}
-            className="p-2 rounded-xl border disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center"
-          >
-            <ChevronRight size={20} />
-          </button>
-        </div>
-      </div>
-
-      {/* Theme Selector */}
-      <div className="space-y-2">
-        <label className="text-xs font-black uppercase tracking-widest text-slate-400">
-          {lang === 'es' ? 'Seleccionar Tema' : 'Select Theme'}
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {VISUAL_THEMES.map((theme) => (
-            <button
-              key={theme.id}
-              onClick={() => setSelectedTheme(theme.id)}
-              className={cn(
-                "px-3 sm:px-4 py-2 rounded-xl font-black text-xs uppercase transition-all flex items-center gap-2",
-                selectedTheme === theme.id
-                  ? "bg-blue-600 text-white"
-                  : "border border-slate-200 dark:border-white/10"
-              )}
-            >
-              <span>{theme.icon}</span> <span className="hidden sm:inline">{theme.name}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Slide Preview / Render Area */}
-      <div className="flex-1 flex items-center justify-center bg-slate-100 dark:bg-slate-900 rounded-xl sm:rounded-2xl overflow-hidden min-h-[200px] sm:min-h-[300px]">
-        {renderedSlide ? (
-          <img src={renderedSlide} alt={`Slide ${currentSlideIndex + 1}`} className="max-h-full max-w-full object-contain" />
-        ) : (
-          <div className="text-center p-4 sm:p-8">
-            <Paint size={32} sm:size={48} className="mx-auto mb-2 sm:mb-4 text-slate-400" />
+  // Stage 3: Narrative Arc - Editable
+  const renderStage3 = () => {
+    const currentSlide = narrative[editingSlideIdx || 0];
+    
+    if (isEditingNarrative && editingSlideIdx !== null) {
+      return (
+        <div className="flex-1 flex flex-col p-4 sm:p-8 space-y-4 overflow-auto">
+          <div className="text-center space-y-2">
+            <h2 className="text-xl sm:text-2xl font-black uppercase tracking-widest">
+              {lang === 'es' ? 'Editar Diapositiva' : 'Edit Slide'}
+            </h2>
             <p className="text-xs sm:text-sm text-slate-400">
               {lang === 'es' 
-                ? 'Vista previa no disponible aún' 
-                : 'Preview not available yet'}
+                ? 'Edita el título y puntos de esta diapositiva' 
+                : 'Edit title and bullets for this slide'}
             </p>
           </div>
-        )}
-      </div>
 
-      {/* Slide Content */}
-      <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-50 dark:bg-slate-900">
-        <h3 className="font-black uppercase text-sm sm:text-base mb-1 sm:mb-2">{narrative[currentSlideIndex]?.title}</h3>
-        <ul className="text-xs sm:text-sm text-slate-400 space-y-1">
-          {narrative[currentSlideIndex]?.bullets.map((bullet, j) => (
-            <li key={j}>• {bullet}</li>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase text-slate-400">
+                {lang === 'es' ? 'Título' : 'Title'}
+              </label>
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="w-full p-3 rounded-xl border border-slate-200 dark:border-white/10 bg-transparent font-black uppercase"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase text-slate-400">
+                {lang === 'es' ? 'Subtítulo' : 'Subtitle'}
+              </label>
+              <input
+                type="text"
+                value={editSubtitle}
+                onChange={(e) => setEditSubtitle(e.target.value)}
+                className="w-full p-3 rounded-xl border border-slate-200 dark:border-white/10 bg-transparent"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase text-slate-400">
+                {lang === 'es' ? 'Puntos (uno por línea)' : 'Bullets (one per line)'}
+              </label>
+              <textarea
+                value={editBullets}
+                onChange={(e) => setEditBullets(e.target.value)}
+                rows={5}
+                className="w-full p-3 rounded-xl border border-slate-200 dark:border-white/10 bg-transparent resize-none text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => { setIsEditingNarrative(false); setEditingSlideIdx(null); }}
+              className="flex-1 py-3 bg-slate-200 dark:bg-slate-800 rounded-xl font-black uppercase text-sm"
+            >
+              {lang === 'es' ? 'Cancelar' : 'Cancel'}
+            </button>
+            <button
+              onClick={saveEditSlide}
+              className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-black uppercase text-sm"
+            >
+              <Check size={18} />
+              {lang === 'es' ? 'Guardar' : 'Save'}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex-1 flex flex-col p-4 sm:p-8 space-y-4 sm:space-y-6 overflow-auto">
+        <div className="text-center space-y-2">
+          <h2 className="text-xl sm:text-2xl font-black uppercase tracking-widest">
+            {lang === 'es' ? 'Etapa 3: Narrativa' : 'Stage 3: Narrative Arc'}
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-400">
+            {lang === 'es' 
+              ? 'Revisa y edita cada diapositiva. Haz clic en editar para modificar.' 
+              : 'Review and edit each slide. Click edit to modify.'}
+          </p>
+        </div>
+
+        <div className="flex-1 space-y-3 sm:space-y-4 overflow-auto">
+          {narrative.map((slide, i) => (
+            <div key={i} className="p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-white/10">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 sm:w-8 h-6 sm:h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs sm:text-sm font-black">
+                    {i + 1}
+                  </span>
+                  <h3 className="font-black uppercase text-sm sm:text-base">{slide.title}</h3>
+                </div>
+                <button
+                  onClick={() => startEditSlide(i)}
+                  className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-black uppercase"
+                >
+                  {lang === 'es' ? 'Editar' : 'Edit'}
+                </button>
+              </div>
+              <ul className="space-y-1 ml-8 sm:ml-10">
+                {slide.bullets.map((bullet, j) => (
+                  <li key={j} className="text-xs sm:text-sm text-slate-400 flex items-start gap-2">
+                    <span className="text-blue-500 mt-1">•</span>
+                    {bullet}
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
-      </div>
+        </div>
 
-      <div className="flex gap-2 sm:gap-4">
         <button
-          onClick={() => renderSlide(currentSlideIndex)}
-          disabled={isLoading}
-          className="flex-1 py-3 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 min-h-[48px]"
+          onClick={confirmNarrative}
+          className="w-full py-3 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest flex items-center justify-center gap-2 min-h-[48px]"
         >
-          {isLoading ? <RefreshCw className="animate-spin" /> : <Palette />}
-          {lang === 'es' ? 'Renderizar' : 'Render'}
+          <ChevronRight />
+          {lang === 'es' ? 'Siguiente: Diseñar' : 'Next: Design & Enhance'}
         </button>
-        
-        {currentSlideIndex < narrative.length - 1 ? (
-          <button
-            onClick={nextSlide}
-            className="flex-1 py-3 sm:py-4 bg-emerald-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest flex items-center justify-center gap-2 min-h-[48px]"
-          >
-            <ChevronRight />
-            {lang === 'es' ? 'Siguiente' : 'Next'}
-          </button>
-        ) : (
-          <button
-            onClick={() => {
-              setIsFinalized(true);
-              setCurrentStage(5);
-            }}
-            className="flex-1 py-3 sm:py-4 bg-emerald-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest flex items-center justify-center gap-2 min-h-[48px]"
-          >
-            <Check />
-            {lang === 'es' ? 'Finalizar' : 'Finalize'}
-          </button>
-        )}
       </div>
-    </div>
-  );
+    );
+  };
+
+// Stage 4: Slide-by-Slide Design with Image & Chart
+  const renderStage4 = () => {
+    const currentSlide = narrative[currentSlideIndex];
+    
+    return (
+      <div className="flex-1 flex flex-col p-3 sm:p-4 lg:p-8 space-y-3 sm:space-y-4 overflow-auto">
+        <div className="flex items-center justify-between shrink-0">
+          <div>
+            <h2 className="text-base sm:text-xl font-black uppercase tracking-widest">
+              {lang === 'es' ? 'Etapa 4: Diseño' : 'Stage 4: Design'}
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-400">
+              {currentSlideIndex + 1} / {narrative.length}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={prevSlide}
+              disabled={currentSlideIndex === 0}
+              className="p-2 rounded-xl border disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <button
+              onClick={() => setCurrentSlideIndex(currentSlideIndex + 1)}
+              disabled={currentSlideIndex >= narrative.length - 1}
+              className="p-2 rounded-xl border disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        </div>
+
+        {/* Image Controls */}
+        <div className="shrink-0">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs font-black uppercase text-slate-400">
+              {lang === 'es' ? 'Imagen' : 'Image'}
+            </label>
+            {currentSlide?.hasImage && (
+              <button onClick={resetImageForSlide} className="text-xs text-red-500 font-black uppercase">
+                {lang === 'es' ? 'Eliminar' : 'Remove'}
+              </button>
+            )}
+          </div>
+          
+          {currentSlide?.hasImage && currentSlide?.generatedImage ? (
+            <div className="relative rounded-xl overflow-hidden border">
+              <img src={currentSlide.generatedImage} alt="Slide" className="w-full aspect-video object-cover" />
+            </div>
+          ) : currentSlide?.hasImage ? (
+            <div className="p-4 rounded-xl border border-purple-500/30 bg-purple-500/10 text-center">
+              <p className="text-xs text-purple-500">{lang === 'es' ? 'Imagen configurada' : 'Image configured'}</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {/* Image Source Selector */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setImageSource('upload')}
+                  className={cn(
+                    "flex-1 py-2 rounded-xl font-black text-xs uppercase flex items-center justify-center gap-2",
+                    imageSource === 'upload'
+                      ? "bg-purple-600 text-white"
+                      : "border border-slate-200 dark:border-white/10"
+                  )}
+                >
+                  <Upload size={14} />
+                  {lang === 'es' ? 'Subir' : 'Upload'}
+                </button>
+                <button
+                  onClick={() => setImageSource('ai')}
+                  className={cn(
+                    "flex-1 py-2 rounded-xl font-black text-xs uppercase flex items-center justify-center gap-2",
+                    imageSource === 'ai'
+                      ? "bg-purple-600 text-white"
+                      : "border border-slate-200 dark:border-white/10"
+                  )}
+                >
+                  <Sparkles size={14} />
+                  {lang === 'es' ? 'Generar IA' : 'AI Generate'}
+                </button>
+              </div>
+              
+              {/* Upload Option */}
+              {imageSource === 'upload' && (
+                <div className="p-3 border border-dashed border-slate-300 dark:border-white/20 rounded-xl text-center">
+                  <input
+                    ref={imageInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => imageInputRef.current?.click()}
+                    className="w-full py-2 text-xs font-black uppercase text-slate-400"
+                  >
+                    {lang === 'es' ? 'Seleccionar imagen' : 'Select image'}
+                  </button>
+                </div>
+              )}
+              
+              {/* AI Generate Option */}
+              {imageSource === 'ai' && (
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={imagePrompt}
+                    onChange={(e) => setImagePrompt(e.target.value)}
+                    placeholder={lang === 'es' ? 'Describe la imagen...' : 'Describe the image...'}
+                    className="w-full p-2 rounded-xl border border-slate-200 dark:border-white/10 bg-transparent text-xs"
+                  />
+                  <button
+                    onClick={generateSlideImage}
+                    disabled={!imagePrompt.trim() || isGeneratingImage}
+                    className="w-full py-2 bg-purple-600 text-white rounded-xl font-black text-xs uppercase disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {isGeneratingImage ? (
+                      <RefreshCw size={14} className="animate-spin" />
+                    ) : (
+                      <Sparkles size={14} />
+                    )}
+                    {lang === 'es' ? 'Generar' : 'Generate'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Chart Type & Data Selection */}
+        {selectedChartType && (
+          <div className="p-3 rounded-xl border border-slate-200 dark:border-white/10 space-y-3 shrink-0">
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase text-slate-400">
+                {lang === 'es' ? 'Tipo de gráfico' : 'Chart type'}
+              </label>
+              <div className="flex gap-2">
+                {CHART_TYPES.map((chart) => (
+                  <button
+                    key={chart.id}
+                    onClick={() => setSelectedChartType(chart.id as any)}
+                    className={cn(
+                      "px-3 py-2 rounded-lg font-black text-xs uppercase flex items-center gap-1",
+                      selectedChartType === chart.id
+                        ? "bg-emerald-600 text-white"
+                        : "bg-slate-100 dark:bg-slate-800"
+                    )}
+                  >
+                    {chart.icon} {chart.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase text-slate-400">
+                {lang === 'es' ? 'Datos (etiqueta,valor - uno por línea)' : 'Data (label,value - one per line)'}
+              </label>
+              <textarea
+                value={chartInput}
+                onChange={(e) => setChartInput(e.target.value)}
+                placeholder={lang === 'es' ? 'Ej:\nVentas, 100\nGastos, 75\nBeneficio, 25' : 'Example:\nSales, 100\nExpenses, 75\nProfit, 25'}
+                rows={3}
+                className="w-full p-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent text-xs"
+              />
+              <button
+                onClick={addChartToSlide}
+                disabled={!chartInput.trim()}
+                className="w-full py-2 bg-emerald-600 text-white rounded-lg font-black text-xs uppercase disabled:opacity-50"
+              >
+                {lang === 'es' ? 'Agregar Gráfico' : 'Add Chart'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Layout Selector */}
+        <div className="space-y-2 shrink-0">
+          <label className="text-xs font-black uppercase tracking-widest text-slate-400">
+            {lang === 'es' ? 'Estrategia Visual' : 'Visual Strategy'}
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: 'split', name: 'Split', icon: <Layers size={14} /> },
+              { id: 'focal', name: 'Focal', icon: <Target size={14} /> },
+              { id: 'bento_grid', name: 'Bento', icon: <Layout size={14} /> },
+              { id: 'technical_drawing', name: 'Technical', icon: <Settings size={14} /> },
+              { id: 'dense_table', name: 'Data Dense', icon: <Database size={14} /> },
+            ].map((layout) => (
+              <button
+                key={layout.id}
+                onClick={() => setSelectedLayout(layout.id as any)}
+                className={cn(
+                  "px-3 py-2 rounded-xl font-black text-[10px] uppercase transition-all flex items-center gap-2",
+                  selectedLayout === layout.id
+                    ? "bg-purple-600 text-white"
+                    : "border border-slate-200 dark:border-white/10"
+                )}
+              >
+                {layout.icon} <span>{layout.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Theme Selector */}
+        <div className="space-y-2 shrink-0">
+          <label className="text-xs font-black uppercase tracking-widest text-slate-400">
+            {lang === 'es' ? 'Seleccionar Estilo' : 'Select Style'}
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {VISUAL_THEMES.map((theme) => (
+              <button
+                key={theme.id}
+                onClick={() => setSelectedTheme(theme.id)}
+                className={cn(
+                  "px-3 sm:px-4 py-2 rounded-xl font-black text-[10px] uppercase transition-all flex items-center gap-2",
+                  selectedTheme === theme.id
+                    ? "bg-blue-600 text-white"
+                    : "border border-slate-200 dark:border-white/10"
+                )}
+              >
+                <span>{theme.icon}</span> <span>{theme.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Slide Preview / Render Area */}
+        <div className="flex-1 flex items-center justify-center bg-slate-100 dark:bg-slate-900 rounded-xl sm:rounded-2xl overflow-hidden min-h-[150px] sm:min-h-[200px]">
+          {renderedSlide ? (
+            <img src={renderedSlide} alt={`Slide ${currentSlideIndex + 1}`} className="max-h-full max-w-full object-contain" />
+          ) : (
+            <div className="text-center p-4 sm:p-8">
+              <Paint size={32} sm:size={48} className="mx-auto mb-2 sm:mb-4 text-slate-400" />
+              <p className="text-xs sm:text-sm text-slate-400">
+                {lang === 'es' ? 'Vista previa no disponible aún' : 'Preview not available yet'}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Slide Content */}
+        <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-50 dark:bg-slate-900 shrink-0">
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="font-black uppercase text-sm sm:text-base">{currentSlide?.title}</h3>
+            {currentSlide?.hasImage && <ImageIcon size={14} className="text-purple-500" />}
+            {currentSlide?.hasChart && <BarChart3 size={14} className="text-emerald-500" />}
+          </div>
+          {currentSlide?.subtitle && (
+            <p className="text-[10px] sm:text-xs text-slate-500 font-bold mb-2 italic">{currentSlide.subtitle}</p>
+          )}
+          <ul className="text-xs sm:text-sm text-slate-400 space-y-1">
+            {currentSlide?.bullets.map((bullet, j) => (
+              <li key={j}>• {bullet}</li>
+            ))}
+          </ul>
+          {currentSlide?.chartData && (
+            <div className="mt-2 p-2 bg-emerald-500/10 rounded-lg">
+              <p className="text-xs font-black text-emerald-500 uppercase">{currentSlide.chartData.length} {lang === 'es' ? 'datos' : 'data points'}</p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-2 sm:gap-4 shrink-0">
+          <button
+            onClick={() => renderSlide(currentSlideIndex)}
+            disabled={isLoading}
+            className="flex-1 py-3 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 min-h-[48px]"
+          >
+            {isLoading ? <RefreshCw className="animate-spin" /> : <Palette />}
+            {lang === 'es' ? 'Renderizar' : 'Render'}
+          </button>
+          
+          {currentSlideIndex < narrative.length - 1 ? (
+            <button
+              onClick={nextSlide}
+              className="flex-1 py-3 sm:py-4 bg-emerald-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest flex items-center justify-center gap-2 min-h-[48px]"
+            >
+              <ChevronRight />
+              {lang === 'es' ? 'Siguiente' : 'Next'}
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setIsFinalized(true);
+                setCurrentStage(5);
+              }}
+              className="flex-1 py-3 sm:py-4 bg-emerald-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest flex items-center justify-center gap-2 min-h-[48px]"
+            >
+              <Check />
+              {lang === 'es' ? 'Finalizar' : 'Finalize'}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   // Stage 5: Final Management & Export
   const renderStage5 = () => (
@@ -670,28 +1077,7 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
         </button>
       </div>
 
-      {/* Stage Content */}
-              className={cn(
-                "w-2 h-2 rounded-full transition-all",
-                currentStage === stage 
-                  ? "bg-blue-600 w-6" 
-                  : currentStage > stage 
-                    ? "bg-emerald-500" 
-                    : "bg-slate-300 dark:bg-slate-700"
-              )}
-            />
-          ))}
-        </div>
-
-        <button 
-          onClick={onClose} 
-          className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
-        >
-          <X size={20} />
-        </button>
-      </div>
-
-      {/* Stage Content */}
+{/* Stage Content */}
       <AnimatePresence mode="wait">
         <motion.div
           key={currentStage}
