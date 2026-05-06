@@ -208,7 +208,12 @@ export default function App() {
 
   // Enforce Trial Limits (24 Hours OR Quota Exhausted)
   useEffect(() => {
-    if (profile && !profile.unlimitedUsage && !appConfig?.isProduction) {
+    // Super admins always bypass trial limits
+    if (profile?.unlimitedUsage || SUPER_ADMIN_EMAILS.includes(user?.email || '')) {
+      return;
+    }
+    // If isProduction is not explicitly true, enforce trial limits
+    if (!appConfig?.isProduction) {
       const maxQueries = profile.maxQueries || 10;
       const maxImages = profile.maxImages || 10;
       
@@ -219,7 +224,7 @@ export default function App() {
         setTrialEnded(true);
       }
     }
-  }, [profile, appConfig?.isProduction]);
+  }, [profile, appConfig?.isProduction, user]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -301,7 +306,7 @@ export default function App() {
       return;
     }
 
-    if (!isSuperAdmin && !appConfig?.isProduction) {
+    if (!appConfig?.isProduction && !isSuperAdmin) {
       if (!profile?.unlimitedUsage) {
         const maxQueries = profile?.maxQueries || 10;
         const createdAt = profile?.createdAt?.toDate ? profile.createdAt.toDate() : new Date();
@@ -592,6 +597,43 @@ export default function App() {
           setShowUpgradePlan(true);
         }}
       />
+    );
+  }
+
+  // Pending approval screen - new users must wait for admin approval
+  if (profile?.role === 'pending' && !isSuperAdmin) {
+    return (
+      <div className="fixed inset-0 bg-corporate-950 flex items-center justify-center p-8">
+        <div className="max-w-md w-full text-center space-y-6">
+          <div className="w-20 h-20 mx-auto rounded-full bg-yellow-500/20 flex items-center justify-center">
+            <Clock size={40} className="text-yellow-500" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-black text-white uppercase tracking-widest">
+              {lang === 'es' ? 'Pendiente de Aprobación' : 'Pending Approval'}
+            </h1>
+            <p className="text-slate-400 text-sm">
+              {lang === 'es' 
+                ? 'Tu solicitud está siendo revisada. Te notificaremos cuando un administrador apruebe tu acceso.'
+                : 'Your request is being reviewed. We will notify you when an administrator approves your access.'}
+            </p>
+          </div>
+          <div className="p-4 bg-slate-800/50 rounded-xl space-y-2">
+            <p className="text-xs text-slate-500 uppercase font-black">
+              {lang === 'es' ? 'Estado de Solicitud' : 'Request Status'}
+            </p>
+            <p className="text-yellow-500 font-black text-sm uppercase">
+              {lang === 'es' ? 'En revisión' : 'Under Review'}
+            </p>
+          </div>
+          <button
+            onClick={logout}
+            className="w-full py-3 border border-slate-700 text-slate-400 rounded-xl font-black uppercase text-sm"
+          >
+            {lang === 'es' ? 'Cerrar Sesión' : 'Sign Out'}
+          </button>
+        </div>
+      </div>
     );
   }
 

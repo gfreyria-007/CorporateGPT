@@ -61,20 +61,25 @@ export async function ensureUserRecord(user: any) {
   try {
     const snap = await getDoc(userRef);
     if (!snap.exists()) {
+      const isSuperAdmin = SUPER_ADMIN_EMAILS.includes(user.email?.toLowerCase() || '');
       await setDoc(userRef, {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
         photoURL: user.photoURL,
-        role: SUPER_ADMIN_EMAILS.includes(user.email?.toLowerCase() || '') ? 'super-admin' : 'user',
-        companyId: null,          // V2: assigned later via invite or self-onboard
-        companyRole: null,        // V2: 'owner' | 'admin' | 'member'
+        role: isSuperAdmin ? 'super-admin' : 'pending',
+        companyId: null,
+        companyRole: null,
         isBanned: false,
         queriesUsed: 0,
         imagesUsed: 0,
-        maxQueries: 10,
-        maxImages: 10,
-        unlimitedUsage: SUPER_ADMIN_EMAILS.includes(user.email?.toLowerCase() || ''),
+        maxQueries: isSuperAdmin ? 999999 : 0,
+        maxImages: isSuperAdmin ? 999999 : 0,
+        unlimitedUsage: isSuperAdmin,
+        subscriptionLevel: isSuperAdmin ? 'admin' : 'pending',
+        subscriptionApprovedAt: null,
+        subscriptionExpiresAt: null,
+        trialRequestedAt: Timestamp.now(),
         createdAt: Timestamp.now(),
         lastActive: Timestamp.now()
       });

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
+  Clock,
   Users, 
   ShieldAlert, 
   Database, 
@@ -22,13 +23,13 @@ import {
 import { collection, query, getDocs, doc, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { translations } from '../lib/translations';
-import { updateUserRole, updateUserBanStatus, updateUserLimits, updateAppConfig, upgradeUserToPaid, addUserSubscription } from '../lib/admin';
+import { updateUserRole, updateUserBanStatus, updateUserLimits, updateAppConfig, upgradeUserToPaid, addUserSubscription, approveUserSubscription, rejectUser } from '../lib/admin';
 import { handleFirestoreError, OperationType } from '../lib/db';
 import * as XLSX from 'xlsx';
 import { cn } from '../lib/utils';
 
 export const AdminPanel: React.FC<{ onClose: () => void, theme: 'light' | 'dark' }> = ({ onClose, theme }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'flagged' | 'license' | 'settings' | 'studio' | 'branding'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'pending' | 'users' | 'flagged' | 'license' | 'settings' | 'studio' | 'branding'>('overview');
   const [users, setUsers] = useState<any[]>([]);
   const [credits, setCredits] = useState<any>(null);
   const [appConfig, setAppConfig] = useState<any>(null);
@@ -124,8 +125,9 @@ export const AdminPanel: React.FC<{ onClose: () => void, theme: 'light' | 'dark'
         <nav className={cn("w-64 lg:w-72 border-r p-6 space-y-2 transition-all",
           theme === 'dark' ? "bg-slate-950 border-white/5" : "bg-white border-slate-200 shadow-xl z-20"
         )}>
-           <AdminTabButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={<BarChart size={18} />} label="Overview" theme={theme} />
-           <AdminTabButton active={activeTab === 'users'} onClick={() => setActiveTab('users')} icon={<Users size={18} />} label="User Management" theme={theme} />
+<AdminTabButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={<BarChart size={18} />} label="Overview" theme={theme} />
+            <AdminTabButton active={activeTab === 'pending'} onClick={() => setActiveTab('pending')} icon={<Clock size={18} />} label="Pending Approvals" theme={theme} count={users.filter(u => u.role === 'pending').length} />
+            <AdminTabButton active={activeTab === 'users'} onClick={() => setActiveTab('users')} icon={<Users size={18} />} label="User Management" theme={theme} />
            <AdminTabButton active={activeTab === 'flagged'} onClick={() => setActiveTab('flagged')} icon={<ShieldAlert size={18} />} label="Security Flags" theme={theme} />
            <AdminTabButton active={activeTab === 'license'} onClick={() => setActiveTab('license')} icon={<CheckCircle2 size={18} />} label="Production" theme={theme} />
            <AdminTabButton active={activeTab === 'studio'} onClick={() => setActiveTab('studio')} icon={<Palette size={18} />} label="Studio Config" theme={theme} />
@@ -218,9 +220,14 @@ export const AdminPanel: React.FC<{ onClose: () => void, theme: 'light' | 'dark'
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
+                            {u.role === 'pending' && <span className="px-2 py-1 bg-yellow-500/20 text-yellow-500 text-[10px] font-bold rounded">PENDING</span>}
+                            {u.role === 'rejected' && <span className="px-2 py-1 bg-red-600/20 text-red-500 text-[10px] font-bold rounded">REJECTED</span>}
                             {u.flagged && <span className="px-2 py-1 bg-red-500/20 text-red-400 text-[10px] font-bold rounded">FLAGGED</span>}
                             {u.banned && <span className="px-2 py-1 bg-red-600/20 text-red-500 text-[10px] font-bold rounded">BANNED</span>}
-                            <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-[10px] font-bold rounded">{u.role || 'user'}</span>
+                            {u.subscriptionLevel === 'trial' && <span className="px-2 py-1 bg-orange-500/20 text-orange-500 text-[10px] font-bold rounded">TRIAL</span>}
+                            {u.subscriptionLevel === 'free' && <span className="px-2 py-1 bg-slate-500/20 text-slate-400 text-[10px] font-bold rounded">FREE</span>}
+                            {u.role === 'paid' || u.subscriptionLevel === 'maestro' ? <span className="px-2 py-1 bg-emerald-500/20 text-emerald-500 text-[10px] font-bold rounded">PAID</span> : null}
+                            {u.role === 'super-admin' && <span className="px-2 py-1 bg-purple-500/20 text-purple-500 text-[10px] font-bold rounded">ADMIN</span>}
                           </div>
                         </div>
                       ))}
@@ -267,9 +274,108 @@ export const AdminPanel: React.FC<{ onClose: () => void, theme: 'light' | 'dark'
                    </div>
                 </div>
               </div>
-            )}
+)}
 
-           {activeTab === 'users' && (
+           {/* Pending Approvals Tab */}
+           {activeTab === 'pending' && (
+             <div className="space-y-6">
+               <div className={cn("flex justify-between items-center p-8 rounded-[3rem] border shadow-xl",
+                  theme === 'dark' ? "bg-slate-950 border-white/5" : "bg-white border-slate-200"
+                )}>
+                 <div>
+                    <h3 className={cn("text-xl font-black tracking-tighter", theme === 'dark' ? "text-white" : "text-slate-900")}>Pending Approvals</h3>
+                    <p className="text-xs font-bold text-yellow-500 uppercase tracking-widest mt-1">Users waiting for access approval</p>
+                 </div>
+                 <div className="flex gap-2">
+                   <span className="px-4 py-2 bg-yellow-500/10 text-yellow-500 rounded-xl text-xs font-black">
+                     {users.filter(u => u.role === 'pending').length} PENDING
+                   </span>
+                 </div>
+               </div>
+               
+               <div className={cn("rounded-[3rem] border shadow-xl overflow-hidden",
+                  theme === 'dark' ? "bg-slate-950 border-white/5" : "bg-white border-slate-200"
+                )}>
+                 <table className="w-full">
+                   <thead className={cn("border-b", theme === 'dark' ? "border-white/5" : "border-slate-200")}>
+                     <tr>
+                       <th className="px-8 py-6 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">User</th>
+                       <th className="px-8 py-6 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Requested</th>
+                       <th className="px-8 py-6 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Status</th>
+                       <th className="px-8 py-6 text-right text-[10px] font-black text-slate-500 uppercase tracking-widest">Actions</th>
+                     </tr>
+                   </thead>
+                   <tbody>
+                     {users.filter(u => u.role === 'pending').length === 0 ? (
+                       <tr>
+                         <td colSpan={4} className="px-8 py-12 text-center text-slate-500 text-sm">
+                           No pending requests
+                         </td>
+                       </tr>
+                     ) : (
+                       users.filter(u => u.role === 'pending').map((u: any) => (
+                         <tr key={u.id} className={cn("border-b", theme === 'dark' ? "border-white/5" : "border-slate-100")}>
+                           <td className="px-8 py-6">
+                             <div className="flex items-center gap-3">
+                               <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 font-black text-xs">
+                                 {u.email?.[0]?.toUpperCase()}
+                               </div>
+                               <div>
+                                 <p className="text-sm font-black text-slate-300">{u.displayName || 'No name'}</p>
+                                 <p className="text-[10px] font-bold text-slate-500">{u.email}</p>
+                               </div>
+                             </div>
+                           </td>
+                           <td className="px-8 py-6 text-slate-400 text-xs">
+                             {u.trialRequestedAt ? new Date(u.trialRequestedAt.toDate ? u.trialRequestedAt.toDate() : u.trialRequestedAt).toLocaleDateString() : '-'}
+                           </td>
+                           <td className="px-8 py-6">
+                             <span className="px-3 py-1 bg-yellow-500/20 text-yellow-500 rounded-full text-[10px] font-black uppercase">Pending</span>
+                           </td>
+                           <td className="px-8 py-6 text-right">
+                             <div className="flex gap-2 justify-end">
+                               <button 
+                                 onClick={() => approveUserSubscription(u.id, 'trial_3day')}
+                                 className="px-3 py-2 rounded-xl bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-black transition-all text-xs font-black uppercase"
+                               >
+                                 3-Day Trial
+                               </button>
+                               <button 
+                                 onClick={() => approveUserSubscription(u.id, 'trial_7day')}
+                                 className="px-3 py-2 rounded-xl bg-orange-500/20 text-orange-500 hover:bg-orange-500 hover:text-white transition-all text-xs font-black uppercase"
+                               >
+                                 7-Day Trial
+                               </button>
+                               <button 
+                                 onClick={() => approveUserSubscription(u.id, 'monthly')}
+                                 className="px-3 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all text-xs font-black uppercase"
+                               >
+                                 Monthly
+                               </button>
+                               <button 
+onClick={() => approveUserSubscription(u.id, 'free')}
+                                          className="px-3 py-2 rounded-xl bg-purple-500/20 text-purple-400 hover:bg-purple-500 hover:text-white transition-all text-xs font-black uppercase"
+                                        >
+                                          Scholarship
+                                        </button>
+                               <button 
+                                 onClick={() => rejectUser(u.id)}
+                                 className="px-3 py-2 rounded-xl bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition-all text-xs font-black uppercase"
+                               >
+                                 Reject
+                               </button>
+                             </div>
+                           </td>
+                         </tr>
+                       ))
+                     )}
+                   </tbody>
+                 </table>
+               </div>
+             </div>
+           )}
+
+            {activeTab === 'users' && (
              <div className="space-y-6">
                 <div className={cn("flex justify-between items-center p-8 rounded-[3rem] border shadow-xl",
                    theme === 'dark' ? "bg-slate-950 border-white/5" : "bg-white border-slate-200"
@@ -353,6 +459,47 @@ export const AdminPanel: React.FC<{ onClose: () => void, theme: 'light' | 'dark'
                               </td>
 <td className="px-8 py-6 text-right">
                                   <div className="flex items-center gap-2 justify-end">
+                                    {/* Pending users - show approval buttons */}
+                                    {u.role === 'pending' && (
+                                      <div className="flex gap-1">
+                                        <button 
+                                          onClick={() => approveUserSubscription(u.id, 'trial_3day')}
+                                          className="px-2 py-1 rounded-lg bg-yellow-500/20 text-yellow-500 text-[9px] font-black uppercase hover:bg-yellow-500 hover:text-black"
+                                          title="3-Day Trial"
+                                        >
+                                          3D
+                                        </button>
+                                        <button 
+                                          onClick={() => approveUserSubscription(u.id, 'trial_7day')}
+                                          className="px-2 py-1 rounded-lg bg-orange-500/20 text-orange-500 text-[9px] font-black uppercase hover:bg-orange-500 hover:text-black"
+                                          title="7-Day Trial"
+                                        >
+                                          7D
+                                        </button>
+                                        <button 
+                                          onClick={() => approveUserSubscription(u.id, 'monthly')}
+                                          className="px-2 py-1 rounded-lg bg-blue-500/20 text-blue-500 text-[9px] font-black uppercase hover:bg-blue-500 hover:text-white"
+                                          title="Monthly"
+                                        >
+                                          MO
+                                        </button>
+                                        <button 
+                                          onClick={() => approveUserSubscription(u.id, 'free')}
+                                          className="px-2 py-1 rounded-lg bg-slate-500/20 text-slate-400 text-[9px] font-black uppercase hover:bg-slate-500 hover:text-white"
+                                          title="Free Pass"
+                                        >
+                                          FREE
+                                        </button>
+                                        <button 
+                                          onClick={() => rejectUser(u.id)}
+                                          className="p-2 rounded-lg bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white"
+                                          title="Reject"
+                                        >
+                                          <X size={14} />
+                                        </button>
+                                      </div>
+                                    )}
+                                    {/* Approved trial users */}
                                     {u.role === 'trial' && (
                                       <button 
                                         onClick={() => upgradeUserToPaid(u.id)}
@@ -362,7 +509,7 @@ export const AdminPanel: React.FC<{ onClose: () => void, theme: 'light' | 'dark'
                                         <Zap size={18} />
                                       </button>
                                     )}
-                                    {u.role !== 'paid' && (
+                                    {u.role !== 'pending' && u.role !== 'trial' && (
                                       <button 
                                         onClick={() => {
                                           const plan = prompt('Enter plan (starter/professional/enterprise):');
@@ -722,7 +869,7 @@ export const AdminPanel: React.FC<{ onClose: () => void, theme: 'light' | 'dark'
   );
 };
 
-const AdminTabButton = ({ active, onClick, icon, label, theme }: any) => (
+const AdminTabButton = ({ active, onClick, icon, label, theme, count }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string; theme: 'light' | 'dark'; count?: number }) => (
   <button 
     onClick={onClick}
     className={cn("w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all relative overflow-hidden group",
@@ -736,6 +883,11 @@ const AdminTabButton = ({ active, onClick, icon, label, theme }: any) => (
        {icon}
     </span>
     {label}
+    {count !== undefined && count > 0 && (
+      <span className="ml-auto -space-y-px px-2 py-0.5 bg-yellow-500 text-black text-[8px] font-black rounded-full">
+        {count}
+      </span>
+    )}
   </button>
 );
 
