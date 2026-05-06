@@ -18,8 +18,8 @@ const MathLabModal: React.FC<MathLabModalProps> = ({ onClose, grade }) => {
     const [mode, setMode] = useState<'angles' | 'rect' | 'tri' | 'circle' | 'arithmetic' | 'trig' | 'fractions' | 'vectors'>('arithmetic');
     
     // Arithmetic state
-    const [num1, setNum1] = useState(125);
-    const [num2, setNum2] = useState(48);
+    const [num1, setNum1] = useState(0);
+    const [num2, setNum2] = useState(0);
     const [op, setOp] = useState<'+' | '-' | '*' | '/' | '^' | '√' | '%'>('+');
 
     const renderBase10Blocks = (value: number) => {
@@ -374,7 +374,7 @@ const MathLabModal: React.FC<MathLabModalProps> = ({ onClose, grade }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-blue-900/40 backdrop-blur-xl flex items-center justify-center p-4 sm:p-8"
+            className="absolute inset-0 z-[100] bg-blue-900/40 backdrop-blur-xl flex items-center justify-center p-4 sm:p-8"
         >
             <motion.div 
                 initial={{ scale: 0.9, y: 20 }}
@@ -465,7 +465,7 @@ const MathLabModal: React.FC<MathLabModalProps> = ({ onClose, grade }) => {
                         {mode === 'arithmetic' ? (
                             renderArithmetic()
                         ) : (
-                            <svg viewBox="0 0 500 500" className="w-full h-full max-w-2xl max-h-full drop-shadow-2xl overflow-visible">
+                            <svg id="math-lab-svg" viewBox="0 0 500 500" className="w-full h-full max-w-2xl max-h-full drop-shadow-2xl overflow-visible">
                                 <defs>
                                     <pattern id="smallGrid" width="10" height="10" patternUnits="userSpaceOnUse">
                                         <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#e5e7eb" strokeWidth="0.5"/>
@@ -486,7 +486,7 @@ const MathLabModal: React.FC<MathLabModalProps> = ({ onClose, grade }) => {
                                         
                                         <motion.circle 
                                             onPan={(_, info) => {
-                                                const svg = document.querySelector('svg');
+                                                const svg = document.getElementById('math-lab-svg') as any;
                                                 if (!svg) return;
                                                 const coords = getSVGCoords(info.point.x, info.point.y, svg);
                                                 setAnglePoint({ x: coords.x, y: coords.y });
@@ -546,7 +546,7 @@ const MathLabModal: React.FC<MathLabModalProps> = ({ onClose, grade }) => {
 
                                         <motion.circle 
                                             onPan={(_, info) => {
-                                                const svg = document.querySelector('svg');
+                                                const svg = document.getElementById('math-lab-svg') as any;
                                                 if (!svg) return;
                                                 const coords = getSVGCoords(info.point.x, info.point.y, svg);
                                                 setRectSize({
@@ -587,7 +587,7 @@ const MathLabModal: React.FC<MathLabModalProps> = ({ onClose, grade }) => {
                                                 <motion.circle 
                                                     key={i}
                                                     onPan={(_, info) => {
-                                                        const svg = document.querySelector('svg');
+                                                        const svg = document.getElementById('math-lab-svg') as any;
                                                         if (!svg) return;
                                                         const coords = getSVGCoords(info.point.x, info.point.y, svg);
                                                         // Keep points within reasonable bounds
@@ -625,7 +625,7 @@ const MathLabModal: React.FC<MathLabModalProps> = ({ onClose, grade }) => {
 
                                         <motion.circle 
                                             onPan={(_, info) => {
-                                                const svg = document.querySelector('svg');
+                                                const svg = document.getElementById('math-lab-svg') as any;
                                                 if (!svg) return;
                                                 const coords = getSVGCoords(info.point.x, info.point.y, svg);
                                                 setRadius(Math.min(220, Math.max(20, coords.x - center.x)));
@@ -661,7 +661,7 @@ const MathLabModal: React.FC<MathLabModalProps> = ({ onClose, grade }) => {
 
                                         <motion.circle 
                                             onPan={(_, info) => {
-                                                const svg = document.querySelector('svg');
+                                                const svg = document.getElementById('math-lab-svg') as any;
                                                 if (!svg) return;
                                                 const coords = getSVGCoords(info.point.x, info.point.y, svg);
                                                 const angle = Math.atan2(coords.y - center.y, coords.x - center.x);
@@ -739,7 +739,7 @@ const MathLabModal: React.FC<MathLabModalProps> = ({ onClose, grade }) => {
 
                                         <motion.circle 
                                             onPan={(_, info) => {
-                                                const svg = document.querySelector('svg');
+                                                const svg = document.getElementById('math-lab-svg') as any;
                                                 if (!svg) return;
                                                 const coords = getSVGCoords(info.point.x, info.point.y, svg);
                                                 setVec({
