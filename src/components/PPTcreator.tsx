@@ -245,9 +245,13 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
       
       let skeleton: any[] = [];
       try {
-        skeleton = await geminiService.generateSkeleton(userContent, validSlides);
+        // RACE: 10s Timeout or AI Response
+        const skeletonPromise = geminiService.generateSkeleton(userContent, validSlides);
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 10000));
+        
+        skeleton = await Promise.race([skeletonPromise, timeoutPromise]) as any[];
       } catch (err) {
-        console.error('[PPT] AI Skeleton generation failed:', err);
+        console.error('[PPT] AI Skeleton generation failed or timed out:', err);
       }
       
       if (skeleton && Array.isArray(skeleton) && skeleton.length > 0) {
@@ -262,13 +266,17 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
         }));
         setNarrative(mappedContent);
       } else {
-        console.warn('[PPT] Using fallback narrative');
+        console.warn('[PPT] Using instant fallback narrative due to delay/error');
         const fallback: SlideContent[] = [];
         for (let i = 0; i < validSlides; i++) {
           fallback.push({
             title: i === 0 ? userContent : `${userContent} - Part ${i + 1}`,
-            subtitle: 'Strategic Overview',
-            bullets: ['Analysis of key drivers', 'Performance metrics', 'Strategic recommendations'],
+            subtitle: 'Strategic Analysis & Insight',
+            bullets: [
+              'Key objectives and strategic alignment',
+              'Performance indicators and data analysis',
+              'Market positioning and competitive edge'
+            ],
             visualLayout: 'split'
           });
         }

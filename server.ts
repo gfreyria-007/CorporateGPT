@@ -667,9 +667,9 @@ async function startServer() {
           const CHAT_MODELS = [
             requestedChatModel,
             'gemini-2.0-flash',
-            'gemini-1.5-flash',
-            'gemini-2.0-flash-lite',
-            'gemini-1.5-pro'
+            'gemini-1.5-flash-latest',
+            'gemini-2.0-flash-lite-preview-02-05',
+            'gemini-1.5-flash'
           ];
 
           let lastError = null;
