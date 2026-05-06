@@ -99,13 +99,12 @@ async function startServer() {
       },
     },
     crossOriginEmbedderPolicy: false,
-    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+    crossOriginOpenerPolicy: false,
   }));
 
   // 1b. Additional headers for Firebase popup auth
   app.use((req, res, next) => {
-    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
-    res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+    // Headers removed to allow Firebase OAuth popups
     next();
   });
 
