@@ -44,7 +44,7 @@ import { ChatMessage } from './components/ChatMessage';
 import { ChatInput } from './components/ChatInput';
 import { AdminPanel } from './components/AdminPanel';
 import { GPTsGenerator } from './components/GPTsGenerator';
-import { PPTcreator } from './components/PPTcreator';
+import PPTcreator from './components/PPTcreator';
 import { MobileWorkspace } from './components/MobileWorkspace';
 import { PromptGenie } from './components/PromptGenie';
 import { CompanyPanel } from './components/CompanyPanel';
