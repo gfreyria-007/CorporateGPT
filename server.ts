@@ -114,7 +114,7 @@ async function startServer() {
   // 2. CORS - Restrict to your domain in production
   app.use(cors({
     origin: process.env.NODE_ENV === 'production' 
-      ? ['https://corporategpt.catalizia.com', 'https://corporate-gpt-catalizia.vercel.app', 'https://www.catalizia.com', 'https://catalizia.com', 'https://corporate-gpt-prod-282195596392.northamerica-south1.run.app']
+      ? ['https://corporategpt.catalizia.com', 'https://www.catalizia.com', 'https://catalizia.com', 'https://corporate-gpt-prod-282195596392.northamerica-south1.run.app']
       : true,
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'Authorization'],
