@@ -209,7 +209,9 @@ export default function App() {
   // Enforce Trial Limits (24 Hours OR Quota Exhausted)
   useEffect(() => {
     // Super admins always bypass trial limits
-    if (profile?.unlimitedUsage || SUPER_ADMIN_EMAILS.includes(user?.email || '')) {
+    if (profile?.unlimitedUsage || SUPER_ADMIN_EMAILS.includes((user?.email || '').toLowerCase())) {
+      if (trialEnded) setTrialEnded(false);
+      if (showLanding) setShowLanding(false);
       return;
     }
     // If isProduction is not explicitly true, enforce trial limits
@@ -588,8 +590,11 @@ export default function App() {
     );
   }
 
-  // CRITICAL: Super admins bypass ALL restrictions - check by email FIRST
-  const isEmailSuperAdmin = SUPER_ADMIN_EMAILS.includes((user?.email || '').toLowerCase());
+  const isEmailSuperAdmin = SUPER_ADMIN_EMAILS.includes((user?.email || '').toLowerCase()) || profile?.role === 'super-admin' || (profile as any)?.role === 'owner';
+  
+  if (user) {
+    console.log('[GOD_MODE] User:', user.email, 'isSuperAdmin:', isEmailSuperAdmin, 'trialEnded:', trialEnded, 'showLanding:', showLanding);
+  }
   
   if (trialEnded && !isEmailSuperAdmin) {
     return (
