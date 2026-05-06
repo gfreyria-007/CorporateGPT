@@ -98,14 +98,14 @@ async function startServer() {
         "img-src": ["'self'", "data:", "https:", "blob:", "https://*.googleusercontent.com"],
       },
     },
-    crossOriginEmbedderPolicy: { policy: "require-corp" },
+    crossOriginEmbedderPolicy: false,
     crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
   }));
 
   // 1b. Additional headers for Firebase popup auth
   app.use((req, res, next) => {
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
-    res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+    res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
     next();
   });
 
