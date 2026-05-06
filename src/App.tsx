@@ -538,14 +538,20 @@ export default function App() {
         throw new Error(lang === 'es' ? 'La generación de imagen falló. Intenta con un prompt diferente.' : 'Image generation failed. Try a different prompt.');
       }
 
+      const sanitizedBase64 = imageBase64.replace(/\s/g, '');
+      const dataUri = `data:image/png;base64,${sanitizedBase64}`;
+      
+      // Log first 100 chars for debugging
+      console.log(`[Image] Data URI prefix: ${dataUri.substring(0, 50)}...`);
+
       // Add the generated image as a message
       const imageMessage: Message = {
         id: `img-${Date.now()}-${Math.random().toString(36).substr(2, 7)}`,
         role: 'assistant',
-        content: `![Generated Image](data:image/png;base64,${imageBase64})`,
+        content: prompt, // Keep the prompt as content for display
         timestamp: Date.now(),
         isImage: true,
-        imageData: `data:image/png;base64,${imageBase64}`
+        imageData: dataUri
       };
       setMessages(prev => [...prev, imageMessage]);
 
