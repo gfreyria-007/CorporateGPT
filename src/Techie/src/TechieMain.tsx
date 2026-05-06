@@ -686,20 +686,28 @@ const canUseSystemKey = (isSubscribed || isAdminRole);
             isOpen={showImageCreationModal} 
             onClose={() => { setShowImageCreationModal(false); if(chatMode === 'image-studio') setChatMode('default'); setImageCreationFile(null); setImageCreationUrl(null); }}
             onGenerate={async (p, a, s, l, e, sz, src) => { 
+                if (!selectedGrade || !userName) {
+                    addMessage(Role.MODEL, "Por favor completa tu perfil primero.");
+                    return;
+                }
                 setIsStudioLoading(true); 
                 try {
                     const customKey = getCustomKey();
-                    const res = await geminiService.generateImage(p, a, selectedGrade!, userName!, s, l, e, sz, src, customKey); 
+                    const res = await geminiService.generateImage(p, a, selectedGrade, userName, s, l, e, sz, src, customKey); 
                     if (res) { addMessage(Role.MODEL, { type: 'image', url: res.url, prompt: p }); setStudioHistory(prev => [{ type: 'image', url: res.url }, ...prev]); } 
                 } catch(e: any) { addMessage(Role.MODEL, e.message); }
 
                 setIsStudioLoading(false); 
             }}
             onEdit={async (s, p, m, style, system) => { 
+                if (!selectedGrade || !userName) {
+                    addMessage(Role.MODEL, "Por favor completa tu perfil primero.");
+                    return;
+                }
                 setIsStudioLoading(true); 
                 try {
                     const customKey = getCustomKey();
-                    const url = await geminiService.editImage(s, p, selectedGrade!, m, style, system, customKey); 
+                    const url = await geminiService.editImage(s, p, selectedGrade, m, style, system, customKey); 
                     if (url) { addMessage(Role.MODEL, { type: 'image', url, prompt: p }); setStudioHistory(prev => [{ type: 'image', url }, ...prev]); } 
                 } catch(e: any) { addMessage(Role.MODEL, e.message); }
 
