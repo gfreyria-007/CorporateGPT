@@ -128,6 +128,7 @@ export default function App() {
   // Permissions block removed to allow free switching between apps
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
+  const isEmailSuperAdmin = user?.email ? SUPER_ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
   const isSuperAdmin = isEmailSuperAdmin || profile?.role === 'admin' || profile?.role === 'super-admin' || (profile as any)?.role === 'owner';
 
   // V2 Version Gatekeeper — reads appVersion from company tenant
