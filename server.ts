@@ -104,7 +104,8 @@ async function startServer() {
 
   // 1b. Additional headers for Firebase popup auth
   app.use((req, res, next) => {
-    // Headers removed to allow Firebase OAuth popups
+    res.removeHeader('Cross-Origin-Opener-Policy');
+    res.removeHeader('Cross-Origin-Embedder-Policy');
     next();
   });
 
