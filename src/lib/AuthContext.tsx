@@ -140,12 +140,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async () => {
     if (isSigningIn) return;
     setIsSigningIn(true);
-    console.log("[AUTH] MODE: REDIRECT - Initiating Google Handshake...");
+    console.log("[AUTH] MODE: POPUP - Initiating Google Handshake...");
     try {
-      const { signInWithRedirect, GoogleAuthProvider } = await import('firebase/auth');
+      const { signInWithPopup, GoogleAuthProvider } = await import('firebase/auth');
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
-      await signInWithRedirect(auth, provider);
+      await signInWithPopup(auth, provider);
     } catch (error: any) {
       console.error("[AUTH] Fatal Neural Error:", error.code, error.message);
       alert(`Error de Conexión: ${error.message}`);
