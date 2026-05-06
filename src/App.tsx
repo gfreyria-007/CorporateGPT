@@ -43,8 +43,6 @@ import { ModelSelector } from './components/ModelSelector';
 import { ChatMessage } from './components/ChatMessage';
 import { ChatInput } from './components/ChatInput';
 import { AdminPanel } from './components/AdminPanel';
-import { ImageEditor } from './components/ImageEditor';
-import PPTStudio from './components/PPTStudio';
 import { GPTsGenerator } from './components/GPTsGenerator';
 import { MobileWorkspace } from './components/MobileWorkspace';
 import { PromptGenie } from './components/PromptGenie';
@@ -97,7 +95,7 @@ export default function App() {
   // UI Panels
 
 
-  const [activePanel, setActivePanel] = useState<'chat' | 'admin' | 'creative' | 'knowledge' | 'ppt' | 'team'>('chat');
+  const [activePanel, setActivePanel] = useState<'chat' | 'admin' | 'knowledge' | 'team'>('chat');
   const [showFAQ, setShowFAQ] = useState(false);
   const [safetyAlert, setSafetyAlert] = useState<string | null>(null);
   const [dataProtectionEnabled, setDataProtectionEnabled] = useState(false);
@@ -736,9 +734,7 @@ export default function App() {
                   {appMode === 'corporate' ? (
                     [
                       { id: 'chat', label: t.intelligentChat, icon: <MessageSquare size={18} /> },
-                      { id: 'creative', label: 'Asset Studio', icon: <Palette size={18} /> },
-                      { id: 'knowledge', label: 'Knowledge Bank', icon: <Database size={18} /> },
-                      { id: 'ppt', label: t.pptStudio, icon: <Presentation size={18} /> }
+                      { id: 'knowledge', label: 'Knowledge Bank', icon: <Database size={18} /> }
                     ].map(item => (
                       <motion.button 
                         key={item.id}
@@ -760,8 +756,7 @@ export default function App() {
                       { id: 'quiz', label: 'Desafío de Saber', icon: <Crown size={18} />, action: () => document.dispatchEvent(new CustomEvent('setQuizMode')) },
                       { id: 'math', label: 'Laboratorio de Mate', icon: <Activity size={18} />, action: () => document.dispatchEvent(new CustomEvent('openMathLab')) },
                       { id: 'arcade', label: 'Zona Arcade', icon: <LayoutGrid size={18} />, action: () => document.dispatchEvent(new CustomEvent('openArcade')) },
-                      { id: 'backpack', label: 'Mi Mochila', icon: <Database size={18} />, action: () => document.dispatchEvent(new CustomEvent('openBackpack')) },
-                      { id: 'creative', label: 'Taller de Arte', icon: <Palette size={18} /> }
+                      { id: 'backpack', label: 'Mi Mochila', icon: <Database size={18} />, action: () => document.dispatchEvent(new CustomEvent('openBackpack')) }
                     ].map(item => (
                       <motion.button 
                         key={item.id}
@@ -1140,14 +1135,8 @@ export default function App() {
           {activePanel === 'admin' && (
             <motion.div key="admin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-corporate-950"><AdminPanel onClose={() => setActivePanel('chat')} theme={theme} /></motion.div>
           )}
-          {activePanel === 'creative' && (
-            <motion.div key="creative" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-corporate-950"><ImageEditor onClose={() => setActivePanel('chat')} theme={theme} lang={lang} appConfig={appConfig} onTrialEnd={() => setTrialEnded(true)} /></motion.div>
-          )}
           {activePanel === 'knowledge' && (
             <motion.div key="knowledge" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-corporate-950"><GPTsGenerator onClose={() => setActivePanel('chat')} onSelect={(gpt: any) => { setSelectedGPT(gpt); setActivePanel('chat'); }} theme={theme} /></motion.div>
-          )}
-          {activePanel === 'ppt' && (
-            <motion.div key="ppt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-white"><PPTStudio theme={theme} lang={lang} user={user} onClose={() => setActivePanel('chat')} /></motion.div>
           )}
           {activePanel === 'team' && (
             <motion.div key="team" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-white dark:bg-corporate-950"><CompanyPanel onClose={() => setActivePanel('chat')} theme={theme} lang={lang} /></motion.div>

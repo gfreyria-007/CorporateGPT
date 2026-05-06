@@ -27,8 +27,6 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
-import { ImageEditor } from './ImageEditor';
-import PPTStudio from './PPTStudio';
 import { GPTsGenerator } from './GPTsGenerator';
 import { EcoModeBanner } from './EcoModeBanner';
 
@@ -245,36 +243,7 @@ export function MobileWorkspace({
                         ))}
                       </div>
                     
-                    <div className="grid grid-cols-1 gap-3 w-full max-w-[280px]">
-                      <button 
-                        onClick={() => handleAction(() => onOpenPanel('ppt'))} 
-                        className={cn("p-5 rounded-3xl border flex items-center justify-between transition-all active:scale-95", 
-                          isDark ? "bg-white/5 border-white/5" : "bg-white border-slate-100 shadow-xl shadow-slate-200/50"
-                        )}
-                      >
-                         <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500">
-                               <Presentation size={20} />
-                            </div>
-                            <span className="text-xs font-black uppercase tracking-widest">{t.pptStudio}</span>
-                         </div>
-                         <ChevronRight size={16} className="text-slate-300" />
-                      </button>
-                      <button 
-                        onClick={() => handleAction(() => onOpenPanel('creative'))} 
-                        className={cn("p-5 rounded-3xl border flex items-center justify-between transition-all active:scale-95", 
-                          isDark ? "bg-white/5 border-white/5" : "bg-white border-slate-100 shadow-xl shadow-slate-200/50"
-                        )}
-                      >
-                         <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-500">
-                               <ImageIcon size={20} />
-                            </div>
-                            <span className="text-xs font-black uppercase tracking-widest">Asset Studio</span>
-                         </div>
-                         <ChevronRight size={16} className="text-slate-300" />
-                      </button>
-                    </div>
+                    
                   </div>
                 ) : (
                   <div className="space-y-6">
@@ -367,24 +336,6 @@ export function MobileWorkspace({
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               className="fixed inset-0 z-[1000] bg-white dark:bg-corporate-950 flex flex-col"
             >
-              {activePanel === 'ppt' && (
-                <PPTStudio 
-                   theme={theme} 
-                   lang={lang} 
-                   user={user} 
-                   onClose={() => onOpenPanel('chat')} 
-                   isMobile={true} 
-                />
-              )}
-              {activePanel === 'creative' && (
-                <ImageEditor 
-                  onClose={() => onOpenPanel('chat')} 
-                  theme={theme} 
-                  appConfig={appConfig}
-                  onTrialEnd={() => setTrialEnded(true)}
-                  isMobile={true}
-                />
-              )}
               {activePanel === 'knowledge' && (
                 <GPTsGenerator 
                   onClose={() => onOpenPanel('chat')} 
@@ -422,15 +373,6 @@ export function MobileWorkspace({
               <span className="text-[9px] font-black uppercase tracking-tighter">{isJunior ? 'Tutor' : 'Chat'}</span>
            </button>
            <button 
-             onClick={() => handleAction(() => onOpenPanel('ppt'))} 
-             className="flex flex-col items-center gap-1 text-slate-400 min-w-[44px] min-h-[44px] justify-center rounded-2xl active:scale-95 active:text-slate-600 tap-target touch-manipulation"
-           >
-              <div className="w-11 h-11 flex items-center justify-center rounded-2xl">
-                 <Presentation size={22} />
-              </div>
-              <span className="text-[9px] font-black uppercase tracking-tighter">{isJunior ? 'Clases' : 'Studio'}</span>
-           </button>
-           <button 
              className="relative -top-2 min-w-[44px] min-h-[44px] flex flex-col items-center"
              onClick={() => handleAction(() => onOpenPanel('knowledge'))}
            >
@@ -443,15 +385,6 @@ export function MobileWorkspace({
               <span className={cn("mt-1 text-[9px] font-black uppercase tracking-tighter",
                 isJunior ? "text-emerald-600" : "text-blue-600"
               )}>{isJunior ? 'Nuevo' : 'GPTs'}</span>
-           </button>
-           <button 
-             onClick={() => handleAction(() => onOpenPanel('creative'))} 
-             className="flex flex-col items-center gap-1 text-slate-400 min-w-[44px] min-h-[44px] justify-center rounded-2xl active:scale-95 active:text-slate-600 tap-target touch-manipulation"
-           >
-              <div className="w-11 h-11 flex items-center justify-center rounded-2xl">
-                 <ImageIcon size={22} />
-              </div>
-              <span className="text-[9px] font-black uppercase tracking-tighter">{isJunior ? 'Arte' : 'Assets'}</span>
            </button>
            <button 
              onClick={() => handleAction(() => setIsMenuOpen(true))} 
