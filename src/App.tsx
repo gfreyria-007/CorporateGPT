@@ -44,6 +44,7 @@ import { ChatMessage } from './components/ChatMessage';
 import { ChatInput } from './components/ChatInput';
 import { AdminPanel } from './components/AdminPanel';
 import { GPTsGenerator } from './components/GPTsGenerator';
+import { PPTcreator } from './components/PPTcreator';
 import { MobileWorkspace } from './components/MobileWorkspace';
 import { PromptGenie } from './components/PromptGenie';
 import { CompanyPanel } from './components/CompanyPanel';
@@ -95,7 +96,7 @@ export default function App() {
   // UI Panels
 
 
-  const [activePanel, setActivePanel] = useState<'chat' | 'admin' | 'knowledge' | 'team'>('chat');
+  const [activePanel, setActivePanel] = useState<'chat' | 'admin' | 'knowledge' | 'ppt' | 'team'>('chat');
   const [showFAQ, setShowFAQ] = useState(false);
   const [safetyAlert, setSafetyAlert] = useState<string | null>(null);
   const [dataProtectionEnabled, setDataProtectionEnabled] = useState(false);
@@ -734,7 +735,8 @@ export default function App() {
                   {appMode === 'corporate' ? (
                     [
                       { id: 'chat', label: t.intelligentChat, icon: <MessageSquare size={18} /> },
-                      { id: 'knowledge', label: 'Knowledge Bank', icon: <Database size={18} /> }
+                      { id: 'knowledge', label: 'Knowledge Bank', icon: <Database size={18} /> },
+                      { id: 'ppt', label: t.pptStudio || 'PPT Creator', icon: <Presentation size={18} /> }
                     ].map(item => (
                       <motion.button 
                         key={item.id}
@@ -1137,6 +1139,9 @@ export default function App() {
           )}
           {activePanel === 'knowledge' && (
             <motion.div key="knowledge" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-corporate-950"><GPTsGenerator onClose={() => setActivePanel('chat')} onSelect={(gpt: any) => { setSelectedGPT(gpt); setActivePanel('chat'); }} theme={theme} /></motion.div>
+          )}
+          {activePanel === 'ppt' && (
+            <PPTcreator onClose={() => setActivePanel('chat')} theme={theme} lang={lang} user={user} />
           )}
           {activePanel === 'team' && (
             <motion.div key="team" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-white dark:bg-corporate-950"><CompanyPanel onClose={() => setActivePanel('chat')} theme={theme} lang={lang} /></motion.div>
