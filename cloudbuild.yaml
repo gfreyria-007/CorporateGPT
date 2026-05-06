@@ -1,0 +1,33 @@
+steps:
+  # Step 1: Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/corporate-gpt-prod:$COMMIT_SHA'
+      - '.'
+
+  # Step 2: Push the image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/corporate-gpt-prod:$COMMIT_SHA'
+
+  # Step 3: Deploy to Cloud Run — us-central1 ONLY
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'corporate-gpt-prod'
+      - '--image=gcr.io/$PROJECT_ID/corporate-gpt-prod:$COMMIT_SHA'
+      - '--region=us-central1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--quiet'
+
+images:
+  - 'gcr.io/$PROJECT_ID/corporate-gpt-prod:$COMMIT_SHA'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
