@@ -37,7 +37,23 @@ import * as geminiService from './services/geminiService';
 import { fileToGenerativePart } from './utils/audio';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from './core/AuthContext';
+import { useLanguage } from './core/LanguageContext';
 import * as gameAudio from './utils/gameAudio';
+
+const LanguageSwitcher: React.FC = () => {
+  const { language, setLanguage } = useLanguage();
+  return (
+    <button
+      onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
+      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-white/80 backdrop-blur shadow-md border border-blue-100 hover:bg-blue-50 transition-all text-xs font-bold"
+      title={language === 'es' ? 'Switch to English' : 'Cambiar a Español'}
+    >
+      <span className={`text-lg ${language === 'es' ? '' : 'opacity-60'}`}>🇪🇸</span>
+      <span className={`text-lg ${language === 'en' ? '' : 'opacity-60'}`}>🇺🇸</span>
+      <span className="text-[10px] uppercase text-blue-800">{language}</span>
+    </button>
+  );
+};
 
 const BUDGETS = {
     FREE: 50, // Trial users get 50 units
@@ -72,6 +88,9 @@ export const TechieMain: React.FC = () => {
     resendVerification,
     setProfile: setUserProfile
   } = useAuth();
+
+  const { language } = useLanguage();
+  const isSpanish = language === 'es';
 
   const [showAdminDashboard, setShowAdminDashboard] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -402,12 +421,12 @@ const canUseSystemKey = (isSubscribed || isAdminRole);
 
       setIsChatLoading(true);
       
-      if (file && isReviewMode) setLoadingText("Revisando y evaluando tu tarea...");
-      else if (file) setLoadingText("Observando y analizando la imagen...");
-      else if (chatMode === 'researcher') setLoadingText("Investigando y redactando reporte...");
-      else if (chatMode === 'quiz-master') setLoadingText("Diseñando un examen...");
-      else if (chatMode === 'explorer') setLoadingText("Buscando en la web...");
-      else setLoadingText("Techie está pensando...");
+      if (file && isReviewMode) setLoadingText(isSpanish ? "Revisando y evaluando tu tarea..." : "Reviewing and evaluating your homework...");
+      else if (file) setLoadingText(isSpanish ? "Observando y analizando la imagen..." : "Observing and analyzing the image...");
+      else if (chatMode === 'researcher') setLoadingText(isSpanish ? "Investigando y redactando reporte..." : "Researching and writing report...");
+      else if (chatMode === 'quiz-master') setLoadingText(isSpanish ? "Diseñando un examen..." : "Designing an exam...");
+      else if (chatMode === 'explorer') setLoadingText(isSpanish ? "Buscando en la web..." : "Searching the web...");
+      else setLoadingText(isSpanish ? "Techie está pensando..." : "Techie is thinking...");
       
       try {
           let response: any;
@@ -440,16 +459,44 @@ const canUseSystemKey = (isSubscribed || isAdminRole);
                   });
               }
 
-              if (chatMode === 'researcher' && !isInitialGreeting) {
-                  addMessage(Role.MODEL, { type: 'deep-research', topic: text, markdownReport: response.text }, sources);
-              } else {
-                  try {
-                      const parsed = JSON.parse(geminiService.cleanJsonString(response.text));
-                      addMessage(Role.MODEL, parsed, sources);
-                  } catch (e) {
-                      addMessage(Role.MODEL, response.text, sources);
-                  }
-              }
+if (chatMode === 'researcher' && !isInitialGreeting) {
+                   addMessage(Role.MODEL, { type: 'deep-research', topic: text, markdownReport: response.text }, sources);
+               } else {
+                   try {
+                       const parsed = JSON.parse(geminiService.cleanJsonString(response.text));
+                       
+if (parsed.type === 'image-request') {
+                            setLoadingText(isSpanish ? "Creando imagen..." : "Creating image...");
+                            const imageResult = await geminiService.generateImage(
+                               parsed.prompt,
+                               '16:9' as AspectRatio,
+                               selectedGrade,
+                               userName || 'Estudiante',
+                               'none',
+                               'none',
+                               undefined,
+                               '1K',
+                               undefined,
+                               getCustomKey()
+                           );
+                           
+                           if (imageResult) {
+                               addMessage(Role.MODEL, { 
+                                   type: 'image', 
+                                   url: imageResult.url, 
+                                   prompt: parsed.prompt,
+                                   enhancedPrompt: imageResult.enhancedPrompt 
+                               }, sources);
+                           } else {
+                               addMessage(Role.MODEL, { type: 'selection', text: 'No pude crear esa imagen. ¿Qué otra cosa te gustaría ver?', question: '¿Try something else?', options: [] }, sources);
+                           }
+                       } else {
+                           addMessage(Role.MODEL, parsed, sources);
+                       }
+                   } catch (e) {
+                       addMessage(Role.MODEL, response.text, sources);
+                   }
+               }
 
               // Update usage count and cost only for system key users
               if (!isInitialGreeting && userProfile.uid && !isBYOKMode) {
@@ -697,6 +744,8 @@ const canUseSystemKey = (isSubscribed || isAdminRole);
               <div className="shrink-0 px-2 sm:px-4 pt-2">
                 <div className="flex items-center justify-center gap-2 flex-wrap">
                   <GradeSelector selectedGrade={selectedGrade} activeTool={TOOL_DEFINITIONS.find(t => t.id === chatMode)} onGradeChange={setSelectedGrade} />
+                  {/* Language Selector */}
+                  <LanguageSwitcher />
                   <div className="w-48 sm:w-56">
                     <ModelSelector 
                       models={models} 

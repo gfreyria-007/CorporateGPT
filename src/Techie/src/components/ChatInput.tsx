@@ -4,6 +4,7 @@ import ImageSourceModal from './ImageSourceModal';
 import { ExplorerSettings, Grade, ChatMode } from '../types';
 import { TOOL_DEFINITIONS } from '../constants';
 import { useAuth } from '../core/AuthContext';
+import { useLanguage } from '../core/LanguageContext';
 
 interface ChatInputProps {
   onSendMessage: (text: string, file?: File, isReviewMode?: boolean, quizCount?: number) => void;
@@ -29,6 +30,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
   onOpenFAQ
 }) => {
   const { logout } = useAuth();
+  const { language } = useLanguage();
+  const isSpanish = language === 'es';
   const [text, setText] = useState('');
   const [file, setFile] = useState<File | undefined>(undefined);
   const [isReviewMode, setIsReviewMode] = useState(false);
@@ -129,11 +132,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
   }
 
   const getPlaceholderText = () => {
-    if (isReviewMode) return "Describe tu duda sobre la tarea...";
-    if (chatMode === 'explorer') return "Pregunta a internet lo que quieras...";
-    if (chatMode === 'researcher') return "Ingresa un tema para investigar...";
-    if (chatMode === 'quiz-master') return "Tema del examen y número de preguntas...";
-    return "Escribe tu pregunta...";
+    if (isReviewMode) return isSpanish ? "Describe tu duda sobre la tarea..." : "Describe your question about the homework...";
+    if (chatMode === 'explorer') return isSpanish ? "Pregunta a internet lo que quieras..." : "Ask the internet anything...";
+    if (chatMode === 'researcher') return isSpanish ? "Ingresa un tema para investigar..." : "Enter a topic to research...";
+    if (chatMode === 'quiz-master') return isSpanish ? "Tema del examen y número de preguntas..." : "Exam topic and number of questions...";
+    return isSpanish ? "Escribe tu pregunta..." : "Type your question...";
   };
   
   const handleTextChange = (e: ChangeEvent<HTMLTextAreaElement>) => {

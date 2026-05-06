@@ -1,7 +1,8 @@
 
 import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChatMessage, Role, QuizOption, QuizResultContent, Grade } from '../types';
+import { ChatMessage, Role, QuizOption, QuizResultContent, Grade, SocraticContent } from '../types';
+import { useLanguage } from '../core/LanguageContext';
 import QuizMessage from './QuizMessage';
 import ReviewMessage from './ReviewMessage';
 import ReviewAllMessage from './ReviewAllMessage';
@@ -11,6 +12,7 @@ import FullQuizMessage from './FullQuizMessage';
 import QuizReportMessage from './QuizReportMessage';
 import MathMessage from './MathMessage';
 import DeepResearchMessage from './DeepResearchMessage';
+import SocraticMessage from './SocraticMessage';
 
 interface MessageProps {
   message: ChatMessage;
@@ -35,6 +37,8 @@ const Message: React.FC<MessageProps> = ({
   const isUser = message.role === Role.USER;
   const isModel = message.role === 'model';
   const isSystem = message.role === Role.SYSTEM;
+  const { language } = useLanguage();
+  const isSpanish = language === 'es';
 
   const renderMarkdown = (text: string) => {
     return text.split('\n').map((line, i) => {
@@ -101,6 +105,8 @@ const Message: React.FC<MessageProps> = ({
         mainContent = <QuizReportMessage content={content} onAwardBadge={onAwardBadge} />;
     } else if (content.type === 'math') {
         mainContent = <MathMessage content={content} />;
+    } else if (content.type === 'socratic') {
+        mainContent = <SocraticMessage content={content as SocraticContent} onAnswer={(q, opt) => onSelection(opt.text)} onNextQuestion={() => onSelection('__next__')} />;
     } else {
         mainContent = null;
     }
@@ -110,7 +116,7 @@ const Message: React.FC<MessageProps> = ({
             {mainContent}
             {isModel && sources && sources.length > 0 && (
                 <div className="mt-3 pt-3 border-t border-gray-100">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Fuentes Consultadas:</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{isSpanish ? 'Fuentes Consultadas:' : 'Sources Consulted:'}</p>
                     <div className="flex flex-wrap gap-2">
                         {sources.map((s, idx) => (
                             <a key={idx} href={s.uri} target="_blank" rel="noreferrer" className="text-[10px] bg-gray-50 text-[#1e3a8a] px-2 py-1 rounded border border-gray-200 hover:bg-white transition-colors truncate max-w-[200px]">

@@ -6,6 +6,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
 
 import { AuthProvider } from './core/AuthContext';
+import { LanguageProvider } from './core/LanguageContext';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -17,7 +18,9 @@ root.render(
   <React.StrictMode>
     <ErrorBoundary>
       <AuthProvider>
-        <TechieMain />
+        <LanguageProvider>
+          <TechieMain />
+        </LanguageProvider>
       </AuthProvider>
     </ErrorBoundary>
   </React.StrictMode>

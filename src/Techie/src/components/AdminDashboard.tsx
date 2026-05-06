@@ -41,7 +41,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, onOpenDiagnost
         setIsLoading(false);
       },
       (error) => {
-        handleFirestoreError(error, OperationType.LIST, 'access_requests');
+        handleFirestoreError(error, OperationType.QUERY, 'access_requests');
       }
     );
 
@@ -51,7 +51,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, onOpenDiagnost
         setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       },
       (error) => {
-        handleFirestoreError(error, OperationType.LIST, 'users');
+        handleFirestoreError(error, OperationType.QUERY, 'users');
       }
     );
 
@@ -62,7 +62,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, onOpenDiagnost
         setErrors(errorData.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)));
       },
       (error) => {
-        handleFirestoreError(error, OperationType.LIST, 'errors');
+        handleFirestoreError(error, OperationType.QUERY, 'errors');
       }
     );
 

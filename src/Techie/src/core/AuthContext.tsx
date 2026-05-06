@@ -188,7 +188,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode, mainUser?: Fire
         }
 
         // Check CorporateGPT trial status for existing users
-        let corporateTrialStatus = { eligible: false, daysLeft: 0 };
+        let corporateTrialStatus: { eligible: boolean; daysLeft?: number } = { eligible: false };
         if (u.email) {
           corporateTrialStatus = await checkCorporateTrial(u.email);
         }
@@ -257,7 +257,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode, mainUser?: Fire
         }
 
         // Check CorporateGPT's trial status for this email
-        let trialStatus = { eligible: false, daysLeft: 0 };
+        let trialStatus: { eligible: boolean; daysLeft?: number } = { eligible: false };
         if (u.email) {
           trialStatus = await checkCorporateTrial(u.email);
         }
@@ -292,7 +292,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode, mainUser?: Fire
         trialExpires.setDate(trialExpires.getDate() + TRIAL_DAYS);
 
         // Use corporate trial status - if eligible, set as trial user
-        const subscriptionLevel = trialStatus.eligible ? 'trial' : 'free';
+        const subscriptionLevel: 'free' | 'trial' = trialStatus.eligible ? 'trial' : 'free';
         // Override isApproved based on corporate trial eligibility
         isApproved = trialStatus.eligible || u.email === 'gfreyria@gmail.com';
 

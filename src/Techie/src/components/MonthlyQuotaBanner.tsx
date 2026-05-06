@@ -14,7 +14,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DollarSign, Calendar, TrendingUp } from 'lucide-react';
-import { UserProfile } from './types';
+import { UserProfile } from '../types';
 
 interface MonthlyQuotaBannerProps {
   userProfile: UserProfile | null;

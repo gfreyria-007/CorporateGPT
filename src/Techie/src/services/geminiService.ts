@@ -5,6 +5,61 @@ import { fileToGenerativePart } from '../utils/audio';
 import { STUDIO_STYLES, LIGHTING_PRESETS } from '../constants';
 import { logger } from '../logger';
 
+export const GRADE_GUARDRAILS: Record<string, { maxAge: number; sensitiveTopics: string[]; contentLevel: 'basic' | 'intermediate' | 'advanced'; imageComplexity: 'simple' | 'medium' | 'detailed' }> = {
+  'primaria1': { maxAge: 6, sensitiveTopics: ['sexo', 'sexual', 'embarazo', 'drogas', 'violencia', 'muerte', 'enfermedad'], contentLevel: 'basic', imageComplexity: 'simple' },
+  'primaria2': { maxAge: 7, sensitiveTopics: ['sexo', 'sexual', 'embarazo', 'drogas', 'violencia', 'muerte', 'enfermedad'], contentLevel: 'basic', imageComplexity: 'simple' },
+  'primaria3': { maxAge: 8, sensitiveTopics: ['sexo', 'sexual', 'embarazo', 'drogas', 'violencia', 'muerte'], contentLevel: 'basic', imageComplexity: 'simple' },
+  'primaria4': { maxAge: 9, sensitiveTopics: ['sexo', 'sexual', 'embarazo', 'drogas', 'violencia', 'muerte'], contentLevel: 'basic', imageComplexity: 'simple' },
+  'primaria5': { maxAge: 10, sensitiveTopics: ['sexo', 'sexual', 'embarazo', 'drogas'], contentLevel: 'intermediate', imageComplexity: 'medium' },
+  'primaria6': { maxAge: 11, sensitiveTopics: ['sexo', 'sexual', 'embarazo', 'drogas'], contentLevel: 'intermediate', imageComplexity: 'medium' },
+  'secundaria1': { maxAge: 12, sensitiveTopics: ['sexo', 'drogas'], contentLevel: 'intermediate', imageComplexity: 'medium' },
+  'secundaria2': { maxAge: 13, sensitiveTopics: ['drogas'], contentLevel: 'advanced', imageComplexity: 'detailed' },
+  'secundaria3': { maxAge: 14, sensitiveTopics: ['drogas'], contentLevel: 'advanced', imageComplexity: 'detailed' },
+};
+
+export const applyContentGuardrails = (gradeId: string, prompt: string, content: string): { safe: boolean; filteredContent?: string; reason?: string } => {
+  const guardrail = GRADE_GUARDRAILS[gradeId];
+  if (!guardrail) return { safe: true };
+  
+  const lowerPrompt = prompt.toLowerCase();
+  const lowerContent = content.toLowerCase();
+  
+  for (const topic of guardrail.sensitiveTopics) {
+    if (lowerPrompt.includes(topic) || lowerContent.includes(topic)) {
+      if (gradeId.startsWith('primaria')) {
+        return { safe: false, reason: `Contenido no apropiado para ${gradeId}. Redirige a un tema educativo.` };
+      }
+    }
+  }
+  
+  return { safe: true };
+};
+
+export const applyImageGuardrails = (gradeId: string, prompt: string): { safe: boolean; filteredPrompt?: string; reason?: string } => {
+  const guardrail = GRADE_GUARDRAILS[gradeId];
+  if (!guardrail) return { safe: true };
+  
+  const lowerPrompt = prompt.toLowerCase();
+  
+  for (const topic of guardrail.sensitiveTopics) {
+    if (lowerPrompt.includes(topic)) {
+      return { safe: false, reason: `No puedo generar imágenes sobre ese tema para ${gradeId}. ¿Qué tal algo más educativo?` };
+    }
+  }
+  
+  let filteredPrompt = prompt;
+  
+  if (guardrail.imageComplexity === 'simple') {
+    filteredPrompt += ', estilo infantil, colores vivos,很简单, cartoon para niños';
+  } else if (guardrail.imageComplexity === 'medium') {
+    filteredPrompt += ', estilo educativo, colores brillantes, ilustración para estudiantes';
+  } else {
+    filteredPrompt += ', estilo educativo detallado, diagrama científico, ilustración escolar';
+  }
+  
+  return { safe: true, filteredPrompt };
+};
+
 export const cleanJsonString = (str: string): string => {
   if (!str) return '';
   let clean = str.replace(/```json\n?|```/g, '').trim();
@@ -298,36 +353,54 @@ export const getChatResponse = async (
 
     if (mode === 'explorer') {
         useJson = true;
-        systemInstruction = `Eres el EXPLORADOR SOCRÁTICO de Catalizia con ACCESO A INTERNET. 
-        Tu objetivo es guiar a ${userName} (${age} años) a descubrir conocimientos por sí mismo.
         
-        REGLAS DEL TUTOR SOCRÁTICO:
-        1. NUNCA des la respuesta final de inmediato.
-        2. Usa el método socrático: responde con una pregunta que invite a la reflexión.
-        3. Proporciona explicaciones en 3 CAPAS DE PROFUNDIDAD, pero siempre termina con un desafío o pregunta.
+        const lastUserMsg = [...history].reverse().find((msg: any) => msg.role === 'user');
+        const userText = lastUserMsg?.parts?.[0]?.text?.toLowerCase() || '';
+        
+        const imageTriggers = ['dibuja', 'imagen', 'foto', 'ilustración', 'dibujo de', 'haz un', 'genera', 'créame', 'visualiza', 'muestra cómo', '画出', 'dessin', 'picture'];
+        const wantsImage = imageTriggers.some(trigger => userText.includes(trigger));
+        
+        if (wantsImage) {
+          const guardrail = applyImageGuardrails(grade.id, lastUserMsg.parts[0].text);
+          if (!guardrail.safe) {
+            return { text: JSON.stringify({ type: 'selection', text: guardrail.reason, question: "¿Qué otro tema te gustaría explorar?", options: [] }) };
+          }
+          
+          return { text: JSON.stringify({ 
+            type: 'image-request', 
+            prompt: guardrail.filteredPrompt || lastUserMsg.parts[0].text,
+            gradeId: grade.id,
+            aspectRatio: '16:9'
+          }) };
+        }
+        
+        systemInstruction = `Eres el EXPLORADOR DE INTERNET para niños de Catalizia con ACCESO A BÚSQUEDA WEB.
+        Tu objetivo es investigar y explicar cualquier tema de forma segura y apropiada para un niño de ${age} años en ${grade.name}.
+        
+        REGLAS DE SEGURIDAD POR EDAD:
+        - Para primaria (6-11 años): Contenido completamente seguro, nada de temas sensibles.
+        - Para secundaria (12-14 años): Contenido educativo apropiado para su edad.
         
         FORMATO OBLIGATORIO JSON:
         {
           "type": "search",
+          "topic": "[Tema buscado]",
           "layers": {
-            "level1": "Analogía simple para un niño. Termina con: '¿Sabías que...?'",
-            "level2": "Explicación técnica accesible. Termina con: '¿Qué pasaría si...?'",
-            "level3": "Profundidad experta. Termina con: '¿Cómo aplicarías esto a...?'"
+            "level1": "Explicación muy simple y divertida para un niño de ${age} años. Como si se lo explicaras a un amigo de 6 años.",
+            "level2": "Explicación con más detalle pero todavía accesible. Añade datos curiosos interesantes.",
+            "level3": "Información más completa para un estudiante de ${grade.name}. Incluye datos técnicos simples."
           },
-          "socraticChallenge": {
-            "question": "Un desafío para que el estudiante razone.",
-            "options": [
-                { "text": "Opción A", "isCorrect": true, "explanation": "..." },
-                { "text": "Opción B", "isCorrect": false, "explanation": "..." },
-                { "text": "Opción C", "isCorrect": false, "explanation": "..." }
-            ]
-          }
+          "sources": [
+            { "title": "Fuente 1", "url": "https://..." },
+            { "title": "Fuente 2", "url": "https://..." }
+          ],
+          "funFact": "Un dato curioso y divertido sobre el tema"
         }`;
         
         if (persona) systemInstruction += `\nPERSONALIDAD ADICIONAL: ${persona}`;
         if (customInstruction) systemInstruction += `\nINSTRUCCIONES DEL SISTEMA: ${customInstruction}`;
         
-    } else if (mode === 'math-viva') {
+} else if (mode === 'math-viva') {
         useJson = true;
         systemInstruction = `Eres el TUTOR MATEMÁTICO SOCRÁTICO de Catalizia. No eres una calculadora, eres un guía para ${userName} (${age} años).
         
@@ -348,13 +421,56 @@ export const getChatResponse = async (
           "challenge": {
             "question": "¿Qué pasaría si llegara un amigo más?",
             "options": [
-                { "text": "Les tocaría más", "isCorrect": false, "why": "Al haber más personas, la misma cantidad se reparte en trozos más pequeños." },
-                { "text": "Les tocaría menos", "isCorrect": true, "why": "¡Exacto! Dividir entre un número más grande da un resultado menor." },
-                { "text": "Se quedaría igual", "isCorrect": false, "why": "La cantidad total no cambia, pero el reparto sí." }
+              { "text": "Les tocaría más", "isCorrect": false, "why": "Al haber más personas, la misma cantidad se reparte en trozos más pequeños." },
+              { "text": "Les tocaría menos", "isCorrect": true, "why": "¡Exacto! Dividir entre un número más grande da un resultado menor." },
+              { "text": "Se quedaría igual", "isCorrect": false, "why": "La cantidad total no cambia, pero el reparto sí." }
             ]
           },
           "visualization": { "type": "blocks | pizza | grid | comparison", "data": { ... } }
         }`;
+    } else if (mode === 'socratic') {
+        // TUTOR SOCRÁTICO - Nueva experiencia de aprendizaje
+        useJson = true;
+        systemInstruction = `Eres el TUTOR SOCRÁTICO de Catalizia. Tu metodología es el método socrático de Sócrates: no das respuestas, haces preguntas que llevan al estudiante a descubrir la verdad por sí mismo.
+        
+        PARA ${userName} (${age} años, grado ${grade?.name}):
+        
+        REGLAS FUNDAMENTALES:
+        1. NUNCA des la respuesta directa
+        2. Cada respuesta debe generar otra pregunta mejor
+        3. Los errores deben convertirse en oportunidades de aprendizaje con pistas
+        4. Los aciertos deben celebrarse con explicación profunda
+        
+        FORMATO JSON OBLIGATORIO - Pregunta Socrática con 3 opciones:
+        {
+          "type": "socratic",
+          "topic": "[TEMA DEL MOMENTO]",
+          "question": "[PREGUNTA QUE HACE PENSAR - No es la respuesta, es una pregunta que lleva a la respuesta]",
+          "options": [
+            { 
+              "text": "[Opción correcta como pregunta]", 
+              "isCorrect": true, 
+              "hint": "[Pista pequeña si el usuario duda]",
+              "explanation": "[Por qué esta pregunta lleva a la verdad - explicación profunda]"
+            },
+            { 
+              "text": "[Opción incorrecta 1]", 
+              "isCorrect": false, 
+              "hint": "[Pista que guía sin dar la respuesta]",
+              "explanation": "[Por qué esta opción no lleva a la respuesta correcta]"
+            },
+            { 
+              "text": "[Opción incorrecta 2]", 
+              "isCorrect": false, 
+              "hint": "[Pista diferente]",
+              "explanation": "[Por qué esta también es un camino sin salida]"
+            }
+          ]
+        }
+        
+        IMPORTANTE: La 'question' debe ser una pregunta socrática, no una respuesta. Por ejemplo, si el tema es gravedad, no preguntes '¿Qué es la gravedad?' sino '¿Por qué crees que las cosas caen hacia abajo y no hacia los lados?';
+        
+        COMPORTAMIENTO: Después de cada respuesta del estudiante, genera otra pregunta del mismo tema para profundizar, o cambia de tema si dominó el actual.`;
     } else {
         systemInstruction = `Eres Techie, el Tutor AI Socrático de Catalizia. Tu misión es ser el mejor instructor de esta generación para ${userName} (${age} años).
         
@@ -456,7 +572,25 @@ export const getDeepResearchResponse = async (topic: string, grade: Grade, userN
     } else if (grade.id.includes('secundaria') || grade.id.includes('prepa')) {
         tokenTarget = "6000";
     }
-
+    
+    const lowerTopic = topic.toLowerCase();
+    const imageTriggers = ['dibuja', 'imagen', 'foto', 'ilustración', 'dibujo de', 'haz un', 'genera', 'créame', 'visualiza', 'muestra cómo', 'diagrama', 'gráfico'];
+    const wantsImage = imageTriggers.some(trigger => lowerTopic.includes(trigger));
+    
+    if (wantsImage) {
+        const guardrail = applyImageGuardrails(grade.id, topic);
+        if (!guardrail.safe) {
+            return { text: JSON.stringify({ type: 'selection', text: guardrail.reason, question: "¿Qué otro tema te gustaría investigar?", options: [] }) };
+        }
+        
+        return { text: JSON.stringify({ 
+            type: 'image-request', 
+            prompt: guardrail.filteredPrompt || topic,
+            gradeId: grade.id,
+            aspectRatio: '16:9'
+        }) };
+    }
+    
     const systemPrompt = `Eres el INVESTIGADOR JEFE (Investigación Académica Nivel Avanzado) de Catalizia. 
     Tu tarea es redactar un "Super Reporte" (Mini Paper de Investigación PhD Juvenil) sobre "${topic}" para ${userName} (${age} años).
     ... (rest of the prompt) ...`;

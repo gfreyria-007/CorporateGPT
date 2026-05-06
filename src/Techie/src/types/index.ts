@@ -5,7 +5,7 @@ export enum Role {
   SYSTEM = "system",
 }
 
-export type ChatMode = 'default' | 'guided' | 'explorer' | 'researcher' | 'quiz-master' | 'image-studio' | 'arcade' | 'review-homework' | 'math-viva';
+export type ChatMode = 'default' | 'guided' | 'socratic' | 'explorer' | 'researcher' | 'quiz-master' | 'image-studio' | 'arcade' | 'review-homework' | 'math-viva';
 
 
 export interface ImageContent {
@@ -41,7 +41,16 @@ export type MessageContent =
   | DeepResearchContent
   | ReviewContent
   | ReviewAllContent
-  | MathContent;
+  | MathContent
+  | SocraticContent
+  | ImageRequestContent;
+
+export interface ImageRequestContent {
+  type: 'image-request';
+  prompt: string;
+  gradeId: string;
+  aspectRatio: string;
+}
 
 export interface MathStep {
   step: number;
@@ -142,6 +151,22 @@ export interface SelectionContent {
   options: SelectionOption[];
 }
 
+export interface SocraticContent {
+  id?: string;
+  type: 'socratic';
+  topic: string;
+  question: string;
+  options: {
+    text: string;
+    isCorrect: boolean;
+    hint: string;
+    explanation: string;
+  }[];
+  isAnswered?: boolean;
+  correctAnswer?: string;
+  lastHint?: string;
+}
+
 export interface SearchContent {
   type: 'search';
   text?: string;
@@ -194,7 +219,7 @@ export interface Flashcard {
   answer: string;
 }
 
-export type SubscriptionLevel = 'free' | 'explorador' | 'maestro' | 'leyenda' | 'admin' | 'family_starter' | 'family_mega';
+export type SubscriptionLevel = 'free' | 'trial' | 'explorador' | 'maestro' | 'leyenda' | 'admin' | 'family_starter' | 'family_mega';
 
 export interface Badge {
   id: string;
@@ -217,7 +242,7 @@ export interface UserProfile {
   uid: string;
   email: string;
   name: string;
-  role: 'admin' | 'user';
+  role: 'admin' | 'super-admin' | 'owner' | 'user';
   isApproved: boolean;
   subscriptionLevel?: SubscriptionLevel;
   personalApiKey?: string;
