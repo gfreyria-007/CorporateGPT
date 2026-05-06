@@ -275,7 +275,7 @@ export default function App() {
       return;
     }
 
-    if (profile?.isBanned) {
+    if (profile?.isBanned && !isSuperAdmin) {
       alert("Your account has been suspended. Please contact your administrator.");
       return;
     }
@@ -595,7 +595,7 @@ export default function App() {
     );
   }
 
-  if (showLanding || !user) {
+  if ((showLanding || !user) && !isSuperAdmin) {
     const isLandingSuperAdmin = SUPER_ADMIN_EMAILS.includes(user?.email || '') || profile?.role === 'super-admin';
     return (
       <LandingPage 
