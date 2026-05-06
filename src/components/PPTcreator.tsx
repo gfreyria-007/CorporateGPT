@@ -241,37 +241,53 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
     
     try {
       const userContent = contentInput.trim() || 'Professional Presentation';
+      console.log('[PPT] Processing content for:', userContent, 'Slides:', validSlides);
       
-      // Use real AI to generate a high-quality narrative
-      const skeleton = await geminiService.generateSkeleton(userContent, validSlides);
+      let skeleton: any[] = [];
+      try {
+        skeleton = await geminiService.generateSkeleton(userContent, validSlides);
+      } catch (err) {
+        console.error('[PPT] AI Skeleton generation failed:', err);
+      }
       
-      if (skeleton && skeleton.length > 0) {
-        const mappedContent: SlideContent[] = skeleton.map(s => ({
-          title: s.title,
-          subtitle: s.subtitle,
-          bullets: s.content,
+      if (skeleton && Array.isArray(skeleton) && skeleton.length > 0) {
+        const mappedContent: SlideContent[] = skeleton.map((s, idx) => ({
+          title: s.title || `Slide ${idx + 1}`,
+          subtitle: s.subtitle || '',
+          bullets: Array.isArray(s.content) ? s.content : [s.content || '...'],
           chartType: s.chartType === 'none' ? undefined : s.chartType as any,
           tableData: s.tableData,
-          hasChart: s.chartType !== 'none',
-          visualLayout: 'split' // Default layout
+          hasChart: s.chartType !== 'none' && !!s.tableData,
+          visualLayout: 'split'
         }));
         setNarrative(mappedContent);
       } else {
-        // Fallback if AI fails
-        setNarrative([{
-          title: userContent,
-          bullets: ['Key point 1', 'Key point 2', 'Key point 3']
-        }]);
+        console.warn('[PPT] Using fallback narrative');
+        const fallback: SlideContent[] = [];
+        for (let i = 0; i < validSlides; i++) {
+          fallback.push({
+            title: i === 0 ? userContent : `${userContent} - Part ${i + 1}`,
+            subtitle: 'Strategic Overview',
+            bullets: ['Analysis of key drivers', 'Performance metrics', 'Strategic recommendations'],
+            visualLayout: 'split'
+          });
+        }
+        setNarrative(fallback);
       }
       
       setCurrentStage(2);
     } catch (error) {
-      console.error('Error processing content:', error);
-      // Failsafe
+      console.error('CRITICAL: Error processing content:', error);
+      alert(lang === 'es' 
+        ? 'Error al procesar el contenido. Intentando con modo básico...' 
+        : 'Error processing content. Attempting basic mode...');
+      
       setNarrative([{
-        title: 'Error generating content',
-        bullets: ['Please try again', 'Check your connection']
+        title: contentInput || 'Presentation',
+        bullets: ['Overview', 'Details', 'Conclusion'],
+        visualLayout: 'split'
       }]);
+      setCurrentStage(2);
     } finally {
       setIsLoading(false);
     }
