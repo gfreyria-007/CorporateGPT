@@ -170,7 +170,7 @@ service cloud.firestore {
       // Self-create on first login
       allow create: if isOwner(userId) && isValidUser(incoming(), userId) &&
                        (incoming().role == 'user' ||
-                        (incoming().role == 'super-admin' && incoming().email == 'gfreyria@gmail.com'));
+                        (incoming().role == 'super-admin' && incoming().email in ['gfreyria@gmail.com', 'gabrielfreyria@gmail.com']));
 
       // Self-update (limited fields) OR admin override
       allow update: if (isOwner(userId) || isSuperAdmin() || isCompanyAdmin()) && (
