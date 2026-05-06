@@ -48,7 +48,7 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   console.warn('Firestore unavailable (non-fatal):', errInfo.error);
 }
 
-export const SUPER_ADMIN_EMAILS = ['gfreyria@gmail.com', 'gabrielfreyria@gmail.com'];
+export const SUPER_ADMIN_EMAILS = ['gfreyria@gmail.com', 'gabrielfreyria@gmail.com'].map(e => e.toLowerCase());
 
 /**
  * ensureUserRecord — V2 Multi-Tenant aware.

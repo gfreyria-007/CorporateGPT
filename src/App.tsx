@@ -128,7 +128,7 @@ export default function App() {
   // Permissions block removed to allow free switching between apps
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  const isSuperAdmin = SUPER_ADMIN_EMAILS.includes(user?.email || '') || profile?.role === 'admin' || profile?.role === 'super-admin' || (profile as any)?.role === 'owner';
+  const isSuperAdmin = isEmailSuperAdmin || profile?.role === 'admin' || profile?.role === 'super-admin' || (profile as any)?.role === 'owner';
 
   // V2 Version Gatekeeper — reads appVersion from company tenant
   const { appVersion, engineStatus, setEngineStatus } = useVersionGatekeeper(
@@ -589,7 +589,7 @@ export default function App() {
   }
 
   // CRITICAL: Super admins bypass ALL restrictions - check by email FIRST
-  const isEmailSuperAdmin = SUPER_ADMIN_EMAILS.includes(user?.email || '');
+  const isEmailSuperAdmin = SUPER_ADMIN_EMAILS.includes((user?.email || '').toLowerCase());
   
   if (trialEnded && !isEmailSuperAdmin) {
     return (
