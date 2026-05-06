@@ -121,7 +121,7 @@ export const AdminPanel: React.FC<{ onClose: () => void, theme: 'light' | 'dark'
 
       <div className="flex-1 flex overflow-hidden">
         {/* Admin Sidebar */}
-        <nav className={cn("w-72 border-r p-6 space-y-2 transition-all",
+        <nav className={cn("w-64 lg:w-72 border-r p-6 space-y-2 transition-all",
           theme === 'dark' ? "bg-slate-950 border-white/5" : "bg-white border-slate-200 shadow-xl z-20"
         )}>
            <AdminTabButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={<BarChart size={18} />} label="Overview" theme={theme} />

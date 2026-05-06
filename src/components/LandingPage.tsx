@@ -247,15 +247,15 @@ export const LandingPage = ({
             </div>
             
             <div className="space-y-2">
-              <h1 className="hero-title-line text-6xl lg:text-9xl font-black tracking-tighter leading-[0.85] text-white">
+              <h1 className="hero-title-line text-4xl sm:text-5xl md:text-6xl lg:text-8xl xl:text-9xl font-black tracking-tighter leading-[0.85] text-white">
                 {lang === 'es' ? 'La IA que tu' : 'The AI your'}
               </h1>
-              <h1 className="hero-title-line text-6xl lg:text-9xl font-black tracking-tighter leading-[0.85] text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-emerald-400 to-indigo-400">
+              <h1 className="hero-title-line text-4xl sm:text-5xl md:text-6xl lg:text-8xl xl:text-9xl font-black tracking-tighter leading-[0.85] text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-emerald-400 to-indigo-400">
                 {lang === 'es' ? 'empresa confía' : 'business trusts'}
               </h1>
             </div>
 
-            <p className="hero-p text-xl lg:text-2xl text-slate-400 font-medium leading-relaxed max-w-xl border-l-2 border-blue-500/30 pl-8">
+            <p className="hero-p text-base sm:text-lg lg:text-xl text-slate-400 font-medium leading-relaxed max-w-xl border-l-2 border-blue-500/30 pl-4 sm:pl-8">
               {lang === 'es' ? 'Accede a los mejores modelos de IA con seguridad corporativa.' : 'Access the world\'s top 100+ models with total NDA security. Save up to 70% by centralizing your team spend.'}
             </p>
 
@@ -301,27 +301,27 @@ export const LandingPage = ({
             </div>
           </div>
 
-          <div className="hero-mockup-container relative">
+<div className="hero-mockup-container relative w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg mx-auto">
             <div className="relative group">
                <motion.div 
                 whileHover={{ scale: 1.02 }}
-                className="relative rounded-[3rem] overflow-hidden shadow-[0_0_150px_rgba(37,99,235,0.4)] border border-white/20 bg-[#020617]"
+                className="relative rounded-[2rem] sm:rounded-[3rem] overflow-hidden shadow-[0_0_150px_rgba(37,99,235,0.4)] border border-white/20 bg-[#020617]"
               >
                 <img src="/landing/dashboard.png" alt="Dashboard" className="w-full h-auto" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-transparent opacity-40" />
               </motion.div>
               
-              {/* Animated Floating Badges */}
+              {/* Animated Floating Badges - Hide on small mobile */}
               <motion.div 
                 animate={{ y: [0, -20, 0], rotate: [0, 5, 0] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -top-12 -right-8 glass-card p-8 rounded-3xl shadow-blue-500/30 border border-white/20 backdrop-blur-2xl"
+                className="hidden sm:flex absolute -top-8 sm:-top-12 -right-4 sm:-right-8 glass-card p-4 sm:p-8 rounded-2xl sm:rounded-3xl shadow-blue-500/30 border border-white/20 backdrop-blur-2xl"
               >
-                <div className="flex items-center gap-5">
-                  <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
-                    <ShieldCheck size={32} className="text-emerald-400" />
+                <div className="flex items-center gap-3 sm:gap-5">
+                  <div className="w-10 sm:w-14 h-10 sm:h-14 rounded-xl sm:rounded-2xl bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
+                    <ShieldCheck size={24} className="text-emerald-400" />
                   </div>
-                  <div>
+                  <div className="hidden sm:block">
                     <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</div>
                     <div className="text-lg font-black text-white">ZDR ACTIVE</div>
                   </div>
@@ -333,22 +333,22 @@ export const LandingPage = ({
       </section>
 
       {/* Feature Section */}
-      <section className="py-44 px-6 lg:px-12 relative overflow-hidden" id="features">
+      <section className="py-24 lg:py-44 px-4 sm:px-6 lg:px-12 relative overflow-hidden" id="features">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col lg:flex-row justify-between items-end gap-16 mb-32">
+          <div className="flex flex-col lg:flex-row justify-between items-end gap-8 lg:gap-16 mb-16 lg:mb-32">
             <div className="reveal-up max-w-3xl">
-              <h2 className="text-5xl lg:text-8xl font-black tracking-tighter text-white mb-10 leading-[0.9]">
+              <h2 className="text-3xl sm:text-4xl lg:text-6xl xl:text-8xl font-black tracking-tighter text-white mb-6 lg:mb-10 leading-[0.9]">
                 {lang === 'es' ? 'La tecnología que otros' : 'The technology others'}<br/>
                 <span className="text-blue-500 italic">{lang === 'es' ? 'no te dicen.' : 'won\'t tell you.'}</span>
               </h2>
-              <p className="text-2xl text-slate-400 font-medium leading-relaxed max-w-2xl">
+              <p className="text-base lg:text-2xl text-slate-400 font-medium leading-relaxed max-w-2xl">
                 {lang === 'es' ? 'No solo te damos acceso a la IA, te damos la infraestructura para gobernarla, asegurar tus datos y optimizar cada centavo.' : 'We don\'t just give you AI access; we give you the infrastructure to govern it, secure your data, and optimize every cent.'}
               </p>
             </div>
             <div className="reveal-up pb-6">
-              <div className="p-10 rounded-[3rem] bg-white/5 border border-white/10 backdrop-blur-xl group hover:bg-white/10 transition-all">
-                <span className="block text-8xl font-black text-white mb-2 group-hover:scale-110 transition-transform">-70%</span>
-                <span className="text-sm font-black text-slate-500 uppercase tracking-[0.5em]">{lang === 'es' ? 'EN COSTOS' : 'ON COSTS'}</span>
+              <div className="p-6 sm:p-10 rounded-[2rem] lg:rounded-[3rem] bg-white/5 border border-white/10 backdrop-blur-xl group hover:bg-white/10 transition-all">
+                <span className="block text-5xl sm:text-6xl lg:text-8xl font-black text-white mb-2 group-hover:scale-110 transition-transform">-70%</span>
+                <span className="text-xs sm:text-sm font-black text-slate-500 uppercase tracking-[0.5em]">{lang === 'es' ? 'EN COSTOS' : 'ON COSTS'}</span>
               </div>
             </div>
           </div>
@@ -417,8 +417,8 @@ export const LandingPage = ({
             </h2>
           </div>
 
-          <div className="comparison-table glass-card rounded-[4rem] overflow-hidden border border-white/10 shadow-3xl bg-white/2">
-            <div className="grid grid-cols-3 p-12 border-b border-white/10 bg-white/5 font-black uppercase text-[12px] tracking-[0.4em] text-slate-500">
+          <div className="comparison-table glass-card rounded-[2rem] lg:rounded-[4rem] overflow-hidden border border-white/10 shadow-3xl bg-white/2">
+            <div className="hidden sm:grid grid-cols-3 p-4 sm:p-12 border-b border-white/10 bg-white/5 font-black uppercase text-[10px] sm:text-[12px] tracking-[0.4em] text-slate-500">
               <div>Característica</div>
               <div className="text-center text-blue-400">Catalizia</div>
               <div className="text-center">Estándar</div>
@@ -429,11 +429,11 @@ export const LandingPage = ({
               { feat: 'PPT Studio Builder', catalizia: true, other: false },
               { feat: 'Techie Tutor (Junior)', catalizia: true, other: false },
             ].map((row, i) => (
-              <div key={i} className="table-row grid grid-cols-3 p-12 border-b border-white/5 items-center hover:bg-white/5 transition-all cursor-default">
-                <div className="text-lg font-bold text-slate-300">{row.feat}</div>
-                <div className="flex justify-center text-emerald-400"><CheckCircle2 size={32} className="drop-shadow-[0_0_10px_rgba(16,185,129,0.5)]" /></div>
-                <div className="flex justify-center text-slate-600 text-sm font-black uppercase tracking-widest">
-                  {row.other === false ? <XCircle size={32} className="text-red-500/20" /> : row.other}
+              <div key={i} className="table-row grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-0 p-4 sm:p-12 border-b border-white/5 items-center hover:bg-white/5 transition-all cursor-default">
+                <div className="text-sm sm:text-lg font-bold text-slate-300">{row.feat}</div>
+                <div className="flex justify-center text-emerald-400"><CheckCircle2 size={24} className="drop-shadow-[0_0_10px_rgba(16,185,129,0.5)]" /></div>
+                <div className="flex justify-center text-slate-600 text-xs sm:text-sm font-black uppercase tracking-widest">
+                  {row.other === false ? <XCircle size={24} className="text-red-500/20" /> : row.other}
                 </div>
               </div>
             ))}
@@ -447,29 +447,29 @@ export const LandingPage = ({
       </div>
 
       {/* Final CTA Adaptive Section */}
-      <section className="py-64 px-6 lg:px-12 relative overflow-hidden bg-gradient-to-b from-[#020617] to-blue-950/20">
+      <section className="py-24 lg:py-64 px-4 sm:px-6 lg:px-12 relative overflow-hidden bg-gradient-to-b from-[#020617] to-blue-950/20">
         <div className="absolute inset-0 z-0">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-blue-600/10 blur-[200px] rounded-full animate-pulse" />
         </div>
         
         <div className="reveal-up max-w-5xl mx-auto text-center relative z-10">
-          <h2 className="text-6xl lg:text-9xl font-black tracking-tighter text-white mb-16 leading-[0.85]">
+          <h2 className="text-4xl sm:text-5xl lg:text-7xl xl:text-9xl font-black tracking-tighter text-white mb-12 lg:mb-16 leading-[0.85]">
             {lang === 'es' ? 'Empodera a tu' : 'Empower your'}<br/>
             <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-emerald-400">
               {lang === 'es' ? 'organización hoy.' : 'organization today.'}
             </span>
           </h2>
-          <p className="text-2xl text-slate-400 font-medium mb-16 max-w-3xl mx-auto leading-relaxed border-t border-white/10 pt-12">
+          <p className="text-base lg:text-2xl text-slate-400 font-medium mb-12 lg:mb-16 max-w-3xl mx-auto leading-relaxed border-t border-white/10 pt-8 lg:pt-12">
             {lang === 'es' ? 'Únete a las empresas que están definiendo el futuro del trabajo con inteligencia responsable y segura.' : 'Join the companies defining the future of work with responsible and secure intelligence.'}
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-10 justify-center">
-            <button onClick={onStartSession} className="magnetic-btn px-16 py-8 rounded-[2rem] bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-[0.3em] text-sm transition-all shadow-[0_0_70px_rgba(37,99,235,0.5)] active:scale-95">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-10 justify-center">
+            <button onClick={onStartSession} className="magnetic-btn px-8 sm:px-16 py-6 sm:py-8 rounded-[2rem] bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-[0.3em] text-xs sm:text-sm transition-all shadow-[0_0_70px_rgba(37,99,235,0.5)] active:scale-95">
               🚀 {lang === 'es' ? 'Iniciar Sesión Segura' : 'Start Sesión Segura'}
             </button>
             <button 
               onClick={onStartSession}
-              className="magnetic-btn px-16 py-8 rounded-[2rem] bg-white/5 border border-white/10 text-white font-black uppercase tracking-[0.3em] text-sm hover:bg-white/10 transition-all backdrop-blur-3xl"
+              className="magnetic-btn px-8 sm:px-16 py-6 sm:py-8 rounded-[2rem] bg-white/5 border border-white/10 text-white font-black uppercase tracking-[0.3em] text-xs sm:text-sm hover:bg-white/10 transition-all backdrop-blur-3xl"
             >
               📞 {lang === 'es' ? 'Hablar con Humano' : 'Talk to Human'}
             </button>

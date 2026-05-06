@@ -115,3 +115,105 @@ html {
   scroll-behavior: smooth;
 }
 
+/* ===================== MOBILE RESPONSIVE UTILITIES ===================== */
+
+/* Safe Area Insets for notched devices (iOS/Android) */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pl-safe {
+    padding-left: env(safe-area-inset-left);
+  }
+  .pr-safe {
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Fallback for devices without safe-area support */
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));
+}
+.pt-safe {
+  padding-top: max(1rem, env(safe-area-inset-top, 1rem));
+}
+
+/* Touch optimization - prevents double-tap zoom */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Prevent font boosting on Android */
+* {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Native momentum scrolling */
+.momentum-scroll {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: scroll;
+  overscroll-behavior: contain;
+}
+
+/* Minimum tap target indicator (44px) */
+.tap-target {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Native card press effect */
+.card-press {
+  transition: transform 0.1s ease-out, background-color 0.1s ease-out;
+}
+.card-press:active {
+  transform: scale(0.98);
+}
+
+/* Native-feeling bottom nav height */
+.bottom-nav-height {
+  height: calc(68px + env(safe-area-inset-bottom, 0px));
+  min-height: 68px;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Mobile-specific breakpoint utilities */
+@media (max-width: 639px) {
+  .mobile-hidden {
+    display: none !important;
+  }
+}
+
+@media (min-width: 640px) {
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+/* Touch-friendly focus states for mobile */
+:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+

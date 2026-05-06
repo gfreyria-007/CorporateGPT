@@ -660,10 +660,10 @@ export default function App() {
         {isSidebarOpen && (
           <motion.aside 
             initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 320, opacity: 1 }}
+            animate={{ width: 280, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 35 }}
-            className={cn("border-r flex flex-col shrink-0 z-50",
+            className={cn("border-r flex flex-col shrink-0 z-50 max-w-72 overflow-hidden",
               theme === 'dark' ? 'bg-corporate-950 border-white/5 shadow-2xl' : 'bg-white/80 backdrop-blur-3xl border-slate-100 shadow-[20px_0_40px_rgba(0,0,0,0.02)]'
             )}
           >

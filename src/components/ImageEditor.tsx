@@ -920,14 +920,14 @@ Make it look like a premium, professionally designed asset that could be used in
   };
 
   return (
-    <div className={cn("fixed inset-0 z-[9999] flex flex-col font-sans transition-colors duration-500", 
+    <div className={cn("fixed inset-0 z-[9999] flex flex-col font-sans transition-colors duration-500 overflow-hidden", 
       theme === 'dark' ? "bg-corporate-950 text-white" : "bg-white text-corporate-900"
     )}>
-      <header className={cn("h-12 border-b flex items-center justify-between px-4 sm:px-6 shrink-0 z-30",
+      <header className={cn("h-12 border-b flex items-center justify-between px-3 sm:px-6 shrink-0 z-30",
         "bg-blue-600 border-blue-500 text-white shadow-lg"
       )}>
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 sm:gap-6">
+          <div className="flex items-center gap-2 sm:gap-3">
               <div className="w-7 h-7 bg-white rounded-lg flex items-center justify-center text-blue-600 shadow-sm relative overflow-hidden group">
                 <motion.div 
                   animate={{ rotate: 360 }}
@@ -936,7 +936,7 @@ Make it look like a premium, professionally designed asset that could be used in
                 />
                 <Zap size={14} className="relative z-10" />
               </div>
-              <div>
+              <div className="hidden xs:block">
                  <h2 className="text-[10px] font-black uppercase tracking-[0.2em] leading-none flex items-center gap-1.5">
                    STUDIO <span className="opacity-70">ENGINE</span>
                    <motion.span 

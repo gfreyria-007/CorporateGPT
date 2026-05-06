@@ -421,16 +421,16 @@ const PPTStudio: React.FC<{
       <NeuralOverlay isLoading={isGenerating} theme={isDark ? 'dark' : 'light'} />
       {/* Header */}
       <div className={cn(
-        "h-20 border-b flex items-center justify-between px-10 backdrop-blur-xl z-50",
+        "h-16 sm:h-20 border-b flex items-center justify-between px-4 sm:px-10 backdrop-blur-xl z-50",
         isDark
           ? "border-white/5 bg-corporate-950/80"
           : "border-slate-200 bg-white/80"
       )}>
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-xl shadow-blue-600/30 ring-1 ring-white/20">
-            <BrainCircuit size={20} />
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-8 sm:w-10 h-8 sm:h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-xl shadow-blue-600/30 ring-1 ring-white/20">
+            <BrainCircuit size={18} />
           </div>
-          <div>
+          <div className="hidden sm:block">
             <h1 className={cn(
               "text-sm font-black uppercase tracking-widest italic",
               isDark ? "text-white" : "text-slate-900"
