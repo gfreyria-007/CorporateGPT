@@ -1062,7 +1062,7 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
               <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">
-                {lang === 'es' ? `Etapa ${currentStage}` : `Stage ${currentStage}`} / 5
+                {lang === 'es' ? `Etapa ${currentStage}` : `Stage ${currentStage}`} / 5 • v2.0.1
               </span>
             </div>
           </div>
@@ -1085,12 +1085,22 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
           ))}
         </div>
 
-        <button 
-          onClick={onClose} 
-          className="p-2 rounded-lg sm:rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-        >
-          <X size={18} sm:size={20} />
-        </button>
+        <div className="flex items-center gap-2">
+          {isLoading && (
+            <button 
+              onClick={() => window.location.reload()}
+              className="text-[10px] font-black uppercase px-2 py-1 bg-red-500/10 text-red-500 rounded border border-red-500/20"
+            >
+              Reset
+            </button>
+          )}
+          <button 
+            onClick={onClose} 
+            className="p-2 rounded-lg sm:rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+          >
+            <X size={18} sm:size={20} />
+          </button>
+        </div>
       </div>
 
 {/* Stage Content */}
