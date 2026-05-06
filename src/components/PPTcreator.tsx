@@ -175,19 +175,19 @@ Rules:
 
   // Stage 1: Scope & Content Intake
   const renderStage1 = () => (
-    <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-8">
-      <div className="text-center space-y-4">
-        <h2 className="text-3xl font-black uppercase tracking-widest">
+    <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 space-y-6 sm:space-y-8 overflow-auto">
+      <div className="text-center space-y-3 sm:space-y-4">
+        <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-widest">
           {lang === 'es' ? 'Etapa 1: Alcance' : 'Stage 1: Scope'}
         </h2>
-        <p className="text-slate-400">
+        <p className="text-sm sm:text-base text-slate-400">
           {lang === 'es' ? '¿Cuántas diapositivas necesitas?' : 'How many slides do you need?'}
         </p>
       </div>
 
-      <div className="w-full max-w-md space-y-6">
+      <div className="w-full max-w-xs sm:max-w-md space-y-4 sm:space-y-6">
         <div className="space-y-2">
-          <label className="text-sm font-black uppercase tracking-widest text-slate-400">
+          <label className="text-xs sm:text-sm font-black uppercase tracking-widest text-slate-400">
             {lang === 'es' ? 'Número de diapositivas' : 'Number of slides'}
           </label>
           <input 
@@ -198,31 +198,31 @@ Rules:
             onChange={(e) => setSlideCount(parseInt(e.target.value))}
             className="w-full h-2 bg-slate-200 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-600"
           />
-          <div className="text-center text-2xl font-black text-blue-600">{slideCount}</div>
+          <div className="text-center text-xl sm:text-2xl font-black text-blue-600">{slideCount}</div>
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-black uppercase tracking-widest text-slate-400">
+          <label className="text-xs sm:text-sm font-black uppercase tracking-widest text-slate-400">
             {lang === 'es' ? 'Fuente de contenido' : 'Content source'}
           </label>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4">
             {[
-              { id: 'text', label: lang === 'es' ? 'Texto' : 'Text Input', icon: <Type size={20} /> },
-              { id: 'upload', label: lang === 'es' ? 'Subir PDF' : 'Upload PDF', icon: <Upload size={20} /> },
-              { id: 'ai', label: lang === 'es' ? 'Generar IA' : 'AI Generate', icon: <Sparkles size={20} /> },
+              { id: 'text', label: lang === 'es' ? 'Texto' : 'Text Input', icon: <Type size={18} /> },
+              { id: 'upload', label: lang === 'es' ? 'Subir PDF' : 'Upload PDF', icon: <Upload size={18} /> },
+              { id: 'ai', label: lang === 'es' ? 'Generar IA' : 'AI Generate', icon: <Sparkles size={18} /> },
             ].map((option) => (
               <button
                 key={option.id}
                 onClick={() => setContentSource(option.id as any)}
                 className={cn(
-                  "p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all",
+                  "p-3 sm:p-4 rounded-xl sm:rounded-2xl border flex flex-col items-center gap-1 sm:gap-2 transition-all",
                   contentSource === option.id
                     ? "bg-blue-600 border-blue-600 text-white"
                     : "border-slate-200 dark:border-white/10 hover:border-blue-600"
                 )}
               >
                 {option.icon}
-                <span className="text-xs font-black uppercase">{option.label}</span>
+                <span className="text-[10px] sm:text-xs font-black uppercase">{option.label}</span>
               </button>
             ))}
           </div>
@@ -233,14 +233,14 @@ Rules:
             value={contentInput}
             onChange={(e) => setContentInput(e.target.value)}
             placeholder={lang === 'es' ? 'Describe tu tema, objetivo y contenido principal...' : 'Describe your topic, objective, and main content...'}
-            className="w-full h-40 p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-transparent resize-none"
+            className="w-full h-32 sm:h-40 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-white/10 bg-transparent resize-none text-sm sm:text-base"
           />
         )}
 
         <button
           onClick={processContent}
           disabled={isLoading || (!contentInput.trim() && contentSource !== 'ai')}
-          className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full py-3 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 min-h-[48px]"
         >
           {isLoading ? <RefreshCw className="animate-spin" /> : <ChevronRight />}
           {lang === 'es' ? 'Procesar Contenido' : 'Process Content'}
@@ -251,29 +251,29 @@ Rules:
 
   // Stage 2: Engagement Calibration
   const renderStage2 = () => (
-    <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-8">
-      <div className="text-center space-y-4">
-        <h2 className="text-3xl font-black uppercase tracking-widest">
+    <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 space-y-6 sm:space-y-8 overflow-auto">
+      <div className="text-center space-y-3 sm:space-y-4">
+        <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-widest">
           {lang === 'es' ? 'Etapa 2: Calibración' : 'Stage 2: Calibration'}
         </h2>
-        <p className="text-slate-400">
+        <p className="text-sm sm:text-base text-slate-400">
           {lang === 'es' 
             ? 'Responde estas 3 preguntas para personalizar tu presentación' 
             : 'Answer these 3 questions to customize your presentation'}
         </p>
       </div>
 
-      <div className="w-full max-w-md space-y-6">
+      <div className="w-full max-w-xs sm:max-w-md space-y-4 sm:space-y-6">
         <div className="space-y-2">
-          <label className="text-sm font-black uppercase tracking-widest text-slate-400">
+          <label className="text-xs sm:text-sm font-black uppercase tracking-widest text-slate-400">
             1. {lang === 'es' ? '¿Quién es tu audiencia?' : 'Who is your audience?'}
           </label>
           <input
             type="text"
             value={audience}
             onChange={(e) => setAudience(e.target.value)}
-            placeholder={lang === 'es' ? 'Ej: Ejecutivos, Estudiantes, Equipo de ventas...' : 'Ex: Executives, Students, Sales team...'}
-            className="w-full p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-transparent"
+            placeholder={lang === 'es' ? 'Ej: Ejecutivos, Estudiantes...' : 'Ex: Executives, Students...'}
+            className="w-full p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-white/10 bg-transparent text-sm sm:text-base"
           />
         </div>
 
@@ -316,7 +316,7 @@ Rules:
         <button
           onClick={generateQuestions}
           disabled={isLoading || !audience.trim() || !keyTakeaway.trim()}
-          className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full py-3 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 min-h-[48px]"
         >
           {isLoading ? <RefreshCw className="animate-spin" /> : <ChevronRight />}
           {lang === 'es' ? 'Siguiente: Construir Narrativa' : 'Next: Build Narrative'}
@@ -327,30 +327,30 @@ Rules:
 
   // Stage 3: Narrative Arc (Text Only)
   const renderStage3 = () => (
-    <div className="flex-1 flex flex-col p-8 space-y-6 overflow-auto">
+    <div className="flex-1 flex flex-col p-4 sm:p-8 space-y-4 sm:space-y-6 overflow-auto">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-black uppercase tracking-widest">
+        <h2 className="text-xl sm:text-2xl font-black uppercase tracking-widest">
           {lang === 'es' ? 'Etapa 3: Narrativa' : 'Stage 3: Narrative Arc'}
         </h2>
-        <p className="text-sm text-slate-400">
+        <p className="text-xs sm:text-sm text-slate-400">
           {lang === 'es' 
             ? 'Revisa el flujo de texto. Solo texto, sin imágenes aún.' 
             : 'Review the text flow. Text only, no images yet.'}
         </p>
       </div>
 
-      <div className="flex-1 space-y-4 overflow-auto">
+      <div className="flex-1 space-y-3 sm:space-y-4 overflow-auto">
         {narrative.map((slide, i) => (
-          <div key={i} className="p-4 rounded-2xl border border-slate-200 dark:border-white/10">
+          <div key={i} className="p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-white/10">
             <div className="flex items-center gap-2 mb-2">
-              <span className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-black">
+              <span className="w-6 sm:w-8 h-6 sm:h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs sm:text-sm font-black">
                 {i + 1}
               </span>
-              <h3 className="font-black uppercase">{slide.title}</h3>
+              <h3 className="font-black uppercase text-sm sm:text-base">{slide.title}</h3>
             </div>
-            <ul className="space-y-1 ml-10">
+            <ul className="space-y-1 ml-8 sm:ml-10">
               {slide.bullets.map((bullet, j) => (
-                <li key={j} className="text-sm text-slate-400 flex items-start gap-2">
+                <li key={j} className="text-xs sm:text-sm text-slate-400 flex items-start gap-2">
                   <span className="text-blue-500 mt-1">•</span>
                   {bullet}
                 </li>
@@ -362,7 +362,7 @@ Rules:
 
       <button
         onClick={confirmNarrative}
-        className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-2"
+        className="w-full py-3 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest flex items-center justify-center gap-2 min-h-[48px]"
       >
         <ChevronRight />
         {lang === 'es' ? 'Siguiente: Diseñar' : 'Next: Design & Enhance'}
@@ -372,28 +372,28 @@ Rules:
 
   // Stage 4: Slide-by-Slide Design
   const renderStage4 = () => (
-    <div className="flex-1 flex flex-col p-4 lg:p-8 space-y-4">
+    <div className="flex-1 flex flex-col p-3 sm:p-4 lg:p-8 space-y-3 sm:space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-black uppercase tracking-widest">
+          <h2 className="text-base sm:text-xl font-black uppercase tracking-widest">
             {lang === 'es' ? 'Etapa 4: Diseño' : 'Stage 4: Design'}
           </h2>
-          <p className="text-sm text-slate-400">
-            {currentSlideIndex + 1} / {narrative.length} - {narrative[currentSlideIndex]?.title}
+          <p className="text-xs sm:text-sm text-slate-400">
+            {currentSlideIndex + 1} / {narrative.length}
           </p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={prevSlide}
             disabled={currentSlideIndex === 0}
-            className="p-2 rounded-xl border disabled:opacity-50"
+            className="p-2 rounded-xl border disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center"
           >
             <ChevronLeft size={20} />
           </button>
           <button
             onClick={() => setCurrentSlideIndex(currentSlideIndex + 1)}
             disabled={currentSlideIndex >= narrative.length - 1}
-            className="p-2 rounded-xl border disabled:opacity-50"
+            className="p-2 rounded-xl border disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center"
           >
             <ChevronRight size={20} />
           </button>
@@ -411,26 +411,26 @@ Rules:
               key={theme.id}
               onClick={() => setSelectedTheme(theme.id)}
               className={cn(
-                "px-4 py-2 rounded-xl font-black text-xs uppercase transition-all flex items-center gap-2",
+                "px-3 sm:px-4 py-2 rounded-xl font-black text-xs uppercase transition-all flex items-center gap-2",
                 selectedTheme === theme.id
                   ? "bg-blue-600 text-white"
                   : "border border-slate-200 dark:border-white/10"
               )}
             >
-              <span>{theme.icon}</span> {theme.name}
+              <span>{theme.icon}</span> <span className="hidden sm:inline">{theme.name}</span>
             </button>
           ))}
         </div>
       </div>
 
       {/* Slide Preview / Render Area */}
-      <div className="flex-1 flex items-center justify-center bg-slate-100 dark:bg-slate-900 rounded-2xl overflow-hidden min-h-[300px]">
+      <div className="flex-1 flex items-center justify-center bg-slate-100 dark:bg-slate-900 rounded-xl sm:rounded-2xl overflow-hidden min-h-[200px] sm:min-h-[300px]">
         {renderedSlide ? (
           <img src={renderedSlide} alt={`Slide ${currentSlideIndex + 1}`} className="max-h-full max-w-full object-contain" />
         ) : (
-          <div className="text-center p-8">
-            <Paint size={48} className="mx-auto mb-4 text-slate-400" />
-            <p className="text-slate-400">
+          <div className="text-center p-4 sm:p-8">
+            <Paint size={32} sm:size={48} className="mx-auto mb-2 sm:mb-4 text-slate-400" />
+            <p className="text-xs sm:text-sm text-slate-400">
               {lang === 'es' 
                 ? 'Vista previa no disponible aún' 
                 : 'Preview not available yet'}
@@ -440,32 +440,32 @@ Rules:
       </div>
 
       {/* Slide Content */}
-      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900">
-        <h3 className="font-black uppercase mb-2">{narrative[currentSlideIndex]?.title}</h3>
-        <ul className="text-sm text-slate-400 space-y-1">
+      <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-50 dark:bg-slate-900">
+        <h3 className="font-black uppercase text-sm sm:text-base mb-1 sm:mb-2">{narrative[currentSlideIndex]?.title}</h3>
+        <ul className="text-xs sm:text-sm text-slate-400 space-y-1">
           {narrative[currentSlideIndex]?.bullets.map((bullet, j) => (
             <li key={j}>• {bullet}</li>
           ))}
         </ul>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex gap-2 sm:gap-4">
         <button
           onClick={() => renderSlide(currentSlideIndex)}
           disabled={isLoading}
-          className="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest disabled:opacity-50 flex items-center justify-center gap-2"
+          className="flex-1 py-3 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 min-h-[48px]"
         >
           {isLoading ? <RefreshCw className="animate-spin" /> : <Palette />}
-          {lang === 'es' ? 'Renderizar Diapositiva' : 'Render Slide'}
+          {lang === 'es' ? 'Renderizar' : 'Render'}
         </button>
         
         {currentSlideIndex < narrative.length - 1 ? (
           <button
             onClick={nextSlide}
-            className="flex-1 py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-2"
+            className="flex-1 py-3 sm:py-4 bg-emerald-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest flex items-center justify-center gap-2 min-h-[48px]"
           >
             <ChevronRight />
-            {lang === 'es' ? 'Siguiente' : 'Next Slide'}
+            {lang === 'es' ? 'Siguiente' : 'Next'}
           </button>
         ) : (
           <button
@@ -473,10 +473,10 @@ Rules:
               setIsFinalized(true);
               setCurrentStage(5);
             }}
-            className="flex-1 py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-2"
+            className="flex-1 py-3 sm:py-4 bg-emerald-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest flex items-center justify-center gap-2 min-h-[48px]"
           >
             <Check />
-            {lang === 'es' ? 'Finalizar' : 'Finalize Deck'}
+            {lang === 'es' ? 'Finalizar' : 'Finalize'}
           </button>
         )}
       </div>
@@ -485,9 +485,9 @@ Rules:
 
   // Stage 5: Final Management & Export
   const renderStage5 = () => (
-    <div className="flex-1 flex flex-col p-8 space-y-6">
+    <div className="flex-1 flex flex-col p-4 sm:p-8 space-y-4 sm:space-y-6 overflow-auto">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-black uppercase tracking-widest">
+        <h2 className="text-xl sm:text-2xl font-black uppercase tracking-widest">
           {lang === 'es' ? 'Etapa 5: Exportar' : 'Stage 5: Export'}
         </h2>
         <p className="text-sm text-slate-400">
@@ -529,34 +529,34 @@ Rules:
           setCurrentStage(4);
           setCurrentSlideIndex(0);
         }}
-        className="py-3 border border-slate-200 dark:border-white/10 rounded-xl font-black uppercase text-sm"
+        className="py-3 border border-slate-200 dark:border-white/10 rounded-xl font-black uppercase text-sm flex items-center justify-center gap-2 w-full sm:w-auto"
       >
-        <Plus size={16} className="inline mr-2" />
+        <Plus size={16} />
         {lang === 'es' ? 'Agregar Diapositiva' : 'Add Slide'}
       </button>
 
       {/* Export Buttons */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <button
           onClick={exportAsPNG}
-          className="py-4 bg-slate-100 dark:bg-slate-800 rounded-2xl font-black uppercase text-sm flex flex-col items-center gap-2"
+          className="py-3 sm:py-4 bg-slate-100 dark:bg-slate-800 rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm flex flex-col items-center gap-1 sm:gap-2"
         >
-          <FileImage size={24} />
-          PNG
+          <FileImage size={20} />
+          <span className="hidden sm:inline">PNG</span>
         </button>
         <button
           onClick={exportAsPDF}
-          className="py-4 bg-slate-100 dark:bg-slate-800 rounded-2xl font-black uppercase text-sm flex flex-col items-center gap-2"
+          className="py-3 sm:py-4 bg-slate-100 dark:bg-slate-800 rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm flex flex-col items-center gap-1 sm:gap-2"
         >
-          <FileText size={24} />
-          PDF
+          <FileText size={20} />
+          <span className="hidden sm:inline">PDF</span>
         </button>
         <button
           onClick={exportAsPPTX}
-          className="py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-sm flex flex-col items-center gap-2"
+          className="py-3 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm flex flex-col items-center gap-1 sm:gap-2"
         >
-          <Presentation size={24} />
-          PPTX
+          <Presentation size={20} />
+          <span className="hidden sm:inline">PPTX</span>
         </button>
       </div>
     </div>
@@ -569,12 +569,12 @@ Rules:
     )}>
       {/* Header */}
       <div className={cn(
-        "h-16 sm:h-20 border-b flex items-center justify-between px-4 sm:px-10 backdrop-blur-xl z-50",
+        "h-14 sm:h-16 border-b flex items-center justify-between px-3 sm:px-6 lg:px-10 backdrop-blur-xl z-50 pt-safe",
         isDark ? "border-white/5 bg-corporate-950/80" : "border-slate-200 bg-white/80"
       )}>
-        <div className="flex items-center gap-3 sm:gap-4">
-          <div className="w-8 sm:w-10 h-8 sm:h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
-            <BrainCircuit size={18} />
+        <div className="flex items-center gap-2 sm:gap-4">
+          <div className="w-8 sm:w-10 h-8 sm:h-10 bg-blue-600 rounded-lg sm:rounded-xl flex items-center justify-center text-white">
+            <BrainCircuit size={16} sm:size={18} />
           </div>
           <div className="hidden sm:block">
             <h1 className={cn(
@@ -595,6 +595,27 @@ Rules:
           {[1, 2, 3, 4, 5].map((stage) => (
             <div 
               key={stage}
+              className={cn(
+                "w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full transition-all",
+                currentStage === stage 
+                  ? "bg-blue-600 w-4 sm:w-6" 
+                  : currentStage > stage 
+                    ? "bg-emerald-500" 
+                    : "bg-slate-300 dark:bg-slate-700"
+              )}
+            />
+          ))}
+        </div>
+
+        <button 
+          onClick={onClose} 
+          className="p-2 rounded-lg sm:rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+        >
+          <X size={18} sm:size={20} />
+        </button>
+      </div>
+
+      {/* Stage Content */}
               className={cn(
                 "w-2 h-2 rounded-full transition-all",
                 currentStage === stage 
