@@ -91,7 +91,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               responseMimeType: restConfig.responseMimeType || (restConfig.responseModalities?.includes('IMAGE') ? undefined : "application/json")
             },
             systemInstruction: payload.systemInstruction || systemInstruction ? { parts: [{ text: payload.systemInstruction || systemInstruction }] } : undefined,
-            tools: payload.tools || [{ googleSearch: {} }]
+            tools: payload.tools // Only include tools if explicitly provided
           })
         });
 

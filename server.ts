@@ -661,15 +661,15 @@ async function startServer() {
           const { systemInstruction, ...restConfig } = generationConfig;
           
           let requestedChatModel = payload.model || 'gemini-2.0-flash';
-          if (requestedChatModel === 'gemini-1.5-flash') requestedChatModel = 'gemini-1.5-flash-latest';
-          if (requestedChatModel === 'gemini-1.5-pro') requestedChatModel = 'gemini-1.5-pro-latest';
+          if (requestedChatModel === 'gemini-1.5-flash-latest') requestedChatModel = 'gemini-1.5-flash';
+          if (requestedChatModel === 'gemini-1.5-pro-latest') requestedChatModel = 'gemini-1.5-pro';
 
           const CHAT_MODELS = [
             requestedChatModel,
             'gemini-2.0-flash',
+            'gemini-1.5-flash',
             'gemini-2.0-flash-lite',
-            'gemini-1.5-pro-latest',
-            'gemini-1.5-flash-latest'
+            'gemini-1.5-pro'
           ];
 
           let lastError = null;
@@ -686,7 +686,7 @@ async function startServer() {
                     responseMimeType: restConfig.responseMimeType || (restConfig.responseModalities?.includes('IMAGE') ? undefined : "application/json")
                   },
                   systemInstruction: payload.systemInstruction || systemInstruction ? { parts: [{ text: payload.systemInstruction || systemInstruction }] } : undefined,
-                  tools: payload.tools || [{ googleSearch: {} }]
+                  tools: payload.tools
                 })
               });
 
