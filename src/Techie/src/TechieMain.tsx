@@ -739,6 +739,8 @@ const canUseSystemKey = (isSubscribed || isAdminRole);
           <AdminDashboard 
             onClose={() => setShowAdminDashboard(false)} 
             onOpenDiagnostics={() => setShowDiagnostics(true)}
+            currentUser={currentUser}
+            userProfile={userProfile}
           />
         )}
         {userProfile && (

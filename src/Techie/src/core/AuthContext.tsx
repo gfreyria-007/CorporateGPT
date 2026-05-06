@@ -262,6 +262,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode, mainUser?: Fire
           trialStatus = await checkCorporateTrial(u.email);
         }
 
+        // Check for pre-configured family profile
+        let familyProfile: { name: string; age: number; gradeId: string } | null = null;
+        if (u.email) {
+          try {
+            // Check if this user is a pre-registered family member
+            const familyQuery = query(
+              collection(db, 'family_invites'),
+              where('childEmail', '==', u.email.toLowerCase()),
+              where('parentEmail', '!=', null)
+            );
+            const familySnapshot = await getDocs(familyQuery);
+            if (!familySnapshot.empty) {
+              const familyData = familySnapshot.docs[0].data();
+              familyProfile = {
+                name: familyData.name || 'Estudiante',
+                age: familyData.age || 10,
+                gradeId: familyData.gradeId || 'primaria1'
+              };
+              console.log('[Auth] Found pre-configured family profile:', familyProfile);
+            }
+          } catch (error) {
+            console.error('Error checking family profile:', error);
+          }
+        }
+
         const trialExpires = new Date();
         trialExpires.setDate(trialExpires.getDate() + TRIAL_DAYS);
 
@@ -270,18 +295,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode, mainUser?: Fire
         // Override isApproved based on corporate trial eligibility
         isApproved = trialStatus.eligible || u.email === 'gfreyria@gmail.com';
 
+        // Get parent's subscription level for family members
+        let parentSubscriptionLevel = subscriptionLevel;
+        if (familyProfile && u.email) {
+          try {
+            const parentQuery = query(
+              collection(db, 'users'),
+              where('email', '==', u.email)
+            );
+            const parentDocs = await getDocs(parentQuery);
+            for (const doc of parentDocs.docs) {
+              const data = doc.data();
+              if (data.role === 'admin' && data.subscriptionLevel) {
+                parentSubscriptionLevel = data.subscriptionLevel;
+                break;
+              }
+            }
+          } catch (e) {
+            console.warn('Could not get parent subscription:', e);
+          }
+        }
+
         const newProfile: UserProfile = {
           uid: u.uid,
           email: u.email || '',
-          name: u.displayName || 'Estudiante',
+          name: familyProfile?.name || u.displayName || 'Estudiante',
           role: u.email === 'gfreyria@gmail.com' ? 'admin' : 'user',
           isApproved,
+          age: familyProfile?.age,
+          gradeId: familyProfile?.gradeId,
           trialExpiresAt: trialStatus.eligible ? trialExpires.toISOString() : undefined,
-          isSubscribed: trialStatus.eligible,
-          tokensPerDay: trialStatus.eligible ? 100 : 20,
+          isSubscribed: trialStatus.eligible || !!familyProfile,
+          tokensPerDay: (trialStatus.eligible || familyProfile) ? 100 : 20,
           dailyUsageCount: 0,
           lastUsageDate: new Date().toISOString().split('T')[0],
-          subscriptionLevel
+          subscriptionLevel: familyProfile ? parentSubscriptionLevel : subscriptionLevel
         };
 
         if (trialStatus.eligible) {

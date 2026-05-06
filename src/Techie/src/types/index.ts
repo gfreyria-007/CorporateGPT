@@ -235,4 +235,6 @@ export interface UserProfile {
   badges?: Badge[];
   projects?: Project[];
   createdAt?: any;
+  familyId?: string;
+  parentEmail?: string;
 }

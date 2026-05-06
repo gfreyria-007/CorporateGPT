@@ -6,21 +6,30 @@ import Papa from 'papaparse';
 interface AdminDashboardProps {
   onClose: () => void;
   onOpenDiagnostics: () => void;
+  currentUser?: any;
+  userProfile?: any;
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, onOpenDiagnostics }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, onOpenDiagnostics, currentUser, userProfile }) => {
   console.log('AdminDashboard Mounting...');
-  const [activeTab, setActiveTab] = useState<'requests' | 'users' | 'errors'>('requests');
+  const [activeTab, setActiveTab] = useState<'requests' | 'users' | 'errors' | 'family'>('requests');
   const [requests, setRequests] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [familyMembers, setFamilyMembers] = useState<any[]>([]);
   const [errors, setErrors] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserName, setNewUserName] = useState('');
+  const [newChildName, setNewChildName] = useState('');
+  const [newChildAge, setNewChildAge] = useState('');
+  const [newChildGrade, setNewChildGrade] = useState('');
+  const [newChildEmail, setNewChildEmail] = useState('');
   const [isAddingUser, setIsAddingUser] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [importStatus, setImportStatus] = useState<{ success: number; errors: string[] } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const parentEmail = currentUser?.email;
 
   useEffect(() => {
     console.log('AdminDashboard useEffect running...');
@@ -62,6 +71,58 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, onOpenDiagnost
       unsubscribeErrors();
     };
   }, []);
+
+  useEffect(() => {
+    if (!parentEmail) return;
+    
+    const unsubscribeFamily = onSnapshot(
+      query(collection(db, 'family_invites'), where('parentEmail', '==', parentEmail)),
+      (snapshot) => {
+        setFamilyMembers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      }
+    );
+
+    return () => unsubscribeFamily();
+  }, [parentEmail]);
+
+  const handleAddFamilyMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newChildName || !newChildAge || !newChildGrade) return;
+    if (!newChildEmail) {
+      alert('Por favor ingresa el email del niño/a (Gmail)');
+      return;
+    }
+
+    setIsAddingUser(true);
+    try {
+      await addDoc(collection(db, 'family_invites'), {
+        name: newChildName,
+        age: parseInt(newChildAge),
+        gradeId: newChildGrade,
+        childEmail: newChildEmail.toLowerCase(),
+        parentEmail: parentEmail,
+        status: 'pending',
+        createdAt: serverTimestamp()
+      });
+      setNewChildName('');
+      setNewChildAge('');
+      setNewChildGrade('');
+      setNewChildEmail('');
+    } catch (error) {
+      console.error('Error adding family member:', error);
+    } finally {
+      setIsAddingUser(false);
+    }
+  };
+
+  const handleDeleteFamilyMember = async (memberId: string) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar este miembro de la familia?')) return;
+    try {
+      await deleteDoc(doc(db, 'family_invites', memberId));
+    } catch (error) {
+      console.error('Error deleting family member:', error);
+    }
+  };
 
   const handleApprove = async (request: any) => {
     try {
@@ -252,6 +313,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, onOpenDiagnost
             Usuarios ({users.length})
           </button>
           <button 
+            onClick={() => setActiveTab('family')}
+            className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'family' ? 'text-purple-400 border-b-2 border-purple-400 bg-purple-400/5' : 'text-white/40 hover:text-white/60'}`}
+          >
+            Familia ({familyMembers.length})
+          </button>
+          <button 
             onClick={() => setActiveTab('errors')}
             className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'errors' ? 'text-blue-400 border-b-2 border-blue-400 bg-blue-400/5' : 'text-white/40 hover:text-white/60'}`}
           >
@@ -336,6 +403,113 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose, onOpenDiagnost
                     </div>
                   </div>
                 ))
+              )}
+            </div>
+          ) : activeTab === 'family' ? (
+            <div className="space-y-6">
+              <div className="bg-purple-500/10 border border-purple-500/20 rounded-2xl p-6">
+                <h3 className="text-sm font-black text-purple-400 uppercase tracking-widest mb-2">👨‍👩‍👧‍👦 Gestión Familiar</h3>
+                <p className="text-xs text-white/50 mb-4">
+                  Aquí puedes añadir miembros de tu familia. Cuando他们 inicien sesión con su propio Gmail, 
+                  sus datos (nombre, edad, grado) se cargarán automáticamente.
+                </p>
+                
+                <form onSubmit={handleAddFamilyMember} className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input 
+                      type="email" 
+                      value={newChildEmail}
+                      onChange={(e) => setNewChildEmail(e.target.value)}
+                      placeholder="Email del niño/a (Gmail)"
+                      required
+                      className="bg-white/5 border border-purple-500/20 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-1 focus:ring-purple-400"
+                    />
+                    <input 
+                      type="text" 
+                      value={newChildName}
+                      onChange={(e) => setNewChildName(e.target.value)}
+                      placeholder="Nombre del niño/a"
+                      required
+                      className="bg-white/5 border border-purple-500/20 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-1 focus:ring-purple-400"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input 
+                      type="number" 
+                      value={newChildAge}
+                      onChange={(e) => setNewChildAge(e.target.value)}
+                      placeholder="Edad"
+                      required
+                      min="5"
+                      max="18"
+                      className="bg-white/5 border border-purple-500/20 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-1 focus:ring-purple-400"
+                    />
+                    <select 
+                      value={newChildGrade}
+                      onChange={(e) => setNewChildGrade(e.target.value)}
+                      required
+                      className="bg-white/5 border border-purple-500/20 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-1 focus:ring-purple-400"
+                    >
+                      <option value="" className="bg-[#0f172a]">Seleccionar grado</option>
+                      <option value="primaria1" className="bg-[#0f172a]">1° Primaria</option>
+                      <option value="primaria2" className="bg-[#0f172a]">2° Primaria</option>
+                      <option value="primaria3" className="bg-[#0f172a]">3° Primaria</option>
+                      <option value="primaria4" className="bg-[#0f172a]">4° Primaria</option>
+                      <option value="primaria5" className="bg-[#0f172a]">5° Primaria</option>
+                      <option value="primaria6" className="bg-[#0f172a]">6° Primaria</option>
+                      <option value="secundaria1" className="bg-[#0f172a]">1° Secundaria</option>
+                      <option value="secundaria2" className="bg-[#0f172a]">2° Secundaria</option>
+                      <option value="secundaria3" className="bg-[#0f172a]">3° Secundaria</option>
+                      <option value="preparatoria1" className="bg-[#0f172a]">1° Preparatoria</option>
+                      <option value="preparatoria2" className="bg-[#0f172a]">2° Preparatoria</option>
+                      <option value="preparatoria3" className="bg-[#0f172a]">3° Preparatoria</option>
+                      <option value="universidad" className="bg-[#0f172a]">Universidad</option>
+                    </select>
+                  </div>
+                  <button 
+                    type="submit"
+                    disabled={isAddingUser}
+                    className="w-full bg-purple-600 hover:bg-purple-500 text-white font-black uppercase tracking-widest py-3 rounded-xl transition-all disabled:opacity-50"
+                  >
+                    {isAddingUser ? 'Añadiendo...' : '➕ Añadir Miembro'}
+                  </button>
+                </form>
+              </div>
+
+              {familyMembers.length === 0 ? (
+                <div className="text-center py-12">
+                  <span className="text-4xl mb-4 block">👨‍👩‍👧‍👦</span>
+                  <p className="text-white/40 font-bold">No hay miembros de la familia añadidos.</p>
+                  <p className="text-white/30 text-sm">Añade a tus hijos para que puedan usar Techie sin configurar su perfil.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {familyMembers.map(member => (
+                    <div key={member.id} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between group hover:bg-white/10 transition-all">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center text-2xl">
+                          👶
+                        </div>
+                        <div>
+                          <h3 className="text-white font-bold">{member.name}</h3>
+                          <p className="text-[10px] text-white/40 font-mono">
+                            {member.age} años • {member.gradeId || 'Sin grado'}
+                          </p>
+                          <p className="text-[8px] text-purple-400 font-mono">
+                            Pending login
+                          </p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => handleDeleteFamilyMember(member.id)}
+                        className="text-white/20 hover:text-red-400 transition-all p-2"
+                        title="Eliminar"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           ) : (
