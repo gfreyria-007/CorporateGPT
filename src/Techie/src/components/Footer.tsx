@@ -8,7 +8,7 @@ interface FooterProps {
 }
 
 const Footer: React.FC<FooterProps> = ({ sessionTokensUsed, subscriptionLevel, onOpenFAQ }) => {
-  const { logout } = useAuth();
+  const { logout, isAdmin } = useAuth();
 
   return (
     <footer className="bg-transparent p-6 text-center text-xs text-gray-400">
