@@ -596,53 +596,93 @@ export async function generateProImageForSlide(
   chartType: string = 'none',
   tableData: string = '',
   userImage?: string,
-  layout: string = 'split'
+  layout: string = 'split',
+  paragraphs?: string[],
+  imagePrompt?: string,
+  excelData?: string,
+  additionalImages?: string[]
 ): Promise<string> {
-  const stylePrompts = {
+  const stylePrompts: Record<string, string> = {
     auto: 'Premium corporate presentation, clean modern design, dynamic composition',
-    sketch: 'Hand-drawn sketch on paper, white background, artistic markers, loose lines',
-    kawaii: 'Cute kawaii style, pastel colors, soft rounded illustrations, playful',
-    professional: 'Corporate blue-white palette, clean professional design, data visualization',
-    scientific: 'Dark technical blueprint, neon cyan-green accents, scientific diagram',
-    anime: 'Japanese anime style, vibrant dynamic illustration, detailed background',
-    clay: '3D clay animation style, soft rounded shapes, cute textured surfaces',
-    editorial: 'High-end magazine editorial, elegant typography, bold visual hierarchy',
-    instructional: 'Educational diagram, clear labels, step-by-step visual guide',
-    bento: 'Modern bento grid layout, organized clean sections, minimalist',
-    bricks: 'Colorful LEGO bricks, playful 3D building blocks toy aesthetic',
-    architect: 'Architectural blueprint style, technical drawings, precise lines, professional',
-    isometric: '3D isometric perspective, conceptual metaphors, modern vector style',
+    sketch: 'Hand-drawn sketch on paper, white background, artistic markers, loose pencil lines, artistic doodles',
+    kawaii: 'Cute kawaii style, pastel colors, soft rounded illustrations, playful, adorable characters',
+    professional: 'Corporate blue-white palette, clean professional design, data visualization, business elegant',
+    scientific: 'Dark technical blueprint, neon cyan-green accents, scientific diagram with measurements',
+    anime: 'Japanese anime style, vibrant dynamic illustration, detailed background, cel-shaded artwork',
+    clay: '3D clay animation style, soft rounded shapes, cute textured surfaces, plasticine sculpture',
+    editorial: 'High-end magazine editorial, elegant typography, bold visual hierarchy, fashion magazine spread',
+    instructional: 'Educational diagram, clear labels, step-by-step visual guide, learning icons',
+    bento: 'Modern bento grid layout, organized clean sections, minimalist Japanese box design',
+    bricks: 'Colorful LEGO bricks, playful 3D building blocks toy aesthetic, construction toy',
+    architect: 'Architectural blueprint style, technical drawings, precise lines, professional drafting',
+    isometric: '3D isometric perspective, conceptual metaphors, modern vector style, grid background',
     blueprint: 'Classic blueprint cyanotype, white lines on blue background, technical specifications',
     cardboard: 'Handcrafted cardboard cutout style, corrugated textures, layered papercraft aesthetic, DIY feel',
-    origami: 'Japanese origami paper folding art, sharp creases, clean geometric shapes, minimalist paper aesthetic',
-    cinematic: 'Cinematic spectacular presentation, epic lighting, high contrast, dramatic shadows, blockbuster film aesthetic'
+    origami: 'Japanese origami paper folding art, sharp creases, clean geometric shapes, paper aesthetics',
+    cinematic: 'Cinematic spectacular presentation, epic lighting, high contrast, dramatic shadows, blockbuster film aesthetic',
+    whiteboard: 'Clean dry-erase whiteboard, handwritten text, marker drawings, classroom education',
+    blackboard: 'Classic blackboard chalk, handwritten white chalk text, classroom school vibe',
+    neon: 'Glowing neon lights, vibrant purple-pink-cyan colors, cyberpunk signage, neon glow effects',
+    cyberpunk: 'Futuristic cyberpunk city, neon signs, rain-soaked streets, high-tech dystopian',
+    futuristic: 'Sci-fi holographic interface, glowing blue futuristic tech, space age design, glassmorphism',
+    vintage: 'Retro vintage 1970s aesthetic, warm sepia tones, old school illustration, nostalgic',
+    classic: 'Classic timeless elegance, traditional design, serif typography, museum quality',
+    minimal: 'Ultra minimal clean design, plenty of white space, simple geometric shapes, essential only',
+    popart: 'Andy Warhol pop art style, bold primary colors, halftone dots, comic book aesthetic',
+    watercolor: 'Soft watercolor painting, blending colors, artistic painted look, watercolour landscape',
+    geometric: 'Bold geometric shapes, clean vector art, pattern-based design, modernist',
+    gradient: 'Beautiful color gradient background, smooth color transitions, modern gradient design',
+    notebook: 'Lined notebook paper, school notebook aesthetic, handwritten notes style',
+    glassmorphism: 'Frosted glass effect, glass morphism UI, translucent blur, modern tech',
+    darktech: 'Hacker terminal dark mode, monospace code, green text on black, matrix style',
+    '2099': 'Year 2099 ultra-futuristic, alien technology, space colony, advanced AI aesthetics',
+    solarized: 'Solarized color palette, warm oranges and blues, balanced contrast, precision colors',
+    nord: 'Arctic nord colors, cool blues and grays, winter night sky, arctic aurora',
+    monokai: 'Monokai code editor colors, warm beige-red palette, coding theme aesthetic',
+    dracula: 'Dracula dark theme, purple and pink accents, vampire elegance',
+    github: 'GitHub dark mode, muted purple colors, developer aesthetic',
+    midnight: 'Deep night sky, starry darkness, cosmic purple tones, peaceful night'
   };
 
   const theme = 'light';
+  const stylePrompt = stylePrompts[style] || stylePrompts.professional;
+  
+  const contentText = content.join(' | ');
+  const paragraphText = paragraphs?.join(' /// ') || '';
+  const hasImage = !!userImage || !!imagePrompt;
+  const hasExcel = !!excelData?.trim();
+  
   const prompt = `You are a World-Class Graphic Information Designer.
-  Task: Create a masterpiece INFOGRAPHIC POSTER for the slide: "${title}: ${subtitle}".
-  
-  CONTENT CONTEXT:
-  - Main Subject: ${title}
-  - Nuanced Insight: ${subtitle}
-  - Strategic Data: ${content.join(' | ')}
-  - Visualization Request: ${chartType !== 'none' ? `Integrated ${chartType} visualization representing: ${tableData}` : 'Bespoke conceptual illustration'}
+Task: Create a masterpiece INFOGRAPHIC POSTER for the slide: "${title}: ${subtitle}".
 
-  VISUAL THEME: ${layout} (Style: ${theme === 'dark' ? 'Modern Dark Cyberpunk' : 'Clean Professional Swiss Design'}).
-  
-  CORE VISUAL STRATEGY:
-  - Do NOT create a background. Create a COMPLETE, HIGH-DENSITY INFOGRAPHIC.
-  - Use a POWERFUL CONCEPTUAL METAPHOR (e.g., if the topic is governance, use Lego blocks; if it's waves, use a technical cross-section of an ocean with depth markers).
-  - INTEGRATE the data visualization directly into the artwork. Use 3D icons, specific data callouts, and technical diagrams.
-  
-  CRITICAL REQUIREMENTS:
-  1. 16:9 cinematic aspect ratio, ultra-high definition, 8k resolution.
-  2. Zero digital noise. Crystal clear, sharp vector-style or high-end 3D rendering.
-  3. Professional typography integrated into the design (sharp, minimal, modern).
-  4. Use a specific, harmonious color palette (e.g., Deep Navy and Emerald, or Charcoal and Gold).
-  5. The image must look like a standalone, professional poster from a top-tier design agency.
-  6. High contrast, studio lighting, premium textures (glassmorphism, matte, or brushed metal).
-  7. No generic "stock photo" feel. Must be a bespoke data-driven illustration.`;
+
+CONTENT CONTEXT:
+- Main Subject: ${title}
+- Nuanced Insight: ${subtitle}
+- Key Points: ${contentText}
+${paragraphText ? `- Detailed Paragraphs: ${paragraphText}` : ''}
+- User Image: ${userImage ? 'Include the user-provided image in the design' : ''}
+${imagePrompt ? `- AI Image Prompt: ${imagePrompt} - incorporate this conceptual image` : ''}
+${hasExcel ? `- Excel/Table Data: ${excelData} - display this data in a styled table or information block` : ''}
+
+VISUAL STYLE: ${stylePrompt}
+
+LAYOUT: ${layout} (split/grid/bento/focal/technical/dense_table)
+
+CORE VISUAL STRATEGY:
+- Create a COMPLETE, HIGH-DENSITY INFOGRAPHIC (not just a background)
+- Use a POWERFUL CONCEPTUAL METAPHOR matching the ${style} style
+- ${hasExcel ? 'INTEGRATE the Excel data into a styled table or info-block within the design' : ''}
+- ${hasImage ? 'COMBINE the provided image(s) creatively into the composition' : 'CREATE a bespoke conceptual illustration matching the content'}
+
+CRITICAL REQUIREMENTS:
+1. 16:9 cinematic aspect ratio, ultra-high definition
+2. Zero digital noise, crystal clear vector-style or professional 3D rendering
+3. Professional typography integrated into the design
+4. Specific harmonious ${style} color palette
+5. The image must look like a standalone professional poster from a top-tier design agency
+6. High contrast, premium textures, polished finish
+7. No generic "stock photo" feel - bespoke data-driven illustration`;
 
   // Use Imagen for PPT slide image generation
   const res = await fetch('/api/gemini', {

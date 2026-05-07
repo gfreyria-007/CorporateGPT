@@ -1218,16 +1218,16 @@ export default function App() {
         {/* Fullscreen Overlays for Desktop Modules */}
         <AnimatePresence>
           {activePanel === 'admin' && (
-            <motion.div key="admin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-corporate-950"><AdminPanel onClose={() => setActivePanel('chat')} theme={theme} /></motion.div>
+            <motion.div key="admin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-corporate-950 overflow-y-auto"><AdminPanel onClose={() => setActivePanel('chat')} theme={theme} /></motion.div>
           )}
           {activePanel === 'knowledge' && (
-            <motion.div key="knowledge" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-corporate-950"><GPTsGenerator onClose={() => setActivePanel('chat')} onSelect={(gpt: any) => { setSelectedGPT(gpt); setActivePanel('chat'); }} theme={theme} /></motion.div>
+            <motion.div key="knowledge" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-corporate-950 overflow-y-auto"><GPTsGenerator onClose={() => setActivePanel('chat')} onSelect={(gpt: any) => { setSelectedGPT(gpt); setActivePanel('chat'); }} theme={theme} /></motion.div>
           )}
           {activePanel === 'ppt' && (
-            <PPTcreator onClose={() => setActivePanel('chat')} theme={theme} lang={lang} user={user} />
+            <div className="fixed inset-0 z-[200] overflow-y-auto"><PPTcreator onClose={() => setActivePanel('chat')} theme={theme} lang={lang} user={user} /></div>
           )}
           {activePanel === 'team' && (
-            <motion.div key="team" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-white dark:bg-corporate-950"><CompanyPanel onClose={() => setActivePanel('chat')} theme={theme} lang={lang} /></motion.div>
+            <motion.div key="team" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-white dark:bg-corporate-950 overflow-y-auto"><CompanyPanel onClose={() => setActivePanel('chat')} theme={theme} lang={lang} /></motion.div>
           )}
         </AnimatePresence>
       </main>

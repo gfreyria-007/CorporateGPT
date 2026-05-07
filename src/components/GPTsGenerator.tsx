@@ -226,7 +226,7 @@ const handleNew = () => {
     <div className={cn("flex-1 flex flex-col h-full transition-colors duration-500 relative z-50",
       theme === 'dark' ? "bg-corporate-950 text-slate-200" : "bg-white text-corporate-900"
     )}>
-      <header className={cn("h-16 border-b flex items-center justify-between px-6 shrink-0 backdrop-blur-xl",
+      <header className={cn("h-16 border-b flex flex-col sm:flex-row items-center justify-between px-2 sm:px-6 py-2 sm:py-0 shrink-0 backdrop-blur-xl gap-2",
         theme === 'dark' ? "bg-corporate-950/80 border-white/5" : "bg-white/80 border-corporate-200 shadow-sm"
       )}>
         <div className="flex items-center gap-3">
@@ -237,14 +237,14 @@ const handleNew = () => {
             Corporate <span className="text-blue-500">GPTs</span>
           </h2>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1 sm:gap-2 lg:gap-4 flex-wrap justify-end max-w-full overflow-x-auto">
           <button 
             onClick={handleNew}
-            className={cn("flex items-center gap-2 px-4 py-2 border rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+            className={cn("flex items-center gap-2 px-2 sm:px-4 py-2 border rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shrink-0",
               theme === 'dark' ? "bg-white/5 border-white/5 text-slate-400 hover:text-white" : "bg-slate-50 border-slate-200 text-slate-500"
             )}
           >
-             <Plus size={14} /> Create New
+             <Plus size={14} /> <span className="hidden sm:inline">Create New</span>
           </button>
           <button 
             disabled={!name || isSaving}
