@@ -499,9 +499,13 @@ export const getChatResponse = async (
     }
 
     try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 40000);
+        
         const res = await fetch('/api/techie', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
             body: JSON.stringify({
                 action: 'chat',
                 payload: {
@@ -514,12 +518,17 @@ export const getChatResponse = async (
             })
         });
         
+        clearTimeout(timeout);
         const result = await res.json();
         if (result.error) throw new Error(result.error);
         
         return result;
     } catch (e: any) {
         console.error("[TECHIE] Chat failed:", e);
+        const isTimeout = e.name === 'AbortError' || e.message?.includes('timeout') || e.message === 'timeout';
+        if (isTimeout) {
+            return { text: JSON.stringify({ type: 'selection', text: "La conexión está tardando más de lo normal. Intenta de nuevo en unos segundos.", question: "¿Qué te gustaría hacer?", options: [{ text: "Intentar de nuevo", isCorrect: true, feedback: "Vamos a intentarlo de nuevo" }] }) };
+        }
         return { text: JSON.stringify({ type: 'selection', text: "Lo siento, tuve un problema técnico. ¿Podemos intentar de nuevo?", question: "¿Qué tal si probamos otra pregunta?", options: [] }) };
     }
 };

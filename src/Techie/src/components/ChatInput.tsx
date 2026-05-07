@@ -5,7 +5,7 @@ import { ExplorerSettings, Grade, ChatMode } from '../types';
 import { TOOL_DEFINITIONS } from '../constants';
 import { useAuth } from '../core/AuthContext';
 import { useLanguage } from '../core/LanguageContext';
-import { ModelSelector } from '../../components/ModelSelector';
+import { ModelSelector } from '../../../components/ModelSelector';
 
 interface ChatInputProps {
   onSendMessage: (text: string, file?: File, isReviewMode?: boolean, quizCount?: number) => void;
@@ -23,6 +23,7 @@ interface ChatInputProps {
   isLoadingModels: boolean;
 }
 
+const ChatInput: React.FC<ChatInputProps> = ({
   selectedGrade,
   onOpenFAQ,
   selectedModel,
