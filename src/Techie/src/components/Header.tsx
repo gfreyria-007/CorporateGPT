@@ -44,7 +44,7 @@ const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center space-x-2">
             <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white rounded-full flex items-center justify-center overflow-hidden border border-blue-100 shadow-lg group hover:scale-110 transition-transform duration-500">
                 <img 
-                    src="https://catalizia.com/images/catalizia-techie.png" 
+                    src="/techie-mascot.png" 
                     alt="Techie Mascot" 
                     className="w-full h-full object-contain p-1 animate-pulse-gentle"
                 />

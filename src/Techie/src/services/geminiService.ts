@@ -1,5 +1,5 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
+import { Type } from "@google/genai";
 import { Grade, ChatMode, ExamQuestion, QuizOption, AspectRatio, ImageSize, Flashcard, ImageStyle, LightingStyle } from '../types';
 import { fileToGenerativePart } from '../utils/audio';
 import { STUDIO_STYLES, LIGHTING_PRESETS } from '../constants';
@@ -124,15 +124,16 @@ const SAFETY_SETTINGS: any[] = [
 
 const GUARDRAIL_ERROR = "Lo siento, como IA educativa de Catalizia no puedo procesar o responder a esa solicitud porque va en contra de nuestras políticas de seguridad para menores.";
 
-const getAI = (customKey?: string) => {
-// metaEnv removed
-    const apiKey = customKey;
-    if (!apiKey) {
-        logger.error('GEMINI_API_KEY no configurada. Ve a Settings > API Key para configurar.', new Error('Missing API key'));
-        throw new Error('GEMINI_API_KEY no configurada. Ve a Settings > API Key para configurar.');
-    }
-    return new GoogleGenAI({ apiKey });
-};
+// Removed function
+
+
+
+
+
+
+
+
+
 
 
 export const generateImage = async (
@@ -145,7 +146,8 @@ export const generateImage = async (
     embeddedText?: string,
     imageSize: ImageSize = '1K',
     sourceImage?: string, // Opcional para Image-to-Image
-    customKey?: string
+    customKey?: string // Keeping for signature compatibility if needed, but unused
+
 ): Promise<{ url: string, enhancedPrompt: string } | null> => {
 
     
@@ -153,7 +155,7 @@ export const generateImage = async (
         throw new Error(GUARDRAIL_ERROR);
     }
 
-    const ai = getAI(customKey);
+
 
     
     const strictConstraints = `
@@ -218,14 +220,15 @@ export const editImage = async (
     maskBase64?: string,
     style: ImageStyle = 'none',
     systemInstructions?: string,
-    customKey?: string
+    customKey?: string // Unused
+
 ): Promise<string | null> => {
 
     if (moderatePrompt(prompt)) {
         throw new Error(GUARDRAIL_ERROR);
     }
 
-    const ai = getAI(customKey);
+
 
     
     let imagePart;
@@ -336,7 +339,8 @@ export const getChatResponse = async (
     temperature: number, 
     persona: string | null, 
     customInstruction: string,
-    customKey?: string,
+    customKey?: string, // Unused
+
     selectedModel?: string
 ) => {
     // Verificar si el último mensaje del usuario viola las reglas de seguridad
@@ -345,7 +349,7 @@ export const getChatResponse = async (
         return { text: JSON.stringify({ type: 'selection', text: GUARDRAIL_ERROR, question: "¿Podemos hablar de otra cosa?", options: [] }) };
     }
 
-    const ai = getAI(customKey);
+
 
     
     let systemInstruction = "";
@@ -520,7 +524,7 @@ export const getChatResponse = async (
     }
 };
 
-export const reviewHomework = async (imagePart: any, text: string, grade: Grade, userName: string | null, age: number | null, customKey?: string) => {
+export const reviewHomework = async (imagePart: any, text: string, grade: Grade, userName: string | null, age: number | null) => {
   const prompt = `Revisa esta tarea para nivel ${grade.name}. Usa INTERNET para verificar si la información es correcta. Lenguaje adecuado para ${age} años. JSON format only.`;
   try {
     const res = await fetch('/api/techie', {
@@ -542,7 +546,7 @@ export const reviewHomework = async (imagePart: any, text: string, grade: Grade,
   }
 };
 
-export const analyzeImage = async (imagePart: any, text: string, grade: Grade, userName: string | null, age: number | null, history: any[], mode: ChatMode, customKey?: string) => {
+export const analyzeImage = async (imagePart: any, text: string, grade: Grade, userName: string | null, age: number | null, history: any[], mode: ChatMode) => {
     let systemInstruction = `Analiza la imagen educativamente para nivel ${grade.name}. Usa ACCESO A INTERNET para identificar hitos o datos reales.`;
     try {
         const res = await fetch('/api/techie', {
@@ -565,7 +569,7 @@ export const analyzeImage = async (imagePart: any, text: string, grade: Grade, u
     }
 };
 
-export const getDeepResearchResponse = async (topic: string, grade: Grade, userName: string | null, age: number | null, customKey?: string) => {
+export const getDeepResearchResponse = async (topic: string, grade: Grade, userName: string | null, age: number | null) => {
     let tokenTarget = "2000 a 3000";
     if (grade.id.startsWith('primaria') && parseInt(grade.id.replace('primaria', '')) >= 4) {
         tokenTarget = "4000 a 5000";
@@ -616,7 +620,7 @@ export const getDeepResearchResponse = async (topic: string, grade: Grade, userN
     }
 };
 
-export const generateTopicQuiz = async (topic: string, grade: Grade, count: number = 10, customKey?: string): Promise<ExamQuestion[]> => {
+export const generateTopicQuiz = async (topic: string, grade: Grade, count: number = 10): Promise<ExamQuestion[]> => {
     const prompt = `Usa INTERNET para generar un examen de ${count} preguntas REALES y actualizadas sobre: ${topic} para nivel escolar ${grade.name}. JSON format.`;
     try {
         const res = await fetch('/api/techie', {
@@ -639,7 +643,7 @@ export const generateTopicQuiz = async (topic: string, grade: Grade, count: numb
     }
 };
 
-export const generateFlashcards = async (text: string, customKey?: string): Promise<Flashcard[]> => {
+export const generateFlashcards = async (text: string): Promise<Flashcard[]> => {
     const prompt = `Genera 5 flashcards educativas basadas en el texto. JSON: [{ "question": "", "answer": "" }]`;
     try {
         const res = await fetch('/api/techie', {

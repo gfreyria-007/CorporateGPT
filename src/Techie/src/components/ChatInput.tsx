@@ -5,6 +5,7 @@ import { ExplorerSettings, Grade, ChatMode } from '../types';
 import { TOOL_DEFINITIONS } from '../constants';
 import { useAuth } from '../core/AuthContext';
 import { useLanguage } from '../core/LanguageContext';
+import { ModelSelector } from '../../components/ModelSelector';
 
 interface ChatInputProps {
   onSendMessage: (text: string, file?: File, isReviewMode?: boolean, quizCount?: number) => void;
@@ -16,18 +17,18 @@ interface ChatInputProps {
   onUpdateExplorerSettings: (settings: ExplorerSettings) => void;
   selectedGrade: Grade | null;
   onOpenFAQ?: () => void;
+  selectedModel: string;
+  onModelSelect: (model: string) => void;
+  models: any[];
+  isLoadingModels: boolean;
 }
 
-const ChatInput: React.FC<ChatInputProps> = ({ 
-  onSendMessage, 
-  onDefaultMode,
-  onModeChange,
-  chatMode,
-  isLoading, 
-  explorerSettings,
-  onUpdateExplorerSettings,
   selectedGrade,
-  onOpenFAQ
+  onOpenFAQ,
+  selectedModel,
+  onModelSelect,
+  models,
+  isLoadingModels
 }) => {
   const { logout } = useAuth();
   const { language } = useLanguage();
@@ -178,10 +179,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                     </svg>
-                    <span className="hidden sm:inline text-xs font-black uppercase tracking-widest">Cosas Pro ✨</span>
+                    <span className="hidden sm:inline text-xs font-black uppercase tracking-widest">Techie Tools 🚀</span>
                   </button>
                   
                   {showTools && (
+
                       <div className="absolute bottom-full left-0 mb-4 w-[calc(100vw-2rem)] sm:w-72 bg-white/80 backdrop-blur-3xl rounded-[2rem] shadow-2xl border border-white overflow-hidden z-50 animate-fade-in-scale transform origin-bottom-left premium-shadow-lg">
                           <div className="max-h-[60vh] overflow-y-auto p-4 space-y-1 custom-scrollbar">
                               <h4 className="px-3 mb-2 text-[10px] font-black text-blue-900/50 uppercase tracking-[0.2em]">{isSpanish ? 'HERRAMIENTAS MÁGICAS' : 'MAGIC TOOLS'}</h4>
@@ -257,6 +259,18 @@ const ChatInput: React.FC<ChatInputProps> = ({
                       </div>
                   )}
               </div>
+
+              <div className="hidden lg:block w-48 shrink-0 self-end mb-1">
+                <ModelSelector 
+                  models={models} 
+                  selectedModel={selectedModel} 
+                  onSelect={onModelSelect} 
+                  isLoading={isLoadingModels} 
+                  lang={language as 'en' | 'es'}
+                  dataProtected={false}
+                />
+              </div>
+
 
               {chatMode === 'explorer' && (
                 <div className="relative shrink-0 self-end mb-1" ref={configRef}>

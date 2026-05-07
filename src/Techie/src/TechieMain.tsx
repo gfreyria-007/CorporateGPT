@@ -769,16 +769,16 @@ if (parsed.type === 'image-request') {
                   <GradeSelector selectedGrade={selectedGrade} activeTool={TOOL_DEFINITIONS.find(t => t.id === chatMode)} onGradeChange={setSelectedGrade} />
                   {/* Language Selector */}
                   <LanguageSwitcher />
-                  <div className="w-48 sm:w-56">
-                    <ModelSelector 
-                      models={models} 
-                      selectedModel={selectedModel} 
-                      onSelect={setSelectedModel} 
-                      isLoading={isLoadingModels} 
-                      lang="es"
-                      dataProtected={false}
-                    />
-                  </div>
+
+ 
+ 
+ 
+ 
+ 
+
+
+
+
                 </div>
               </div>
 
@@ -798,6 +798,11 @@ if (parsed.type === 'image-request') {
                   onUpdateExplorerSettings={setExplorerSettings} 
                   selectedGrade={selectedGrade} 
                   onOpenFAQ={() => setShowFAQ(true)}
+                  selectedModel={selectedModel}
+                  onModelSelect={setSelectedModel}
+                  models={models}
+                  isLoadingModels={isLoadingModels}
+
                 />
                 <Footer sessionTokensUsed={sessionTokensUsed} subscriptionLevel={userProfile?.subscriptionLevel} onOpenFAQ={() => setShowFAQ(true)} />
               </div>
