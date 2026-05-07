@@ -788,6 +788,8 @@ async function startServer() {
   app.post('/api/techie', async (req, res) => {
     const userId = await extractUserId(req);
     const { action, payload } = req.body;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 45000);
 
     if (!OPENROUTER_API_KEY) {
       console.error("[TECHIE PROXY] Missing OPENROUTER_API_KEY");
@@ -797,26 +799,57 @@ async function startServer() {
     try {
       console.log(`[TECHIE PROXY] Action: ${action}`);
 
-      // --- IMMORTAL FALLBACK SYSTEM FOR TEXT (NON-GEMINI FOR TECHIE) ---
+      // --- SIMPLIFIED TEXT ROUTING FOR TECHIE (FASTER) ---
       if (action === 'chat' || action === 'generateContent') {
-        const textModels = [
-          payload.model || 'openrouter/auto',
-          'anthropic/claude-3.5-sonnet',
-          'openai/gpt-4o',
-          'google/gemini-2.0-pro-exp-02-05:free',
-          'mistralai/mistral-large'
-        ];
+        const model = payload.model || 'openrouter/auto';
+        const messages = payload.contents || payload.history || [];
+        const formattedMessages = messages.map((m: any) => ({
+          role: m.role === 'model' ? 'assistant' : m.role,
+          content: typeof m.parts?.[0]?.text === 'string' ? m.parts[0].text : m.content
+        }));
 
-        let lastError = null;
-        for (const model of textModels) {
+        try {
+          console.log(`[TECHIE PROXY] Using Model: ${model}`);
+          
+          const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+              'HTTP-Referer': 'https://catalizia.com',
+              'X-Title': 'Catalizia Techie'
+            },
+            signal: controller.signal,
+            body: JSON.stringify({
+              model,
+              messages: [
+                { role: 'system', content: payload.systemInstruction || 'You are Techie, a helpful educational assistant for children.' },
+                ...formattedMessages
+              ],
+              temperature: payload.temperature || 0.7
+            })
+          });
+
+          clearTimeout(timeout);
+          
+          if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error?.message || `HTTP ${response.status}`);
+          }
+
+          const result = await response.json();
+          await trackUsage(userId, false);
+          const text = result.choices?.[0]?.message?.content || '';
+          return res.status(200).json({ text, modelUsed: model });
+        } catch (err: any) {
+          clearTimeout(timeout);
+          console.warn("[TECHIE PROXY] Primary model failed:", err.message);
+          
+          // Quick fallback to a reliable free model
+          const fallbackModel = 'google/gemini-2.0-flash-001:free';
+          console.log(`[TECHIE PROXY] Trying fallback: ${fallbackModel}`);
+          
           try {
-            console.log(`[TECHIE PROXY] Trying Text Option: ${model}`);
-            const messages = payload.contents || payload.history || [];
-            const formattedMessages = messages.map((m: any) => ({
-              role: m.role === 'model' ? 'assistant' : m.role,
-              content: typeof m.parts?.[0]?.text === 'string' ? m.parts[0].text : m.content
-            }));
-
             const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
               method: 'POST',
               headers: {
@@ -826,7 +859,7 @@ async function startServer() {
                 'X-Title': 'Catalizia Techie'
               },
               body: JSON.stringify({
-                model,
+                model: fallbackModel,
                 messages: [
                   { role: 'system', content: payload.systemInstruction || 'You are Techie, a helpful educational assistant for children.' },
                   ...formattedMessages
@@ -835,73 +868,67 @@ async function startServer() {
               })
             });
 
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error?.message || `Model ${model} failed`);
-
-            await trackUsage(userId, false);
-            const text = result.choices?.[0]?.message?.content || '';
-            return res.status(200).json({ text, modelUsed: model });
-          } catch (err: any) {
-            console.warn(`[TECHIE PROXY] Option ${model} failed:`, err.message);
-            lastError = err.message;
-          }
-        }
-        throw new Error(`All Techie Text models failed. Last error: ${lastError}`);
-      }
-
-      // --- IMMORTAL FALLBACK SYSTEM FOR IMAGES (NON-GEMINI FOR TECHIE) ---
-      if (action === 'generateImage') {
-        const imageModels = [
-          payload.model || 'black-forest-labs/flux-1-schnell', // Option A
-          'black-forest-labs/flux-pro',                        // Option B
-          'openai/dall-e-3',                                   // Option C
-          'stabilityai/stable-diffusion-xl-base-1.0'           // Option D
-        ];
-
-        let lastError = null;
-        for (const model of imageModels) {
-          try {
-            console.log(`[TECHIE PROXY] Trying Image Option: ${model}`);
-            const isMultimodal = model.includes('gemini');
-            
-            const body: any = {
-              model,
-              messages: [{ role: 'user', content: payload.prompt }]
-            };
-
-            if (isMultimodal) {
-              body.modalities = ["image"];
-              body.image_config = { aspect_ratio: payload.aspectRatio || '1:1' };
-            } else {
-              body.image_config = { aspect_ratio: payload.aspectRatio || '1:1' };
+            if (!response.ok) {
+              throw new Error('Fallback model also failed');
             }
 
-            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-              },
-              body: JSON.stringify(body)
-            });
-
             const result = await response.json();
-            if (!response.ok) throw new Error(result.error?.message || `Model ${model} failed`);
-
-            await trackUsage(userId, true);
-            const imageBase64 = result.choices?.[0]?.message?.content || result.choices?.[0]?.message?.image_url;
-            if (!imageBase64) throw new Error("No image data returned");
-
-            return res.status(200).json({ imageBase64, modelUsed: model });
-          } catch (err: any) {
-            console.warn(`[TECHIE PROXY] Image Option ${model} failed:`, err.message);
-            lastError = err.message;
+            const text = result.choices?.[0]?.message?.content || '';
+            return res.status(200).json({ text, modelUsed: fallbackModel });
+          } catch (fallbackErr: any) {
+            throw new Error(`All models failed. Last error: ${fallbackErr.message}`);
           }
         }
-        throw new Error(`All Techie Image models failed. Last error: ${lastError}`);
       }
 
-      return res.status(400).json({ error: 'INVALID_ACTION' });
+      // --- IMAGE GENERATION FOR TECHIE ---
+      if (action === 'generateImage') {
+        clearTimeout(timeout);
+        const imageModel = payload.model || 'black-forest-labs/flux-1-schnell';
+        
+        try {
+          const response = await fetch('https://openrouter.ai/api/v1/images/generations', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+              'HTTP-Referer': 'https://catalizia.com',
+              'X-Title': 'Catalizia Techie'
+            },
+            body: JSON.stringify({
+              model: imageModel,
+              prompt: payload.prompt,
+              aspect_ratio: payload.aspectRatio || '16:9'
+            })
+          });
+
+          if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error?.message || `Image model failed`);
+          }
+
+          const result = await response.json();
+          const imageUrl = result.data?.[0]?.url || result.images?.[0]?.url;
+          return res.status(200).json({ imageBase64: imageUrl, modelUsed: imageModel });
+        } catch (imgErr: any) {
+          console.error("[TECHIE IMAGE] Error:", imgErr.message);
+          throw imgErr;
+        }
+      }
+
+      clearTimeout(timeout);
+return res.status(400).json({ error: 'Unknown action' });
+    } catch (err: any) {
+      clearTimeout(timeout);
+      console.error("[TECHIE PROXY] Error:", err.message);
+      if (err.name === 'AbortError') {
+        return res.status(504).json({ error: 'Request timeout' });
+      }
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Auth endpoints...
 
     } catch (error: any) {
       console.error("[TECHIE PROXY] Critical Error:", error.message);
