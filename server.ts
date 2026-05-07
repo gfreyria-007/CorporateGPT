@@ -264,7 +264,7 @@ async function startServer() {
   app.get('/api/health', (req, res) => {
     res.json({
       status: 'healthy',
-      version: '5.1.0',
+      version: '5.1.1', // Updated for Deep Research Flow
       security: {
         helmet: 'active',
         rateLimit: 'active',
