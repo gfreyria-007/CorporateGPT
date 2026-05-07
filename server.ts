@@ -86,6 +86,11 @@ if (process.env.NODE_ENV === 'production') {
 async function startServer() {
   const app = express();
   const PORT = process.env.PORT || 8080;
+  
+  // Startup health endpoint (before full init for Cloud Run)
+  app.get('/_ready', (req, res) => {
+    res.status(200).send('OK');
+  });
 
 // 1. Security Headers (CSP, HSTS, etc.)
   app.use(helmet({
@@ -1043,7 +1048,8 @@ return res.status(400).json({ error: 'Unknown action' });
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Version: 5.1.0 ready`);
   });
 }
 
-startServer();
+startServer().catch(console.error);
