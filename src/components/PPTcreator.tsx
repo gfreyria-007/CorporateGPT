@@ -727,7 +727,7 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
           />
         </div>
 
-        {contentSource === 'text' && (
+        {(contentSource === 'text' || contentSource === 'ai') && (
           <div className="p-4 rounded-2xl border border-purple-500/30 bg-purple-500/10 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -1489,7 +1489,7 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
               <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">
-                {lang === 'es' ? `Etapa ${currentStage}` : `Stage ${currentStage}`} / 6 • v2.1.0
+                {lang === 'es' ? `Etapa ${currentStage}` : `Stage ${currentStage}`} / 6 • v5.1.0
               </span>
             </div>
           </div>

@@ -204,7 +204,14 @@ export const generateImage = async (
 
         const imageBase64 = imgRes.imageBase64;
         if (imageBase64) {
-            const finalUrl = imageBase64.startsWith('data:') ? imageBase64 : `data:image/png;base64,${imageBase64}`;
+            let finalUrl: string;
+            if (imageBase64.startsWith('data:')) {
+                finalUrl = imageBase64;
+            } else if (imageBase64.startsWith('http')) {
+                finalUrl = imageBase64;
+            } else {
+                finalUrl = `data:image/png;base64,${imageBase64}`;
+            }
             return { url: finalUrl, enhancedPrompt: 'Generación de Imagen via OpenRouter' };
         }
     } catch (e: any) {

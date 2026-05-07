@@ -889,9 +889,11 @@ async function startServer() {
       // --- IMAGE GENERATION FOR TECHIE ---
       if (action === 'generateImage') {
         clearTimeout(timeout);
-        const imageModel = payload.model || 'black-forest-labs/flux-1-schnell';
         
         try {
+          console.log('[TECHIE IMAGE] Generating image with FLUX...');
+          
+          // Use FLUX image generation through OpenRouter
           const response = await fetch('https://openrouter.ai/api/v1/images/generations', {
             method: 'POST',
             headers: {
@@ -901,20 +903,30 @@ async function startServer() {
               'X-Title': 'Catalizia Techie'
             },
             body: JSON.stringify({
-              model: imageModel,
+              model: 'black-forest-labs/flux-1-schnell',
               prompt: payload.prompt,
               aspect_ratio: payload.aspectRatio || '16:9'
             })
           });
 
+          const responseText = await response.text();
+          console.log('[TECHIE IMAGE] Response status:', response.status);
+          
           if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.error?.message || `Image model failed`);
+            console.log('[TECHIE IMAGE] Error response:', responseText);
+            throw new Error('Image generation unavailable');
           }
-
-          const result = await response.json();
-          const imageUrl = result.data?.[0]?.url || result.images?.[0]?.url;
-          return res.status(200).json({ imageBase64: imageUrl, modelUsed: imageModel });
+          
+          const result = JSON.parse(responseText);
+          const imageUrl = result.data?.[0]?.url;
+          
+          if (!imageUrl) {
+            console.error('[TECHIE IMAGE] No image URL in result:', result);
+            throw new Error('No image URL returned from API');
+          }
+          
+          console.log('[TECHIE IMAGE] Generated URL:', imageUrl.substring(0, 100));
+          return res.status(200).json({ imageBase64: imageUrl, modelUsed: 'flux-1-schnell' });
         } catch (imgErr: any) {
           console.error("[TECHIE IMAGE] Error:", imgErr.message);
           throw imgErr;
@@ -933,11 +945,224 @@ return res.status(400).json({ error: 'Unknown action' });
     }
   });
 
-  // Auth endpoints...
+  // API Route for Image Editing (Inpainting)
+  app.post('/api/image/edit', async (req, res) => {
+    try {
+      const { originalImage, maskImage, prompt, template } = req.body;
+      if (!originalImage || !prompt) {
+        return res.status(400).json({ error: 'Missing image or prompt' });
+      }
 
-    } catch (error: any) {
-      console.error("[TECHIE PROXY] Critical Error:", error.message);
-      return res.status(500).json({ error: 'TECHIE_FAILED', details: error.message });
+      const fullPrompt = template ? `${prompt}. ${template}` : prompt;
+
+      const response = await fetch('https://openrouter.ai/api/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+          'HTTP-Referer': 'https://catalizia.com',
+          'X-Title': 'Catalizia Techie Image Editor'
+        },
+        body: JSON.stringify({
+          model: 'black-forest-labs/flux-1-schnell',
+          prompt: `Edit this image: ${fullPrompt}. Keep the unedited parts exactly the same. The user masked the area they want changed. Only modify the masked area.`,
+          aspect_ratio: '16:9'
+        })
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error?.message || 'Image editing failed');
+      }
+
+      const result = await response.json();
+      const editedImage = result.data?.[0]?.url || result.images?.[0]?.url;
+      
+      return res.status(200).json({ editedImage, modelUsed: 'flux-1-schnell' });
+    } catch (err: any) {
+      console.error('[IMAGE EDIT] Error:', err.message);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // API Route for Image Generation
+  app.post('/api/image/generate', async (req, res) => {
+    try {
+      const { prompt, model, aspectRatio, size } = req.body;
+      if (!prompt) {
+        return res.status(400).json({ error: 'Missing prompt' });
+      }
+
+      if (!OPENROUTER_API_KEY) {
+        throw new Error('OPENROUTER_API_KEY not configured');
+      }
+
+      const imageModel = model || 'black-forest-labs/flux-1-schnell';
+      console.log('[IMAGE GEN] Using model:', imageModel);
+      
+      const requestBody: any = {
+        model: imageModel,
+        prompt: prompt
+      };
+
+      if (aspectRatio) {
+        requestBody.aspect_ratio = aspectRatio;
+      }
+
+      if (size) {
+        requestBody.size = size;
+      }
+
+      console.log('[IMAGE GEN] Request:', JSON.stringify(requestBody).substring(0, 200));
+
+      const response = await fetch('https://openrouter.ai/api/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+          'HTTP-Referer': 'https://catalizia.com',
+          'X-Title': 'Catalizia Image Studio'
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      const responseText = await response.text();
+      console.log('[IMAGE GEN] Response status:', response.status);
+      console.log('[IMAGE GEN] Response preview:', responseText.substring(0, 300));
+      
+      if (!response.ok) {
+        console.error('[IMAGE GEN] API Error:', responseText);
+        try {
+          const err = JSON.parse(responseText);
+          throw new Error(err.error?.message || `Image generation failed: ${response.status}`);
+        } catch (e: any) {
+          if (e instanceof SyntaxError) {
+            throw new Error(`API returned HTML error (status ${response.status}). Check API key and model.`);
+          }
+          throw e;
+        }
+      }
+
+      const result = JSON.parse(responseText);
+      const imageUrl = result.data?.[0]?.url || result.images?.[0]?.url;
+      
+      if (!imageUrl) {
+        console.error('[IMAGE GEN] No image URL in result:', result);
+        throw new Error('No image URL returned from API');
+      }
+      
+      return res.status(200).json({ imageUrl, modelUsed: imageModel });
+    } catch (err: any) {
+      console.error('[IMAGE GEN] Error:', err.message);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // API Route for DALL-E Image Generation
+  app.post('/api/image/dalle', async (req, res) => {
+    try {
+      const { prompt, model, size } = req.body;
+      if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
+
+      const openaiApiKey = process.env.OPENAI_API_KEY;
+      if (!openaiApiKey) throw new Error('OpenAI API key not configured');
+
+      const dalleModel = model === 'dalle-3' ? 'dall-e-3' : 'dall-e-2';
+      const sizeMap: Record<string, string> = {
+        '1024x1024': '1024x1024',
+        '1792x1024': '1792x1024',
+        '1024x1792': '1024x1792'
+      };
+      const imageSize = sizeMap[size] || '1024x1024';
+
+      const response = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${openaiApiKey}`
+        },
+        body: JSON.stringify({
+          model: dalleModel,
+          prompt: prompt,
+          size: imageSize,
+          quality: 'standard'
+        })
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error?.message || 'DALL-E failed');
+      }
+
+      const result = await response.json();
+      const imageUrl = result.data?.[0]?.url;
+      
+      if (!imageUrl) throw new Error('No image URL returned');
+      
+      res.json({ imageUrl, modelUsed: dalleModel });
+    } catch (err: any) {
+      console.error('[DALL-E] Error:', err.message);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // API Route for Gemini Image Generation
+  app.post('/api/image/gemini', async (req, res) => {
+    try {
+      const { prompt } = req.body;
+      if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
+
+      const geminiKey = process.env.GEMINI_API_KEY;
+      if (!geminiKey) throw new Error('GEMINI_API_KEY not configured');
+
+      // Use text model to get an image URL suggestion
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ 
+            parts: [{ 
+              text: `Create a detailed image prompt that will produce a high-quality image: ${prompt}. 
+              
+              Then search for and return a direct URL to a relevant image from Unsplash or Pexels that matches this description. 
+              
+              Return ONLY the image URL (like https://images.unsplash.com/...), nothing else.` 
+            }] 
+          }],
+          generationConfig: { 
+            maxOutputTokens: 500,
+            temperature: 0.7
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.log('[GEMINI] Error:', errText);
+        throw new Error('Gemini request failed');
+      }
+
+      const result = await response.json();
+      const content = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      
+      // Extract image URL from response
+      const urlMatch = content.match(/(https?:\/\/[^\s]+\.(?:png|jpg|jpeg|gif|webp))/i);
+      let imageUrl = urlMatch ? urlMatch[1] : '';
+      
+      if (!imageUrl) {
+        // Try to find any URL
+        const anyUrlMatch = content.match(/(https?:\/\/[^\s]+)/i);
+        if (anyUrlMatch) imageUrl = anyUrlMatch[1];
+      }
+      
+      if (!imageUrl) {
+        return res.status(500).json({ error: 'Could not generate image with Gemini. Please try DALL-E or FLUX.' });
+      }
+      
+      res.json({ imageUrl, modelUsed: 'gemini-2.0-flash' });
+    } catch (err: any) {
+      console.error('[GEMINI] Error:', err.message);
+      res.status(500).json({ error: err.message });
     }
   });
 
