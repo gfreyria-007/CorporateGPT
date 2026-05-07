@@ -264,7 +264,7 @@ async function startServer() {
   app.get('/api/health', (req, res) => {
     res.json({
       status: 'healthy',
-      version: '5.1.1', // Updated for Deep Research Flow
+      version: '5.2.0', // Updated for Techie Socratic Pedagogy
       security: {
         helmet: 'active',
         rateLimit: 'active',
@@ -1273,7 +1273,7 @@ return res.status(400).json({ error: 'Unknown action' });
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`Version: 5.1.0 ready`);
+    console.log(`Version: 5.2.0 ready`);
   });
 }
 
