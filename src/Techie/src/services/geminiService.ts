@@ -502,6 +502,7 @@ export const getChatResponse = async (
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 40000);
         
+        // Use /api/techie endpoint (optimized with timeout)
         const res = await fetch('/api/techie', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -513,16 +514,21 @@ export const getChatResponse = async (
                     history,
                     temperature: (mode === 'explorer' || mode === 'math-viva') ? temperature : 0.3,
                     systemInstruction: (SAFETY_MANDATE + "\n" + systemInstruction).trim(),
-                    useJson
+                    useJson: true
                 }
             })
         });
         
         clearTimeout(timeout);
-        const result = await res.json();
-        if (result.error) throw new Error(result.error);
         
-        return result;
+        // Check if response is error
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({ error: 'Unknown error' }));
+            throw new Error(errData.error || `HTTP ${res.status}`);
+        }
+        
+        const result = await res.json();
+        return { text: result.text || '' };
     } catch (e: any) {
         console.error("[TECHIE] Chat failed:", e);
         const isTimeout = e.name === 'AbortError' || e.message?.includes('timeout') || e.message === 'timeout';
