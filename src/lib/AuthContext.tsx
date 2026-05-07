@@ -7,7 +7,7 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase';
 import { checkTrialStatus, startTrial } from './trialManager';
 
-const ALLOWED_EMAILS = ['gfreyria@gmail.com', 'gabrielfreyria@gmail.com'];
+const ALLOWED_EMAILS = ['gfreyria@gmail.com', 'gabrielfreyria@gmail.com', 'sohernandez@gmail.com'];
 
 interface AuthContextType {
   user: User | null;

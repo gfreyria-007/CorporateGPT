@@ -22,7 +22,7 @@ export function canAccessTechie(profile: {
   unlimitedUsage?: boolean;
 }): boolean {
   // Super admins always have access
-  if (profile.role === 'super-admin' || profile.role === 'admin' || (profile as any).email === 'gfreyria@gmail.com') return true;
+  if (profile.role === 'super-admin' || profile.role === 'admin' || (profile as any).email === 'gfreyria@gmail.com' || (profile as any).email === 'sohernandez@gmail.com') return true;
   
   // Unlimited users always have access
   if (profile.unlimitedUsage) return true;

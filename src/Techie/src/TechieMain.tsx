@@ -138,7 +138,7 @@ export const TechieMain: React.FC = () => {
   const [pendingImagePrompt, setPendingImagePrompt] = useState('');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
-  const isAdminRole = userProfile?.role === 'admin' || userProfile?.role === 'super-admin' || (userProfile as any)?.role === 'owner' || currentUser?.email === 'gfreyria@gmail.com';
+  const isAdminRole = userProfile?.role === 'admin' || userProfile?.role === 'super-admin' || (userProfile as any)?.role === 'owner' || currentUser?.email === 'gfreyria@gmail.com' || currentUser?.email === 'sohernandez@gmail.com';
   const isSubscribed = ['trial', 'explorador', 'maestro', 'leyenda', 'family_starter', 'family_mega'].includes(userProfile?.subscriptionLevel || '') || isAdminRole;
   const isEmailVerified = true; // Bypassed per user request
   const hasPersonalKey = !!userProfile?.personalApiKey;

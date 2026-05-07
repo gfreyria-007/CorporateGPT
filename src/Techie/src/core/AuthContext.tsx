@@ -11,7 +11,7 @@ import { logger } from '../logger';
 // Use unified trial system (3 days) - shared with Corporate GPT
 // Trial status is stored in CorporateGPT's 'trials' collection
 const TRIAL_DAYS = 3;
-const ALLOWED_EMAILS = ['gfreyria@gmail.com', 'gabrielfreyria@gmail.com'];
+const ALLOWED_EMAILS = ['gfreyria@gmail.com', 'gabrielfreyria@gmail.com', 'sohernandez@gmail.com'];
 
 async function checkCorporateTrial(email: string): Promise<{ eligible: boolean; daysLeft?: number }> {
   try {
