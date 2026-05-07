@@ -316,19 +316,24 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
     setImageSource(null);
   };
 
-  const processContent = async () => {
+  const goToStage2 = () => {
+    setCurrentStage(2);
+  };
+
+  const buildSkeleton = async (researchContext?: string) => {
     const validSlides = Math.max(1, slideCount);
     setIsLoading(true);
     
     try {
       const userContent = contentInput.trim() || 'Professional Presentation';
-      console.log('[PPT] Processing content for:', userContent, 'Slides:', validSlides);
+      console.log('[PPT] Building skeleton for:', userContent, 'Slides:', validSlides);
       
       let skeleton: any[] = [];
       try {
-        // RACE: 10s Timeout or AI Response
-        const skeletonPromise = geminiService.generateSkeleton(userContent, validSlides);
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 30000));
+        const contextString = researchContext || `Audience: ${audience}\nTone: ${tone}\nKey Takeaway: ${keyTakeaway}`;
+        // RACE: 45s Timeout or AI Response
+        const skeletonPromise = geminiService.generateSkeleton(userContent, validSlides, contextString);
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 45000));
         
         skeleton = await Promise.race([skeletonPromise, timeoutPromise]) as any[];
       } catch (err) {
@@ -364,19 +369,19 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
         setNarrative(fallback);
       }
       
-      setCurrentStage(2);
+      setCurrentStage(3);
     } catch (error) {
-      console.error('CRITICAL: Error processing content:', error);
+      console.error('CRITICAL: Error building skeleton:', error);
       alert(lang === 'es' 
-        ? 'Error al procesar el contenido. Intentando con modo básico...' 
-        : 'Error processing content. Attempting basic mode...');
+        ? 'Error al crear la estructura. Intentando con modo básico...' 
+        : 'Error creating skeleton. Attempting basic mode...');
       
       setNarrative([{
         title: contentInput || 'Presentation',
         bullets: ['Overview', 'Details', 'Conclusion'],
         visualLayout: 'split'
       }]);
-      setCurrentStage(2);
+      setCurrentStage(3);
     } finally {
       setIsLoading(false);
     }
@@ -405,19 +410,9 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
         };
         
         try {
-          const res = await fetch('/api/gemini', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'deepResearch',
-              topic: contentInput,
-              audience: audience,
-              keyTakeaway: keyTakeaway
-            })
-          });
-          const data = await res.json();
-          if (data.research && Array.isArray(data.research)) {
-            researchData.topics = data.research.map((r: any, idx: number) => ({
+          const researchResult = await geminiService.generateDeepResearch(contentInput, audience, keyTakeaway);
+          if (researchResult && Array.isArray(researchResult) && researchResult.length > 0) {
+            researchData.topics = researchResult.map((r: any, idx: number) => ({
               title: r.title || `Topic ${idx + 1}`,
               content: r.content || r.summary || '',
               sources: r.sources || []
@@ -435,17 +430,19 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
         setIsGeneratingResearch(false);
       }
     } else {
-      setCurrentStage(3);
+      await buildSkeleton();
     }
   };
 
-  const proceedFromDeepResearch = () => {
-    setCurrentStage(3);
+  const proceedFromDeepResearch = async () => {
+    const researchContext = deepResearch?.topics.map(t => `${t.title}:\n${t.content}`).join('\n\n') || '';
+    const fullContext = `Audience: ${audience}\nTone: ${tone}\nKey Takeaway: ${keyTakeaway}\n\nResearch Data:\n${researchContext}`;
+    await buildSkeleton(fullContext);
   };
 
-  const skipDeepResearch = () => {
+  const skipDeepResearch = async () => {
     setDeepResearch(null);
-    setCurrentStage(3);
+    await buildSkeleton();
   };
 
   const startEditResearch = (index: number) => {
@@ -652,12 +649,12 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
         )}
 
         <button
-          onClick={processContent}
-          disabled={isLoading}
+          onClick={goToStage2}
+          disabled={!contentInput.trim() && contentSource !== 'upload'}
           className="w-full py-3 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 min-h-[48px]"
         >
-          {isLoading ? <RefreshCw className="animate-spin" /> : <ChevronRight />}
-          {lang === 'es' ? 'Procesar Contenido' : 'Process Content'}
+          <ChevronRight />
+          {lang === 'es' ? 'Siguiente' : 'Next'}
         </button>
       </div>
     </div>
@@ -858,10 +855,11 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
           </button>
           <button
             onClick={proceedFromDeepResearch}
-            className="flex-1 py-3 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest flex items-center justify-center gap-2 min-h-[48px]"
+            disabled={isLoading}
+            className="flex-1 py-3 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest flex items-center justify-center gap-2 min-h-[48px] disabled:opacity-50"
           >
-            <ChevronRight />
-            {lang === 'es' ? 'Siguiente' : 'Next'}
+            {isLoading ? <RefreshCw className="animate-spin" /> : <ChevronRight />}
+            {lang === 'es' ? 'Generar Presentación' : 'Generate Presentation'}
           </button>
         </div>
       </div>

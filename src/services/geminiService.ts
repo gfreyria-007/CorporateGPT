@@ -401,7 +401,48 @@ REQUIRED JSON RESPONSE:
   catch { return { title: '', subtitle: '', sections: [], conclusions: [] }; }
 }
 
-export async function generateSkeleton(prompt: string, count: number = 10): Promise<SlideSkeleton[]> {
+export async function generateDeepResearch(topic: string, audience: string, keyTakeaway: string): Promise<any[]> {
+  const payload = {
+    model: "gemini-2.0-flash",
+    contents: [{ role: "user", parts: [{ text: `You are an expert researcher.
+Topic: ${topic}
+Audience: ${audience}
+Key Takeaway: ${keyTakeaway}
+
+Generate 3 deep research topics with detailed content and insights that will be used to create a highly professional presentation.
+Include specific data points, trends, and actionable insights.
+
+Return JSON EXACTLY like this:
+{
+  "research": [
+    {
+      "title": "Topic title",
+      "content": "Detailed insights and findings...",
+      "sources": ["Source 1", "Source 2"]
+    }
+  ]
+}` }] }],
+    config: { responseMimeType: "application/json" }
+  };
+
+  const res = await fetch('/api/gemini', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'generateContent', payload })
+  });
+  
+  if (!res.ok) throw new Error("API Error");
+  
+  const data = await res.json();
+  try {
+    const raw = data.research || (data.text ? JSON.parse(data.text.replace(/```json/g,'').replace(/```/g,'').trim()).research : []);
+    return raw || [];
+  } catch(e) {
+    return [];
+  }
+}
+
+export async function generateSkeleton(prompt: string, count: number = 10, additionalContext?: string): Promise<SlideSkeleton[]> {
   const systemInstruction = `You are a high-level Strategic Presentation Architect at Catalizia. 
   Current Date context: ${new Date().toISOString().split('T')[0]}. The current year is 2026.
   The user is creating a presentation on: "${prompt}".
@@ -424,6 +465,7 @@ export async function generateSkeleton(prompt: string, count: number = 10): Prom
   const payload = {
     model: "gemini-2.0-flash",
     contents: [{ role: "user", parts: [{ text: `Generate EXACTLY ${count} content-rich slides for this topic: "${prompt}".
+    ${additionalContext ? `\nCRITICAL CONTEXT & DEEP RESEARCH TO INTEGRATE:\n${additionalContext}\n` : ''}
     IMPORTANT: Fill each slide with REAL, SPECIFIC information. No placeholder text.
     For at least 3-4 slides, choose an appropriate chartType (bar, line, pie, etc.) and provide the corresponding REAL DATA in 'tableData' (format: Label,Value\nLabel,Value).
     Return as JSON: { "slides": [{ "id": "1", "title": "Specific Title", "subtitle": "Descriptive subtitle", "content": ["Concrete fact 1", "Specific data point 2", "Real insight 3"], "chartType": "bar", "tableData": "Q1,450\nQ2,620\nQ3,580\nQ4,910" }] }` }] }],
