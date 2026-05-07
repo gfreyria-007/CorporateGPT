@@ -618,28 +618,31 @@ export async function generateProImageForSlide(
     cinematic: 'Cinematic spectacular presentation, epic lighting, high contrast, dramatic shadows, blockbuster film aesthetic'
   };
 
-  const prompt = `Create a WORLD-CLASS corporate presentation slide infographic.
+  const theme = 'light';
+  const prompt = `You are a World-Class Graphic Information Designer.
+  Task: Create a masterpiece INFOGRAPHIC POSTER for the slide: "${title}: ${subtitle}".
+  
+  CONTENT CONTEXT:
+  - Main Subject: ${title}
+  - Nuanced Insight: ${subtitle}
+  - Strategic Data: ${content.join(' | ')}
+  - Visualization Request: ${chartType !== 'none' ? `Integrated ${chartType} visualization representing: ${tableData}` : 'Bespoke conceptual illustration'}
 
-TITLE: "${title}"
-SUBTITLE: "${subtitle}"
-KEY POINTS: ${content.join(' | ')}
-
-${chartType !== 'none' && tableData ? `DATA VISUALIZATION: ${chartType} chart with: ${tableData}` : 'NO CHART DATA'}
-
-VISUAL STYLE: ${stylePrompts[style as keyof typeof stylePrompts] || stylePrompts.auto}
-VISUAL LAYOUT STRATEGY: ${layout} (e.g., focal, grid, bento, technical)
-
-CRITICAL REQUIREMENTS:
-1. 16:9 cinematic aspect ratio, ultra-high definition, 8k resolution
-2. Professional typography with hierarchy, zero noise, crystal clear rendering
-3. Cohesive color scheme (blue/emerald/amber/purple) with sophisticated gradients
-4. No placeholder text - render actual content with sharp edges
-5. High contrast, publication-ready quality, studio lighting
-6. Subtle gradients and shadows for depth, premium textures
-7. Infographic-style data presentation, clear icons, balanced composition
-8. Clean whitespace, intentional composition, mathematical precision
-9. Visual elements supporting the message, metaphors rendered with high fidelity
-10. Corporate/professional aesthetic, futuristic yet grounded design`;
+  VISUAL THEME: ${layout} (Style: ${theme === 'dark' ? 'Modern Dark Cyberpunk' : 'Clean Professional Swiss Design'}).
+  
+  CORE VISUAL STRATEGY:
+  - Do NOT create a background. Create a COMPLETE, HIGH-DENSITY INFOGRAPHIC.
+  - Use a POWERFUL CONCEPTUAL METAPHOR (e.g., if the topic is governance, use Lego blocks; if it's waves, use a technical cross-section of an ocean with depth markers).
+  - INTEGRATE the data visualization directly into the artwork. Use 3D icons, specific data callouts, and technical diagrams.
+  
+  CRITICAL REQUIREMENTS:
+  1. 16:9 cinematic aspect ratio, ultra-high definition, 8k resolution.
+  2. Zero digital noise. Crystal clear, sharp vector-style or high-end 3D rendering.
+  3. Professional typography integrated into the design (sharp, minimal, modern).
+  4. Use a specific, harmonious color palette (e.g., Deep Navy and Emerald, or Charcoal and Gold).
+  5. The image must look like a standalone, professional poster from a top-tier design agency.
+  6. High contrast, studio lighting, premium textures (glassmorphism, matte, or brushed metal).
+  7. No generic "stock photo" feel. Must be a bespoke data-driven illustration.`;
 
   // Use Imagen for PPT slide image generation
   const res = await fetch('/api/gemini', {
@@ -647,7 +650,7 @@ CRITICAL REQUIREMENTS:
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       action: 'generateImage',
-      model: 'imagen-4.0-fast-generate-001',
+      model: 'imagen-4.0-ultra-generate-001',
       prompt: prompt,
       aspectRatio: '16:9'
     })
