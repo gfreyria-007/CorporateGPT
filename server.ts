@@ -383,11 +383,11 @@ async function startServer() {
       if (deepThink) systemContent += `\n\n[REASONING MODE ENABLED]: Think step-by-step in extreme detail.`;
       if (webSearch) systemContent += `\n\n[SEARCH MODE ENABLED]: Use web data context.`;
 
-      console.log(`[API/CHAT] Requesting model: ${model || 'openrouter/auto'}`);
+      console.log(`[API/CHAT] Requesting model: ${model || 'google/gemini-2.0-flash-001'}`);
 
       const fallbackModels = [
-        model || 'openrouter/auto',
-        'anthropic/claude-3.5-sonnet',
+        model || 'google/gemini-2.0-flash-001',
+        'anthropic/claude-3.5-sonnet:beta',
         'openai/gpt-4o',
         'google/gemini-2.0-pro-exp-02-05:free',
         'mistralai/mistral-large'
@@ -801,7 +801,7 @@ async function startServer() {
 
       // --- SIMPLIFIED TEXT ROUTING FOR TECHIE (FASTER) ---
       if (action === 'chat' || action === 'generateContent') {
-        const model = payload.model || 'openrouter/auto';
+        const model = payload.model || 'google/gemini-2.0-flash-001';
         const messages = payload.contents || payload.history || [];
         const formattedMessages = messages.map((m: any) => ({
           role: m.role === 'model' ? 'assistant' : m.role,
