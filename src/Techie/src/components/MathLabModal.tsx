@@ -248,7 +248,7 @@ const MathLabModal: React.FC<MathLabModalProps> = ({ onClose, grade }) => {
     };
 
     const calculateAreaTri = () => {
-        return Math.abs((v1.x * (v2.y - v3.y) + v2.x * (v3.y - v1.y) + v3.x * (v1.y - v2.y)) / 2).toFixed(1);
+        return Math.abs((v1.x * (v2.y - v3.y) + v2.x * (v3.y - v1.y) + v3.x * (v1.y - v2.y)) / 2);
     };
 
     const renderArithmetic = () => {
@@ -399,7 +399,7 @@ const MathLabModal: React.FC<MathLabModalProps> = ({ onClose, grade }) => {
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+                <div className="flex-1 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden">
                     {/* Sidebar / Tools */}
                     <div className="w-full md:w-48 bg-gray-50 border-b md:border-b-0 md:border-r border-gray-100 p-4 flex md:flex-col gap-2 overflow-x-auto shrink-0 scrollbar-hide">
                         <button 
@@ -461,11 +461,11 @@ const MathLabModal: React.FC<MathLabModalProps> = ({ onClose, grade }) => {
                     </div>
 
                     {/* Canvas Area */}
-                    <div className="flex-1 bg-pattern relative p-4 sm:p-8 overflow-hidden flex items-center justify-center">
+                    <div className="flex-1 min-h-[400px] md:min-h-0 shrink-0 md:shrink bg-pattern relative p-4 sm:p-8 overflow-hidden flex items-center justify-center">
                         {mode === 'arithmetic' ? (
                             renderArithmetic()
                         ) : (
-                            <svg id="math-lab-svg" viewBox="0 0 500 500" className="w-full h-full max-w-2xl max-h-full drop-shadow-2xl overflow-visible">
+                            <svg id="math-lab-svg" viewBox="0 0 500 500" className="w-full h-full max-w-2xl max-h-full drop-shadow-2xl overflow-visible touch-none">
                                 <defs>
                                     <pattern id="smallGrid" width="10" height="10" patternUnits="userSpaceOnUse">
                                         <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#e5e7eb" strokeWidth="0.5"/>
@@ -577,7 +577,7 @@ const MathLabModal: React.FC<MathLabModalProps> = ({ onClose, grade }) => {
                                         <g transform="translate(250, 470)">
                                             <rect x="-100" y="-30" width="200" height="40" rx="20" fill="white" className="shadow-sm" />
                                             <text textAnchor="middle" className="text-2xl font-black fill-[#ca8a04] uppercase tracking-tighter">
-                                                Área: {(calculateAreaTri() as any / 100).toFixed(1)} u²
+                                                Área: {(calculateAreaTri() / 100).toFixed(1)} u²
                                             </text>
                                         </g>
 
