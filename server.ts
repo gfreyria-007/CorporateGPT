@@ -259,7 +259,7 @@ async function startServer() {
   app.get('/api/health', (req, res) => {
     res.json({
       status: 'healthy',
-      version: '5.0.3',
+      version: '5.1.0',
       security: {
         helmet: 'active',
         rateLimit: 'active',
