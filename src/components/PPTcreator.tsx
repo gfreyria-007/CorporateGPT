@@ -11,6 +11,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { translations } from '../lib/translations';
 import * as geminiService from '../services/geminiService';
 
+import jsPDF from 'jspdf';
+import pptxgen from 'pptxgenjs';
+
 type Stage = 1 | 2 | 3 | 4 | 5;
 
 interface SlideContent {
@@ -247,7 +250,7 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
       try {
         // RACE: 10s Timeout or AI Response
         const skeletonPromise = geminiService.generateSkeleton(userContent, validSlides);
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 10000));
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 30000));
         
         skeleton = await Promise.race([skeletonPromise, timeoutPromise]) as any[];
       } catch (err) {
@@ -381,11 +384,46 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
   };
 
   const exportAsPDF = () => {
-    alert('PDF export would be generated here');
+    if (renderedSlides.filter(s => s).length === 0) {
+      alert(lang === 'es' ? 'No hay diapositivas renderizadas para exportar.' : 'No rendered slides to export.');
+      return;
+    }
+
+    const doc = new jsPDF({
+      orientation: 'landscape',
+      unit: 'px',
+      format: [1920, 1080]
+    });
+
+    let addedFirst = false;
+    renderedSlides.forEach((slide, i) => {
+      if (slide) {
+        if (addedFirst) doc.addPage([1920, 1080], 'landscape');
+        doc.addImage(slide, 'PNG', 0, 0, 1920, 1080);
+        addedFirst = true;
+      }
+    });
+
+    doc.save(`${contentInput || 'presentation'}.pdf`);
   };
 
   const exportAsPPTX = () => {
-    alert('PPTX export would be generated here');
+    if (renderedSlides.filter(s => s).length === 0) {
+      alert(lang === 'es' ? 'No hay diapositivas renderizadas para exportar.' : 'No rendered slides to export.');
+      return;
+    }
+
+    const pres = new pptxgen();
+    pres.layout = 'LAYOUT_16x9';
+
+    renderedSlides.forEach((slide, i) => {
+      if (slide) {
+        const pptSlide = pres.addSlide();
+        pptSlide.addImage({ data: slide, x: 0, y: 0, w: '100%', h: '100%' });
+      }
+    });
+
+    pres.writeFile({ fileName: `${contentInput || 'presentation'}.pptx` });
   };
 
   // Stage 1: Scope & Content Intake

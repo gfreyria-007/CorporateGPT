@@ -402,18 +402,22 @@ REQUIRED JSON RESPONSE:
 }
 
 export async function generateSkeleton(prompt: string, count: number = 10): Promise<SlideSkeleton[]> {
-  const systemInstruction = `You are a high-level Presentation Architect at Catalizia. 
+  const systemInstruction = `You are a high-level Strategic Presentation Architect at Catalizia. 
   Current Date context: ${new Date().toISOString().split('T')[0]}. The current year is 2026.
   The user is creating a presentation on: "${prompt}".
   
+  CORE MISSION: 
+  Provide "World-Class" depth. Do not use generic corporate jargon like "Strategic Alignment" unless backed by specific, nuanced insights.
+  If the topic is specialized (e.g., "The 7th Wave Principle"), you must research and include its specific origins, physics, and strategic applications.
+  
   CONTEXTUAL INTELLIGENCE:
   - If additional context from a "Neural Interview" is provided, you MUST synthesize and prioritize it.
-  - Generate EXACTLY ${count} slides that form a cohesive, strategic narrative.
-  - content array: 3-5 high-density, professional bullet points. Use specific data, names, and industry-standard insights.
-  - Each slide MUST have a distinct, high-impact title and a context-setting subtitle.
+  - Generate EXACTLY ${count} slides that form a cohesive, high-stakes narrative.
+  - content array: 3-5 high-density, professional bullet points. Use specific data, names, industry-standard insights, and sophisticated metaphors.
+  - Each slide MUST have a distinct, high-impact title and a context-setting subtitle that adds "flavor" and depth.
   
   STYLE & TONE:
-  - Corporate, sophisticated, and data-driven.
+  - Corporate but visionary, sophisticated, and data-driven.
   - Respond in the SAME language as the prompt.
   - Return ONLY the JSON object, nothing else.`;
 
@@ -447,7 +451,8 @@ export async function generateSkeleton(prompt: string, count: number = 10): Prom
         },
         required: ["slides"]
       }
-    }
+    },
+    tools: [{ googleSearchRetrieval: {} }]
   };
 
   const res = await fetch('/api/gemini', {
@@ -625,16 +630,16 @@ VISUAL STYLE: ${stylePrompts[style as keyof typeof stylePrompts] || stylePrompts
 VISUAL LAYOUT STRATEGY: ${layout} (e.g., focal, grid, bento, technical)
 
 CRITICAL REQUIREMENTS:
-1. 16:9 cinematic aspect ratio
-2. Professional typography with hierarchy
-3. Cohesive color scheme (blue/emerald/amber/purple)
-4. No placeholder text - render actual content
-5. High contrast, publication-ready quality
-6. Subtle gradients and shadows for depth
-7. Infographic-style data presentation
-8. Clean whitespace, intentional composition
-9. Visual elements supporting the message
-10. Corporate/professional aesthetic`;
+1. 16:9 cinematic aspect ratio, ultra-high definition, 8k resolution
+2. Professional typography with hierarchy, zero noise, crystal clear rendering
+3. Cohesive color scheme (blue/emerald/amber/purple) with sophisticated gradients
+4. No placeholder text - render actual content with sharp edges
+5. High contrast, publication-ready quality, studio lighting
+6. Subtle gradients and shadows for depth, premium textures
+7. Infographic-style data presentation, clear icons, balanced composition
+8. Clean whitespace, intentional composition, mathematical precision
+9. Visual elements supporting the message, metaphors rendered with high fidelity
+10. Corporate/professional aesthetic, futuristic yet grounded design`;
 
   // Use Imagen for PPT slide image generation
   const res = await fetch('/api/gemini', {
