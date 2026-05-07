@@ -1,5 +1,6 @@
 import React from 'react';
 import { AuthProvider } from '../Techie/src/core/AuthContext';
+import { LanguageProvider } from '../Techie/src/core/LanguageContext';
 import { TechieMain } from '../Techie/src/TechieMain';
 import { useAuth } from '../lib/AuthContext';
 import '../Techie/src/index.css';
@@ -15,7 +16,9 @@ export const TechieWorkspace = () => {
   return (
     <div id="techie-root" className="w-full h-full overflow-hidden bg-slate-50">
        <AuthProvider mainUser={mainUser}>
-          <TechieMain />
+         <LanguageProvider>
+           <TechieMain />
+         </LanguageProvider>
        </AuthProvider>
     </div>
   );
