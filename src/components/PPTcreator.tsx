@@ -320,7 +320,7 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
     setCurrentStage(2);
   };
 
-  const buildSkeleton = async (researchContext?: string) => {
+  const buildSkeleton = async (researchContext?: string, nextStage?: number) => {
     const validSlides = Math.max(1, slideCount);
     setIsLoading(true);
     
@@ -383,8 +383,13 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
         }
         setNarrative(fallback);
       }
+      }
       
-      setCurrentStage(3);
+      if (nextStage !== undefined) {
+        setCurrentStage(nextStage as any);
+      } else {
+        setCurrentStage(3);
+      }
     } catch (error) {
       console.error('CRITICAL: Error building skeleton:', error);
       alert(lang === 'es' 
@@ -459,9 +464,21 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
   };
 
   const proceedFromDeepResearch = async () => {
-    const researchContext = deepResearch?.topics.map(t => `${t.title}:\n${t.content}`).join('\n\n') || '';
-    const fullContext = `Audience: ${audience}\nTone: ${tone}\nKey Takeaway: ${keyTakeaway}\n\nResearch Data:\n${researchContext}`;
-    await buildSkeleton(fullContext);
+    setIsLoading(true);
+    try {
+      const researchContext = deepResearch?.topics.map(t => `${t.title}:\n${t.content}`).join('\n\n') || '';
+      const fullContext = `Audience: ${audience}\nTone: ${tone}\nKey Takeaway: ${keyTakeaway}\n\nResearch Data:\n${researchContext}`;
+      
+      // Build skeleton and jump directly to Stage 5 (Final Render/Export)
+      await buildSkeleton(fullContext, 5);
+      
+      // Auto-set style if not already set
+      if (!selectedTheme || selectedTheme === 'auto') {
+        setSelectedTheme('professional');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const skipDeepResearch = async () => {
