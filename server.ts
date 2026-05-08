@@ -75,7 +75,7 @@ const trackUsage = async (userId: string | null | undefined, isImage: boolean) =
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 // Single source of truth — reads version from package.json at runtime
-const VERSION: string = JSON.parse(require('fs').readFileSync('./package.json', 'utf-8')).version;
+const VERSION: string = JSON.parse(readFileSync('./package.json', 'utf-8')).version;
 
 
 // Production Health Check
@@ -1270,7 +1270,7 @@ return res.status(400).json({ error: 'Unknown action' });
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`Version: 5.3.2 ready`);
+    console.log(`Version:  ready`);
   });
 }
 
