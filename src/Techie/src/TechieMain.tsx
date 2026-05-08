@@ -89,7 +89,7 @@ export const TechieMain: React.FC = () => {
     setProfile: setUserProfile
   } = useAuth();
 
-  const { language } = useLanguage();
+  const { language, setLanguage } = useLanguage();
   const isSpanish = language === 'es';
 
   const [showAdminDashboard, setShowAdminDashboard] = useState(false);
@@ -266,6 +266,8 @@ const canUseSystemKey = (isSubscribed || isAdminRole);
     setShowDiagnostics(false);
     setShowImagePopup(false);
     setShowImageEditor(false);
+    setShowImageModelSelector(false);
+    setShowBadgePopup(false);
     setActiveGame(null);
     setAwardedBadge(null);
   };
@@ -385,6 +387,29 @@ const canUseSystemKey = (isSubscribed || isAdminRole);
       } catch (e) { 
           console.error('Error awarding badge:', e);
       }
+  };
+
+  const handleDeleteData = async () => {
+    try {
+      await updateProfile({
+        badges: [],
+        projects: [],
+        monthlyCostUsed: 0,
+        dailyUsageCount: 0,
+        name: null,
+        age: null,
+        gradeId: null
+      });
+      setUserName(null);
+      setUserAge(0);
+      setSelectedGrade(null);
+      setMessages([]);
+      localStorage.removeItem('techie_grade');
+      alert(isSpanish ? 'Tus datos han sido borrados. Techie se reiniciará.' : 'Your data has been deleted. Techie will restart.');
+      window.location.reload();
+    } catch (e) {
+      console.error('Error deleting data:', e);
+    }
   };
 
   const handleSaveProject = async (type: 'image' | 'report' | 'certificate', title: string, url?: string, content?: string) => {
@@ -620,11 +645,7 @@ if (parsed.type === 'image-request') {
               transition={{ duration: 0.5 }}
               className="mb-12 flex flex-col items-center"
             >
-                <img 
-                  src="https://catalizia.com/images/logo-white.png" 
-                  alt="Catalizia" 
-                  className="h-12 w-auto object-contain mb-3 brightness-0 invert opacity-90"
-                />
+                <h2 className="text-white text-3xl font-black tracking-widest uppercase mb-3 drop-shadow-md">CatalizIA</h2>
                 <p className="text-indigo-400 text-[10px] font-black tracking-[0.6em] uppercase">Intelligence for Education</p>
             </motion.div>
 
@@ -635,7 +656,7 @@ if (parsed.type === 'image-request') {
               className="w-40 h-40 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[3rem] flex items-center justify-center mb-10 p-6 relative group"
             >
               <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/20 to-blue-500/20 rounded-[3rem] opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <img src="https://catalizia.com/images/catalizia-techie.png" alt="Techie" className="w-full h-full object-contain relative z-10 drop-shadow-2xl" />
+              <img src="/techie-mascot.png" alt="Techie" className="w-full h-full object-contain relative z-10 drop-shadow-2xl" />
             </motion.div>
 
             <motion.h1 
@@ -686,13 +707,6 @@ if (parsed.type === 'image-request') {
     );
   }
 
-  const handleDeleteData = async () => {
-      try {
-          await deleteAccount();
-      } catch (error) {
-          alert("Hubo un error al borrar tus datos. Por favor contacta a soporte.");
-      }
-  };
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-pattern text-[#1e3a8a] font-sans">
@@ -927,7 +941,7 @@ if (parsed.type === 'image-request') {
             isOpen={showSettingsModal} 
             onClose={() => setShowSettingsModal(false)} 
             userProfile={userProfile} 
-            onProfileUpdate={(updated) => setUserProfile(updated)} 
+            onProfileUpdate={() => {}} 
             onDeleteData={handleDeleteData}
             onOpenFAQ={() => { setShowSettingsModal(false); setShowFAQ(true); }}
             selectedGrade={selectedGrade}

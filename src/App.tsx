@@ -160,6 +160,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    setShowImageModelSelector(false);
+    setShowFAQ(false);
+  }, [activePanel, appMode]);
+
+  useEffect(() => {
     // URL Params Handling
     const params = new URLSearchParams(window.location.search);
     
