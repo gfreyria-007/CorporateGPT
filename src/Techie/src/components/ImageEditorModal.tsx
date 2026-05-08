@@ -66,7 +66,7 @@ const IMAGE_SIZES = [
 
 type EditorMode = 'generate' | 'edit';
 
-export default function ImageEditorModal({ isOpen, onClose, initialImage, onSave, user: providedUser }: ImageEditorModalProps) {
+const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, initialImage, onSave, user: providedUser }) => {
   const authContext = useAuth();
   const user = providedUser || authContext?.user;
   const [editorMode, setEditorMode] = useState<EditorMode>('generate');
