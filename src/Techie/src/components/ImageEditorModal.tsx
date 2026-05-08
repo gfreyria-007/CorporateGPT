@@ -1,11 +1,20 @@
 import React, { useState, useRef, useEffect, useCallback, useContext } from 'react';
 import { useAuth, AuthContext } from '../core/AuthContext';
 import { AspectRatio } from '../types';
+import { 
+  Sparkles, X, Wand2, ArrowRight, Lightbulb, Zap, Send, 
+  Loader2, Undo2, RotateCcw, ImageIcon, Palette, Square, 
+  Type, MousePointer2, Brush, Eraser, Download, Share2, 
+  Layers, Trash2, Check, Wand, Target
+} from 'lucide-react';
+import { PromptGenie } from '../../components/PromptGenie';
 
 interface ImageEditorModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialImage?: string;
+  onSave?: (image: string) => void;
+  user?: any;
 }
 
 interface StyleTemplate {
@@ -78,12 +87,14 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
   const [brushSize, setBrushSize] = useState(40);
   const [brushColor, setBrushColor] = useState('rgba(255, 0, 0, 0.6)');
   const [mode, setMode] = useState<'brush' | 'erase'>('brush');
-  const [selectedTemplates, setSelectedTemplates] = useState<StyleTemplate[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<StyleTemplate | null>(null);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [showGenie, setShowGenie] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [editedImage, setEditedImage] = useState<string | null>(null);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
+  const [lastPoint, setLastPoint] = useState<{ x: number, y: number } | null>(null);
 
   const imageCanvasRef = useRef<HTMLCanvasElement>(null);
   const maskCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -147,18 +158,33 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
     if (!isDrawing || !maskCanvasRef.current) return;
     const ctx = maskCanvasRef.current.getContext('2d');
     if (!ctx) return;
+    
     const { x, y } = getCanvasCoords(e);
+    
     ctx.beginPath();
-    ctx.arc(x, y, brushSize, 0, Math.PI * 2);
-    ctx.fillStyle = mode === 'brush' ? brushColor : 'rgba(0,0,0,0)';
+    ctx.lineWidth = brushSize * 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
     if (mode === 'erase') {
       ctx.globalCompositeOperation = 'destination-out';
+      ctx.strokeStyle = 'rgba(0,0,0,1)';
     } else {
       ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = brushColor;
     }
-    ctx.fill();
-    ctx.globalCompositeOperation = 'source-over';
-  }, [isDrawing, getCanvasCoords, brushSize, brushColor, mode]);
+    
+    if (lastPoint) {
+      ctx.moveTo(lastPoint.x, lastPoint.y);
+      ctx.lineTo(x, y);
+    } else {
+      ctx.moveTo(x, y);
+      ctx.lineTo(x, y);
+    }
+    
+    ctx.stroke();
+    setLastPoint({ x, y });
+  }, [isDrawing, getCanvasCoords, brushSize, brushColor, mode, lastPoint]);
 
   const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
     setIsDrawing(true);
@@ -166,26 +192,14 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
   };
 
   const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDrawing) return;
-    const canvas = maskCanvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    const { x, y } = getCanvasCoords(e);
-    ctx.beginPath();
-    if (mode === 'erase') {
-      ctx.globalCompositeOperation = 'destination-out';
-    } else {
-      ctx.globalCompositeOperation = 'source-over';
+    if (isDrawing) {
+      draw(e);
     }
-    ctx.arc(x, y, brushSize, 0, Math.PI * 2);
-    ctx.fillStyle = mode === 'brush' ? brushColor : 'rgba(0,0,0,0)';
-    ctx.fill();
-    ctx.globalCompositeOperation = 'source-over';
   };
 
   const handleMouseUp = () => {
     setIsDrawing(false);
+    setLastPoint(null);
   };
 
   const clearMask = () => {
@@ -209,15 +223,9 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
     }
   };
 
-  const toggleTemplate = (template: StyleTemplate) => {
-    setSelectedTemplates(prev => {
-      const exists = prev.find(t => t.id === template.id);
-      if (exists) {
-        return prev.filter(t => t.id !== template.id);
-      } else {
-        return [...prev, template];
-      }
-    });
+  const applyTemplate = (template: StyleTemplate) => {
+    setSelectedTemplate(template);
+    setShowTemplates(false);
   };
 
   const getMaskBase64 = () => {
@@ -272,8 +280,7 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
     setAbortController(controller);
 
     try {
-      const stylePrompts = selectedTemplates.map(t => t.prompt).join(', ');
-      const fullPrompt = stylePrompts ? `Subject: ${prompt}. Style Context: ${stylePrompts}` : prompt;
+      const fullPrompt = selectedTemplate ? `Subject: ${prompt}. Style Context: ${selectedTemplate.prompt}` : prompt;
       const apiPath = '/api/gemini'; // Force all to /api/gemini for robustness and fallback support
       
       const idToken = user ? await user.getIdToken() : null;
@@ -345,8 +352,7 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
       const sourceImageBase64 = getSourceImageBase64();
       const maskImageBase64 = getMaskBase64();
       
-      const stylePrompts = selectedTemplates.map(t => t.prompt).join(', ');
-      const fullPrompt = stylePrompts ? `Subject: ${prompt}. Style Context: ${stylePrompts}` : prompt;
+      const fullPrompt = selectedTemplate ? `Subject: ${prompt}. Style Context: ${selectedTemplate.prompt}` : prompt;
       
       // For editing/inpainting, we must use an Imagen model that supports masks
       const editModel = selectedModel.startsWith('gemini') ? 'imagen-3.0-fast-generate-001' : selectedModel;
@@ -412,7 +418,7 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
     setEditedImage(null);
     clearMask();
     setPrompt('');
-    setSelectedTemplates([]);
+    setSelectedTemplate(null);
     setGeneratedImages([]);
   };
 
@@ -513,7 +519,17 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
 
               {/* Prompt */}
               <div>
-                <label className="block text-sm font-bold text-teal-800 mb-2 uppercase tracking-wide">🎯 Prompt</label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="flex items-center gap-2 text-sm font-bold text-teal-800 uppercase tracking-wide">
+                    <Target size={16} className="text-teal-500" /> Prompt
+                  </label>
+                  <button
+                    onClick={() => setShowGenie(true)}
+                    className="text-xs font-bold text-purple-600 hover:text-purple-700 flex items-center gap-1 bg-purple-50 px-2 py-1 rounded-lg border border-purple-100 transition-colors"
+                  >
+                    <Wand2 size={12} /> Prompt Genie
+                  </button>
+                </div>
                 <textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
@@ -521,6 +537,18 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
                   className="w-full p-4 rounded-2xl border-2 border-teal-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none font-medium text-gray-700 bg-white shadow-sm resize-none"
                   rows={3}
                 />
+                
+                {showGenie && (
+                  <PromptGenie 
+                    isOpen={showGenie}
+                    onClose={() => setShowGenie(false)}
+                    onApply={(enhancedPrompt) => {
+                      setPrompt(enhancedPrompt);
+                      setShowGenie(false);
+                    }}
+                    initialPrompt={prompt}
+                  />
+                )}
               </div>
 
               {/* Style Templates */}
@@ -529,9 +557,9 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
                   onClick={() => setShowTemplates(!showTemplates)}
                   className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl font-bold text-sm shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
                 >
-                  <span>✨</span>
+                  <Sparkles size={16} />
                   {showTemplates ? 'Ocultar Estilos' : '20 Estilos Disponibles'}
-                  <span className={`transform transition-transform ${showTemplates ? 'rotate-180' : ''}`}>▼</span>
+                  <RotateCcw size={14} className={`transform transition-transform ${showTemplates ? 'rotate-180' : ''}`} />
                 </button>
                 
                 {showTemplates && (
@@ -539,19 +567,14 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
                     {STYLE_TEMPLATES.map((template) => (
                       <button
                         key={template.id}
-                        onClick={() => toggleTemplate(template)}
-                        className={`p-3 rounded-xl text-left transition-all border-2 ${selectedTemplates.find(t => t.id === template.id) 
+                        onClick={() => applyTemplate(template)}
+                        className={`p-3 rounded-xl text-left transition-all border-2 ${selectedTemplate?.id === template.id 
                           ? 'bg-purple-100 border-purple-500 shadow-lg scale-105' 
                           : 'bg-white border-transparent hover:border-purple-200 hover:shadow-md'}`}
                       >
                         <div className="text-xl mb-1">{template.icon}</div>
                         <div className="text-xs font-black text-gray-800">{template.name}</div>
                         <div className="text-[9px] text-gray-400 uppercase">{template.category}</div>
-                        {selectedTemplates.find(t => t.id === template.id) && (
-                          <div className="absolute top-1 right-1 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center text-[8px] text-white font-bold">
-                            ✓
-                          </div>
-                        )}
                       </button>
                     ))}
                   </div>
@@ -568,11 +591,13 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
                     : 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 hover:shadow-xl'}`}
               >
                 {isProcessing ? (
-                  <span className="flex items-center justify-center gap-2" onClick={handleStop}>
-                    <span>⏹️</span> Detener
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 size={24} className="animate-spin" /> Detener
                   </span>
                 ) : (
-                  '🚀 Generar Imagen'
+                  <span className="flex items-center justify-center gap-2">
+                    <Zap size={24} /> Generar Imagen
+                  </span>
                 )}
               </button>
 
@@ -612,7 +637,7 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
                   onClick={() => fileInputRef.current?.click()}
                   className="py-3 px-6 bg-teal-500 text-white rounded-full font-bold shadow-lg hover:bg-teal-600 hover:shadow-xl transition-all flex items-center gap-2"
                 >
-                  <span>📁</span> Subir Imagen
+                  <ImageIcon size={18} /> Subir Imagen
                 </button>
               </div>
 
@@ -657,15 +682,15 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
                     <div className="flex bg-white rounded-full p-1 shadow-md border border-teal-100">
                       <button
                         onClick={() => setMode('brush')}
-                        className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${mode === 'brush' ? 'bg-teal-500 text-white shadow' : 'text-teal-700 hover:bg-teal-50'}`}
+                        className={`px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${mode === 'brush' ? 'bg-teal-500 text-white shadow' : 'text-teal-700 hover:bg-teal-50'}`}
                       >
-                        🖌️ Brush
+                        <Brush size={16} /> Brush
                       </button>
                       <button
                         onClick={() => setMode('erase')}
-                        className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${mode === 'erase' ? 'bg-red-500 text-white shadow' : 'text-red-700 hover:bg-red-50'}`}
+                        className={`px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${mode === 'erase' ? 'bg-red-500 text-white shadow' : 'text-red-700 hover:bg-red-50'}`}
                       >
-                        🧹 Erase
+                        <Eraser size={16} /> Erase
                       </button>
                     </div>
 
@@ -684,9 +709,9 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
 
                     <button
                       onClick={clearMask}
-                      className="px-4 py-2 bg-white text-red-600 rounded-full font-bold text-sm shadow-md border border-red-100 hover:bg-red-50 transition-colors"
+                      className="px-4 py-2 bg-white text-red-600 rounded-full font-bold text-sm shadow-md border border-red-100 hover:bg-red-50 transition-colors flex items-center gap-2"
                     >
-                      🗑️ Clear
+                      <Trash2 size={16} /> Clear
                     </button>
                   </div>
 
@@ -706,8 +731,8 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
                         {STYLE_TEMPLATES.map((template) => (
                           <button
                             key={template.id}
-                            onClick={() => toggleTemplate(template)}
-                            className={`p-3 rounded-xl text-left transition-all border-2 ${selectedTemplates.find(t => t.id === template.id) 
+                            onClick={() => applyTemplate(template)}
+                            className={`p-3 rounded-xl text-left transition-all border-2 ${selectedTemplate?.id === template.id 
                               ? 'bg-purple-100 border-purple-500 shadow-lg' 
                               : 'bg-white border-transparent hover:border-purple-200'}`}
                           >
@@ -721,13 +746,21 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
 
                   {/* Prompt for edit */}
                   <div>
-                    <label className="block text-sm font-bold text-teal-800 mb-2 uppercase tracking-wide">
-                      🎯 ¿Qué quieres cambiar?
-                    </label>
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="flex items-center gap-2 text-sm font-bold text-teal-800 uppercase tracking-wide">
+                        <Target size={16} className="text-teal-500" /> ¿Qué quieres cambiar?
+                      </label>
+                      <button
+                        onClick={() => setShowGenie(true)}
+                        className="text-xs font-bold text-purple-600 hover:text-purple-700 flex items-center gap-1 bg-purple-50 px-2 py-1 rounded-lg border border-purple-100 transition-colors"
+                      >
+                        <Wand2 size={12} /> Prompt Genie
+                      </button>
+                    </div>
                     <textarea
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
-                      placeholder="例: Add a cowboy hat, remove the sun, make it look like 80s anime..."
+                      placeholder="Add a cowboy hat, remove the sun, make it look like 80s anime..."
                       className="w-full p-4 rounded-2xl border-2 border-teal-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none font-medium text-gray-700 bg-white shadow-sm resize-none"
                       rows={3}
                     />
@@ -769,19 +802,19 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
                 onClick={handleDownload}
                 className="py-3 px-6 bg-teal-500 text-white rounded-full font-bold shadow-lg hover:bg-teal-600 hover:shadow-xl transition-all flex items-center gap-2"
               >
-                <span>💾</span> Descargar Imagen
+                <Download size={18} /> Descargar Imagen
               </button>
             </div>
           )}
 
           {/* Reset */}
-          {(editedImage || prompt || selectedTemplates.length > 0) && (
+          {(editedImage || prompt || selectedTemplate) && (
             <div className="mt-2 flex justify-center">
               <button
                 onClick={handleReset}
-                className="py-2 px-4 text-orange-600 font-bold text-sm hover:underline"
+                className="py-2 px-4 text-orange-600 font-bold text-sm hover:underline flex items-center gap-1"
               >
-                🔄 Reiniciar
+                <RotateCcw size={14} /> Reiniciar
               </button>
             </div>
           )}
