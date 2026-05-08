@@ -587,7 +587,7 @@ async function startServer() {
       }
 
         // 4. Handle Imagen image generation with Bulletproof Fallbacks
-                        if (action === 'generateImage' || (payload.model && payload.model.startsWith('imagen-'))) {
+                                if (action === 'generateImage' || (payload.model && (payload.model.startsWith('imagen-') || payload.model.includes('/')))) {
           // --- SMARTER PROMPT ENHANCEMENT (Subject-Preserving) ---
           let optimizedPrompt = payload.prompt;
           try {
@@ -596,7 +596,7 @@ async function startServer() {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                contents: [{ role: 'user', parts: [{ text: `Expand the following image prompt into a highly detailed, professional description for an AI image generator (Imagen 3). 
+                contents: [{ role: 'user', parts: [{ text: `Expand the following image prompt into a highly detailed, professional description for an AI image generator (Imagen 3 / DALL-E 3). 
 
                 CRITICAL INSTRUCTION: You MUST preserve the IDENTITY and ESSENCE of the SUBJECT. 
                 If the subject is a known character (like Spider-Man), do NOT replace them with a generic model. 
@@ -620,19 +620,53 @@ async function startServer() {
             console.warn("[IMAGEN] Prompt enhancement failed, using original:", e);
           }
 
+          // --- 1. TRY OPENROUTER IF SPECIFIED ---
+          if (finalModel.includes('/') || finalModel.startsWith('openai')) {
+            try {
+              console.log(`[OPENROUTER IMAGE] Generating with ${finalModel}...`);
+              const orResponse = await fetch('https://openrouter.ai/api/v1/images/generations', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                  'HTTP-Referer': 'https://catalizia.com',
+                  'X-Title': 'Catalizia CorporateGPT'
+                },
+                body: JSON.stringify({
+                  model: finalModel,
+                  prompt: optimizedPrompt,
+                  aspect_ratio: payload.aspectRatio || '16:9'
+                })
+              });
+
+              if (orResponse.ok) {
+                const result = await orResponse.json();
+                const imageUrl = result.data?.[0]?.url;
+                if (imageUrl) {
+                  console.log(`[OPENROUTER IMAGE] Success with ${finalModel}`);
+                  await trackUsage(userId, true);
+                  return res.status(200).json({ imageBase64: imageUrl, modelUsed: finalModel });
+                }
+              } else {
+                const errData = await orResponse.json().catch(() => ({}));
+                console.warn(`[OPENROUTER IMAGE] Failed: ${errData.error?.message || orResponse.status}`);
+              }
+            } catch (e) {
+              console.error(`[OPENROUTER IMAGE] Exception:`, e.message);
+            }
+          }
+
+          // --- 2. TRY IMAGEN MODELS ---
           const IMAGE_MODELS = [
-            finalModel,
+            finalModel.startsWith('imagen') ? finalModel : null,
             'imagen-3.0-generate-001',
             'imagen-3.0-fast-generate-001',
-            'imagen-4.0-fast-generate-001',
-            'imagen-4.0-generate-001'
-          ].filter(m => m && (m.startsWith('imagen-') || m.startsWith('gemini-'))) as string[];
+            'imagen-4.0-fast-generate-001'
+          ].filter(Boolean) as string[];
 
           let lastError = null;
           for (const model of IMAGE_MODELS) {
             try {
-              if (model.startsWith('gemini')) continue; // Skip gemini in dedicated imagen loop
-
               console.log(`[IMAGEN] Attempting model: ${model}`);
               const instance = { prompt: optimizedPrompt };
               if (payload.sourceImage) instance.image = { bytesBase64Encoded: payload.sourceImage };
@@ -668,12 +702,12 @@ async function startServer() {
             }
           }
 
-          // LAST RESORT: Fallback to Gemini 2.0 Flash Multimodal (Supports Inpainting/Masks)
-          console.log(`[IMAGEN] All dedicated models failed. Falling back to Gemini 2.0 Flash multimodal...`);
+          // --- 3. LAST RESORT: FALLBACK TO GEMINI 2.0 FLASH ---
+          console.log(`[IMAGEN] Falling back to Gemini 2.0 Flash multimodal...`);
           try {
             const parts = [{ text: optimizedPrompt }];
             if (payload.sourceImage) parts.push({ inlineData: { mimeType: 'image/png', data: payload.sourceImage } });
-            if (payload.maskImage) parts.push({ inlineData: { mimeType: 'image/png', data: payload.maskImage }, text: "Use this mask for inpainting. Only change the area covered by the mask while preserving the subject identity elsewhere." });
+            if (payload.maskImage) parts.push({ inlineData: { mimeType: 'image/png', data: payload.maskImage }, text: "Use this mask for inpainting. Only change the area covered by the mask." });
 
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
               method: 'POST',
@@ -700,6 +734,7 @@ async function startServer() {
           }
 
           return res.status(500).json({ error: 'IMAGE_GEN_FAILED', details: lastError || 'All models exhausted' });
+        }
         }
         }
         // 5. Handle regular Content Generation

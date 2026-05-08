@@ -42,6 +42,7 @@ const STYLE_TEMPLATES: StyleTemplate[] = [
 const IMAGE_MODELS = [
   { id: 'imagen-3.0-fast-generate-001', name: 'Imagen 3 Fast', description: 'Balanced speed & quality' },
   { id: 'imagen-3.0-generate-001', name: 'Imagen 3 High', description: 'Highest visual fidelity' },
+  { id: 'openai/dall-e-3', name: 'DALL-E 3 (OpenRouter)', description: 'OpenAI latest model' },
   { id: 'imagen-4.0-fast-generate-001', name: 'Imagen 4 Preview', description: 'Next-gen fast generation' },
 ];
 
