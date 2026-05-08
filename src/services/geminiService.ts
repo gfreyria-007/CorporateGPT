@@ -428,25 +428,46 @@ REQUIRED JSON RESPONSE:
 export async function generateDeepResearch(topic: string, audience: string, keyTakeaway: string): Promise<any[]> {
   const payload = {
     model: "gemini-2.0-flash",
-    contents: [{ role: "user", parts: [{ text: `You are an expert researcher.
+    contents: [{ role: "user", parts: [{ text: `You are a high-level strategic consultant.
 Topic: ${topic}
 Audience: ${audience}
 Key Takeaway: ${keyTakeaway}
 
-Generate 3 deep research topics with detailed content and insights that will be used to create a highly professional presentation.
-Include specific data points, trends, and actionable insights.
+TASK: Perform a deep research on the topic. Provide 3 highly detailed strategic pillars.
+For each pillar, provide a title and at least 3-4 paragraphs of dense, professional content with data, trends, and specific insights.
+DO NOT use placeholders. DO NOT be generic.
 
 Return JSON EXACTLY like this:
 {
   "research": [
     {
-      "title": "Topic title",
-      "content": "Detailed insights and findings...",
-      "sources": ["Source 1", "Source 2"]
+      "title": "Strategic Pillar Title",
+      "content": "Dense, professional content with at least 500 characters...",
+      "sources": ["Source Link or Name"]
     }
   ]
 }` }] }],
-    config: { responseMimeType: "application/json" }
+    config: { 
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          research: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                title: { type: Type.STRING },
+                content: { type: Type.STRING },
+                sources: { type: Type.ARRAY, items: { type: Type.STRING } }
+              },
+              required: ["title", "content"]
+            }
+          }
+        },
+        required: ["research"]
+      }
+    }
   };
 
   const res = await fetch('/api/gemini', {
@@ -467,34 +488,44 @@ Return JSON EXACTLY like this:
 }
 
 export async function generateSkeleton(prompt: string, count: number = 10, additionalContext?: string): Promise<SlideSkeleton[]> {
-  const systemInstruction = `You are a high-level Strategic Presentation Architect at Catalizia. 
+  const systemInstruction = `You are a Master Infographic Storyteller & Strategic Architect at Catalizia. 
   Current Date context: ${new Date().toISOString().split('T')[0]}. The current year is 2026.
-  The user is creating a presentation on: "${prompt}".
+  The user is creating a visual journey on: "${prompt}".
   
   CORE MISSION: 
-  Provide "World-Class" depth. Do not use generic corporate jargon like "Strategic Alignment" unless backed by specific, nuanced insights.
-  If the topic is specialized (e.g., "The 7th Wave Principle"), you must research and include its specific origins, physics, and strategic applications.
+  Transform data and context into a logical, high-impact narrative sequence. 
+  Each slide must not be a collection of bullets, but a "Visual Infographic Moment".
+  
+  NARRATIVE ARC (Logical Sequence):
+  1. THE HOOK: A high-impact visualization of the current state or problem.
+  2. THE EVIDENCE: Data-driven slides using charts to show trends and insights.
+  3. THE SOLUTION: A conceptual visualization of the strategic approach.
+  4. THE IMPACT: A forward-looking infographic showing the results.
   
   CONTEXTUAL INTELLIGENCE:
-  - If additional context from a "Neural Interview" is provided, you MUST synthesize and prioritize it.
-  - Generate EXACTLY ${count} slides that form a cohesive, high-stakes narrative.
-  - content array: 3-5 high-density, professional bullet points. Use specific data, names, industry-standard insights, and sophisticated metaphors.
-  - Each slide MUST have a distinct, high-impact title and a context-setting subtitle that adds "flavor" and depth.
-  - imagePrompt: Provide a detailed, creative prompt for an AI image generator (Imagen) that captures the core metaphor of the slide.
-  - paragraphs: Provide 1-2 detailed paragraphs (as an array) with deeper context and technical details for the slide content.
+  - If "Deep Research" context is provided, synthesize it into the story.
+  - Generate EXACTLY ${count} slides.
+  - imagePrompt: Describe a conceptual visual metaphor for the infographic background/centerpiece.
+  - paragraphs: Provide a technical deep-dive that the presenter would say while the audience looks at the infographic.
   
   STYLE & TONE:
-  - Corporate but visionary, sophisticated, and data-driven.
+  - Professional, visionary, and visually oriented.
+  - NO generic jargon. Use specific industry insights.
   - Respond in the SAME language as the prompt.
-  - Return ONLY the JSON object, nothing else.`;
+  - Return ONLY JSON.`;
 
   const payload = {
     model: "gemini-2.0-flash",
-    contents: [{ role: "user", parts: [{ text: `Generate EXACTLY ${count} content-rich slides for this topic: "${prompt}".
-    ${additionalContext ? `\nCRITICAL CONTEXT & DEEP RESEARCH TO INTEGRATE:\n${additionalContext}\n` : ''}
-    IMPORTANT: Fill each slide with REAL, SPECIFIC information. No placeholder text.
-    For at least 3-4 slides, choose an appropriate chartType (bar, line, pie, etc.) and provide the corresponding REAL DATA in 'tableData' (format: Label,Value\nLabel,Value).
-    Return as JSON: { "slides": [{ "id": "1", "title": "Specific Title", "subtitle": "Descriptive subtitle", "content": ["Concrete fact 1", "Specific data point 2", "Real insight 3"], "paragraphs": ["Detailed context...", "Technical depth..."], "imagePrompt": "A conceptual 3D render of...", "chartType": "bar", "tableData": "Q1,450\nQ2,620\nQ3,580\nQ4,910" }] }` }] }],
+    contents: [{ role: "user", parts: [{ text: `Generate a logical NARRATIVE INFOGRAPHIC SEQUENCE for: "${prompt}".
+    ${additionalContext ? `\nDEEP RESEARCH CONTEXT:\n${additionalContext}\n` : ''}
+    
+    INSTRUCTIONS:
+    1. Divide the knowledge into ${count} slides that follow a logical sequence of "Knowledge Transmission".
+    2. For each slide, define a visual strategy (charts, tables, or complex conceptual images).
+    3. Use 'content' for the 3-4 key data points that will be HIGHLIGHTED in the infographic.
+    4. Mandatory: Use 'chartType' and 'tableData' for at least 50% of the slides to make them true infographics.
+    
+    Return JSON: { "slides": [{ "id": "1", "title": "IMPACTFUL TITLE", "content": ["Data point 1", "Insight 2", "Actionable 3"], "paragraphs": ["Technical narrative for the presenter..."], "imagePrompt": "A conceptual 3D infographic showing...", "chartType": "bar", "tableData": "Label,Value\nLabel,Value" }] }` }] }],
     config: {
       systemInstruction,
       responseMimeType: "application/json",
@@ -508,21 +539,19 @@ export async function generateSkeleton(prompt: string, count: number = 10, addit
               properties: {
                 id: { type: Type.STRING },
                 title: { type: Type.STRING },
-                subtitle: { type: Type.STRING },
                 content: { type: Type.ARRAY, items: { type: Type.STRING } },
                 paragraphs: { type: Type.ARRAY, items: { type: Type.STRING } },
                 imagePrompt: { type: Type.STRING },
                 chartType: { type: Type.STRING, enum: ["none", "bar", "line", "pie", "donut", "radar", "scatter", "bubble"] },
                 tableData: { type: Type.STRING }
               },
-              required: ["id", "title", "subtitle", "content", "paragraphs", "imagePrompt", "chartType"]
+              required: ["id", "title", "content", "paragraphs", "imagePrompt", "chartType"]
             }
           }
         },
         required: ["slides"]
       }
-    },
-    tools: [{ googleSearchRetrieval: {} }]
+    }
   };
 
   const res = await fetch('/api/gemini', {

@@ -357,23 +357,27 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
         console.warn('[PPT] Using instant fallback narrative due to delay/error');
         const fallback: SlideContent[] = [];
         const researchTopics = deepResearch?.topics || [];
+        const phases = lang === 'es' 
+          ? ['GANCHO: El Problema', 'EVIDENCIA: Datos Clave', 'ESTRATEGIA: El Camino', 'IMPACTO: Resultados']
+          : ['HOOK: The Challenge', 'EVIDENCE: Key Data', 'STRATEGY: The Path', 'IMPACT: Results'];
         
         for (let i = 0; i < validSlides; i++) {
           const research = researchTopics[i % researchTopics.length];
+          const phase = phases[i % phases.length];
+          
           fallback.push({
-            title: research?.title || (i === 0 ? userContent : `${userContent} - Part ${i + 1}`),
-            subtitle: research ? 'Detailed Sector Analysis' : 'Strategic Analysis & Insight',
-            bullets: research ? [
-              research.content.substring(0, 100) + '...',
-              'Deep dive into specialized research',
-              'Strategic implications and insights'
+            title: research?.title || `${phase} - ${userContent}`,
+            bullets: (research && research.content && research.content.length > 20) ? [
+              research.content.substring(0, 150) + '...',
+              'Análisis detallado de tendencias y proyecciones',
+              'Implicaciones estratégicas para el sector'
             ] : [
-              'Key objectives and strategic alignment',
-              'Performance indicators and data analysis',
-              'Market positioning and competitive edge'
+              'Definición de objetivos estratégicos clave',
+              'Análisis de datos y métricas de rendimiento',
+              'Posicionamiento competitivo y propuesta de valor'
             ],
-            paragraphs: research ? [research.content] : [],
-            imagePrompt: `A high-end cinematic visualization of ${research?.title || userContent}, 3D professional render, clean lighting`,
+            paragraphs: (research && research.content) ? [research.content] : [],
+            imagePrompt: `A high-end conceptual infographic visualization of ${research?.title || userContent}, 3D professional render, cinematic lighting, ${phase}`,
             visualLayout: 'split'
           });
         }
@@ -400,6 +404,7 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
 
   const generateQuestions = async () => {
     if (!audience.trim() || !keyTakeaway.trim()) return;
+    if (!contentInput.trim() && contentSource !== 'upload') return; // Bug 3: guard empty topic
     
     if (isDeepResearchEnabled) {
       setIsGeneratingResearch(true);
@@ -420,21 +425,29 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
           createdAt: new Date()
         };
         
+        let drSucceeded = false;
         try {
           const researchResult = await geminiService.generateDeepResearch(contentInput, audience, keyTakeaway);
           if (researchResult && Array.isArray(researchResult) && researchResult.length > 0) {
             researchData.topics = researchResult.map((r: any, idx: number) => ({
               title: r.title || `Topic ${idx + 1}`,
-              content: r.content || r.summary || '',
+              content: r.content || r.summary || (lang === 'es' ? 'Contenido detallado para este tema.' : 'Detailed content for this topic.'),
               sources: r.sources || []
             }));
+            drSucceeded = true;
           }
         } catch (e) {
-          console.error('Deep research API error:', e);
+          console.error('[PPT] Deep research API error — falling back to direct skeleton:', e);
         }
-        
-        setDeepResearch(researchData);
-        setCurrentStage(2.5 as any);
+
+        if (drSucceeded) {
+          setDeepResearch(researchData);
+          setCurrentStage(2.5 as any);
+        } else {
+          // DR failed or returned empty — skip Stage 2.5, build skeleton directly
+          console.warn('[PPT] DR empty/failed, skipping Stage 2.5 and building skeleton directly');
+          await buildSkeleton();
+        }
       } catch (error) {
         console.error('Deep research error:', error);
       } finally {
@@ -909,17 +922,6 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
             </div>
             <div className="space-y-2">
               <label className="text-xs font-black uppercase text-slate-400">
-                {lang === 'es' ? 'Subtítulo' : 'Subtitle'}
-              </label>
-              <input
-                type="text"
-                value={editSubtitle}
-                onChange={(e) => setEditSubtitle(e.target.value)}
-                className="w-full p-3 rounded-xl border border-slate-200 dark:border-white/10 bg-transparent"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase text-slate-400">
                 {lang === 'es' ? 'Puntos sin bullets (uno por línea)' : 'Bullet points (one per line)'}
               </label>
               <textarea
@@ -1025,12 +1027,12 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
       <div className="flex-1 flex flex-col p-4 sm:p-8 space-y-4 sm:space-y-6 overflow-auto">
         <div className="text-center space-y-2">
           <h2 className="text-xl sm:text-2xl font-black uppercase tracking-widest">
-            {lang === 'es' ? 'Etapa 3: Narrativa' : 'Stage 3: Narrative Arc'}
+            {lang === 'es' ? 'Secuencia Infográfica: Narrativa' : 'Infographic Sequence: Narrative'}
           </h2>
           <p className="text-xs sm:text-sm text-slate-400">
             {lang === 'es' 
-              ? 'Revisa y edita cada diapositiva. Haz clic en editar para modificar.' 
-              : 'Review and edit each slide. Click edit to modify.'}
+              ? 'La IA ha compuesto una narrativa lógica para transmitir el conocimiento. Edita cada "momento visual" si es necesario.' 
+              : 'AI has composed a logical narrative for knowledge transmission. Edit each "visual moment" if needed.'}
           </p>
         </div>
 
@@ -1345,7 +1347,7 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
             <img src={renderedSlide} alt={`Slide ${currentSlideIndex + 1}`} className="max-h-full max-w-full object-contain" />
           ) : (
             <div className="text-center p-4 sm:p-8">
-              <Paint size={32} sm:size={48} className="mx-auto mb-2 sm:mb-4 text-slate-400" />
+              <Paint size={40} className="mx-auto mb-2 sm:mb-4 text-slate-400" />
               <p className="text-xs sm:text-sm text-slate-400">
                 {lang === 'es' ? 'Vista previa no disponible aún' : 'Preview not available yet'}
               </p>
@@ -1501,7 +1503,7 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
       )}>
         <div className="flex items-center gap-2 sm:gap-4">
           <div className="w-8 sm:w-10 h-8 sm:h-10 bg-blue-600 rounded-lg sm:rounded-xl flex items-center justify-center text-white">
-            <BrainCircuit size={16} sm:size={18} />
+            <BrainCircuit size={18} />
           </div>
           <div className="hidden sm:block">
             <h1 className={cn(
@@ -1546,7 +1548,7 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
             onClick={onClose} 
             className="p-2 rounded-lg sm:rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           >
-            <X size={18} sm:size={20} />
+            <X size={20} />
           </button>
         </div>
       </div>
