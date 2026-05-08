@@ -6,9 +6,10 @@ import { Grade } from '../types';
 interface MathLabModalProps {
     onClose: () => void;
     grade: Grade;
+    useGenZ?: boolean;
 }
 
-const MathLabModal: React.FC<MathLabModalProps> = ({ onClose, grade }) => {
+const MathLabModal: React.FC<MathLabModalProps> = ({ onClose, grade, useGenZ = true }) => {
     const isPrimaryLow = grade.id === 'primaria1' || grade.id === 'primaria2' || grade.id === 'primaria3';
     const isPrimaryHigh = grade.id === 'primaria4' || grade.id === 'primaria5' || grade.id === 'primaria6';
     const isSecondaryPlus = !isPrimaryLow && !isPrimaryHigh;
@@ -269,6 +270,7 @@ const MathLabModal: React.FC<MathLabModalProps> = ({ onClose, grade }) => {
                     <div className="flex flex-col items-center gap-3">
                         <input 
                             type="number" 
+                            inputMode="decimal"
                             value={num1} 
                             onChange={(e) => setNum1(Math.min(maxInput, Math.max(0, parseInt(e.target.value) || 0)))}
                             className="w-32 py-4 text-4xl font-black text-center text-[#1e3a8a] bg-blue-50 rounded-2xl border-2 border-blue-200 focus:outline-none focus:border-blue-500 shadow-inner"
@@ -291,6 +293,7 @@ const MathLabModal: React.FC<MathLabModalProps> = ({ onClose, grade }) => {
                     <div className="flex flex-col items-center gap-3">
                         <input 
                             type="number" 
+                            inputMode="decimal"
                             value={num2} 
                             disabled={op === '√'}
                             onChange={(e) => setNum2(Math.min(maxInput, Math.max(0, parseInt(e.target.value) || 0)))}
@@ -822,9 +825,11 @@ const MathLabModal: React.FC<MathLabModalProps> = ({ onClose, grade }) => {
                                             className="space-y-4"
                                         >
                                             <div className={`p-3 rounded-xl flex items-center gap-2 ${question.options[selectedOption!].isCorrect ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
-                                                <span className="text-xl">{question.options[selectedOption!].isCorrect ? '✅' : '❌'}</span>
+                                                <span className="text-xl">{question.options[selectedOption!].isCorrect ? (useGenZ ? '🔥' : '✅') : (useGenZ ? '💀' : '❌')}</span>
                                                 <span className="text-[10px] font-black uppercase tracking-widest">
-                                                    {question.options[selectedOption!].isCorrect ? '¡Excelente!' : 'Casi...'}
+                                                    {question.options[selectedOption!].isCorrect 
+                                                        ? (useGenZ ? '¡TE PASASTE! ✨' : '¡Excelente!') 
+                                                        : (useGenZ ? 'F EN EL CHAT...' : 'Casi...')}
                                                 </span>
                                             </div>
                                             

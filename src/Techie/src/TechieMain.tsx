@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import Header from './components/Header';
 import Footer from './components/Footer';
 import GradeSelector from './components/GradeSelector';
 import ChatWindow from './components/ChatWindow';
@@ -20,6 +19,7 @@ import TetrisGame from './components/TetrisGame';
 import SpaceAliensGame from './components/SpaceAliensGame';
 import MathLabModal from './components/MathLabModal';
 import MonthlyQuotaBanner from './components/MonthlyQuotaBanner';
+import ImageEditorModal from './components/ImageEditorModal';
 
 import { FirebaseUser } from '../../lib/firebase';
 import { ModelSelector } from '../../components/ModelSelector';
@@ -81,7 +81,7 @@ export const TechieMain: React.FC = () => {
     isAdmin, 
     login: handleLogin, 
     appleLogin: handleAppleLogin, 
-    logout: handleLogout,
+    logout: authLogout,
     updateProfile,
     setProfileData,
     deleteAccount,
@@ -107,6 +107,7 @@ export const TechieMain: React.FC = () => {
   const [sessionTokensUsed, setSessionTokensUsed] = useState(0);
   
   const [explorerSettings, setExplorerSettings] = useState<ExplorerSettings>({ temperature: 0.7, persona: null });
+  const [useGenZ, setUseGenZ] = useState(true);
   const [studioHistory, setStudioHistory] = useState<ImageContent[]>([]);
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
 
@@ -129,6 +130,8 @@ export const TechieMain: React.FC = () => {
   const [activeGame, setActiveGame] = useState<'snake' | 'tetris' | 'aliens' | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const [showMathLab, setShowMathLab] = useState(false);
+  const [showImageEditor, setShowImageEditor] = useState(false);
+  const [editorImage, setEditorImage] = useState<string | undefined>(undefined);
 
   // --- Shared Model Selector State (same as CorporateGPT) ---
   const [selectedModel, setSelectedModel] = useState('openrouter/auto');
@@ -195,12 +198,12 @@ const canUseSystemKey = (isSubscribed || isAdminRole);
   }, []);
 
   useEffect(() => {
-    const handleOpenBackpack = () => setShowBackpack(true);
-    const handleOpenArcade = () => setShowArcade(true);
-    const handleOpenMathLab = () => setShowMathLab(true);
-    const handleSetResearcher = () => setChatMode('researcher');
-    const handleSetQuiz = () => setChatMode('quiz-master');
-    const handleSetDefault = () => setChatMode('default');
+    const handleOpenBackpack = () => { closeAllModals(); setShowBackpack(true); };
+    const handleOpenArcade = () => { closeAllModals(); setShowArcade(true); };
+    const handleOpenMathLab = () => { closeAllModals(); setShowMathLab(true); };
+    const handleSetResearcher = () => { closeAllModals(); setChatMode('researcher'); };
+    const handleSetQuiz = () => { closeAllModals(); setChatMode('quiz-master'); };
+    const handleSetDefault = () => { closeAllModals(); setChatMode('default'); };
     
     document.addEventListener('openBackpack', handleOpenBackpack);
     document.addEventListener('openArcade', handleOpenArcade);
@@ -251,7 +254,31 @@ const canUseSystemKey = (isSubscribed || isAdminRole);
       }));
   };
 
+   const closeAllModals = () => {
+    setShowImageCreationModal(false);
+    setShowArcade(false);
+    setShowMathLab(false);
+    setShowFlashcards(false);
+    setShowBackpack(false);
+    setShowFAQ(false);
+    setShowSettingsModal(false);
+    setShowAdminDashboard(false);
+    setShowDiagnostics(false);
+    setShowImagePopup(false);
+    setShowImageEditor(false);
+    setActiveGame(null);
+    setAwardedBadge(null);
+  };
+
+  const handleLogout = async () => {
+    closeAllModals();
+    await authLogout();
+  };
+
   const handleModeChange = (newMode: ChatMode) => {
+    // Close any open modals first to prevent overlap
+    closeAllModals();
+
     // We allow re-triggering if it's a modal-based tool
     if (newMode === chatMode && !['arcade', 'image-studio'].includes(newMode)) return;
     
@@ -394,6 +421,7 @@ if (isBYOKMode && !personalApiKey) {
             '¡Hola! Para continuar aprendiendo con Techie, necesitas activar un Plan Familiar en el Hub de CatalizIA o ingresar tu propia API Key en los ajustes.' : 
             'Hello! To continue learning with Techie, you need to activate a Family Plan at the CatalizIA Hub or enter your own API Key in settings.';
           addMessage(Role.MODEL, noPlanMsg);
+          closeAllModals();
           setShowSettingsModal(true);
           return;
         }
@@ -463,13 +491,13 @@ if (isBYOKMode && !personalApiKey) {
           }
 
           if (isReviewMode && file) {
-             response = await geminiService.reviewHomework(await fileToGenerativePart(file), text, selectedGrade, userName, userAge, customKey);
+             response = await geminiService.reviewHomework(await fileToGenerativePart(file), text, selectedGrade, userName, userAge, customKey, useGenZ);
           } else if (file) {
-             response = await geminiService.analyzeImage(await fileToGenerativePart(file), text, selectedGrade, userName, userAge, history, chatMode, customKey);
+             response = await geminiService.analyzeImage(await fileToGenerativePart(file), text, selectedGrade, userName, userAge, history, chatMode, customKey, useGenZ);
           } else if (chatMode === 'researcher' && !isInitialGreeting) {
-             response = await geminiService.getDeepResearchResponse(text, selectedGrade, userName, userAge, customKey);
+             response = await geminiService.getDeepResearchResponse(text, selectedGrade, userName, userAge, customKey, useGenZ);
           } else {
-             response = await geminiService.getChatResponse(history, selectedGrade, userName, userAge, chatMode, explorerSettings.temperature, explorerSettings.persona, explorerSettings.customSystemInstruction || '', customKey, selectedModel);
+             response = await geminiService.getChatResponse(history, selectedGrade, userName, userAge, chatMode, explorerSettings.temperature, explorerSettings.persona, explorerSettings.customSystemInstruction || '', customKey, selectedModel, useGenZ);
           }
 
 
@@ -745,12 +773,7 @@ if (parsed.type === 'image-request') {
                     </div>
 
                     <div className="mt-12 pt-8 border-t border-slate-100">
-                        <button 
-                            onClick={handleLogout}
-                            className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-red-500 transition-colors"
-                        >
-                            Cerrar Sesión
-                        </button>
+                        {/* Redundant logout button removed as it is available in the top selector */}
                     </div>
                 </div>
             </div>
@@ -759,32 +782,58 @@ if (parsed.type === 'image-request') {
               onProfileSubmit={handleProfileSubmit} 
               initialData={userName ? {name: userName, age: userAge || 0} : undefined} 
               initialGrade={selectedGrade} 
-              onOpenAdmin={() => { console.log('Opening Admin from UserProfileSetup'); setShowAdminDashboard(true); }}
+              onOpenAdmin={() => { 
+                console.log('Opening Admin from UserProfileSetup'); 
+                closeAllModals();
+                setShowAdminDashboard(true); 
+              }}
             />
           ) : (
             <>
-              {/* Top controls: Grade + Model on one compact row */}
+              {/* Top controls: Model on one compact row */}
               <div className="shrink-0 px-2 sm:px-4 pt-2">
-                <div className="flex items-center justify-center gap-2 flex-wrap">
-                  <GradeSelector selectedGrade={selectedGrade} activeTool={TOOL_DEFINITIONS.find(t => t.id === chatMode)} onGradeChange={setSelectedGrade} />
-                  {/* Language Selector */}
-                  <LanguageSwitcher />
-
- 
- 
- 
- 
- 
-
-
-
+                <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4">
+                  {/* Gen-Z Toggle */}
+                  <button
+                    onClick={() => setUseGenZ(!useGenZ)}
+                    className={`p-2 sm:p-3 rounded-full flex items-center gap-2 transition-all shadow-md active:scale-95 ${useGenZ ? 'bg-gradient-to-r from-pink-500 to-orange-400 text-white' : 'bg-white text-blue-900 border border-blue-100'}`}
+                    title={isSpanish ? (useGenZ ? 'Modo Divertido Activado' : 'Modo Serio Activado') : (useGenZ ? 'Fun Mode On' : 'Serious Mode On')}
+                  >
+                    <span className="text-sm">{useGenZ ? '😎' : '👔'}</span>
+                    <span className="hidden sm:inline uppercase">{useGenZ ? (isSpanish ? 'Divertido' : 'Fun') : (isSpanish ? 'Serio' : 'Serious')}</span>
+                  </button>
 
                 </div>
               </div>
 
               <div className="flex-1 relative flex flex-col min-h-0 bg-white overflow-hidden">
                   <div className="flex-1 overflow-y-auto">
-                    <ChatWindow messages={messages} isLoading={isChatLoading} loadingText={loadingText} onQuizAnswer={(q, o) => o.isCorrect && chatMode === 'default' && handleSendMessage(`Siguiente paso?`)} onSelection={(t) => handleSendMessage(t)} onImageClick={(u,p)=> { setPopupImage(u); setPopupPrompt(p); setShowImagePopup(true); }} onCreateFlashcards={async (t)=> { const cards = await geminiService.generateFlashcards(t); setFlashcards(cards); setShowFlashcards(true); }} onEditImage={(u) => { setImageCreationUrl(u); setShowImageCreationModal(true); setShowImagePopup(false); }} onQuizFinished={(res) => addMessage(Role.MODEL, res)} onAwardBadge={handleAwardBadge} onSaveProject={handleSaveProject} grade={selectedGrade || undefined} userName={userName} customKey={getCustomKey()} />
+                    <ChatWindow 
+                      messages={messages} 
+                      isLoading={isChatLoading} 
+                      loadingText={loadingText} 
+                      onQuizAnswer={(q, o) => o.isCorrect && chatMode === 'default' && handleSendMessage(`Siguiente paso?`)} 
+                      onSelection={(t) => handleSendMessage(t)} 
+                      onImageClick={(u,p)=> { setPopupImage(u); setPopupPrompt(p); setShowImagePopup(true); }} 
+                      onCreateFlashcards={async (t)=> { 
+                        const cards = await geminiService.generateFlashcards(t); 
+                        closeAllModals();
+                        setFlashcards(cards); 
+                        setShowFlashcards(true); 
+                      }} 
+                      onEditImage={(u) => { 
+                        setImageCreationUrl(u); 
+                        closeAllModals();
+                        setShowImageCreationModal(true); 
+                        setShowImagePopup(false); 
+                      }} 
+                      onQuizFinished={(res) => addMessage(Role.MODEL, res)} 
+                      onAwardBadge={handleAwardBadge} 
+                      onSaveProject={handleSaveProject} 
+                      grade={selectedGrade || undefined} 
+                      userName={userName} 
+                      customKey={getCustomKey()} 
+                    />
                   </div>
               </div>
               <div className="shrink-0">
@@ -797,14 +846,14 @@ if (parsed.type === 'image-request') {
                   explorerSettings={explorerSettings} 
                   onUpdateExplorerSettings={setExplorerSettings} 
                   selectedGrade={selectedGrade} 
-                  onOpenFAQ={() => setShowFAQ(true)}
+                  onOpenFAQ={() => { closeAllModals(); setShowFAQ(true); }}
                   selectedModel={selectedModel}
                   onModelSelect={setSelectedModel}
                   models={models}
                   isLoadingModels={isLoadingModels}
 
                 />
-                <Footer sessionTokensUsed={sessionTokensUsed} subscriptionLevel={userProfile?.subscriptionLevel} onOpenFAQ={() => setShowFAQ(true)} />
+                <Footer sessionTokensUsed={sessionTokensUsed} subscriptionLevel={userProfile?.subscriptionLevel} onOpenFAQ={() => { closeAllModals(); setShowFAQ(true); }} />
               </div>
 
             </>
@@ -844,7 +893,8 @@ if (parsed.type === 'image-request') {
             }}
             isLoading={isStudioLoading} initialEditFile={imageCreationFile} initialEditUrl={imageCreationUrl} history={studioHistory}
         />
-        <ImagePopup isOpen={showImagePopup} imageUrl={popupImage} prompt={popupPrompt} onClose={() => setShowImagePopup(false)} onEdit={(u) => { setImageCreationUrl(u); setShowImageCreationModal(true); setShowImagePopup(false); }} />
+        <ImagePopup isOpen={showImagePopup} imageUrl={popupImage} prompt={popupPrompt} onClose={() => setShowImagePopup(false)} onEdit={(u) => { setEditorImage(u); setShowImageEditor(true); setShowImagePopup(false); }} />
+        <ImageEditorModal isOpen={showImageEditor} onClose={() => { setShowImageEditor(false); setEditorImage(undefined); }} initialImage={editorImage} />
         <FlashcardModal isOpen={showFlashcards} cards={flashcards} onClose={() => setShowFlashcards(false)} />
         <BackpackModal 
           isOpen={showBackpack} 
@@ -880,6 +930,19 @@ if (parsed.type === 'image-request') {
             onProfileUpdate={(updated) => setUserProfile(updated)} 
             onDeleteData={handleDeleteData}
             onOpenFAQ={() => { setShowSettingsModal(false); setShowFAQ(true); }}
+            selectedGrade={selectedGrade}
+            onGradeChange={(g) => { 
+                setSelectedGrade(g); 
+                if (g) {
+                    localStorage.setItem('techie_grade', g.id);
+                    addMessage(Role.SYSTEM, isSpanish ? `Cambiando a nivel: **${g.name}** 🎓` : `Switching to level: **${g.name}** 🎓`);
+                }
+            }}
+            language={language}
+            onLanguageChange={(l) => {
+                setLanguage(l);
+                addMessage(Role.SYSTEM, l === 'es' ? 'Cambiando a Español 🇪🇸' : 'Switching to English 🇺🇸');
+            }}
           />
         )}
 
@@ -952,6 +1015,7 @@ lastError: lastErrorMsg,
                 <MathLabModal 
                   onClose={() => setShowMathLab(false)} 
                   grade={selectedGrade || { id: 'primaria1', name: '1ro de Primaria' } as any}
+                  useGenZ={useGenZ}
                 />
             )}
         </AnimatePresence>

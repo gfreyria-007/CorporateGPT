@@ -323,7 +323,7 @@ export const editImage = async (
         const imgRes = await res.json();
         if (imgRes.error) {
             console.error("[TECHIE] Edit Error:", imgRes.error);
-            throw new Error(imgRes.details || imgRes.error);
+            throw new Error("Lo siento, no pude procesar la edición. ¿Podemos intentar con otra descripción?");
         }
 
         const imageBase64 = imgRes.imageBase64;
@@ -348,7 +348,8 @@ export const getChatResponse = async (
     customInstruction: string,
     customKey?: string, // Unused
 
-    selectedModel?: string
+    selectedModel?: string,
+    useGenZ: boolean = true
 ) => {
     // Verificar si el último mensaje del usuario viola las reglas de seguridad
     const lastUserMessage = [...history].reverse().find((msg: any) => msg.role === 'user');
@@ -385,7 +386,8 @@ export const getChatResponse = async (
           }) };
         }
         
-        systemInstruction = `Eres Techie Explorador, el BUSCADOR DE INTERNET MÁS SEGURO Y DIVERTIDO de Catalizia.
+        const personaStyle = useGenZ ? `Habla como un joven Gen-Z brillante y amigable (usa palabras como "bro", "literal", "mind-blowing", "top", pero mantén el respeto y la seguridad). No suenes como un profesor aburrido.` : `Mantén un tono profesional, formal, paciente y muy educativo, propio de una enciclopedia o tutor académico serio.`;
+        systemInstruction = `Eres Techie Explorador, el BUSCADOR DE INTERNET MÁS SEGURO Y DIVERTIDO de Catalizia. ${personaStyle}
         Tu objetivo es investigar y explicar cualquier tema del universo de forma segura y adaptada para un joven de ${age} años en ${grade.name}.
         
         REGLAS DE EXPLORACIÓN Y SEGURIDAD:
@@ -415,7 +417,8 @@ export const getChatResponse = async (
         
 } else if (mode === 'math-viva') {
         useJson = true;
-        systemInstruction = `Eres el TUTOR MATEMÁTICO SOCRÁTICO de Catalizia. No eres una calculadora, eres un guía para ${userName} (${age} años).
+        const personaStyle = useGenZ ? `Eres un genio matemático relajado, hablas como un joven brillante. Usa analogías de videojuegos o cosas modernas. Nada de formalismos aburridos.` : `Eres un tutor de matemáticas formal y estructurado. Explica cada paso con precisión académica y lenguaje respetuoso.`;
+        systemInstruction = `Eres el TUTOR MATEMÁTICO SOCRÁTICO de Catalizia. ${personaStyle} No eres una calculadora, eres un guía para ${userName} (${age} años).
         
         FILOSOFÍA:
         - Ayuda al estudiante a 'ver' las matemáticas.
@@ -444,7 +447,8 @@ export const getChatResponse = async (
     } else if (mode === 'socratic') {
         // TUTOR SOCRÁTICO - Nueva experiencia de aprendizaje
         useJson = true;
-        systemInstruction = `Eres Techie, el TUTOR SOCRÁTICO DEFINITIVO de Catalizia. Eres un genio relajado, hablas como un joven brillante (usa palabras como "cool", "bro", "literal", "obvio no", pero mantén el respeto y la pedagogía). No suenes como un profesor aburrido o como sus papás.
+        const personaStyle = useGenZ ? `Eres un genio relajado, hablas como un joven brillante (usa palabras como "cool", "bro", "literal", "obvio no", pero mantén el respeto y la pedagogía). No suenes como un profesor aburrido o como sus papás.` : `Tienes un tono muy respetuoso, paciente, profesional y formal, propio de un tutor académico serio. No uses jerga de internet.`;
+        systemInstruction = `Eres Techie, el TUTOR SOCRÁTICO DEFINITIVO de Catalizia. ${personaStyle}
         
         ESTUDIANTE: ${userName} (${age} años, grado ${grade?.name}).
         
@@ -483,7 +487,8 @@ export const getChatResponse = async (
         
         IMPORTANTE: Tu 'question' debe forzarlos a razonar el siguiente paso, NO darles el final del problema.`;
     } else {
-        systemInstruction = `Eres Techie, el Tutor AI de nueva generación de Catalizia. Tu misión es ser el mejor instructor del mundo para ${userName} (${age} años). Hablas su idioma, eres dinámico, usas analogías de videojuegos, redes sociales o cosas modernas. Nada de hablar como un profesor anticuado.
+        const personaStyleDef = useGenZ ? `Hablas su idioma, eres dinámico, usas analogías de videojuegos, redes sociales o cosas modernas. Nada de hablar como un profesor anticuado.` : `Tienes un tono educado, formal y estructurado, propio de un tutor clásico y paciente.`;
+        systemInstruction = `Eres Techie, el Tutor AI de nueva generación de Catalizia. Tu misión es ser el mejor instructor del mundo para ${userName} (${age} años). ${personaStyleDef}
         
         REGLAS DE ORO:
         1. ANDAMIAJE MENTAL: NO des solo respuestas. Haz que el joven RAZONE. Si te piden resolver "2x = 10", tú respondes: "Imagina que 2 cajas mágicas pesan 10 kilos. ¿Cuánto pesa una sola caja?".
@@ -539,15 +544,33 @@ export const getChatResponse = async (
     } catch (e: any) {
         console.error("[TECHIE] Chat failed:", e);
         const isTimeout = e.name === 'AbortError' || e.message?.includes('timeout') || e.message === 'timeout';
+        
         if (isTimeout) {
-            return { text: JSON.stringify({ type: 'selection', text: "La conexión está tardando más de lo normal. Intenta de nuevo en unos segundos.", question: "¿Qué te gustaría hacer?", options: [{ text: "Intentar de nuevo", isCorrect: true, feedback: "Vamos a intentarlo de nuevo" }] }) };
+            return { text: JSON.stringify({ 
+                type: 'selection', 
+                text: "⚠️ La conexión está tardando más de lo normal. El tráfico está pesado en la red de CatalizIA.", 
+                question: "¿Qué te gustaría hacer?", 
+                options: [
+                    { text: "Intentar de nuevo 🔄", isCorrect: true, feedback: "Vamos a intentarlo de nuevo con más fuerza." }
+                ] 
+            }) };
         }
-        return { text: JSON.stringify({ type: 'selection', text: "Lo siento, tuve un problema técnico. ¿Podemos intentar de nuevo?", question: "¿Qué tal si probamos otra pregunta?", options: [] }) };
+
+        // Total failure - friendly message matching CorporateGPT style
+        return { text: JSON.stringify({ 
+            type: 'selection', 
+            text: "⚠️ El servicio está temporalmente ocupado o experimentando mucha demanda. Techie está tomando un breve respiro.", 
+            question: "¿Quieres intentar de nuevo en unos segundos?", 
+            options: [
+                { text: "Intentar de nuevo 🚀", isCorrect: true, feedback: "¡Esa es la actitud! Reintentando..." }
+            ] 
+        }) };
     }
 };
 
-export const reviewHomework = async (imagePart: any, text: string, grade: Grade, userName: string | null, age: number | null) => {
-  const prompt = `Revisa esta tarea para nivel ${grade.name}. Usa INTERNET para verificar si la información es correcta. Lenguaje adecuado para ${age} años. JSON format only.`;
+export const reviewHomework = async (imagePart: any, text: string, grade: Grade, userName: string | null, age: number | null, customKey?: string, useGenZ: boolean = true) => {
+  const personaStyle = useGenZ ? `Eres un tutor Gen-Z cool y brillante.` : `Eres un tutor académico formal y serio.`;
+  const prompt = `Revisa esta tarea para nivel ${grade.name}. ${personaStyle} Usa INTERNET para verificar si la información es correcta. Lenguaje adecuado para ${age} años. JSON format only.`;
   try {
     const res = await fetch('/api/techie', {
         method: 'POST',
@@ -568,8 +591,9 @@ export const reviewHomework = async (imagePart: any, text: string, grade: Grade,
   }
 };
 
-export const analyzeImage = async (imagePart: any, text: string, grade: Grade, userName: string | null, age: number | null, history: any[], mode: ChatMode) => {
-    let systemInstruction = `Analiza la imagen educativamente para nivel ${grade.name}. Usa ACCESO A INTERNET para identificar hitos o datos reales.`;
+export const analyzeImage = async (imagePart: any, text: string, grade: Grade, userName: string | null, age: number | null, history: any[], mode: ChatMode, customKey?: string, useGenZ: boolean = true) => {
+    const personaStyle = useGenZ ? `Eres un experto Gen-Z que analiza imágenes.` : `Eres un analista académico formal de imágenes.`;
+    let systemInstruction = `Analiza la imagen educativamente para nivel ${grade.name}. ${personaStyle} Usa ACCESO A INTERNET para identificar hitos o datos reales.`;
     try {
         const res = await fetch('/api/techie', {
             method: 'POST',
@@ -591,7 +615,7 @@ export const analyzeImage = async (imagePart: any, text: string, grade: Grade, u
     }
 };
 
-export const getDeepResearchResponse = async (topic: string, grade: Grade, userName: string | null, age: number | null) => {
+export const getDeepResearchResponse = async (topic: string, grade: Grade, userName: string | null, age: number | null, customKey?: string, useGenZ: boolean = true) => {
     let tokenTarget = "2000 a 3000";
     if (grade.id.startsWith('primaria') && parseInt(grade.id.replace('primaria', '')) >= 4) {
         tokenTarget = "4000 a 5000";

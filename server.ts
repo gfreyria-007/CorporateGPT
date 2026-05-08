@@ -98,7 +98,7 @@ async function startServer() {
       directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
         "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://*.googleapis.com", "https://apis.google.com", "https://*.firebaseapp.com", "https://www.googletagmanager.com"],
-        "connect-src": ["'self'", "https://openrouter.ai", "https://*.googleapis.com", "https://*.firebaseio.com", "wss://*.firebaseio.com", "https://*.firebaseapp.com", "https://*.google-analytics.com", "ws://localhost:*", "http://localhost:*"],
+        "connect-src": ["'self'", "https://*.catalizia.com", "https://openrouter.ai", "https://*.googleapis.com", "https://*.firebaseio.com", "wss://*.firebaseio.com", "https://*.firebaseapp.com", "https://*.google-analytics.com", "ws://localhost:*", "http://localhost:*"],
         "frame-src": ["'self'", "https://*.firebaseapp.com", "https://*.googleapis.com", "https://*.google.com", "https://*.google.com/accounts", "https://accounts.google.com"],
         "img-src": ["'self'", "data:", "https:", "blob:", "https://*.googleusercontent.com"],
       },
@@ -264,7 +264,7 @@ async function startServer() {
   app.get('/api/health', (req, res) => {
     res.json({
       status: 'healthy',
-      version: '5.2.0', // Updated for Techie Socratic Pedagogy
+      version: '5.3.2', // Updated for Techie Socratic Pedagogy & PPT Narrative context hardening
       security: {
         helmet: 'active',
         rateLimit: 'active',
@@ -816,73 +816,67 @@ async function startServer() {
         try {
           console.log(`[TECHIE PROXY] Using Model: ${model}`);
           
-          const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-              'HTTP-Referer': 'https://catalizia.com',
-              'X-Title': 'Catalizia Techie'
-            },
-            signal: controller.signal,
-            body: JSON.stringify({
-              model,
-              messages: [
-                { role: 'system', content: payload.systemInstruction || 'You are Techie, a helpful educational assistant for children.' },
-                ...formattedMessages
-              ],
-              temperature: payload.temperature || 0.7
-            })
-          });
+          const fallbackModels = [
+            model,
+            'google/gemini-2.0-flash-001',
+            'anthropic/claude-3-haiku',
+            'openai/gpt-4o-mini',
+            'google/gemini-2.0-flash-001:free',
+            'mistralai/mistral-small'
+          ].filter((m, i, self) => m && self.indexOf(m) === i); // Unique models
 
-          clearTimeout(timeout);
-          
-          if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.error?.message || `HTTP ${response.status}`);
+          let lastError = null;
+          for (const currentModel of fallbackModels) {
+            try {
+              console.log(`[TECHIE PROXY] Trying Option: ${currentModel}`);
+              
+              const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+                  'HTTP-Referer': 'https://catalizia.com',
+                  'X-Title': 'Catalizia Techie'
+                },
+                signal: controller.signal,
+                body: JSON.stringify({
+                  model: currentModel,
+                  messages: [
+                    { role: 'system', content: payload.systemInstruction || 'You are Techie, a helpful educational assistant for children.' },
+                    ...formattedMessages
+                  ],
+                  temperature: payload.temperature || 0.7,
+                  response_format: payload.useJson ? { type: 'json_object' } : undefined
+                })
+              });
+
+              if (response.ok) {
+                const result = await response.json();
+                await trackUsage(userId, false);
+                const text = result.choices?.[0]?.message?.content || '';
+                
+                if (text) {
+                  clearTimeout(timeout);
+                  console.log(`[TECHIE PROXY] SUCCESS: ${currentModel}`);
+                  return res.status(200).json({ text, modelUsed: currentModel });
+                }
+              } else {
+                const errData = await response.json().catch(() => ({}));
+                console.warn(`[TECHIE PROXY] Model ${currentModel} failed:`, errData.error?.message || response.status);
+                lastError = errData.error?.message || `HTTP ${response.status}`;
+              }
+            } catch (err: any) {
+              console.warn(`[TECHIE PROXY] ${currentModel} exception:`, err.message);
+              lastError = err.message;
+              continue;
+            }
           }
 
-          const result = await response.json();
-          await trackUsage(userId, false);
-          const text = result.choices?.[0]?.message?.content || '';
-          return res.status(200).json({ text, modelUsed: model });
+          throw new Error(`All Techie models failed. Last error: ${lastError}`);
         } catch (err: any) {
           clearTimeout(timeout);
-          console.warn("[TECHIE PROXY] Primary model failed:", err.message);
-          
-          // Quick fallback to a reliable free model
-          const fallbackModel = 'google/gemini-2.0-flash-001:free';
-          console.log(`[TECHIE PROXY] Trying fallback: ${fallbackModel}`);
-          
-          try {
-            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-                'HTTP-Referer': 'https://catalizia.com',
-                'X-Title': 'Catalizia Techie'
-              },
-              body: JSON.stringify({
-                model: fallbackModel,
-                messages: [
-                  { role: 'system', content: payload.systemInstruction || 'You are Techie, a helpful educational assistant for children.' },
-                  ...formattedMessages
-                ],
-                temperature: payload.temperature || 0.7
-              })
-            });
-
-            if (!response.ok) {
-              throw new Error('Fallback model also failed');
-            }
-
-            const result = await response.json();
-            const text = result.choices?.[0]?.message?.content || '';
-            return res.status(200).json({ text, modelUsed: fallbackModel });
-          } catch (fallbackErr: any) {
-            throw new Error(`All models failed. Last error: ${fallbackErr.message}`);
-          }
+          console.error("[TECHIE PROXY] Critical Failure:", err.message);
+          return res.status(500).json({ error: err.message });
         }
       }
 
@@ -1273,7 +1267,7 @@ return res.status(400).json({ error: 'Unknown action' });
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`Version: 5.2.0 ready`);
+    console.log(`Version: 5.3.2 ready`);
   });
 }
 

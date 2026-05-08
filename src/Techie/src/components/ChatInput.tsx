@@ -24,6 +24,13 @@ interface ChatInputProps {
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({
+  onSendMessage,
+  onDefaultMode,
+  onModeChange,
+  chatMode,
+  isLoading,
+  explorerSettings,
+  onUpdateExplorerSettings,
   selectedGrade,
   onOpenFAQ,
   selectedModel,
@@ -38,13 +45,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const [file, setFile] = useState<File | undefined>(undefined);
   const [isReviewMode, setIsReviewMode] = useState(false);
   const [showImageSourceModal, setShowImageSourceModal] = useState(false);
-  const [showTools, setShowTools] = useState(false);
   const [showExplorerConfig, setShowExplorerConfig] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const toolsRef = useRef<HTMLDivElement>(null);
   const configRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -58,9 +63,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (toolsRef.current && !toolsRef.current.contains(event.target as Node)) {
-        setShowTools(false);
-      }
       if (configRef.current && !configRef.current.contains(event.target as Node)) {
         setShowExplorerConfig(false);
       }
@@ -98,20 +100,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
-  const handleToolAction = (toolId: ChatMode) => {
-      setShowTools(false);
-      if (toolId === 'review-homework') {
-          setIsReviewMode(true); 
-          setShowImageSourceModal(true);
-          return;
-      }
-      
-      if (toolId === 'default') {
-          onDefaultMode();
-      } else {
-          onModeChange(toolId);
-      }
-  };
+
 
   const handleAttachmentClick = () => {
     setShowImageSourceModal(true);
@@ -170,96 +159,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
               <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
               
-              <div className="relative shrink-0 self-end mb-0.5" ref={toolsRef}>
-                  <button
-                    type="button"
-                    onClick={() => setShowTools(!showTools)}
-                    className="flex items-center gap-1.5 px-2.5 sm:px-4 py-3 text-blue-900 bg-blue-50 hover:bg-blue-900 hover:text-white rounded-2xl sm:rounded-[1.5rem] focus:outline-none transition-all duration-300 border border-blue-100 shadow-sm active:scale-90"
-                    disabled={isLoading}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                    </svg>
-                    <span className="hidden sm:inline text-xs font-black uppercase tracking-widest">Techie Tools 🚀</span>
-                  </button>
-                  
-                  {showTools && (
 
-                      <div className="absolute bottom-full left-0 mb-4 w-[calc(100vw-2rem)] sm:w-72 bg-white/80 backdrop-blur-3xl rounded-[2rem] shadow-2xl border border-white overflow-hidden z-50 animate-fade-in-scale transform origin-bottom-left premium-shadow-lg">
-                          <div className="max-h-[60vh] overflow-y-auto p-4 space-y-1 custom-scrollbar">
-                              <h4 className="px-3 mb-2 text-[10px] font-black text-blue-900/50 uppercase tracking-[0.2em]">{isSpanish ? 'HERRAMIENTAS MÁGICAS' : 'MAGIC TOOLS'}</h4>
-                              {TOOL_DEFINITIONS.map(tool => {
-                                const transTitle = tool.id === 'default' ? (isSpanish ? 'Techie Tutor IA' : 'Techie AI Tutor') :
-                                  tool.id === 'socratic' ? (isSpanish ? 'Tutor Socrático 🎯' : 'Socratic Tutor 🎯') :
-          tool.id === 'math-viva' ? (isSpanish ? 'Laboratorio de Mate 🧪' : 'Math Lab 🧪') :
-          tool.id === 'explorer' ? (isSpanish ? 'Explorador del Mundo 🌍' : 'World Explorer 🌍') :
-          tool.id === 'researcher' ? (isSpanish ? 'Super Reportes 📚' : 'Super Reports 📚') :
-          tool.id === 'quiz-master' ? (isSpanish ? 'Práctica de Exámenes 📝' : 'Exam Practice 📝') :
-          tool.id === 'image-studio' ? (isSpanish ? 'Estudio de Arte Mágico ✨' : 'Magic Art Studio ✨') :
-          tool.id === 'arcade' ? (isSpanish ? 'Zona Arcade 🕹️' : 'Arcade Zone 🕹️') : tool.title;
-                                const transDesc = tool.id === 'default' ? (isSpanish ? 'Tu guía súper inteligente' : 'Your super smart guide') :
-          tool.id === 'socratic' ? (isSpanish ? '¡No da respuestas!' : 'Does not give answers!') :
-          tool.id === 'math-viva' ? (isSpanish ? '¡Juega con números!' : 'Play with numbers!') :
-          tool.id === 'explorer' ? (isSpanish ? 'Pregunta lo que sea' : 'Ask anything') :
-          tool.id === 'researcher' ? (isSpanish ? 'Investiga cualquier tema' : 'Research any topic') :
-          tool.id === 'quiz-master' ? (isSpanish ? 'Prepárate para exámenes' : 'Prepare for exams') :
-          tool.id === 'image-studio' ? (isSpanish ? 'Crea dibujos con IA' : 'Create drawings with AI') :
-          tool.id === 'arcade' ? (isSpanish ? 'Diviértete jugando' : 'Have fun playing') : tool.desc;
-                                return (
-                                  <button
-                                      key={tool.id}
-                                      type="button"
-                                      onClick={() => handleToolAction(tool.id)}
-                                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left rounded-xl hover:bg-blue-50/50 transition-colors group"
-                                  >
-                                      <div className={`p-1 rounded-lg ${tool.iconBg} ${tool.iconText} shrink-0`}>
-                                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={tool.iconPath} />
-                                          </svg>
-                                      </div>
-                                      <div className="flex-1 min-w-0">
-                                          <span className="block text-[11px] font-black text-blue-900 uppercase tracking-wide truncate">{transTitle}</span>
-                                          <span className="block text-[9px] text-gray-500 truncate">{transDesc}</span>
-                                      </div>
-                                  </button>
-                                );
-                              })}
-                              <div className="border-t border-gray-100 my-1"></div>
-                              <button
-                                  type="button"
-                                  onClick={(e) => { e.preventDefault(); onOpenFAQ?.(); setShowTools(false); }}
-                                  className="w-full flex items-center gap-2 px-3 py-1.5 text-left rounded-xl hover:bg-blue-50 transition-colors group"
-                              >
-                                  <div className="p-1 rounded-lg bg-blue-100 text-blue-600 shrink-0">
-                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                      </svg>
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                      <span className="block text-[11px] font-black text-blue-600 uppercase tracking-wide truncate">Manual / FAQ</span>
-                                      <span className="block text-[9px] text-gray-400 truncate">¿Cómo funciona Techie?</span>
-                                  </div>
-                              </button>
-                              <div className="border-t border-gray-100 my-1"></div>
-                              <button
-                                  type="button"
-                                  onClick={logout}
-                                  className="w-full flex items-center gap-2 px-3 py-1.5 text-left rounded-xl hover:bg-red-50 transition-colors group"
-                              >
-                                  <div className="p-1 rounded-lg bg-red-100 text-red-600 shrink-0">
-                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                      </svg>
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                      <span className="block text-[11px] font-black text-red-600 uppercase tracking-wide truncate">Cerrar Sesión</span>
-                                      <span className="block text-[9px] text-gray-400 truncate">Salir de la aplicación</span>
-                                  </div>
-                              </button>
-                          </div>
-                      </div>
-                  )}
-              </div>
 
               <div className="hidden lg:block w-48 shrink-0 self-end mb-1">
                 <ModelSelector 

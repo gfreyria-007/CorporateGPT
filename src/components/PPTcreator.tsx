@@ -345,6 +345,8 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
           title: s.title || `Slide ${idx + 1}`,
           subtitle: s.subtitle || '',
           bullets: Array.isArray(s.content) ? s.content : [s.content || '...'],
+          paragraphs: Array.isArray(s.paragraphs) ? s.paragraphs : [],
+          imagePrompt: s.imagePrompt || '',
           chartType: s.chartType === 'none' ? undefined : s.chartType as any,
           tableData: s.tableData,
           hasChart: s.chartType !== 'none' && !!s.tableData,
@@ -354,15 +356,24 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
       } else {
         console.warn('[PPT] Using instant fallback narrative due to delay/error');
         const fallback: SlideContent[] = [];
+        const researchTopics = deepResearch?.topics || [];
+        
         for (let i = 0; i < validSlides; i++) {
+          const research = researchTopics[i % researchTopics.length];
           fallback.push({
-            title: i === 0 ? userContent : `${userContent} - Part ${i + 1}`,
-            subtitle: 'Strategic Analysis & Insight',
-            bullets: [
+            title: research?.title || (i === 0 ? userContent : `${userContent} - Part ${i + 1}`),
+            subtitle: research ? 'Detailed Sector Analysis' : 'Strategic Analysis & Insight',
+            bullets: research ? [
+              research.content.substring(0, 100) + '...',
+              'Deep dive into specialized research',
+              'Strategic implications and insights'
+            ] : [
               'Key objectives and strategic alignment',
               'Performance indicators and data analysis',
               'Market positioning and competitive edge'
             ],
+            paragraphs: research ? [research.content] : [],
+            imagePrompt: `A high-end cinematic visualization of ${research?.title || userContent}, 3D professional render, clean lighting`,
             visualLayout: 'split'
           });
         }
@@ -1031,7 +1042,20 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
                   <span className="w-6 sm:w-8 h-6 sm:h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs sm:text-sm font-black">
                     {i + 1}
                   </span>
-                  <h3 className="font-black uppercase text-sm sm:text-base">{slide.title}</h3>
+                  <div className="flex flex-col">
+                    <h3 className="font-black uppercase text-sm sm:text-base">{slide.title}</h3>
+                    <div className="flex gap-2 mt-0.5">
+                      {slide.paragraphs && slide.paragraphs.length > 0 && (
+                        <span className="text-[8px] font-black uppercase px-1.5 py-0.5 bg-blue-500/10 text-blue-600 rounded">Context</span>
+                      )}
+                      {slide.imagePrompt && (
+                        <span className="text-[8px] font-black uppercase px-1.5 py-0.5 bg-emerald-500/10 text-emerald-600 rounded">Image Prompt</span>
+                      )}
+                      {slide.hasChart && (
+                        <span className="text-[8px] font-black uppercase px-1.5 py-0.5 bg-amber-500/10 text-amber-600 rounded">Chart</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 <button
                   onClick={() => startEditSlide(i)}

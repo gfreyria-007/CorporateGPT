@@ -22,7 +22,7 @@ const Header: React.FC<HeaderProps> = ({
   onOpenAdmin, onOpenSettings, onOpenFAQ, onOpenArcade, onOpenMathLab, 
   isMuted, onToggleMute
 }) => {
-  const { profile, isAdmin, logout } = useAuth();
+  const { profile, isAdmin } = useAuth();
   const badges = profile?.badges || [];
   
   const level = Math.floor(badges.length / 3) + 1;
@@ -126,49 +126,8 @@ const Header: React.FC<HeaderProps> = ({
           </button>
         )}
 
-        {logout && (
-          <button 
-            onClick={logout}
-            className="p-2 hover:bg-white text-red-600 rounded-xl transition-all flex items-center gap-2"
-            title="Cerrar Sesión"
-          >
-            <span className="text-lg">🚪</span>
-            <span className="text-[10px] font-black uppercase tracking-widest hidden sm:block">Salir</span>
-          </button>
-        )}
 
-        {onToggleMute && (
-          <button 
-            onClick={onToggleMute}
-            className={`p-2 rounded-xl transition-all flex items-center gap-2 ${isMuted ? 'text-gray-400 bg-gray-100' : 'text-blue-500 hover:bg-white'}`}
-            title={isMuted ? "Activar Sonido" : "Silenciar"}
-          >
-            <span className="text-lg">{isMuted ? '🔇' : '🔊'}</span>
-            <span className="text-[10px] font-black uppercase tracking-widest hidden sm:block">{isMuted ? 'Silencio' : 'Sonido'}</span>
-          </button>
-        )}
 
-        <div className="w-px h-6 bg-gray-200 mx-1"></div>
-
-        <div className="flex items-center">
-          <button 
-              onClick={onDecreaseFont}
-              disabled={!canDecrease}
-              className={`p-2 rounded-xl transition-colors flex items-center justify-center min-w-[36px] ${!canDecrease ? 'text-gray-300 cursor-not-allowed' : 'text-blue-900 hover:bg-white shadow-sm'}`}
-              title="Reducir tamaño de letra"
-          >
-              <span className="text-xs font-black">A-</span>
-          </button>
-          <div className="w-px h-4 bg-gray-200 mx-1"></div>
-          <button 
-              onClick={onIncreaseFont}
-              disabled={!canIncrease}
-              className={`p-2 rounded-xl transition-colors flex items-center justify-center min-w-[36px] ${!canIncrease ? 'text-gray-300 cursor-not-allowed' : 'text-blue-900 hover:bg-white shadow-sm'}`}
-              title="Aumentar tamaño de letra"
-          >
-              <span className="text-lg font-black leading-none">A+</span>
-          </button>
-        </div>
       </div>
     </header>
   );

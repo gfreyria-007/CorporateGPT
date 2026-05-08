@@ -8,7 +8,7 @@ interface FooterProps {
 }
 
 const Footer: React.FC<FooterProps> = ({ sessionTokensUsed, subscriptionLevel, onOpenFAQ }) => {
-  const { logout, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
 
   return (
     <footer className="bg-transparent p-6 text-center text-xs text-gray-400">
@@ -18,18 +18,14 @@ const Footer: React.FC<FooterProps> = ({ sessionTokensUsed, subscriptionLevel, o
           {' '}
           <a href="#" onClick={(e) => { e.preventDefault(); onOpenFAQ?.(); }} className="font-semibold text-blue-600 hover:underline">
             Ver Manual / FAQ
-          </a>
-          {' | '}
-          <a href="#" onClick={(e) => { e.preventDefault(); window.location.reload(); }} className="font-semibold text-gray-400 hover:underline">
-            Reiniciar sesión
           </a>.
         </p>
         <p className="mb-1">
           &copy; {new Date().getFullYear()} Catalizia.com.
         </p>
         {!isAdmin && (
-          <p className="font-mono text-gray-300 text-[10px] mb-2 flex items-center justify-center gap-4">
-              <span>Tokens: {sessionTokensUsed}</span>
+          <div className="py-2.5 px-6 bg-white/60 backdrop-blur-xl border border-white/40 flex items-center justify-center gap-4 animate-fade-in-down shadow-xl premium-shadow-lg rounded-full max-w-fit mx-auto mb-4 mt-2">
+              <span className="font-mono text-gray-700">Tokens: {sessionTokensUsed}</span>
               {subscriptionLevel && (
                 <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${
                   subscriptionLevel === 'leyenda' || subscriptionLevel === 'family_mega' ? 'bg-purple-500 text-white shadow-lg' : 
@@ -44,18 +40,11 @@ const Footer: React.FC<FooterProps> = ({ sessionTokensUsed, subscriptionLevel, o
                     'Gratis'
                   }
                 </span>
-              )}
-          </p>
+               )}
+          </div>
         )}
 
-        {logout && (
-          <button 
-            onClick={logout}
-            className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white text-[10px] font-black uppercase tracking-widest rounded-full transition-all active:scale-95 shadow-lg shadow-red-500/20"
-          >
-            Cerrar Sesión / Salir
-          </button>
-        )}
+
       </div>
     </footer>
   );

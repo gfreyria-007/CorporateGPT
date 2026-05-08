@@ -69,6 +69,7 @@ import { TechieWorkspace } from './components/TechieWorkspace';
 import { translations } from './lib/translations';
 import { canAccessTechie } from './lib/permissions';
 import { ImageModelSelector } from './components/ImageModelSelector';
+import ImageEditorModal from './Techie/src/components/ImageEditorModal';
 
 export default function App() {
   // Auth & Profile
@@ -96,7 +97,7 @@ export default function App() {
   // UI Panels
 
 
-  const [activePanel, setActivePanel] = useState<'chat' | 'admin' | 'knowledge' | 'ppt' | 'team'>('chat');
+  const [activePanel, setActivePanel] = useState<'chat' | 'admin' | 'knowledge' | 'ppt' | 'team' | 'imageEditor'>('chat');
   const [showFAQ, setShowFAQ] = useState(false);
   const [safetyAlert, setSafetyAlert] = useState<string | null>(null);
   const [dataProtectionEnabled, setDataProtectionEnabled] = useState(false);
@@ -819,7 +820,8 @@ export default function App() {
                     [
                       { id: 'chat', label: t.intelligentChat, icon: <MessageSquare size={18} /> },
                       { id: 'knowledge', label: 'Knowledge Bank', icon: <Database size={18} /> },
-                      { id: 'ppt', label: t.pptStudio || 'PPT Creator', icon: <Presentation size={18} /> }
+                      { id: 'ppt', label: t.pptStudio || 'PPT Creator', icon: <Presentation size={18} /> },
+                      { id: 'imageEditor', label: '🎨 Image Editor', icon: <Sparkles size={18} className="text-purple-500" /> }
                     ].map(item => (
                       <motion.button 
                         key={item.id}
@@ -1228,6 +1230,9 @@ export default function App() {
           )}
           {activePanel === 'team' && (
             <motion.div key="team" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-white dark:bg-corporate-950 overflow-y-auto"><CompanyPanel onClose={() => setActivePanel('chat')} theme={theme} lang={lang} /></motion.div>
+          )}
+          {activePanel === 'imageEditor' && (
+            <ImageEditorModal isOpen={true} onClose={() => setActivePanel('chat')} />
           )}
         </AnimatePresence>
       </main>

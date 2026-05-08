@@ -45,6 +45,8 @@ export interface SlideSkeleton {
   generatedImageUrl?: string;
   rendered?: boolean;
   visualLayout?: string;
+  paragraphs?: string[];
+  imagePrompt?: string;
 }
 
 export interface ClarifyingQuestion {
@@ -478,6 +480,8 @@ export async function generateSkeleton(prompt: string, count: number = 10, addit
   - Generate EXACTLY ${count} slides that form a cohesive, high-stakes narrative.
   - content array: 3-5 high-density, professional bullet points. Use specific data, names, industry-standard insights, and sophisticated metaphors.
   - Each slide MUST have a distinct, high-impact title and a context-setting subtitle that adds "flavor" and depth.
+  - imagePrompt: Provide a detailed, creative prompt for an AI image generator (Imagen) that captures the core metaphor of the slide.
+  - paragraphs: Provide 1-2 detailed paragraphs (as an array) with deeper context and technical details for the slide content.
   
   STYLE & TONE:
   - Corporate but visionary, sophisticated, and data-driven.
@@ -490,7 +494,7 @@ export async function generateSkeleton(prompt: string, count: number = 10, addit
     ${additionalContext ? `\nCRITICAL CONTEXT & DEEP RESEARCH TO INTEGRATE:\n${additionalContext}\n` : ''}
     IMPORTANT: Fill each slide with REAL, SPECIFIC information. No placeholder text.
     For at least 3-4 slides, choose an appropriate chartType (bar, line, pie, etc.) and provide the corresponding REAL DATA in 'tableData' (format: Label,Value\nLabel,Value).
-    Return as JSON: { "slides": [{ "id": "1", "title": "Specific Title", "subtitle": "Descriptive subtitle", "content": ["Concrete fact 1", "Specific data point 2", "Real insight 3"], "chartType": "bar", "tableData": "Q1,450\nQ2,620\nQ3,580\nQ4,910" }] }` }] }],
+    Return as JSON: { "slides": [{ "id": "1", "title": "Specific Title", "subtitle": "Descriptive subtitle", "content": ["Concrete fact 1", "Specific data point 2", "Real insight 3"], "paragraphs": ["Detailed context...", "Technical depth..."], "imagePrompt": "A conceptual 3D render of...", "chartType": "bar", "tableData": "Q1,450\nQ2,620\nQ3,580\nQ4,910" }] }` }] }],
     config: {
       systemInstruction,
       responseMimeType: "application/json",
@@ -506,10 +510,12 @@ export async function generateSkeleton(prompt: string, count: number = 10, addit
                 title: { type: Type.STRING },
                 subtitle: { type: Type.STRING },
                 content: { type: Type.ARRAY, items: { type: Type.STRING } },
+                paragraphs: { type: Type.ARRAY, items: { type: Type.STRING } },
+                imagePrompt: { type: Type.STRING },
                 chartType: { type: Type.STRING, enum: ["none", "bar", "line", "pie", "donut", "radar", "scatter", "bubble"] },
                 tableData: { type: Type.STRING }
               },
-              required: ["id", "title", "subtitle", "content", "chartType"]
+              required: ["id", "title", "subtitle", "content", "paragraphs", "imagePrompt", "chartType"]
             }
           }
         },

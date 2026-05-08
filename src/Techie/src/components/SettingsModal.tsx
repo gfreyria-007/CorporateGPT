@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UserProfile, SubscriptionLevel } from '../types';
+import { UserProfile, SubscriptionLevel, Grade } from '../types';
 import { db, doc, updateDoc } from '../../../lib/firebase';
+import { GRADES } from '../constants';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -10,9 +11,16 @@ interface SettingsModalProps {
   onProfileUpdate: (updated: UserProfile) => void;
   onDeleteData: () => Promise<void>;
   onOpenFAQ: () => void;
+  selectedGrade: any;
+  onGradeChange: (g: any) => void;
+  language: string;
+  onLanguageChange: (l: string) => void;
 }
 
-const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, userProfile, onProfileUpdate, onDeleteData, onOpenFAQ }) => {
+const SettingsModal: React.FC<SettingsModalProps> = ({ 
+    isOpen, onClose, userProfile, onProfileUpdate, onDeleteData, onOpenFAQ,
+    selectedGrade, onGradeChange, language, onLanguageChange
+}) => {
   const [apiKey, setApiKey] = useState(userProfile.personalApiKey || '');
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -78,6 +86,45 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, userProf
                 <p className="text-[10px] text-slate-400 font-bold uppercase leading-relaxed">
                    Tu cuenta está sincronizada con el Hub Central de CatalizIA. Los créditos se gestionan automáticamente.
                 </p>
+            </div>
+
+            {/* Language & Grade Preferences */}
+            <div className="space-y-4 pt-4 border-t border-gray-100">
+                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Preferencias de Aprendizaje</h4>
+                <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-gray-600">Idioma / Language</span>
+                        <div className="flex gap-1">
+                            <button 
+                                onClick={() => onLanguageChange('es')}
+                                className={`px-3 py-1 rounded-full text-xs font-bold ${language === 'es' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-400'}`}
+                            >
+                                ESP 🇪🇸
+                            </button>
+                            <button 
+                                onClick={() => onLanguageChange('en')}
+                                className={`px-3 py-1 rounded-full text-xs font-bold ${language === 'en' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-400'}`}
+                            >
+                                ENG 🇺🇸
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div className="flex flex-col gap-2">
+                        <span className="text-xs font-bold text-gray-600">Nivel Escolar</span>
+                        <div className="grid grid-cols-2 gap-2">
+                            {GRADES.map((g) => (
+                                <button
+                                    key={g.id}
+                                    onClick={() => onGradeChange(g)}
+                                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 transition-all ${selectedGrade?.id === g.id ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-100 bg-white text-gray-400'}`}
+                                >
+                                    {g.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {message && (

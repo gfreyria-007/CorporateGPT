@@ -12,7 +12,7 @@ interface GradeSelectorProps {
 const GradeSelector: React.FC<GradeSelectorProps> = ({ selectedGrade, activeTool, onGradeChange }) => {
   if (selectedGrade) {
     return (
-      <div className="py-2.5 px-6 bg-white/60 backdrop-blur-xl border border-white/40 flex items-center justify-center gap-4 sticky top-[90px] sm:top-[100px] z-50 animate-fade-in-down shadow-xl premium-shadow-lg rounded-full max-w-fit mx-auto mb-4">
+      <div className="py-2.5 px-6 bg-white/60 backdrop-blur-xl border border-white/40 flex items-center justify-center gap-4 animate-fade-in-down shadow-xl premium-shadow-lg rounded-full max-w-fit mx-auto mb-4 mt-2">
          <style>{`
           @keyframes fade-in-down {
             from { opacity: 0; transform: translateY(-5px); }
