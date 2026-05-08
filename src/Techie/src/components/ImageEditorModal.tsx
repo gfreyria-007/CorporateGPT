@@ -80,7 +80,7 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
   const [brushSize, setBrushSize] = useState(40);
   const [brushColor, setBrushColor] = useState('rgba(255, 0, 0, 0.6)');
   const [mode, setMode] = useState<'brush' | 'erase'>('brush');
-  const [selectedTemplate, setSelectedTemplate] = useState<StyleTemplate | null>(null);
+  const [selectedTemplates, setSelectedTemplates] = useState<StyleTemplate[]>([]);
   const [showTemplates, setShowTemplates] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [editedImage, setEditedImage] = useState<string | null>(null);
@@ -211,11 +211,15 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
     }
   };
 
-  const applyTemplate = (template: StyleTemplate) => {
-    setSelectedTemplate(template);
-    // Don't modify the prompt state here to avoid duplication
-    // We will combine them at generation time
-    setShowTemplates(false);
+  const toggleTemplate = (template: StyleTemplate) => {
+    setSelectedTemplates(prev => {
+      const exists = prev.find(t => t.id === template.id);
+      if (exists) {
+        return prev.filter(t => t.id !== template.id);
+      } else {
+        return [...prev, template];
+      }
+    });
   };
 
   const getMaskBase64 = () => {
@@ -270,7 +274,8 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
     setAbortController(controller);
 
     try {
-      const fullPrompt = selectedTemplate ? `${prompt}. ${selectedTemplate.prompt}` : prompt;
+      const stylePrompts = selectedTemplates.map(t => t.prompt).join(', ');
+      const fullPrompt = stylePrompts ? `Subject: ${prompt}. Style Context: ${stylePrompts}` : prompt;
       const apiPath = '/api/gemini'; // Force all to /api/gemini for robustness and fallback support
       
       const idToken = user ? await user.getIdToken() : null;
@@ -342,7 +347,8 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
       const sourceImageBase64 = getSourceImageBase64();
       const maskImageBase64 = getMaskBase64();
       
-      const fullPrompt = selectedTemplate ? `${prompt}. ${selectedTemplate.prompt}` : prompt;
+      const stylePrompts = selectedTemplates.map(t => t.prompt).join(', ');
+      const fullPrompt = stylePrompts ? `Subject: ${prompt}. Style Context: ${stylePrompts}` : prompt;
       
       // For editing/inpainting, we must use an Imagen model that supports masks
       const editModel = selectedModel.startsWith('gemini') ? 'imagen-3.0-fast-generate-001' : selectedModel;
@@ -408,7 +414,7 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
     setEditedImage(null);
     clearMask();
     setPrompt('');
-    setSelectedTemplate(null);
+    setSelectedTemplates([]);
     setGeneratedImages([]);
   };
 
@@ -535,14 +541,19 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
                     {STYLE_TEMPLATES.map((template) => (
                       <button
                         key={template.id}
-                        onClick={() => applyTemplate(template)}
-                        className={`p-3 rounded-xl text-left transition-all border-2 ${selectedTemplate?.id === template.id 
+                        onClick={() => toggleTemplate(template)}
+                        className={`p-3 rounded-xl text-left transition-all border-2 ${selectedTemplates.find(t => t.id === template.id) 
                           ? 'bg-purple-100 border-purple-500 shadow-lg scale-105' 
                           : 'bg-white border-transparent hover:border-purple-200 hover:shadow-md'}`}
                       >
                         <div className="text-xl mb-1">{template.icon}</div>
                         <div className="text-xs font-black text-gray-800">{template.name}</div>
                         <div className="text-[9px] text-gray-400 uppercase">{template.category}</div>
+                        {selectedTemplates.find(t => t.id === template.id) && (
+                          <div className="absolute top-1 right-1 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center text-[8px] text-white font-bold">
+                            ✓
+                          </div>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -697,8 +708,8 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
                         {STYLE_TEMPLATES.map((template) => (
                           <button
                             key={template.id}
-                            onClick={() => applyTemplate(template)}
-                            className={`p-3 rounded-xl text-left transition-all border-2 ${selectedTemplate?.id === template.id 
+                            onClick={() => toggleTemplate(template)}
+                            className={`p-3 rounded-xl text-left transition-all border-2 ${selectedTemplates.find(t => t.id === template.id) 
                               ? 'bg-purple-100 border-purple-500 shadow-lg' 
                               : 'bg-white border-transparent hover:border-purple-200'}`}
                           >
@@ -766,7 +777,7 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
           )}
 
           {/* Reset */}
-          {(editedImage || prompt || selectedTemplate) && (
+          {(editedImage || prompt || selectedTemplates.length > 0) && (
             <div className="mt-2 flex justify-center">
               <button
                 onClick={handleReset}

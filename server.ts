@@ -587,18 +587,24 @@ async function startServer() {
       }
 
         // 4. Handle Imagen image generation with Bulletproof Fallbacks
-                if (action === 'generateImage' || (payload.model && payload.model.startsWith('imagen-'))) {
-          // --- PROMPT ENHANCEMENT (Connect to "Web" / Internal Knowledge) ---
+                        if (action === 'generateImage' || (payload.model && payload.model.startsWith('imagen-'))) {
+          // --- SMARTER PROMPT ENHANCEMENT (Subject-Preserving) ---
           let optimizedPrompt = payload.prompt;
           try {
-            console.log(`[IMAGEN] Enhancing prompt for better accuracy...`);
+            console.log(`[IMAGEN] Enhancing prompt with Subject-Preservation...`);
             const enhanceResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                contents: [{ role: 'user', parts: [{ text: `Expand the following image prompt into a highly detailed, professional, and accurate description for an AI image generator (Imagen 3). Include lighting, textures, composition, and specific details. Ensure the description is extremely faithful to the original intent but provides the necessary depth for high-quality generation. 
+                contents: [{ role: 'user', parts: [{ text: `Expand the following image prompt into a highly detailed, professional description for an AI image generator (Imagen 3). 
+
+                CRITICAL INSTRUCTION: You MUST preserve the IDENTITY and ESSENCE of the SUBJECT. 
+                If the subject is a known character (like Spider-Man), do NOT replace them with a generic model. 
+                Apply any styles or contexts TO the subject, rather than letting the style override the subject's identity.
                 
-                Original Prompt: ${payload.prompt}` }] }],
+                Input Prompt: ${payload.prompt}
+                
+                Generate a single paragraph of roughly 100-150 words that combines these elements into a cohesive, high-fidelity, and cinematic scene description. Focus on textures, lighting, and keeping the subject recognizable.` }] }],
                 generationConfig: { temperature: 0.7, maxOutputTokens: 500 }
               })
             });
@@ -667,7 +673,7 @@ async function startServer() {
           try {
             const parts = [{ text: optimizedPrompt }];
             if (payload.sourceImage) parts.push({ inlineData: { mimeType: 'image/png', data: payload.sourceImage } });
-            if (payload.maskImage) parts.push({ inlineData: { mimeType: 'image/png', data: payload.maskImage }, text: "Use this mask for inpainting. Only change the area covered by the mask while preserving everything else." });
+            if (payload.maskImage) parts.push({ inlineData: { mimeType: 'image/png', data: payload.maskImage }, text: "Use this mask for inpainting. Only change the area covered by the mask while preserving the subject identity elsewhere." });
 
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
               method: 'POST',
@@ -694,6 +700,7 @@ async function startServer() {
           }
 
           return res.status(500).json({ error: 'IMAGE_GEN_FAILED', details: lastError || 'All models exhausted' });
+        }
         }
         // 5. Handle regular Content Generation
         } else if (action === 'generateContent') {
