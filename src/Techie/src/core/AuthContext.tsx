@@ -64,7 +64,7 @@ interface AuthContextType {
   setProfile: React.Dispatch<React.SetStateAction<UserProfile | null>>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode, mainUser?: FirebaseUser | null, mainProfile?: any }> = ({ children, mainUser, mainProfile }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);

@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useAuth } from '../core/AuthContext';
+import React, { useState, useRef, useEffect, useCallback, useContext } from 'react';
+import { useAuth, AuthContext } from '../core/AuthContext';
 import { AspectRatio } from '../types';
 
 interface ImageEditorModalProps {
@@ -67,7 +67,7 @@ const IMAGE_SIZES = [
 type EditorMode = 'generate' | 'edit';
 
 const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, initialImage, onSave, user: providedUser }) => {
-  const authContext = useAuth();
+  const authContext = useContext(AuthContext);
   const user = providedUser || authContext?.user;
   const [editorMode, setEditorMode] = useState<EditorMode>('generate');
   const [image, setImage] = useState<string | null>(initialImage || null);
