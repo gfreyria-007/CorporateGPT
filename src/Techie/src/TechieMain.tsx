@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Footer from './components/Footer';
 import GradeSelector from './components/GradeSelector';
 import ChatWindow from './components/ChatWindow';
@@ -238,10 +238,15 @@ const canUseSystemKey = (isSubscribed || isAdminRole);
   }, [userProfile]);
 
 
+  const greetingSentRef = useRef(false);
+
   useEffect(() => {
-    if (selectedGrade && userName && messages.length === 0) {
-      handleSendMessage("¡Hola!");
+    if (selectedGrade && userName && messages.length === 0 && !greetingSentRef.current) {
+      greetingSentRef.current = true;
+      // Defer to next tick so handleSendMessage closure is fully bound
+      setTimeout(() => handleSendMessage("¡Hola!"), 0);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedGrade, userName]);
 
   const getSimplifiedHistory = (msgs: ChatMessage[]) => {
