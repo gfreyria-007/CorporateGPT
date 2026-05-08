@@ -30,17 +30,20 @@ export function PromptGenie({ isOpen, onClose, onApply, theme, initialPrompt = '
     try {
       const isImage = mode === 'image';
       const prompt = isImage 
-        ? `You are an AI Image Prompt Expert. The user provided this seed: "${input}". 
-           Generate 3 distinct, highly descriptive, cinematic, and professional image prompts based on this seed. 
-           Include details about lighting, texture, composition, and artistic style (e.g., 8k, photorealistic, cinematic lighting).
+        ? `You are an AI Image Prompt Expert with REAL-TIME WEB ACCESS. The user provided this seed: "${input}". 
+           First, use your search tool to verify any specific character identities, historical periods, or technical subjects mentioned. 
+           Then, generate 3 distinct, highly descriptive, cinematic, and professional image prompts that are FACTUALLY ACCURATE to the subject's identity (e.g., if 'Noir' is mentioned, ensure 1930s traits like trench coats/fedoras are included).
+           Include details about lighting, texture, composition, and artistic style.
            Format: Return exactly 3 options separated by "---". No numbering or preamble.`
-        : `You are a Prompt Engineering Expert. The user provided this simple prompt: "${input}". 
+        : `You are a Prompt Engineering Expert with REAL-TIME WEB ACCESS. The user provided this simple prompt: "${input}". 
+           Use your search tool to ground your response in the latest available data to prevent hallucinations.
            Generate 3 distinct, high-quality, professional versions of this prompt that are more descriptive, contextual, and structured. 
            Format: Only return the 3 options separated by "---". No preamble.`;
 
       const payload = {
         model: "gemini-2.0-flash",
-        contents: [{ role: 'user', parts: [{ text: prompt }] }]
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        tools: [{ google_search: {} }]
       };
 
       const token = user ? await user.getIdToken() : null;
