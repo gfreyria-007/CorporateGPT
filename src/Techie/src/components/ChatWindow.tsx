@@ -25,7 +25,7 @@ const TypingIndicator: React.FC<{ text?: string }> = ({ text }) => {
     
     return (
         <div className="flex items-start gap-3 my-4 flex-row animate-fade-in">
-            <img src="https://catalizia.com/images/catalizia-techie.png" alt="Techie" className="w-10 h-10 rounded-full border border-blue-600/10" referrerPolicy="no-referrer" />
+            <img src="/techie-mascot.png" alt="Techie" className="w-10 h-10 rounded-full border border-blue-600/10" referrerPolicy="no-referrer" />
             <div className={`max-w-xl p-4 rounded-2xl shadow-sm border transition-colors ${isThinking ? 'bg-blue-50/50 border-blue-200' : 'bg-white border-gray-200'} text-gray-800 rounded-bl-none flex items-center gap-3`}>
                 <div className="flex space-x-1">
                     <span className={`w-2 h-2 ${isThinking ? 'bg-blue-400' : 'bg-blue-600'} rounded-full animate-pulse delay-0`}></span>

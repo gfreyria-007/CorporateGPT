@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useAuth } from '../core/AuthContext';
+import { AspectRatio } from '../types';
 
 interface ImageEditorModalProps {
   isOpen: boolean;
@@ -42,6 +44,8 @@ const IMAGE_MODELS = [
   { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash ⭐', description: 'Fast & reliable', category: 'Google' },
   { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Preview', description: 'Latest experimental', category: 'Google' },
   { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Stable option', category: 'Google' },
+  { id: 'imagen-4.0-fast-generate-001', name: 'Imagen 4 Fast', description: 'Best for editing', category: 'Google' },
+  { id: 'imagen-3.0-generate-001', name: 'Imagen 3 High', description: 'Stable quality', category: 'Google' },
 ];
 
 const ASPECT_RATIOS = [
@@ -62,7 +66,8 @@ const IMAGE_SIZES = [
 
 type EditorMode = 'generate' | 'edit';
 
-const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, initialImage }) => {
+export default function ImageEditorModal({ isOpen, onClose, initialImage, onSave }: ImageEditorModalProps) {
+  const { user } = useAuth();
   const [editorMode, setEditorMode] = useState<EditorMode>('generate');
   const [image, setImage] = useState<string | null>(initialImage || null);
   const [prompt, setPrompt] = useState('');
@@ -211,24 +216,74 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
     setShowTemplates(false);
   };
 
+  const getMaskBase64 = () => {
+    if (!maskCanvasRef.current) return null;
+    const canvas = maskCanvasRef.current;
+    
+    // Create a temporary canvas for the white-on-black mask required by Imagen
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = canvasWidth;
+    tempCanvas.height = canvasHeight;
+    const tempCtx = tempCanvas.getContext('2d');
+    if (!tempCtx) return null;
+
+    // Fill with black (area to preserve)
+    tempCtx.fillStyle = 'black';
+    tempCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+    // Draw the mask strokes
+    tempCtx.drawImage(canvas, 0, 0);
+
+    // Convert everything to absolute white/black
+    const imageData = tempCtx.getImageData(0, 0, canvasWidth, canvasHeight);
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i + 3] > 10) { // If alpha > small threshold, it's part of the mask
+        data[i] = 255;     // R
+        data[i + 1] = 255; // G
+        data[i + 2] = 255; // B
+        data[i + 3] = 255; // A (opaque)
+      } else {
+        data[i] = 0;
+        data[i + 1] = 0;
+        data[i + 2] = 0;
+        data[i + 3] = 255;
+      }
+    }
+    tempCtx.putImageData(imageData, 0, 0);
+    return tempCanvas.toDataURL('image/png').split(',')[1];
+  };
+
+  const getSourceImageBase64 = () => {
+    if (!imageCanvasRef.current) return null;
+    return imageCanvasRef.current.toDataURL('image/png').split(',')[1];
+  };
+
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
 
     setIsProcessing(true);
     setEditedImage(null);
-    setAbortController(new AbortController());
+    const controller = new AbortController();
+    setAbortController(controller);
 
     try {
       const fullPrompt = selectedTemplate ? `${prompt}. ${selectedTemplate.prompt}` : prompt;
+      const isImagen = selectedModel.startsWith('imagen-');
+      const apiPath = isImagen ? '/api/gemini' : '/api/techie';
+      
+      const idToken = user ? await user.getIdToken() : null;
 
-      // Use same /api/techie endpoint that works in the chat
-      const response = await fetch('/api/techie', {
+      const response = await fetch(apiPath, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(idToken && { 'Authorization': `Bearer ${idToken}` })
+        },
         body: JSON.stringify({
           action: 'generateImage',
           payload: {
-            model: 'black-forest-labs/flux-1-schnell',
+            model: selectedModel,
             prompt: fullPrompt,
             aspectRatio: aspectRatio === '1:1' ? '1:1' : '16:9'
           }
@@ -242,10 +297,9 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
 
       const result = await response.json();
       
-      // Same response format as chat
-      let imageUrl = result.imageBase64 || '';
+      // Handle both backend response formats
+      let imageUrl = result.imageBase64 || (result.predictions?.[0]?.bytesBase64Encoded) || '';
       
-      // Format as data URL if needed
       if (imageUrl && !imageUrl.startsWith('data:')) {
         imageUrl = `data:image/png;base64,${imageUrl}`;
       }
@@ -258,15 +312,9 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
         throw new Error('No image in response');
       }
     } catch (error: any) {
-      if (error.name === 'AbortError') {
-        console.log('Generation cancelled');
-        return;
-      }
+      if (error.name === 'AbortError') return;
       console.error('Image generation failed:', error);
-      const msg = error.message || 'Image service unavailable';
-      alert(msg.includes('500') || msg.includes('failed') 
-        ? 'Image generation unavailable. Try again.' 
-        : `Failed: ${msg}`);
+      alert(`Failed: ${error.message}`);
     } finally {
       setIsProcessing(false);
       setAbortController(null);
@@ -282,9 +330,68 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
   };
 
   const handleEdit = async () => {
-    // Image editing temporarily unavailable - use generate instead
-    alert('Image editing uses the same generation. Try generating a new image with your desired changes!');
-    setEditorMode('generate');
+    if (!prompt.trim() || !image) return;
+
+    setIsProcessing(true);
+    setEditedImage(null);
+    const controller = new AbortController();
+    setAbortController(controller);
+
+    try {
+      const sourceImageBase64 = getSourceImageBase64();
+      const maskImageBase64 = getMaskBase64();
+      
+      const fullPrompt = selectedTemplate ? `${prompt}. ${selectedTemplate.prompt}` : prompt;
+      
+      // Force use of Imagen for editing/inpainting as it's the only one supporting it in backend
+      const editModel = selectedModel.startsWith('imagen-') ? selectedModel : 'imagen-4.0-fast-generate-001';
+      
+      const idToken = user ? await user.getIdToken() : null;
+
+      const response = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(idToken && { 'Authorization': `Bearer ${idToken}` })
+        },
+        body: JSON.stringify({
+          action: 'generateImage',
+          payload: {
+            model: editModel,
+            prompt: fullPrompt,
+            sourceImage: sourceImageBase64,
+            maskImage: maskImageBase64,
+            aspectRatio: aspectRatio === '1:1' ? '1:1' : '16:9'
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Image editing failed');
+      }
+
+      const result = await response.json();
+      let imageUrl = result.imageBase64 || (result.predictions?.[0]?.bytesBase64Encoded) || '';
+      
+      if (imageUrl && !imageUrl.startsWith('data:')) {
+        imageUrl = `data:image/png;base64,${imageUrl}`;
+      }
+
+      if (imageUrl) {
+        setEditedImage(imageUrl);
+        setGeneratedImages(prev => [imageUrl, ...prev]);
+      } else {
+        throw new Error('No image in response');
+      }
+    } catch (error: any) {
+      if (error.name === 'AbortError') return;
+      console.error('Image editing failed:', error);
+      alert(`Failed: ${error.message}`);
+    } finally {
+      setIsProcessing(false);
+      setAbortController(null);
+    }
   };
 
   const handleDownload = () => {

@@ -1,0 +1,618 @@
+{
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\check_gemini.ts": {
+    "mtime": 1777563315.1277072,
+    "hash": "d24ced7ea56e2a3e99986e1b6bf8e42f"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\check_health.ts": {
+    "mtime": 1777832394.0152657,
+    "hash": "087ae6448cbcbecc26d06fde9052ad57"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\check_keys.ts": {
+    "mtime": 1777563245.9226224,
+    "hash": "f3a77a50fe94693ae30d1812710c84af"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\check_openrouter.ts": {
+    "mtime": 1777563776.3530612,
+    "hash": "0a603293432aa2e75d849a385dc1a9c8"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\check_openrouter_chat.ts": {
+    "mtime": 1777563799.55243,
+    "hash": "2f906503890cb4eacf6dfd14faf692c3"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\eslint.config.js": {
+    "mtime": 1777416779.5094032,
+    "hash": "1a184d1e2492e7daace8bacde2dc7150"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\find_free_vision.ts": {
+    "mtime": 1777831484.1940527,
+    "hash": "9a6eb7f1f37f0cab908f8a2648a940c2"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\find_image_models.ts": {
+    "mtime": 1777835613.3096704,
+    "hash": "b0acb373f8a8e81c40c01b324ac7f683"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\find_models.ts": {
+    "mtime": 1777831370.699103,
+    "hash": "6ed02042c90d73330dc26c24dc373294"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\find_vision.ts": {
+    "mtime": 1777831491.316239,
+    "hash": "25745d9cffcdcaee6417b4326fae74b9"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\list_gemini_models.ts": {
+    "mtime": 1777563327.4429512,
+    "hash": "7b7ff39b9af158d3aa1731b3429f9395"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\list_models.ts": {
+    "mtime": 1777831212.0243108,
+    "hash": "fd206815927b410ca30e7aa478e86b55"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\server.ts": {
+    "mtime": 1778253830.674997,
+    "hash": "fd5dde707d84ba86cebebd11149bb913"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\test_all_models.ts": {
+    "mtime": 1777831192.4788876,
+    "hash": "1a3737b5bacad5d9ce44a2a2fe1c78f6"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\test_api_models.ts": {
+    "mtime": 1777832192.5298405,
+    "hash": "e20204e1b7827279c495387f2d202a34"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\test_corrected.ts": {
+    "mtime": 1777831379.7984958,
+    "hash": "088a12a5cec3a006b83d23cd169497e3"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\test_fixed_models.ts": {
+    "mtime": 1777832211.1939213,
+    "hash": "4914d9a7ed16b0a605804dd9a2ebe275"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\test_imagen.ts": {
+    "mtime": 1777835620.0638728,
+    "hash": "0395fb397bf187266f8bdcadeb01bdb2"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\test_imagen2.ts": {
+    "mtime": 1777835627.1584337,
+    "hash": "76a15f8305e70a488dc2cff7f77335da"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\test_image_models.ts": {
+    "mtime": 1777835604.2797568,
+    "hash": "68985f9da4c03353f8784fb2bf2bfbf7"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\test_models.ts": {
+    "mtime": 1777831221.131524,
+    "hash": "405e848a90f17623fe03c4d54990d91d"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\test_published_models.ts": {
+    "mtime": 1777831342.6216176,
+    "hash": "f98a43e90c672fa20b3ca823591df25a"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\test_vision_alt.ts": {
+    "mtime": 1777831499.1966972,
+    "hash": "69156ab1c546f3316358e998d1ea5231"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\vite.config.ts": {
+    "mtime": 1778171916.8232942,
+    "hash": "ac16d3187066c8e488ef31e0900bc7eb"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\api\\chat.ts": {
+    "mtime": 1777832230.1026387,
+    "hash": "956493a9048cb95d41ee33134067361f"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\api\\create-checkout-session.ts": {
+    "mtime": 1777739593.563,
+    "hash": "4b96360cf05331852fa51327571301a8"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\api\\fallback.ts": {
+    "mtime": 1777832232.4498665,
+    "hash": "82845d6dcee9715f669398c7ec064126"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\api\\gemini.ts": {
+    "mtime": 1778250404.1865315,
+    "hash": "4c43f4a76a1d76d77813f68eee8be946"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\api\\logger.ts": {
+    "mtime": 1777655910.1299922,
+    "hash": "74366a20778121f9c4edf144bf4bbd2b"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\api\\models.ts": {
+    "mtime": 1777759882.7452762,
+    "hash": "101bc01bbc5b8a8fd7709423bf280652"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\api\\quota.ts": {
+    "mtime": 1777734673.0370705,
+    "hash": "7073f7a689c3eb1b33905172e0944ba7"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\api\\rateLimit.ts": {
+    "mtime": 1777739500.1769383,
+    "hash": "10fc889556ed77c9661e857da2f99e98"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\api\\admin\\credits.ts": {
+    "mtime": 1777748691.5750496,
+    "hash": "80acc56a2ede71fd45c949cc52019e1d"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\api\\webhooks\\stripe.ts": {
+    "mtime": 1777739588.0489802,
+    "hash": "2d962990d22f189e05bc9f3f2b01f74b"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\scratch\\check_imagen_method.ts": {
+    "mtime": 1777861195.0361004,
+    "hash": "515fdbfc62c919961a3cc02101e1af4b"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\scratch\\list_models.ts": {
+    "mtime": 1777861208.9161897,
+    "hash": "076e7f2286fc29161c2ab34ade9cb471"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\scratch\\list_prices.ts": {
+    "mtime": 1777570093.6080923,
+    "hash": "e0b12f8574849a18c97695cca3642562"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\scratch\\setup_stripe.ts": {
+    "mtime": 1777570109.2349744,
+    "hash": "849b1a4a2e4f91c8451d39a29e4fa4cd"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\scratch\\test_gemini_api.js": {
+    "mtime": 1777419325.9888585,
+    "hash": "1156e26b3fc9284e88895ce4e3392223"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\scratch\\test_image.ts": {
+    "mtime": 1777861095.0505843,
+    "hash": "3f5b0b2ce045036fdb0ee48427d4096c"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\scratch\\test_predict.ts": {
+    "mtime": 1777861290.3617456,
+    "hash": "86cc3e563709ca9f74c394e551c94281"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\scratch\\test_server_logic.ts": {
+    "mtime": 1777750280.0201557,
+    "hash": "9fe12dcfac071f17fac4c61efef773dd"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\App.tsx": {
+    "mtime": 1778204806.1635692,
+    "hash": "47b3ed7ae4aa28cdc401d557964ad71d"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\main.tsx": {
+    "mtime": 1777747541.4314382,
+    "hash": "1aa1cef8aed3c2c38e0063f4bfd8de7b"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\types.ts": {
+    "mtime": 1778031886.6521165,
+    "hash": "fdce41014af49c517a737f0eeaecdc78"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\AdminPanel.tsx": {
+    "mtime": 1778090768.2819808,
+    "hash": "b48575ec672f366da3f041ca0c914321"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\AdvancedPanel.tsx": {
+    "mtime": 1777596813.1065447,
+    "hash": "86d0f5f46c5db8486fc62372f5f3a1ac"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\ChatInput.tsx": {
+    "mtime": 1778084714.9027314,
+    "hash": "ca2a20332643a579a9456e7ad6468648"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\ChatMessage.tsx": {
+    "mtime": 1778035176.0951643,
+    "hash": "2cf81eba0a9a282273d46e8b24a3b61c"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\CompanyPanel.tsx": {
+    "mtime": 1777748227.374164,
+    "hash": "80b696e3a106edb1e5b22eac77752eaf"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\EcoModeBanner.tsx": {
+    "mtime": 1777749726.0039012,
+    "hash": "06a86cdcff07043905602f23c72946be"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\EmailConfirmationModal.tsx": {
+    "mtime": 1777655533.910244,
+    "hash": "99a5bf78d15728ba6fac7d4826b97d1b"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\ErrorBoundary.tsx": {
+    "mtime": 1777655523.8003788,
+    "hash": "1aaaec21195d7a2a31a0befc7403b5ef"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\FAQ.tsx": {
+    "mtime": 1778086180.2116113,
+    "hash": "4701d21e35e05f091a01d9321a7a7aca"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\GPTsGenerator.tsx": {
+    "mtime": 1778169815.9760642,
+    "hash": "636d73e46c6e67928efd5cb922f6632e"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\ImageModelSelector.tsx": {
+    "mtime": 1778031851.854653,
+    "hash": "5713a534dd9fccd02a47588ba2924e36"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\LandingEditor.tsx": {
+    "mtime": 1777680278.0651915,
+    "hash": "50c53a0240d06c8817c4d4e96a7d4cfa"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\LandingPage.tsx": {
+    "mtime": 1778086202.6070483,
+    "hash": "221218cde3b082f6b7c4d016022e3586"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\MobileWorkspace.tsx": {
+    "mtime": 1778204302.7087936,
+    "hash": "cd258129cb4e5e6b90865ffc2568b9fa"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\ModelSelector.tsx": {
+    "mtime": 1777831529.0468004,
+    "hash": "fd037ba931d69b08e4001a26db0d01d5"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\NeuralOverlay.tsx": {
+    "mtime": 1777596813.1592011,
+    "hash": "b8473b9d23a0cd8b3c681168af8e4cb2"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\PPTcreator.tsx": {
+    "mtime": 1778252027.2133074,
+    "hash": "61cf1572a9074cb34cc23a1259e38c92"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\PricingSection.tsx": {
+    "mtime": 1777834848.3955617,
+    "hash": "b880055035a59276d7b211f26ce75ac5"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\PromptGenie.tsx": {
+    "mtime": 1777739232.0938962,
+    "hash": "4ff7f5db3ce2b3b3af39c1eb9f3cd54f"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\SalesLanding.tsx": {
+    "mtime": 1777834436.5019646,
+    "hash": "48b666344eca34c8e55fba45190095b1"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\SuperAdminPanel.tsx": {
+    "mtime": 1777596813.189391,
+    "hash": "50041df7d81b1dbabc2757ee821749a2"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\SupportFooter.tsx": {
+    "mtime": 1778085315.2912035,
+    "hash": "0c799accba46a3b5183fb98ee0358167"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\TechieWorkspace.tsx": {
+    "mtime": 1778201024.7979646,
+    "hash": "b41ced083b1a8c6e08fbc8eeeeb4a8d9"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\TrialEndedModal.tsx": {
+    "mtime": 1777757695.438279,
+    "hash": "60e4ac6ad39ec8bf5f881e336118699a"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\UpgradePlanPage.tsx": {
+    "mtime": 1777747269.582843,
+    "hash": "59d870fd1ff709755e147db2e58498a3"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\components\\Compliance\\PrivacyPolicy.tsx": {
+    "mtime": 1777861523.7594507,
+    "hash": "2814ddd5392d129ef5de1782fa94607c"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\lib\\admin.ts": {
+    "mtime": 1778102154.1113214,
+    "hash": "bd8672d605cfdd6be83e3b8394aba305"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\lib\\AuthContext.tsx": {
+    "mtime": 1778122024.8844712,
+    "hash": "9ac8eec83c455520e4095d0adac79cb3"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\lib\\company.ts": {
+    "mtime": 1777565809.6659856,
+    "hash": "735e126f84487a00656552a7ccf6a0f1"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\lib\\db.ts": {
+    "mtime": 1778122018.0278506,
+    "hash": "61ec6bcb22b42697bf605875d7ad74b6"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\lib\\eliteModelConfig.ts": {
+    "mtime": 1777831251.4568317,
+    "hash": "beef70dffb3646aa7c19316f7be782b5"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\lib\\failsafeRouter.ts": {
+    "mtime": 1777759699.300354,
+    "hash": "36eee6f76ebb3f01a08192005967a894"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\lib\\firebase.ts": {
+    "mtime": 1778089389.4176002,
+    "hash": "8fdd39cc83bff62103cedd002cecef98"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\lib\\landingConfig.ts": {
+    "mtime": 1777664823.1072042,
+    "hash": "05ae3a27740d66667771af245bad7e69"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\lib\\permissions.ts": {
+    "mtime": 1778122041.6132243,
+    "hash": "5b87a8397434888c77eef9fde264a70c"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\lib\\quotaManager.ts": {
+    "mtime": 1777858978.5966556,
+    "hash": "5febcf1a69d3ca07fafcc38bbff7d3a5"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\lib\\secureDocumentHandler.ts": {
+    "mtime": 1777739559.5068629,
+    "hash": "e94864cc7ea75d50f45009d9c6ecf815"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\lib\\translations.ts": {
+    "mtime": 1778086811.543501,
+    "hash": "90e23f73a3fa8890df1fa1a0edb83da8"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\lib\\trialManager.ts": {
+    "mtime": 1777671159.4497862,
+    "hash": "87bcfd3508ead2fc91e8a8284924dc91"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\lib\\useQuota.ts": {
+    "mtime": 1777566337.8820195,
+    "hash": "646ae8524e35c7acd236cd2d078325ca"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\lib\\useVersionGatekeeper.ts": {
+    "mtime": 1777566014.3579473,
+    "hash": "b256b7d2599ca61252f13a390cbe7e13"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\lib\\utils.ts": {
+    "mtime": 1777416779.4482992,
+    "hash": "8595c2f874aa1ff8c7cc28df2999f354"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\services\\geminiService.ts": {
+    "mtime": 1778251963.8484511,
+    "hash": "36a99143eeb9ff917dfb62f3cd262aea"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\postcss.config.js": {
+    "mtime": 1777603455.322808,
+    "hash": "ac96fa81e8dd4224012bce81068fe169"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\tailwind.config.js": {
+    "mtime": 1777603455.35462,
+    "hash": "9b21cbf656f93b77e44221c3fa486cec"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\vite.config.ts": {
+    "mtime": 1777757074.6813598,
+    "hash": "24f205e8cc09a2c66d26b1970753ce61"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\scratch\\test_gemini.ts": {
+    "mtime": 1777603455.3233845,
+    "hash": "8eb352f095604d78d333a20551a46beb"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\index.tsx": {
+    "mtime": 1778111357.1721816,
+    "hash": "46a021722f7ed7e5b2b2ede9cf9709e9"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\json.d.ts": {
+    "mtime": 1777603455.3486462,
+    "hash": "66587be658e93132c518652d2bdbe4c3"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\logger.ts": {
+    "mtime": 1777659466.7436762,
+    "hash": "12f33d9f048399b00a660469d1ece24c"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\TechieMain.tsx": {
+    "mtime": 1778205239.130422,
+    "hash": "dec094d22e4db70e444333811c18e23d"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\AdminDashboard.tsx": {
+    "mtime": 1778110348.147452,
+    "hash": "a389721b9887b89f2413b2680505403a"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\ArcadeModal.tsx": {
+    "mtime": 1777603455.3262782,
+    "hash": "fbd2351979662339ee46a94c26843234"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\BackpackModal.tsx": {
+    "mtime": 1777603455.3274288,
+    "hash": "854bac4ea201e953b4e8cb32f5adf99f"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\ChatInput.tsx": {
+    "mtime": 1778197479.297974,
+    "hash": "15eaac133f35fc09a6c8bf19a1185478"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\ChatWindow.tsx": {
+    "mtime": 1778204294.8478606,
+    "hash": "efbbbd160ed28dc2a13e638208196b9d"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\DeepResearchMessage.tsx": {
+    "mtime": 1777603455.3291316,
+    "hash": "ab96261b4df5fb22e265e24d964323ac"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\DiagnosticsModal.tsx": {
+    "mtime": 1777603455.3297088,
+    "hash": "b2bc1ab47b785a0b8a20e2466f6a63a1"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\ErrorBoundary.tsx": {
+    "mtime": 1777603455.3302257,
+    "hash": "ea17377c3bf870b968b943153949de3e"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\FAQModal.tsx": {
+    "mtime": 1777742007.7894006,
+    "hash": "c3168131eb8d79dd011054eddc62f19e"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\FlashcardModal.tsx": {
+    "mtime": 1777603455.3312707,
+    "hash": "728875c533a0838ac5987e8d131096ab"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\Footer.tsx": {
+    "mtime": 1778199796.4677575,
+    "hash": "6488845b95d6217b546debaf48a55097"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\FullQuizMessage.tsx": {
+    "mtime": 1777603455.3318253,
+    "hash": "ad77471a3589b49dd4808aebe0ae9740"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\GradeSelector.tsx": {
+    "mtime": 1778199801.7092714,
+    "hash": "e0c0a5545121116a41b4d207dd50107c"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\Header.tsx": {
+    "mtime": 1778199810.9954543,
+    "hash": "574eb1e98cd5765060d5a24db78b34ee"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\ImageCreationModal.tsx": {
+    "mtime": 1777738386.9931388,
+    "hash": "74ae0c4748e1ee6662e5f1aea188c4da"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\ImageEditorModal.tsx": {
+    "mtime": 1778254561.1878235,
+    "hash": "be56864aadb2e24841a73f6b29b9dcfd"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\ImagePopup.tsx": {
+    "mtime": 1777603455.3345628,
+    "hash": "5c88e86440073d1f463f1a89be549f91"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\ImageSourceModal.tsx": {
+    "mtime": 1777603455.3350763,
+    "hash": "c9a46f2c35296fb3561955a5e9666808"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\MathLabModal.tsx": {
+    "mtime": 1778193387.3165958,
+    "hash": "fc1f57416fe2930bf8cd6c970067f21c"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\MathMessage.tsx": {
+    "mtime": 1777603455.3367443,
+    "hash": "2aa727a2e1d4211ea853757d7066a0c0"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\Message.tsx": {
+    "mtime": 1778204283.5612144,
+    "hash": "0887e3b41d52e040651a6402fc51509c"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\MonthlyQuotaBanner.tsx": {
+    "mtime": 1778110352.005413,
+    "hash": "1a12476fed39187a9bcacbdec5dae32d"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\QuizMessage.tsx": {
+    "mtime": 1777603455.337788,
+    "hash": "84f3744e31db7ef629abb8f4545a051d"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\QuizReportMessage.tsx": {
+    "mtime": 1777739254.7635891,
+    "hash": "340f7c3dafccad05a79d492dd1f0c658"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\ReviewAllMessage.tsx": {
+    "mtime": 1777603455.3388367,
+    "hash": "83eb358ba9257a8b38bb895ec184c4bd"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\ReviewMessage.tsx": {
+    "mtime": 1777603455.3393588,
+    "hash": "066d53c82621544dcee36c6c7912bc6f"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\SearchMessage.tsx": {
+    "mtime": 1777603455.3398833,
+    "hash": "e0d4b5bcada64e083ac7b2194afdb281"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\SelectionMessage.tsx": {
+    "mtime": 1777603455.3403993,
+    "hash": "40c476c295f36eab37e8757f0b4318ec"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\SettingsModal.tsx": {
+    "mtime": 1778199865.736415,
+    "hash": "a41714d26a5b7983d62d7d5247e36d8c"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\SnakeGame.tsx": {
+    "mtime": 1777603455.3420248,
+    "hash": "ef20a252bc5a3333dad0c5172539980b"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\SocraticMessage.tsx": {
+    "mtime": 1778110176.0450578,
+    "hash": "a5fa87237966a8a197fd23191f989aed"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\SpaceAliensGame.tsx": {
+    "mtime": 1777603455.343074,
+    "hash": "a9725eaf8ecd9e87f8d5a71b2615b569"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\TetrisGame.tsx": {
+    "mtime": 1777603455.3436012,
+    "hash": "7e93dca48215a76a49c23f2e59f2e47a"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\components\\UserProfileSetup.tsx": {
+    "mtime": 1778204292.8379874,
+    "hash": "bf2b048ed2023d61d87dade99e75818d"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\constants\\index.ts": {
+    "mtime": 1778110610.0825007,
+    "hash": "cf346817b256ec575637caffcac39449"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\core\\AuthContext.tsx": {
+    "mtime": 1778201019.5265932,
+    "hash": "a7eb726f3e45f0352eacf18da5198069"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\core\\LanguageContext.tsx": {
+    "mtime": 1778111881.2520823,
+    "hash": "e4906fcb0675210d3123c21bb0ae4ac9"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\lib\\utils.ts": {
+    "mtime": 1777603455.3492537,
+    "hash": "0a3d688a6c4a897d87fc887b5e421c60"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\services\\geminiService.ts": {
+    "mtime": 1778199466.1626601,
+    "hash": "b6df0f97fc09e198f6a828dd62371c93"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\types\\aistudio.d.ts": {
+    "mtime": 1777603455.3514197,
+    "hash": "232e195a1eda7d366fcc42c08caf8c7c"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\types\\index.ts": {
+    "mtime": 1778111125.166064,
+    "hash": "e45a82324e5d215641617ecb297ff6f0"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\utils\\audio.ts": {
+    "mtime": 1777603455.353029,
+    "hash": "ef1cf6bb9ce2ca6db7df045c2d858ff4"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\src\\utils\\gameAudio.ts": {
+    "mtime": 1777603455.3540769,
+    "hash": "12d6fde98f1c2946a53a54786b9f78bd"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\AGENTS.md": {
+    "mtime": 1778205389.2194383,
+    "hash": "747e73a5e1af4b72c0d65c9169c23199"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\build_log.txt": {
+    "mtime": 1777514413.2537527,
+    "hash": "120da79083bc2ceb40eb4c82ead2a2e1"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\build_output.txt": {
+    "mtime": 1777581096.6867464,
+    "hash": "2fa7e11af53f683c3647f210be8f4344"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\cloudbuild.yaml": {
+    "mtime": 1778033626.1609523,
+    "hash": "98abbfca46583d3489d4ec10b1435401"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\index.html": {
+    "mtime": 1777738341.4024541,
+    "hash": "31be491195e08fcf6dac208c83cec95e"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\MEMORY.md": {
+    "mtime": 1778100639.3836722,
+    "hash": "62e101cbd948bf91b7b508f4b1f92701"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\README.md": {
+    "mtime": 1777416779.2925253,
+    "hash": "9a954f5a7685658ddacf785829cca7cb"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\security_spec.md": {
+    "mtime": 1777416779.3000488,
+    "hash": "a9dea3533638c82382a080fbb1ce881a"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\CLAUDE.md": {
+    "mtime": 1777603455.3189802,
+    "hash": "4e3d2ee7f785bfa3e57f8a8fcb417ff9"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\index.html": {
+    "mtime": 1777603455.3206265,
+    "hash": "e0ba5fe92a91a53f7ecce70cee8830b7"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\src\\Techie\\README.md": {
+    "mtime": 1777603455.3195386,
+    "hash": "17aba2fdaa0cb5528396ccc8950ba3b3"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\public\\techie-mascot.png": {
+    "mtime": 1778118025.6767323,
+    "hash": "4cf9056361923b2032b999b038d49486"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\public\\landing\\dashboard.png": {
+    "mtime": 1777735084.0389936,
+    "hash": "6687e655bf576cd4bde4a06ec428f72a"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\public\\landing\\junior.png": {
+    "mtime": 1777735100.761268,
+    "hash": "bed27dabee109665846446e03cdd8dc7"
+  },
+  "C:\\Users\\gabsv\\Documents\\Proyectos\\Catalizia_Corp\\Corporate_GPT\\public\\landing\\ppt.png": {
+    "mtime": 1777735118.4387646,
+    "hash": "1b2b24f720ad6bc0a15b933b56ba7ae7"
+  }
+}

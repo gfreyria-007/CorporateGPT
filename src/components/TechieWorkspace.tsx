@@ -10,12 +10,10 @@ import '../Techie/src/index.css';
  * Encapsulates the full Techie application within Corporate GPT.
  * Scopes Tailwind and Context to prevent interference.
  */
-export const TechieWorkspace = () => {
-  const { user: mainUser } = useAuth();
-
+export const TechieWorkspace = ({ user, profile }: { user: any; profile: any }) => {
   return (
     <div id="techie-root" className="w-full h-full overflow-hidden bg-slate-50">
-       <AuthProvider mainUser={mainUser}>
+       <AuthProvider mainUser={user} mainProfile={profile}>
          <LanguageProvider>
            <TechieMain />
          </LanguageProvider>

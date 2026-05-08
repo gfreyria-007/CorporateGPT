@@ -119,18 +119,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           rawText = result.candidates[0].content.parts[0].text;
         }
         
-        const cleanJson = (rawText || '').replace(/```json/g, '').replace(/```/g, '').trim();
-        
+        // ROBUST JSON EXTRACTION: Find the first { and the last }
         let parsedFields: Record<string, any> = {};
         try {
-          if (cleanJson) {
-            const parsed = JSON.parse(cleanJson);
+          const firstBrace = (rawText || '').indexOf('{');
+          const lastBrace = (rawText || '').lastIndexOf('}');
+          
+          if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+            const potentialJson = rawText.substring(firstBrace, lastBrace + 1);
+            const parsed = JSON.parse(potentialJson);
             if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
               parsedFields = parsed;
             }
           }
         } catch (e) {
-          console.warn("[GEMINI] JSON Parse warning (may be plain text):", e);
+          console.warn("[GEMINI] Robust JSON Parse warning:", e);
         }
 
         // Tracking: Increment multimedia counter for images/slides

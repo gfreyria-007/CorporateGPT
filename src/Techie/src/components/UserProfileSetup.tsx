@@ -92,7 +92,7 @@ const UserProfileSetup: React.FC<UserProfileSetupProps> = ({
             <div className="w-full max-w-md animate-fade-in-scale flex flex-col items-center">
                 <div className="mb-8">
                     <div className="w-28 h-28 bg-gray-50 rounded-full flex items-center justify-center overflow-hidden border border-blue-100 shadow-inner">
-                         <img src="https://catalizia.com/images/catalizia-techie.png" alt="Techie" className="w-full h-full object-contain p-2"/>
+                         <img src="/techie-mascot.png" alt="Techie" className="w-full h-full object-contain p-2"/>
                     </div>
                 </div>
                 <h2 className="text-3xl font-black text-[#1e3a8a] mb-2 uppercase tracking-tight">Configura tu Perfil</h2>

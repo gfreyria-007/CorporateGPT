@@ -74,6 +74,9 @@ const trackUsage = async (userId: string | null | undefined, isImage: boolean) =
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+// Single source of truth — reads version from package.json at runtime
+const VERSION: string = JSON.parse(require('fs').readFileSync('./package.json', 'utf-8')).version;
+
 
 // Production Health Check
 if (process.env.NODE_ENV === 'production') {
@@ -264,7 +267,7 @@ async function startServer() {
   app.get('/api/health', (req, res) => {
     res.json({
       status: 'healthy',
-      version: '5.3.2', // Updated for Techie Socratic Pedagogy & PPT Narrative context hardening
+      version: VERSION,
       security: {
         helmet: 'active',
         rateLimit: 'active',

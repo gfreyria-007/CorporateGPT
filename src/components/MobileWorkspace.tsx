@@ -176,7 +176,7 @@ export function MobileWorkspace({
                   <div className="flex items-center gap-2">
                     {isJunior && (
                       <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center border border-blue-100 overflow-hidden">
-                        <img src="https://catalizia.com/images/catalizia-techie.png" alt="Techie" className="w-full h-full object-contain p-1" />
+                        <img src="/techie-mascot.png" alt="Techie" className="w-full h-full object-contain p-1" />
                       </div>
                     )}
                     <div className="flex flex-col">

@@ -140,7 +140,7 @@ const Message: React.FC<MessageProps> = ({
       {!isUser && (
         <div className="shrink-0 group">
             <img 
-                src="https://catalizia.com/images/catalizia-techie.png" 
+                src="/techie-mascot.png" 
                 alt="Techie" 
                 className="w-10 h-10 rounded-full border-2 border-white bg-white shadow-lg group-hover:scale-125 transition-transform duration-300" 
                 referrerPolicy="no-referrer" 

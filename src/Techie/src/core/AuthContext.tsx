@@ -66,7 +66,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode, mainUser?: FirebaseUser | null }> = ({ children, mainUser }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode, mainUser?: FirebaseUser | null, mainProfile?: any }> = ({ children, mainUser, mainProfile }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,10 +76,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode, mainUser?: Fire
     // If we have a mainUser from the parent, prioritize it to avoid double login
     if (mainUser) {
       setUser(mainUser);
-      loadUserProfile(mainUser);
-      setLoading(false);
+      if (mainProfile) {
+        setProfile(mainProfile as UserProfile);
+        setLoading(false);
+      } else {
+        loadUserProfile(mainUser);
+        setLoading(false);
+      }
     }
-  }, [mainUser]);
+  }, [mainUser, mainProfile]);
 
   useEffect(() => {
     // Only set up internal listener if no mainUser is provided or if it's null
