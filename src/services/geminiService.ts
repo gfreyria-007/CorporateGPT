@@ -428,25 +428,34 @@ REQUIRED JSON RESPONSE:
 export async function generateDeepResearch(topic: string, audience: string, keyTakeaway: string): Promise<any[]> {
   const payload = {
     model: "gemini-2.0-flash",
-    contents: [{ role: "user", parts: [{ text: `You are a high-level strategic consultant.
+    contents: [{ role: "user", parts: [{ text: `You are a World-Class Strategic Research Analyst.
+    
 Topic: ${topic}
 Audience: ${audience}
 Key Takeaway: ${keyTakeaway}
 
-TASK: Perform a deep research on the topic. Provide 3 highly detailed strategic pillars.
-For each pillar, provide a title and at least 3-4 paragraphs of dense, professional content with data, trends, and specific insights.
-DO NOT use placeholders. DO NOT be generic.
+TASK: Perform an EXHAUSTIVE deep research report on this topic. 
+You must use your search tool to gather real-world data, current trends (2025-2026 context), and verified facts.
 
-Return JSON EXACTLY like this:
+REQUIREMENTS:
+1. Provide at least 5-7 highly detailed strategic pillars or thematic sections.
+2. For EACH section, write at least 6-8 dense paragraphs of professional analysis.
+3. Total report length must be at least 2000 tokens. 
+4. Include specific numbers, statistics, and industry benchmarks.
+5. Provide specific sources and citations for each pillar.
+6. NO hallucinations. If data is unavailable, state the current market consensus.
+
+Return ONLY this JSON structure:
 {
   "research": [
     {
-      "title": "Strategic Pillar Title",
-      "content": "Dense, professional content with at least 500 characters...",
-      "sources": ["Source Link or Name"]
+      "title": "Exhaustive Section Title",
+      "content": "A very long, dense, and professional analysis with at least 1500-2000 characters per section...",
+      "sources": ["Verified Source 1", "Verified Source 2"]
     }
   ]
 }` }] }],
+    tools: [{ google_search: {} }],
     config: { 
       responseMimeType: "application/json",
       responseSchema: {
@@ -476,13 +485,14 @@ Return JSON EXACTLY like this:
     body: JSON.stringify({ action: 'generateContent', payload })
   });
   
-  if (!res.ok) throw new Error("API Error");
+  if (!res.ok) throw new Error("Deep Research API Error");
   
   const data = await res.json();
   try {
     const raw = data.research || (data.text ? JSON.parse(data.text.replace(/```json/g,'').replace(/```/g,'').trim()).research : []);
     return raw || [];
   } catch(e) {
+    console.error("[GEMINI] Research Parse Error:", e);
     return [];
   }
 }

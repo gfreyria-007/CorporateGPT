@@ -5,7 +5,7 @@ import {
   Zap, Database, BarChart3, Presentation, Image as ImageIcon, Download,
   FileText, Upload, Eye, EyeOff, Check, ArrowRight, FileSpreadsheet, FileImage,
   Palette as Paint, Layers, Settings, Move, Target, Zap as Lightning, ImagePlus,
-  Wand2, PieChart, TrendingUp, Activity, BarChart
+  Wand2, PieChart, TrendingUp, Activity, BarChart, Search, Edit3, Link as LinkIcon
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -677,8 +677,11 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
           disabled={!contentInput.trim() && contentSource !== 'upload'}
           className="w-full py-3 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 min-h-[48px]"
         >
-          <ChevronRight />
-          {lang === 'es' ? 'Siguiente' : 'Next'}
+          {contentSource === 'ai' ? <Sparkles size={18} /> : <ChevronRight />}
+          {contentSource === 'ai' 
+            ? (lang === 'es' ? 'Iniciar Investigación Profunda' : 'Start Deep Research')
+            : (lang === 'es' ? 'Siguiente' : 'Next')
+          }
         </button>
       </div>
     </div>
@@ -834,37 +837,65 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
 
     return (
       <div className="flex-1 flex flex-col p-4 sm:p-8 space-y-4 sm:space-y-6 overflow-auto">
-        <div className="text-center space-y-2">
-          <h2 className="text-xl sm:text-2xl font-black uppercase tracking-widest">
-            {lang === 'es' ? 'Investigación Profunda' : 'Deep Research'}
+        <div className="text-center space-y-2 border-b border-slate-200 dark:border-white/10 pb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-full text-[10px] font-black uppercase tracking-widest mb-2">
+            <Search size={12} />
+            {lang === 'es' ? 'Google Grounding Activo' : 'Google Grounding Active'}
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tighter">
+            {lang === 'es' ? 'Reporte: Deep Learning' : 'Deep Learning Report'}
           </h2>
-          <p className="text-xs sm:text-sm text-slate-400">
+          <p className="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto">
             {lang === 'es' 
-              ? 'Revisa la investigación generada por la IA. Edita si es necesario.' 
-              : 'Review AI-generated research. Edit if needed.'}
+              ? 'Investigación estratégica de alta densidad (+2000 tokens) basada en datos reales de la web.' 
+              : 'High-density strategic research (+2000 tokens) based on real-world web data.'}
           </p>
         </div>
 
-        <div className="flex-1 space-y-3 sm:space-y-4 overflow-auto">
+        <div className="flex-1 space-y-6 sm:space-y-8 overflow-auto px-2">
           {deepResearch?.topics.map((topic, i) => (
-            <div key={i} className="p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-white/10">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="w-6 sm:w-8 h-6 sm:h-8 rounded-full bg-purple-600 text-white flex items-center justify-center text-xs sm:text-sm font-black">
+            <div key={i} className="relative group">
+              <div className="flex items-start gap-4 sm:gap-6">
+                <div className="flex flex-col items-center">
+                  <span className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-sm font-black text-blue-600">
                     {i + 1}
                   </span>
-                  <h3 className="font-black uppercase text-sm sm:text-base">{topic.title}</h3>
+                  {i < (deepResearch?.topics.length - 1) && (
+                    <div className="w-[2px] flex-1 bg-gradient-to-b from-blue-600/20 to-transparent my-2" />
+                  )}
                 </div>
-                <button
-                  onClick={() => startEditResearch(i)}
-                  className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-black uppercase"
-                >
-                  {lang === 'es' ? 'Editar' : 'Edit'}
-                </button>
+                
+                <div className="flex-1 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-black uppercase text-base sm:text-lg tracking-tight text-slate-800 dark:text-white">
+                      {topic.title}
+                    </h3>
+                    <button
+                      onClick={() => startEditResearch(i)}
+                      className="p-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-blue-600"
+                    >
+                      <Edit3 size={16} />
+                    </button>
+                  </div>
+
+                  <div className="prose prose-sm dark:prose-invert max-w-none">
+                    <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
+                      {topic.content || (lang === 'es' ? 'Sin contenido' : 'No content')}
+                    </p>
+                  </div>
+
+                  {topic.sources && topic.sources.length > 0 && (
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {topic.sources.map((source, si) => (
+                        <span key={si} className="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-white/5 rounded-md text-[10px] font-medium text-slate-500 uppercase">
+                          <LinkIcon size={10} />
+                          {source}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-              <p className="text-xs sm:text-sm text-slate-400 ml-8 sm:ml-10 whitespace-pre-wrap">
-                {topic.content || (lang === 'es' ? 'Sin contenido' : 'No content')}
-              </p>
             </div>
           ))}
         </div>
