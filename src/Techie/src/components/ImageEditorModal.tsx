@@ -5,9 +5,12 @@ import {
   Sparkles, X, Wand2, ArrowRight, Lightbulb, Zap, Send, 
   Loader2, Undo2, RotateCcw, ImageIcon, Palette, Square, 
   Type, MousePointer2, Brush, Eraser, Download, Share2, 
-  Layers, Trash2, Check, Wand, Target
+  Layers, Trash2, Check, Wand, Target, Monitor, Smartphone,
+  Layout, StretchHorizontal, Tv, Building2, Gamepad2, Blocks,
+  Camera, UserCheck, Briefcase, Paintbrush, Frame, Pencil,
+  Mountain, Box, Clapperboard, Sun, Video
 } from 'lucide-react';
-import { PromptGenie } from '../../components/PromptGenie';
+import { PromptGenie } from '../../../components/PromptGenie';
 
 interface ImageEditorModalProps {
   isOpen: boolean;
@@ -20,32 +23,32 @@ interface ImageEditorModalProps {
 interface StyleTemplate {
   id: string;
   name: string;
-  icon: string;
+  icon: React.ReactNode;
   prompt: string;
   category: string;
 }
 
 const STYLE_TEMPLATES: StyleTemplate[] = [
-  { id: '80s-anime', name: '80s Anime', icon: '🎞️', prompt: '1980s retro anime style, high contrast cel-shading, vibrant neon color palette with pinks and cyans, vaporwave aesthetic, grainy film texture, bold dark outlines, iconic vintage animation look, hand-drawn quality, CRT screen effect', category: 'anime' },
-  { id: 'modern-anime', name: 'Modern Anime', icon: '🎌', prompt: 'Modern high-fidelity anime style, crisp linework, soft cinematic shading, vibrant and harmonious colors, detailed atmospheric backgrounds, Makoto Shinkai inspired lighting, ethereal glows, digital polish, 4k resolution aesthetic', category: 'anime' },
-  { id: 'cyberpunk-2099', name: 'Office 2099', icon: '🏢', prompt: 'Cyberpunk office 2099, futuristic corporate workspace, glowing neon blue and magenta lights, holographic computer displays, sleek metallic surfaces, high-tech corporate architecture, rainy city visible through floor-to-ceiling windows, dark moody atmosphere, volumetric lighting', category: 'office' },
-  { id: 'pixel-art-kawai', name: 'Kawai 8-Bit', icon: '👾', prompt: 'High-quality Kawaii pixel art, adorable chibi character style, vibrant and cheerful color palette, 8-bit retro gaming aesthetic, clean pixel edges, heart motifs, sparkling effects, isometric perspective, video game world atmosphere', category: 'pixel' },
-  { id: 'pixel-bricks', name: 'Bricks 8-Bit', icon: '🧱', prompt: 'Classic brick-based pixel art, retro building blocks construction, 8-bit architecture, vibrant primary colors, stylized blocky textures, LEGO-inspired digital art, nostalgic toy aesthetic, sharp geometric edges', category: 'pixel' },
-  { id: 'classic-vintage', name: 'Classic Vintage', icon: '📷', prompt: 'Authentic classic vintage photography, heavy film grain, sepia and warm brown tones, faded edges, timeless historical aesthetic, nostalgic 35mm film feel, Leica-style depth of field, dusty texture, antique portrait quality', category: 'photo' },
-  { id: 'professional-corporate', name: 'Professional Corp', icon: '👔', prompt: 'Ultra-professional corporate headshot, high-end business attire, clean neutral studio background, executive lighting setup, sharp focus on eyes, confident posture, minimal depth of field, high-resolution portrait, magazine cover quality', category: 'portrait' },
-  { id: 'professionalLinkedIn', name: 'LinkedIn Pro', icon: '💼', prompt: 'Premium LinkedIn professional profile photo, modern business casual, bright airy office background with soft bokeh, approachable and friendly expression, natural daylighting, high-end DSLR quality, clean professional composition', category: 'portrait' },
-  { id: 'professional-envato', name: 'Envato Studio', icon: '🎨', prompt: 'Creative professional portfolio photo, artistic smart casual, vibrant colorful studio background, creative tools visible, dynamic pose, modern lighting, high-energy creative professional vibe, sharp and clear', category: 'portrait' },
-  { id: 'watercolor', name: 'Watercolor', icon: '🎨', prompt: 'Professional watercolor painting, soft bleeding colors, expressive wet-on-wet technique, delicate paper texture, artistic hand-painted look, dreamy ethereal atmosphere, splash effects, fine brushwork, pastel tones', category: 'art' },
-  { id: 'oil-painting', name: 'Oil Painting', icon: '🖼️', prompt: 'Masterpiece oil painting, thick impasto brushstrokes, rich heavy textures, dramatic chiaroscuro lighting, Renaissance-inspired color palette, museum quality canvas texture, deep saturated colors, classical art style', category: 'art' },
-  { id: 'acrylic-art', name: 'Acrylic Art', icon: '🖌️', prompt: 'Modern acrylic art, bold and vibrant colors, contemporary expressive style, visible layered brushwork, high contrast, abstract elements, energetic composition, gallery-ready modern art aesthetic', category: 'art' },
-  { id: 'sketch-pencil', name: 'Pencil Sketch', icon: '✏️', prompt: 'Highly detailed pencil sketch, realistic graphite shading, hand-drawn paper texture, fine cross-hatching, artistic linework, rough construction lines, architectural drawing style, graphite on white paper', category: 'art' },
-  { id: 'watercolor-landscape', name: 'Watercolor Landscape', icon: '🏔️', prompt: 'Ethereal watercolor landscape, soft flowing gradients, misty mountains, serene natural scene, artistic transparency, atmospheric depth, peaceful zen aesthetic, fine art painting', category: 'art' },
-  { id: '3d-render', name: '3D Render', icon: '🎮', prompt: 'High-end 3D computer render, Octane Render style, photorealistic materials, subsurface scattering, advanced ray-tracing, Unreal Engine 5 aesthetic, volumetric fog, extremely detailed textures, 8k resolution', category: 'digital' },
-  { id: 'illustration-digital', name: 'Digital Illustration', icon: '💻', prompt: 'Modern digital illustration, clean vector style, flat design with depth, vibrant complementary colors, commercial art aesthetic, sleek and polished, trendy tech illustration style', category: 'digital' },
-  { id: 'neon-portrait', name: 'Neon Portrait', icon: '💡', prompt: 'Moody neon portrait, vibrant LED backlight, cyberpunk color scheme (purple and blue), dramatic shadows, glowing skin reflections, cinematic urban night atmosphere, rainy street reflections', category: 'photo' },
-  { id: 'film-noir', name: 'Film Noir', icon: '🎬', prompt: 'Classic film noir cinematic style, stark black and white contrast, dramatic venetian blind shadows, hard lighting, smoke atmosphere, moody 1940s detective aesthetic, grainy film texture', category: 'photo' },
-  { id: 'golden-hour', name: 'Golden Hour', icon: '🌅', prompt: 'Breathtaking golden hour photography, warm glowing sunset light, long soft shadows, ethereal light leaks, natural sun flare, beautiful warm skin tones, peaceful summer evening atmosphere', category: 'photo' },
-  { id: 'cinematic', name: 'Cinematic', icon: '🎥', prompt: 'Epic cinematic movie still, anamorphic lens flare, wide aspect ratio, dramatic Hollywood lighting, color graded (teal and orange), high production value, intense emotional atmosphere, 35mm film look', category: 'photo' },
+  { id: '80s-anime', name: '80s Anime', icon: <Tv size={20} />, prompt: '1980s retro anime style, high contrast cel-shading, vibrant neon color palette with pinks and cyans, vaporwave aesthetic, grainy film texture, bold dark outlines, iconic vintage animation look, hand-drawn quality, CRT screen effect', category: 'anime' },
+  { id: 'modern-anime', name: 'Modern Anime', icon: <Sparkles size={20} />, prompt: 'Modern high-fidelity anime style, crisp linework, soft cinematic shading, vibrant and harmonious colors, detailed atmospheric backgrounds, Makoto Shinkai inspired lighting, ethereal glows, digital polish, 4k resolution aesthetic', category: 'anime' },
+  { id: 'cyberpunk-2099', name: 'Office 2099', icon: <Building2 size={20} />, prompt: 'Cyberpunk office 2099, futuristic corporate workspace, glowing neon blue and magenta lights, holographic computer displays, sleek metallic surfaces, high-tech corporate architecture, rainy city visible through floor-to-ceiling windows, dark moody atmosphere, volumetric lighting', category: 'office' },
+  { id: 'pixel-art-kawai', name: 'Kawai 8-Bit', icon: <Gamepad2 size={20} />, prompt: 'High-quality Kawaii pixel art, adorable chibi character style, vibrant and cheerful color palette, 8-bit retro gaming aesthetic, clean pixel edges, heart motifs, sparkling effects, isometric perspective, video game world atmosphere', category: 'pixel' },
+  { id: 'pixel-bricks', name: 'Bricks 8-Bit', icon: <Blocks size={20} />, prompt: 'Classic brick-based pixel art, retro building blocks construction, 8-bit architecture, vibrant primary colors, stylized blocky textures, LEGO-inspired digital art, nostalgic toy aesthetic, sharp geometric edges', category: 'pixel' },
+  { id: 'classic-vintage', name: 'Classic Vintage', icon: <Camera size={20} />, prompt: 'Authentic classic vintage photography, heavy film grain, sepia and warm brown tones, faded edges, timeless historical aesthetic, nostalgic 35mm film feel, Leica-style depth of field, dusty texture, antique portrait quality', category: 'photo' },
+  { id: 'professional-corporate', name: 'Professional Corp', icon: <UserCheck size={20} />, prompt: 'Ultra-professional corporate headshot, high-end business attire, clean neutral studio background, executive lighting setup, sharp focus on eyes, confident posture, minimal depth of field, high-resolution portrait, magazine cover quality', category: 'portrait' },
+  { id: 'professionalLinkedIn', name: 'LinkedIn Pro', icon: <Briefcase size={20} />, prompt: 'Premium LinkedIn professional profile photo, modern business casual, bright airy office background with soft bokeh, approachable and friendly expression, natural daylighting, high-end DSLR quality, clean professional composition', category: 'portrait' },
+  { id: 'professional-envato', name: 'Envato Studio', icon: <Palette size={20} />, prompt: 'Creative professional portfolio photo, artistic smart casual, vibrant colorful studio background, creative tools visible, dynamic pose, modern lighting, high-energy creative professional vibe, sharp and clear', category: 'portrait' },
+  { id: 'watercolor', name: 'Watercolor', icon: <Paintbrush size={20} />, prompt: 'Professional watercolor painting, soft bleeding colors, expressive wet-on-wet technique, delicate paper texture, artistic hand-painted look, dreamy ethereal atmosphere, splash effects, fine brushwork, pastel tones', category: 'art' },
+  { id: 'oil-painting', name: 'Oil Painting', icon: <Frame size={20} />, prompt: 'Masterpiece oil painting, thick impasto brushstrokes, rich heavy textures, dramatic chiaroscuro lighting, Renaissance-inspired color palette, museum quality canvas texture, deep saturated colors, classical art style', category: 'art' },
+  { id: 'acrylic-art', name: 'Acrylic Art', icon: <Paintbrush size={20} />, prompt: 'Modern acrylic art, bold and vibrant colors, contemporary expressive style, visible layered brushwork, high contrast, abstract elements, energetic composition, gallery-ready modern art aesthetic', category: 'art' },
+  { id: 'sketch-pencil', name: 'Pencil Sketch', icon: <Pencil size={20} />, prompt: 'Highly detailed pencil sketch, realistic graphite shading, hand-drawn paper texture, fine cross-hatching, artistic linework, rough construction lines, architectural drawing style, graphite on white paper', category: 'art' },
+  { id: 'watercolor-landscape', name: 'Watercolor Landscape', icon: <Mountain size={20} />, prompt: 'Ethereal watercolor landscape, soft flowing gradients, misty mountains, serene natural scene, artistic transparency, atmospheric depth, peaceful zen aesthetic, fine art painting', category: 'art' },
+  { id: '3d-render', name: '3D Render', icon: <Box size={20} />, prompt: 'High-end 3D computer render, Octane Render style, photorealistic materials, subsurface scattering, advanced ray-tracing, Unreal Engine 5 aesthetic, volumetric fog, extremely detailed textures, 8k resolution', category: 'digital' },
+  { id: 'illustration-digital', name: 'Digital Illustration', icon: <Monitor size={20} />, prompt: 'Modern digital illustration, clean vector style, flat design with depth, vibrant complementary colors, commercial art aesthetic, sleek and polished, trendy tech illustration style', category: 'digital' },
+  { id: 'neon-portrait', name: 'Neon Portrait', icon: <Lightbulb size={20} />, prompt: 'Moody neon portrait, vibrant LED backlight, cyberpunk color scheme (purple and blue), dramatic shadows, glowing skin reflections, cinematic urban night atmosphere, rainy street reflections', category: 'photo' },
+  { id: 'film-noir', name: 'Film Noir', icon: <Clapperboard size={20} />, prompt: 'Classic 1930s-1940s film noir cinematic style, stark black and white high-contrast lighting (chiaroscuro), dramatic shadows, smoke and misty atmosphere, period-accurate detective aesthetic including trench coats, fedoras, and vintage accessories, gritty 35mm film grain, moody urban mystery vibe', category: 'photo' },
+  { id: 'golden-hour', name: 'Golden Hour', icon: <Sun size={20} />, prompt: 'Breathtaking golden hour photography, warm glowing sunset light, long soft shadows, ethereal light leaks, natural sun flare, beautiful warm skin tones, peaceful summer evening atmosphere', category: 'photo' },
+  { id: 'cinematic', name: 'Cinematic', icon: <Video size={20} />, prompt: 'Epic cinematic movie still, anamorphic lens flare, wide aspect ratio, dramatic Hollywood lighting, color graded (teal and orange), high production value, intense emotional atmosphere, 35mm film look', category: 'photo' },
 ];
 
 const IMAGE_MODELS = [
@@ -56,11 +59,11 @@ const IMAGE_MODELS = [
 ];
 
 const ASPECT_RATIOS = [
-  { id: '16:9', name: 'Landscape', icon: '🖥️' },
-  { id: '9:16', name: 'Portrait', icon: '📱' },
-  { id: '1:1', name: 'Square', icon: '⬜' },
-  { id: '4:3', name: 'Standard', icon: '📐' },
-  { id: '21:9', name: 'Ultrawide', icon: '📊' },
+  { id: '16:9', name: 'Landscape', icon: <Monitor size={18} /> },
+  { id: '9:16', name: 'Portrait', icon: <Smartphone size={18} /> },
+  { id: '1:1', name: 'Square', icon: <Square size={18} /> },
+  { id: '4:3', name: 'Standard', icon: <Layout size={18} /> },
+  { id: '21:9', name: 'Ultrawide', icon: <StretchHorizontal size={18} /> },
 ];
 
 const IMAGE_SIZES = [
@@ -224,8 +227,11 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
   };
 
   const applyTemplate = (template: StyleTemplate) => {
-    setSelectedTemplate(template);
-    setShowTemplates(false);
+    if (selectedTemplate?.id === template.id) {
+      setSelectedTemplate(null);
+    } else {
+      setSelectedTemplate(template);
+    }
   };
 
   const getMaskBase64 = () => {
@@ -430,8 +436,8 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
         {/* Header */}
         <div className="bg-gradient-to-r from-teal-500 to-cyan-500 p-4 sm:p-6 text-white flex justify-between items-center shrink-0">
           <div className="flex items-center gap-3 sm:gap-4">
-            <div className="w-10 sm:w-12 h-10 sm:h-12 bg-white/20 rounded-full flex items-center justify-center text-2xl sm:text-3xl shadow-inner border border-white/30">
-              🎨
+            <div className="w-10 sm:w-12 h-10 sm:h-12 bg-white/20 rounded-full flex items-center justify-center shadow-inner border border-white/30">
+              <Palette size={24} />
             </div>
             <div>
               <h2 className="text-lg sm:text-2xl font-black uppercase tracking-tight">Estudio de Imagen</h2>
@@ -450,15 +456,15 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
         <div className="flex bg-teal-50 p-2 gap-2 border-b border-teal-100 shrink-0">
           <button
             onClick={() => setEditorMode('generate')}
-            className={`flex-1 py-3 rounded-2xl font-black uppercase tracking-widest text-xs transition-all ${editorMode === 'generate' ? 'bg-teal-500 text-white shadow-lg' : 'bg-transparent text-teal-900/40 hover:bg-teal-100'}`}
+            className={`flex-1 py-3 rounded-2xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 ${editorMode === 'generate' ? 'bg-teal-500 text-white shadow-lg' : 'bg-transparent text-teal-900/40 hover:bg-teal-100'}`}
           >
-            ✨ Generar
+            <Sparkles size={16} /> Generar
           </button>
           <button
             onClick={() => setEditorMode('edit')}
-            className={`flex-1 py-3 rounded-2xl font-black uppercase tracking-widest text-xs transition-all ${editorMode === 'edit' ? 'bg-teal-500 text-white shadow-lg' : 'bg-transparent text-teal-900/40 hover:bg-teal-100'}`}
+            className={`flex-1 py-3 rounded-2xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 ${editorMode === 'edit' ? 'bg-teal-500 text-white shadow-lg' : 'bg-transparent text-teal-900/40 hover:bg-teal-100'}`}
           >
-            🖌️ Editar
+            <Brush size={16} /> Editar
           </button>
         </div>
 
@@ -547,6 +553,8 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
                       setShowGenie(false);
                     }}
                     initialPrompt={prompt}
+                    theme="light"
+                    mode="image"
                   />
                 )}
               </div>
@@ -777,10 +785,12 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
                   >
                     {isProcessing ? (
                       <span className="flex items-center justify-center gap-2">
-                        <span className="animate-spin">⏳</span> Procesando...
+                        <Loader2 size={20} className="animate-spin" /> Procesando...
                       </span>
                     ) : (
-                      '🚀 Generar Edición'
+                      <span className="flex items-center justify-center gap-2">
+                        <Zap size={20} /> Generar Edición
+                      </span>
                     )}
                   </button>
                 </>
@@ -788,7 +798,9 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
 
               {!image && (
                 <div className="text-center py-12 text-gray-400">
-                  <div className="text-4xl mb-4">🖼️</div>
+                  <div className="flex justify-center mb-4">
+                    <ImageIcon size={48} className="opacity-20" />
+                  </div>
                   <p className="font-bold">Sube una imagen para comenzar a editar</p>
                 </div>
               )}

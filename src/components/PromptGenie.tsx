@@ -1,38 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X, Wand2, ArrowRight, Lightbulb, Zap, Send } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { GoogleGenAI } from '@google/genai';
+import { AuthContext } from '../Techie/src/core/AuthContext';
 
 interface PromptGenieProps {
   isOpen: boolean;
   onClose: () => void;
   onApply: (improvedPrompt: string) => void;
   theme: 'light' | 'dark';
+  initialPrompt?: string;
+  mode?: 'text' | 'image';
 }
 
-export function PromptGenie({ isOpen, onClose, onApply, theme }: PromptGenieProps) {
-  const [input, setInput] = useState('');
+export function PromptGenie({ isOpen, onClose, onApply, theme, initialPrompt = '', mode = 'text' }: PromptGenieProps) {
+  const { user } = useContext(AuthContext) || {};
+  const [input, setInput] = useState(initialPrompt);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) setInput(initialPrompt);
+  }, [isOpen, initialPrompt]);
 
   const improvePrompt = async () => {
     if (!input.trim()) return;
     setIsGenerating(true);
     
     try {
-      const prompt = `You are a Prompt Engineering Expert. The user provided this simple prompt: "${input}". 
-      Generate 3 distinct, high-quality, professional versions of this prompt that are more descriptive, contextual, and structured. 
-      Format: Only return the 3 options separated by "---". No preamble.`;
+      const isImage = mode === 'image';
+      const prompt = isImage 
+        ? `You are an AI Image Prompt Expert. The user provided this seed: "${input}". 
+           Generate 3 distinct, highly descriptive, cinematic, and professional image prompts based on this seed. 
+           Include details about lighting, texture, composition, and artistic style (e.g., 8k, photorealistic, cinematic lighting).
+           Format: Return exactly 3 options separated by "---". No numbering or preamble.`
+        : `You are a Prompt Engineering Expert. The user provided this simple prompt: "${input}". 
+           Generate 3 distinct, high-quality, professional versions of this prompt that are more descriptive, contextual, and structured. 
+           Format: Only return the 3 options separated by "---". No preamble.`;
 
       const payload = {
         model: "gemini-2.0-flash",
-        contents: prompt
+        contents: [{ role: 'user', parts: [{ text: prompt }] }]
       };
 
+      const token = user ? await user.getIdToken() : null;
       const res = await fetch('/api/gemini', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
         body: JSON.stringify({ action: 'generateContent', payload })
       });
       const result = await res.json();

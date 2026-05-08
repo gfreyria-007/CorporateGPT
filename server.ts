@@ -733,12 +733,10 @@ async function startServer() {
             console.error(`[IMAGEN] Fallback also failed:`, e.message);
           }
 
-          return res.status(500).json({ error: 'IMAGE_GEN_FAILED', details: lastError || 'All models exhausted' });
+return res.status(500).json({ error: 'IMAGE_GEN_FAILED', details: lastError || 'All models exhausted' });
         }
-        }
-        }
-        // 5. Handle regular Content Generation
-        } else if (action === 'generateContent') {
+// 5. Handle regular Content Generation
+        if (action === 'generateContent') {
           const generationConfig = payload.config || payload.generationConfig || {};
           const { systemInstruction, ...restConfig } = generationConfig;
           
