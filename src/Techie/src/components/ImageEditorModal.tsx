@@ -40,12 +40,9 @@ const STYLE_TEMPLATES: StyleTemplate[] = [
 ];
 
 const IMAGE_MODELS = [
-  // Google Gemini - uses existing /api/gemini endpoint
-  { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash ⭐', description: 'Fast & reliable', category: 'Google' },
-  { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Preview', description: 'Latest experimental', category: 'Google' },
-  { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Stable option', category: 'Google' },
-  { id: 'imagen-3.0-fast-generate-001', name: 'Imagen 3 Fast', description: 'Best for editing', category: 'Google' },
-  { id: 'imagen-3.0-generate-001', name: 'Imagen 3 High', description: 'Stable quality', category: 'Google' },
+  { id: 'imagen-3.0-fast-generate-001', name: 'Imagen 3 Fast', description: 'Balanced speed & quality' },
+  { id: 'imagen-3.0-generate-001', name: 'Imagen 3 High', description: 'Highest visual fidelity' },
+  { id: 'imagen-4.0-fast-generate-001', name: 'Imagen 4 Preview', description: 'Next-gen fast generation' },
 ];
 
 const ASPECT_RATIOS = [
