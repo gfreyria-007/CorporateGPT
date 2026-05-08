@@ -17,26 +17,26 @@ interface StyleTemplate {
 }
 
 const STYLE_TEMPLATES: StyleTemplate[] = [
-  { id: '80s-anime', name: '80s Anime', icon: '🎞️', prompt: '1980s anime style, retro vaporwave aesthetic, cel-shaded, bold outlines, vibrant neon colors', category: 'anime' },
-  { id: 'modern-anime', name: 'Modern Anime', icon: '🎌', prompt: 'Modern anime style, clean linework, soft shading, vibrant colors, detailed backgrounds', category: 'anime' },
-  { id: 'cyberpunk-2099', name: 'Office 2099', icon: '🏢', prompt: 'Cyberpunk office 2099, futuristic workspace, neon lights, holographic displays, high-tech corporate', category: 'office' },
-  { id: 'pixel-art-kawai', name: 'Kawai 8-Bit', icon: '👾', prompt: 'Kawaii pixel art, cute chibi style, 8-bit retro gaming aesthetic, vibrant colors, adorable character', category: 'pixel' },
-  { id: 'pixel-bricks', name: 'Bricks 8-Bit', icon: '🧱', prompt: 'Brick pixel art, retro building blocks style, 8-bit architecture, classic video game aesthetic', category: 'pixel' },
-  { id: 'classic-vintage', name: 'Classic Vintage', icon: '📷', prompt: 'Classic vintage photography, film grain, warm tones, timeless aesthetic, nostalgic feel', category: 'photo' },
-  { id: 'professional-corporate', name: 'Professional Corp', icon: '👔', prompt: 'Professional corporate headshot, business attire, clean background, executive portrait', category: 'portrait' },
-  { id: 'professionalLinkedIn', name: 'LinkedIn Pro', icon: '💼', prompt: 'LinkedIn professional profile photo, business casual, clean office background, approachable yet professional', category: 'portrait' },
-  { id: 'professional-envato', name: 'Envato Studio', icon: '🎨', prompt: 'Professional creative portfolio photo, casual smart, vibrant background, friendly confident look', category: 'portrait' },
-  { id: 'watercolor', name: 'Watercolor', icon: '🎨', prompt: 'Watercolor painting, soft flowing colors, artistic painted look, delicate brushstrokes, dreamy ethereal', category: 'art' },
-  { id: 'oil-painting', name: 'Oil Painting', icon: '🖼️', prompt: 'Classical oil painting, rich textured brushwork, dramatic lighting, Renaissance inspired, museum quality', category: 'art' },
-  { id: 'acrylic-art', name: 'Acrylic Art', icon: '🖌️', prompt: 'Modern acrylic painting, bold colors, contemporary art style, vibrant expressive brushwork', category: 'art' },
-  { id: 'sketch-pencil', name: 'Pencil Sketch', icon: '✏️', prompt: 'Detailed pencil sketch, realistic shading, hand-drawn aesthetic, fine linework', category: 'art' },
-  { id: 'watercolor-landscape', name: 'Watercolor Landscape', icon: '🏔️', prompt: 'Watercolor landscape painting, soft flowing colors, natural scene, dreamy atmosphere', category: 'art' },
-  { id: '3d-render', name: '3D Render', icon: '🎮', prompt: '3D computer rendered, photorealistic, high detail, modern CGI aesthetic', category: 'digital' },
-  { id: 'illustration-digital', name: 'Digital Illustration', icon: '💻', prompt: 'Digital illustration, vector style, clean lines, vibrant colors, modern artwork', category: 'digital' },
-  { id: 'neon-portrait', name: 'Neon Portrait', icon: '💡', prompt: 'Neon lighting portrait, colorful LED lights, cyberpunk aesthetic, dramatic moody atmosphere', category: 'photo' },
-  { id: 'film-noir', name: 'Film Noir', icon: '🎬', prompt: 'Film noir style, black and white, dramatic shadows, classic cinematic look', category: 'photo' },
-  { id: 'golden-hour', name: 'Golden Hour', icon: '🌅', prompt: 'Golden hour photography, warm sunset light, soft glow, natural beauty lighting', category: 'photo' },
-  { id: 'cinematic', name: 'Cinematic', icon: '🎥', prompt: 'Cinematic movie style, dramatic lighting, film grain, epic composition, movie poster aesthetic', category: 'photo' },
+  { id: '80s-anime', name: '80s Anime', icon: '🎞️', prompt: '1980s retro anime style, high contrast cel-shading, vibrant neon color palette with pinks and cyans, vaporwave aesthetic, grainy film texture, bold dark outlines, iconic vintage animation look, hand-drawn quality, CRT screen effect', category: 'anime' },
+  { id: 'modern-anime', name: 'Modern Anime', icon: '🎌', prompt: 'Modern high-fidelity anime style, crisp linework, soft cinematic shading, vibrant and harmonious colors, detailed atmospheric backgrounds, Makoto Shinkai inspired lighting, ethereal glows, digital polish, 4k resolution aesthetic', category: 'anime' },
+  { id: 'cyberpunk-2099', name: 'Office 2099', icon: '🏢', prompt: 'Cyberpunk office 2099, futuristic corporate workspace, glowing neon blue and magenta lights, holographic computer displays, sleek metallic surfaces, high-tech corporate architecture, rainy city visible through floor-to-ceiling windows, dark moody atmosphere, volumetric lighting', category: 'office' },
+  { id: 'pixel-art-kawai', name: 'Kawai 8-Bit', icon: '👾', prompt: 'High-quality Kawaii pixel art, adorable chibi character style, vibrant and cheerful color palette, 8-bit retro gaming aesthetic, clean pixel edges, heart motifs, sparkling effects, isometric perspective, video game world atmosphere', category: 'pixel' },
+  { id: 'pixel-bricks', name: 'Bricks 8-Bit', icon: '🧱', prompt: 'Classic brick-based pixel art, retro building blocks construction, 8-bit architecture, vibrant primary colors, stylized blocky textures, LEGO-inspired digital art, nostalgic toy aesthetic, sharp geometric edges', category: 'pixel' },
+  { id: 'classic-vintage', name: 'Classic Vintage', icon: '📷', prompt: 'Authentic classic vintage photography, heavy film grain, sepia and warm brown tones, faded edges, timeless historical aesthetic, nostalgic 35mm film feel, Leica-style depth of field, dusty texture, antique portrait quality', category: 'photo' },
+  { id: 'professional-corporate', name: 'Professional Corp', icon: '👔', prompt: 'Ultra-professional corporate headshot, high-end business attire, clean neutral studio background, executive lighting setup, sharp focus on eyes, confident posture, minimal depth of field, high-resolution portrait, magazine cover quality', category: 'portrait' },
+  { id: 'professionalLinkedIn', name: 'LinkedIn Pro', icon: '💼', prompt: 'Premium LinkedIn professional profile photo, modern business casual, bright airy office background with soft bokeh, approachable and friendly expression, natural daylighting, high-end DSLR quality, clean professional composition', category: 'portrait' },
+  { id: 'professional-envato', name: 'Envato Studio', icon: '🎨', prompt: 'Creative professional portfolio photo, artistic smart casual, vibrant colorful studio background, creative tools visible, dynamic pose, modern lighting, high-energy creative professional vibe, sharp and clear', category: 'portrait' },
+  { id: 'watercolor', name: 'Watercolor', icon: '🎨', prompt: 'Professional watercolor painting, soft bleeding colors, expressive wet-on-wet technique, delicate paper texture, artistic hand-painted look, dreamy ethereal atmosphere, splash effects, fine brushwork, pastel tones', category: 'art' },
+  { id: 'oil-painting', name: 'Oil Painting', icon: '🖼️', prompt: 'Masterpiece oil painting, thick impasto brushstrokes, rich heavy textures, dramatic chiaroscuro lighting, Renaissance-inspired color palette, museum quality canvas texture, deep saturated colors, classical art style', category: 'art' },
+  { id: 'acrylic-art', name: 'Acrylic Art', icon: '🖌️', prompt: 'Modern acrylic art, bold and vibrant colors, contemporary expressive style, visible layered brushwork, high contrast, abstract elements, energetic composition, gallery-ready modern art aesthetic', category: 'art' },
+  { id: 'sketch-pencil', name: 'Pencil Sketch', icon: '✏️', prompt: 'Highly detailed pencil sketch, realistic graphite shading, hand-drawn paper texture, fine cross-hatching, artistic linework, rough construction lines, architectural drawing style, graphite on white paper', category: 'art' },
+  { id: 'watercolor-landscape', name: 'Watercolor Landscape', icon: '🏔️', prompt: 'Ethereal watercolor landscape, soft flowing gradients, misty mountains, serene natural scene, artistic transparency, atmospheric depth, peaceful zen aesthetic, fine art painting', category: 'art' },
+  { id: '3d-render', name: '3D Render', icon: '🎮', prompt: 'High-end 3D computer render, Octane Render style, photorealistic materials, subsurface scattering, advanced ray-tracing, Unreal Engine 5 aesthetic, volumetric fog, extremely detailed textures, 8k resolution', category: 'digital' },
+  { id: 'illustration-digital', name: 'Digital Illustration', icon: '💻', prompt: 'Modern digital illustration, clean vector style, flat design with depth, vibrant complementary colors, commercial art aesthetic, sleek and polished, trendy tech illustration style', category: 'digital' },
+  { id: 'neon-portrait', name: 'Neon Portrait', icon: '💡', prompt: 'Moody neon portrait, vibrant LED backlight, cyberpunk color scheme (purple and blue), dramatic shadows, glowing skin reflections, cinematic urban night atmosphere, rainy street reflections', category: 'photo' },
+  { id: 'film-noir', name: 'Film Noir', icon: '🎬', prompt: 'Classic film noir cinematic style, stark black and white contrast, dramatic venetian blind shadows, hard lighting, smoke atmosphere, moody 1940s detective aesthetic, grainy film texture', category: 'photo' },
+  { id: 'golden-hour', name: 'Golden Hour', icon: '🌅', prompt: 'Breathtaking golden hour photography, warm glowing sunset light, long soft shadows, ethereal light leaks, natural sun flare, beautiful warm skin tones, peaceful summer evening atmosphere', category: 'photo' },
+  { id: 'cinematic', name: 'Cinematic', icon: '🎥', prompt: 'Epic cinematic movie still, anamorphic lens flare, wide aspect ratio, dramatic Hollywood lighting, color graded (teal and orange), high production value, intense emotional atmosphere, 35mm film look', category: 'photo' },
 ];
 
 const IMAGE_MODELS = [
@@ -77,8 +77,8 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
   const [imageSize, setImageSize] = useState('1792x1024');
   
   const [isDrawing, setIsDrawing] = useState(false);
-  const [brushSize, setBrushSize] = useState(30);
-  const [brushColor, setBrushColor] = useState('rgba(239, 68, 68, 0.5)');
+  const [brushSize, setBrushSize] = useState(40);
+  const [brushColor, setBrushColor] = useState('rgba(255, 0, 0, 0.6)');
   const [mode, setMode] = useState<'brush' | 'erase'>('brush');
   const [selectedTemplate, setSelectedTemplate] = useState<StyleTemplate | null>(null);
   const [showTemplates, setShowTemplates] = useState(false);
@@ -213,7 +213,8 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
 
   const applyTemplate = (template: StyleTemplate) => {
     setSelectedTemplate(template);
-    setPrompt(prev => prev ? `${prev}. ${template.prompt}` : template.prompt);
+    // Don't modify the prompt state here to avoid duplication
+    // We will combine them at generation time
     setShowTemplates(false);
   };
 
@@ -270,8 +271,7 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
 
     try {
       const fullPrompt = selectedTemplate ? `${prompt}. ${selectedTemplate.prompt}` : prompt;
-      const isImagen = selectedModel.startsWith('imagen-');
-      const apiPath = isImagen ? '/api/gemini' : '/api/techie';
+      const apiPath = '/api/gemini'; // Force all to /api/gemini for robustness and fallback support
       
       const idToken = user ? await user.getIdToken() : null;
 
@@ -463,9 +463,9 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
                   onChange={(e) => setSelectedModel(e.target.value)}
                   className="w-full p-3 rounded-xl border-2 border-teal-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none bg-white shadow-sm"
                 >
-                  {IMAGE_MODELS.map((model) => (
+                   {IMAGE_MODELS.map((model) => (
                     <option key={model.id} value={model.id}>
-                      {model.name} - {model.description} ({model.category})
+                      {model.name} - {model.description}
                     </option>
                   ))}
                 </select>

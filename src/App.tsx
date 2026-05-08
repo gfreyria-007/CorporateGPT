@@ -1089,7 +1089,7 @@ export default function App() {
 
         <div className="flex-1 overflow-y-auto custom-scrollbar relative z-10" ref={scrollRef}>
           <AnimatePresence mode="wait">
-            {appMode === 'junior' ? (
+            {appMode === 'junior' && (
               <motion.div key="junior" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0">
                   <TechieWorkspace 
                     user={user}
@@ -1098,17 +1098,15 @@ export default function App() {
                     onLogout={logout}
                   />
                </motion.div>
-            ) : (
-              <>
-                {activePanel === 'admin' && (
-                  <motion.div key="admin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0">
-                    <SuperAdminPanel user={user} onClose={() => setActivePanel('chat')} />
-                  </motion.div>
-                )}
-              </>
             )}
 
-            {activePanel === 'chat' && appMode === 'corporate' && (
+            {appMode === 'corporate' && activePanel === 'admin' && (
+              <motion.div key="admin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0">
+                <SuperAdminPanel user={user} onClose={() => setActivePanel('chat')} />
+              </motion.div>
+            )}
+
+            {appMode === 'corporate' && activePanel === 'chat' && (
               <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-10 max-w-5xl mx-auto space-y-6 pb-32">
                 {messages.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center py-12 lg:py-20 space-y-12 lg:space-y-16">
