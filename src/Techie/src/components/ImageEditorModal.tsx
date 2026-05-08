@@ -44,7 +44,7 @@ const IMAGE_MODELS = [
   { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash ⭐', description: 'Fast & reliable', category: 'Google' },
   { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Preview', description: 'Latest experimental', category: 'Google' },
   { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Stable option', category: 'Google' },
-  { id: 'imagen-4.0-fast-generate-001', name: 'Imagen 4 Fast', description: 'Best for editing', category: 'Google' },
+  { id: 'imagen-3.0-fast-generate-001', name: 'Imagen 3 Fast', description: 'Best for editing', category: 'Google' },
   { id: 'imagen-3.0-generate-001', name: 'Imagen 3 High', description: 'Stable quality', category: 'Google' },
 ];
 
@@ -66,8 +66,9 @@ const IMAGE_SIZES = [
 
 type EditorMode = 'generate' | 'edit';
 
-export default function ImageEditorModal({ isOpen, onClose, initialImage, onSave }: ImageEditorModalProps) {
-  const { user } = useAuth();
+export default function ImageEditorModal({ isOpen, onClose, initialImage, onSave, user: providedUser }: ImageEditorModalProps) {
+  const authContext = useAuth();
+  const user = providedUser || authContext?.user;
   const [editorMode, setEditorMode] = useState<EditorMode>('generate');
   const [image, setImage] = useState<string | null>(initialImage || null);
   const [prompt, setPrompt] = useState('');
@@ -232,25 +233,25 @@ export default function ImageEditorModal({ isOpen, onClose, initialImage, onSave
     tempCtx.fillRect(0, 0, canvasWidth, canvasHeight);
 
     // Draw the mask strokes
-    tempCtx.drawImage(canvas, 0, 0);
-
-    // Convert everything to absolute white/black
-    const imageData = tempCtx.getImageData(0, 0, canvasWidth, canvasHeight);
+    const originalCtx = canvas.getContext('2d');
+    if (!originalCtx) return '';
+    
+    const imageData = originalCtx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
+    
+    const maskData = tempCtx.createImageData(canvas.width, canvas.height);
+    const mData = maskData.data;
+    
     for (let i = 0; i < data.length; i += 4) {
-      if (data[i + 3] > 10) { // If alpha > small threshold, it's part of the mask
-        data[i] = 255;     // R
-        data[i + 1] = 255; // G
-        data[i + 2] = 255; // B
-        data[i + 3] = 255; // A (opaque)
-      } else {
-        data[i] = 0;
-        data[i + 1] = 0;
-        data[i + 2] = 0;
-        data[i + 3] = 255;
-      }
+      const alpha = data[i + 3];
+      const val = alpha > 10 ? 255 : 0;
+      mData[i] = val;
+      mData[i + 1] = val;
+      mData[i + 2] = val;
+      mData[i + 3] = 255;
     }
-    tempCtx.putImageData(imageData, 0, 0);
+    
+    tempCtx.putImageData(maskData, 0, 0);
     return tempCanvas.toDataURL('image/png').split(',')[1];
   };
 
@@ -343,8 +344,8 @@ export default function ImageEditorModal({ isOpen, onClose, initialImage, onSave
       
       const fullPrompt = selectedTemplate ? `${prompt}. ${selectedTemplate.prompt}` : prompt;
       
-      // Force use of Imagen for editing/inpainting as it's the only one supporting it in backend
-      const editModel = selectedModel.startsWith('imagen-') ? selectedModel : 'imagen-4.0-fast-generate-001';
+      // For editing/inpainting, we must use an Imagen model that supports masks
+      const editModel = selectedModel.startsWith('gemini') ? 'imagen-3.0-fast-generate-001' : selectedModel;
       
       const idToken = user ? await user.getIdToken() : null;
 

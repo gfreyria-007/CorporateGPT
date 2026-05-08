@@ -8,6 +8,7 @@ import { translations } from '../lib/translations';
 interface ChatMessageProps {
   message: Message;
   lang: 'en' | 'es';
+  onEditImage?: (imageData: string) => void;
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message, lang = 'es' }) => {
@@ -62,6 +63,16 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, lang = 'es' }
               <span className="opacity-70 dark:opacity-60">{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             </p>
             <div className="flex items-center gap-2">
+              {onEditImage && (
+                <button 
+                  onClick={() => onEditImage(message.imageData!)}
+                  className="p-2 bg-blue-100 dark:bg-blue-500/20 hover:bg-blue-200 dark:hover:bg-blue-500/30 rounded-xl transition-all text-blue-600 dark:text-blue-400 flex items-center gap-2 border border-transparent dark:border-blue-500/20 shadow-sm"
+                  title={lang === 'es' ? 'Editar en Studio' : 'Edit in Studio'}
+                >
+                  <Palette size={14} />
+                  <span className="text-[9px] font-black uppercase tracking-widest">{lang === 'es' ? 'Editar' : 'Edit'}</span>
+                </button>
+              )}
               <button 
                 onClick={handleDownloadImage}
                 className="p-2 bg-purple-100 dark:bg-purple-500/20 hover:bg-purple-200 dark:hover:bg-purple-500/30 rounded-xl transition-all text-purple-600 dark:text-purple-400 group/download flex items-center gap-2 border border-transparent dark:border-purple-500/20 shadow-sm"

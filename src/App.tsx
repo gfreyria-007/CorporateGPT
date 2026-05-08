@@ -128,6 +128,7 @@ export default function App() {
 
   // Permissions block removed to allow free switching between apps
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [editingImage, setEditingImage] = useState<string | null>(null);
 
   const isEmailSuperAdmin = user?.email ? SUPER_ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
   const isSuperAdmin = isEmailSuperAdmin || profile?.role === 'admin' || profile?.role === 'super-admin' || (profile as any)?.role === 'owner';
@@ -1177,7 +1178,14 @@ export default function App() {
                      </div>
                   </div>
                 ) : (
-                  messages.map(m => <ChatMessage key={m.id} message={m} lang={lang} />)
+                  messages.map(m => (
+                    <ChatMessage 
+                      key={m.id} 
+                      message={m} 
+                      lang={lang} 
+                      onEditImage={(img) => { setEditingImage(img); setActivePanel('imageEditor'); }} 
+                    />
+                  ))
                 )}
                 {isChatLoading && (
                   <div className="flex gap-4 max-w-3xl mx-auto w-full px-4 py-3 bg-blue-600/[0.03] dark:bg-blue-600/[0.05] rounded-xl border border-blue-500/10 relative overflow-hidden">
@@ -1237,7 +1245,12 @@ export default function App() {
             <motion.div key="team" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-white dark:bg-corporate-950 overflow-y-auto"><CompanyPanel onClose={() => setActivePanel('chat')} theme={theme} lang={lang} /></motion.div>
           )}
           {activePanel === 'imageEditor' && (
-            <ImageEditorModal isOpen={true} onClose={() => setActivePanel('chat')} />
+            <ImageEditorModal 
+              isOpen={true} 
+              onClose={() => { setActivePanel('chat'); setEditingImage(null); }} 
+              initialImage={editingImage}
+              user={user}
+            />
           )}
         </AnimatePresence>
       </main>
