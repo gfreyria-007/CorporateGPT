@@ -802,6 +802,19 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
                       className="w-full p-4 rounded-2xl border-2 border-teal-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none font-medium text-gray-700 bg-white shadow-sm resize-none"
                       rows={3}
                     />
+                    {showGenie && (
+                      <PromptGenie 
+                        isOpen={showGenie}
+                        onClose={() => setShowGenie(false)}
+                        onApply={(enhancedPrompt) => {
+                          setPrompt(enhancedPrompt);
+                          setShowGenie(false);
+                        }}
+                        initialPrompt={prompt}
+                        theme="light"
+                        mode="image"
+                      />
+                    )}
                   </div>
 
                   {/* Edit Button */}

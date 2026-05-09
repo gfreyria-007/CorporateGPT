@@ -615,10 +615,13 @@ async function startServer() {
           let lastError = null;
           for (const model of IMAGE_MODELS) {
             try {
-              const instance = { prompt: optimizedPrompt };
+              const instance: any = { prompt: optimizedPrompt };
               if (payload.sourceImage) instance.image = { bytesBase64Encoded: payload.sourceImage };
-              const parameters = { sampleCount: 1, aspectRatio: payload.aspectRatio || '1:1' };
-              if (payload.maskImage) parameters.mask = { image: { bytesBase64Encoded: payload.maskImage } };
+              const parameters: any = { sampleCount: 1, aspectRatio: payload.aspectRatio || '1:1' };
+              if (payload.maskImage) {
+                parameters.editMode = 'inpainting-insert';
+                parameters.mask = { image: { bytesBase64Encoded: payload.maskImage } };
+              }
               
               const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:predict?key=${apiKey}`;
               const response = await fetch(apiUrl, {
