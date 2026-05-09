@@ -477,7 +477,8 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
                   </div>
                   <button
                     onClick={() => startEditResearch(i)}
-                    className="p-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-blue-600"
+                    className="p-2 transition-opacity rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-blue-600 bg-blue-50 dark:bg-blue-900/20"
+                    title={lang === 'es' ? 'Editar este punto' : 'Edit this point'}
                   >
                     <Edit3 size={14} />
                   </button>
