@@ -32,8 +32,12 @@ export function PromptGenie({ isOpen, onClose, onApply, theme, initialPrompt = '
       const prompt = isImage 
         ? `You are an AI Image Prompt Expert with REAL-TIME WEB ACCESS. The user provided this seed: "${input}". 
            First, use your search tool to verify any specific character identities, historical periods, or technical subjects mentioned. 
-           Then, generate 3 distinct, highly descriptive, cinematic, and professional image prompts that are FACTUALLY ACCURATE to the subject's identity (e.g., if 'Noir' is mentioned, ensure 1930s traits like trench coats/fedoras are included).
-           Include details about lighting, texture, composition, and artistic style.
+           Then, generate 3 distinct, highly descriptive, cinematic, and professional image prompts that are FACTUALLY ACCURATE to the subject's identity.
+           CRITICAL: You MUST add deepness to the prompt. Include specific suggestions for:
+           - Lighting and illumination (e.g., volumetric lighting, cinematic shadows, golden hour)
+           - Artistic style and medium (e.g., cyberpunk, 8k resolution, hyperrealistic, octane render)
+           - Camera angles, lenses, and composition
+           - Texture, mood, and color palette
            Format: Return exactly 3 options separated by "---". No numbering or preamble.`
         : `You are a Prompt Engineering Expert with REAL-TIME WEB ACCESS. The user provided this simple prompt: "${input}". 
            Use your search tool to ground your response in the latest available data to prevent hallucinations.
@@ -43,7 +47,7 @@ export function PromptGenie({ isOpen, onClose, onApply, theme, initialPrompt = '
       const payload = {
         model: "gemini-2.0-flash",
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        tools: [{ google_search: {} }]
+        tools: [{ googleSearch: {} }]
       };
 
       const token = user ? await user.getIdToken() : null;
