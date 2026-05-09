@@ -454,52 +454,52 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
           </p>
         </div>
 
-        <div className="flex-1 space-y-6 sm:space-y-8 overflow-auto px-2">
-          {deepResearch?.topics.map((topic, i) => (
-            <div key={i} className="relative group">
-              <div className="flex items-start gap-4 sm:gap-6">
-                <div className="flex flex-col items-center">
-                  <span className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-sm font-black text-blue-600">
-                    {i + 1}
-                  </span>
-                  {i < (deepResearch?.topics.length - 1) && (
-                    <div className="w-[2px] flex-1 bg-gradient-to-b from-blue-600/20 to-transparent my-2" />
-                  )}
-                </div>
-                
-                <div className="flex-1 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-black uppercase text-base sm:text-lg tracking-tight text-slate-800 dark:text-white">
+        <div className="flex-1 overflow-hidden px-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 h-full overflow-y-auto lg:overflow-visible pb-12 lg:pb-0 scrollbar-hide">
+            {deepResearch?.topics.map((topic, i) => (
+              <motion.div 
+                key={i} 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="relative group bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 hover:border-blue-500/50 transition-all shadow-sm hover:shadow-xl flex flex-col h-fit lg:h-full"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-black">
+                      {i + 1}
+                    </span>
+                    <h3 className="font-black uppercase text-sm tracking-tight text-slate-800 dark:text-white truncate max-w-[150px]">
                       {topic.title}
                     </h3>
-                    <button
-                      onClick={() => startEditResearch(i)}
-                      className="p-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-blue-600"
-                    >
-                      <Edit3 size={16} />
-                    </button>
                   </div>
-
-                  <div className="prose prose-sm dark:prose-invert max-w-none">
-                    <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
-                      {topic.content || (lang === 'es' ? 'Sin contenido' : 'No content')}
-                    </p>
-                  </div>
-
-                  {topic.sources && topic.sources.length > 0 && (
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      {topic.sources.map((source, si) => (
-                        <span key={si} className="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-white/5 rounded-md text-[10px] font-medium text-slate-500 uppercase">
-                          <LinkIcon size={10} />
-                          {source}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  <button
+                    onClick={() => startEditResearch(i)}
+                    className="p-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-blue-600"
+                  >
+                    <Edit3 size={14} />
+                  </button>
                 </div>
-              </div>
-            </div>
-          ))}
+
+                <div className="flex-1 overflow-y-auto scrollbar-hide">
+                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap line-clamp-[8] group-hover:line-clamp-none transition-all">
+                    {topic.content || (lang === 'es' ? 'Sin contenido' : 'No content')}
+                  </p>
+                </div>
+
+                {topic.sources && topic.sources.length > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-4 border-t border-slate-100 dark:border-white/5 mt-4">
+                    {topic.sources.map((source, si) => (
+                      <span key={si} className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded text-[8px] font-bold text-slate-400 uppercase">
+                        <LinkIcon size={8} />
+                        {source}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </div>
         </div>
 
         <div className="flex gap-2 sm:gap-4 shrink-0">
@@ -542,21 +542,31 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
           </div>
         </div>
 
-        {/* Mini Preview of Pillars */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {deepResearch?.topics.slice(0, 4).map((topic, i) => (
-            <div key={i} className="p-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 rounded-lg bg-blue-600/10 text-blue-600 flex items-center justify-center text-[10px] font-black">
-                  {i + 1}
+        <div className="flex-1 overflow-hidden">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 h-full overflow-y-auto lg:overflow-visible pr-2 scrollbar-hide">
+            {deepResearch?.topics.map((topic, i) => (
+              <motion.div 
+                key={i} 
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: i * 0.05 }}
+                className="p-6 rounded-[2rem] bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-2xl transition-all flex flex-col h-fit lg:h-full group"
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm font-black shadow-lg">
+                    {i + 1}
+                  </div>
+                  <h3 className="text-sm font-black uppercase tracking-tight text-slate-800 dark:text-white line-clamp-1">{topic.title}</h3>
                 </div>
-                <h3 className="text-xs font-black uppercase truncate">{topic.title}</h3>
-              </div>
-              <p className="text-[10px] text-slate-500 line-clamp-3 leading-relaxed">
-                {topic.content}
-              </p>
-            </div>
-          ))}
+                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-[6] group-hover:line-clamp-none transition-all leading-relaxed font-medium">
+                  {topic.content}
+                </p>
+                <div className="mt-auto pt-4 flex justify-end">
+                  <div className="w-8 h-1 bg-blue-600/20 rounded-full group-hover:w-full transition-all duration-500" />
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">

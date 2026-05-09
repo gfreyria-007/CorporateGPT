@@ -34,35 +34,35 @@ const MathLabModal: React.FC<MathLabModalProps> = ({ onClose, grade, useGenZ = t
         const Block = ({ color, label, count, size }: { color: string, label: string, count: number, size: string }) => {
             if (count === 0) return null;
             return (
-                <div className="flex flex-col items-center gap-1">
-                    <div className="flex flex-wrap gap-1 max-w-[150px] justify-center items-center">
+                <div className="flex flex-col items-center gap-2">
+                    <div className="flex flex-wrap gap-2 max-w-[300px] sm:max-w-[400px] justify-center items-center">
                         {Array.from({ length: Math.min(count, 100) }).map((_, i) => (
                             <motion.div 
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
                                 key={`${label}-${i}`} 
-                                className={`${size} ${color} rounded-sm shadow-sm relative group`}
+                                className={`${size} ${color} rounded-md shadow-md relative group border-2 border-white/20`}
                             >
-                                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-white/20 transition-opacity flex items-center justify-center text-[4px] font-bold text-white">
+                                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-white/20 transition-opacity flex items-center justify-center text-[8px] font-bold text-white">
                                     {label}
                                 </div>
                             </motion.div>
                         ))}
-                        {count > 100 && <span className="text-[10px] font-black text-gray-400">+{count - 100}</span>}
+                        {count > 100 && <span className="text-xs font-black text-gray-400">+{count - 100}</span>}
                     </div>
-                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">{label} ({count})</span>
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{label} ({count})</span>
                 </div>
             );
         };
 
         return (
-            <div className="flex flex-wrap items-end justify-center gap-6 p-4">
-                <Block color="bg-black" label="100K+" count={hundredThousands} size="w-8 h-8" />
-                <Block color="bg-rose-500" label="10K" count={tenThousands} size="w-6 h-6" />
-                <Block color="bg-amber-500" label="1000" count={thousands} size="w-5 h-5" />
-                <Block color="bg-indigo-600" label="100" count={hundreds} size="w-4 h-4" />
-                <Block color="bg-emerald-500" label="10" count={tens} size="w-3 h-3" />
-                <Block color="bg-blue-500" label="1" count={units} size="w-2 h-2" />
+            <div className="flex flex-wrap items-end justify-center gap-4 sm:gap-8 p-4">
+                <Block color="bg-black" label="100K+" count={hundredThousands} size="w-24 h-24 sm:w-32 sm:h-32" />
+                <Block color="bg-rose-500" label="10K" count={tenThousands} size="w-16 h-16 sm:w-24 sm:h-24" />
+                <Block color="bg-amber-500" label="1000" count={thousands} size="w-12 h-12 sm:w-20 sm:h-20" />
+                <Block color="bg-indigo-600" label="100" count={hundreds} size="w-10 h-10 sm:w-16 sm:h-16" />
+                <Block color="bg-emerald-500" label="10" count={tens} size="w-8 h-8 sm:w-12 sm:h-12" />
+                <Block color="bg-blue-500" label="1" count={units} size="w-6 h-6 sm:w-8 sm:h-8" />
             </div>
         );
     };
@@ -265,83 +265,90 @@ const MathLabModal: React.FC<MathLabModalProps> = ({ onClose, grade, useGenZ = t
         const displayResult = isNaN(result) || !isFinite(result) ? "Error" : result.toLocaleString();
 
         return (
-            <div className="w-full h-full flex flex-col items-center justify-start gap-8 overflow-y-auto p-4 md:p-8">
-                <div className="flex flex-wrap items-center justify-center gap-6 bg-white/80 backdrop-blur-md p-8 rounded-[3rem] border-2 border-blue-100 shadow-2xl sticky top-0 z-10 w-full max-w-5xl">
-                    <div className="flex flex-col items-center gap-3">
+            <div className="w-full h-full flex flex-col items-center justify-start gap-4 sm:gap-8 overflow-y-auto p-2 sm:p-4 md:p-8">
+                <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 bg-white/80 backdrop-blur-md p-4 sm:p-8 rounded-[2rem] sm:rounded-[3rem] border-2 border-blue-100 shadow-2xl sticky top-0 z-10 w-full max-w-6xl">
+                    <div className="flex flex-col items-center gap-2 sm:gap-3">
                         <input 
                             type="number" 
                             inputMode="decimal"
                             value={num1} 
                             onChange={(e) => setNum1(Math.min(maxInput, Math.max(0, parseInt(e.target.value) || 0)))}
-                            className="w-32 py-4 text-4xl font-black text-center text-[#1e3a8a] bg-blue-50 rounded-2xl border-2 border-blue-200 focus:outline-none focus:border-blue-500 shadow-inner"
+                            className="w-24 sm:w-32 py-2 sm:py-4 text-2xl sm:text-4xl font-black text-center text-[#1e3a8a] bg-blue-50 rounded-xl sm:rounded-2xl border-2 border-blue-200 focus:outline-none focus:border-blue-500 shadow-inner"
                         />
                         <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Valor A</span>
                     </div>
 
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-4 gap-1 sm:gap-2">
                         {['+', '-', '*', '/', '^', '√', '%'].map(o => (
                             <button 
                                 key={o}
                                 onClick={() => setOp(o as any)}
-                                className={`w-12 h-12 rounded-xl font-black text-xl flex items-center justify-center transition-all ${op === o ? 'bg-blue-600 text-white shadow-lg scale-110' : 'bg-gray-100 text-gray-400 hover:bg-white border border-gray-200'}`}
+                                className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl font-black text-lg sm:text-xl flex items-center justify-center transition-all ${op === o ? 'bg-blue-600 text-white shadow-lg scale-110' : 'bg-gray-100 text-gray-400 hover:bg-white border border-gray-200'}`}
                             >
                                 {o === '*' ? '×' : o === '/' ? '÷' : o}
                             </button>
                         ))}
                     </div>
 
-                    <div className="flex flex-col items-center gap-3">
+                    <div className="flex flex-col items-center gap-2 sm:gap-3">
                         <input 
                             type="number" 
                             inputMode="decimal"
                             value={num2} 
                             disabled={op === '√'}
                             onChange={(e) => setNum2(Math.min(maxInput, Math.max(0, parseInt(e.target.value) || 0)))}
-                            className={`w-32 py-4 text-4xl font-black text-center rounded-2xl border-2 focus:outline-none shadow-inner transition-opacity ${op === '√' ? 'opacity-20 cursor-not-allowed bg-gray-100 border-gray-200' : 'text-[#1e3a8a] bg-blue-50 border-blue-200 focus:border-blue-500'}`}
+                            className={`w-24 sm:w-32 py-2 sm:py-4 text-2xl sm:text-4xl font-black text-center rounded-xl sm:rounded-2xl border-2 focus:outline-none shadow-inner transition-opacity ${op === '√' ? 'opacity-20 cursor-not-allowed bg-gray-100 border-gray-200' : 'text-[#1e3a8a] bg-blue-50 border-blue-200 focus:border-blue-500'}`}
                         />
                         <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Valor B</span>
                     </div>
 
-                    <div className="text-4xl font-black text-blue-200 mx-2">→</div>
+                    <div className="hidden sm:block text-4xl font-black text-blue-200 mx-2">→</div>
 
-                    <div className="flex flex-col items-center gap-3">
-                        <div className="px-8 py-4 text-4xl font-black text-center text-white bg-blue-900 rounded-2xl shadow-xl border-2 border-blue-950 min-w-[120px]">
+                    <div className="flex flex-col items-center gap-2 sm:gap-3">
+                        <div className="px-4 sm:px-8 py-2 sm:py-4 text-2xl sm:text-4xl font-black text-center text-white bg-blue-900 rounded-xl sm:rounded-2xl shadow-xl border-2 border-blue-950 min-w-[100px] sm:min-w-[120px]">
                             {displayResult}
                         </div>
                         <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Resultado</span>
                     </div>
                 </div>
 
-                <div className="w-full flex-1 min-h-[400px] bg-slate-50/50 rounded-[3rem] p-12 border border-blue-50 shadow-inner overflow-y-auto text-center">
-                    <div className="flex flex-col items-center gap-16">
+                <div className="w-full flex-1 min-h-0 bg-slate-50/50 rounded-[2rem] sm:rounded-[3rem] p-4 sm:p-8 lg:p-12 border border-blue-50 shadow-inner overflow-y-auto text-center">
+                    <div className="flex flex-col items-center gap-8 lg:gap-16">
                         <div className="w-full space-y-4">
                             <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] italic">Descomposición de Magnitudes</h3>
-                            <div className="flex flex-col gap-8">
-                                <div className="bg-white/40 p-8 rounded-[2rem] border border-blue-50 relative overflow-hidden">
-                                    <div className="absolute top-4 left-4 text-[8px] font-black text-blue-200 uppercase">Valor A</div>
-                                    {renderBase10Blocks(num1)}
-                                </div>
-                                
-                                <div className="flex items-center justify-center relative">
-                                    <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-blue-100 to-transparent absolute" />
-                                    <div className="bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-black shadow-lg z-10 scale-125 border-4 border-white">
-                                        {op === '*' ? '×' : op === '/' ? '÷' : op}
+                            <div className="flex flex-col gap-4 lg:gap-8">
+                                <div className="flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-12">
+                                    <div className="flex-1 w-full bg-white/40 p-4 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] border border-blue-50 relative overflow-hidden min-h-[200px] flex items-center justify-center">
+                                        <div className="absolute top-4 left-4 text-[8px] font-black text-blue-200 uppercase">Valor A</div>
+                                        <div className="transform scale-90 sm:scale-100">
+                                            {renderBase10Blocks(num1)}
+                                        </div>
                                     </div>
-                                </div>
+                                    
+                                    <div className="shrink-0 flex items-center justify-center relative w-12 h-12 lg:w-16 lg:h-16">
+                                        <div className="lg:hidden h-[2px] w-full bg-gradient-to-r from-transparent via-blue-100 to-transparent absolute" />
+                                        <div className="hidden lg:block w-[2px] h-full bg-gradient-to-b from-transparent via-blue-100 to-transparent absolute" />
+                                        <div className="bg-blue-600 text-white w-10 h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center font-black shadow-lg z-10 scale-125 border-4 border-white">
+                                            {op === '*' ? '×' : op === '/' ? '÷' : op}
+                                        </div>
+                                    </div>
 
-                                <div className="bg-white/40 p-8 rounded-[2rem] border border-emerald-50 relative overflow-hidden">
-                                    <div className="absolute top-4 left-4 text-[8px] font-black text-emerald-200 uppercase">Valor B</div>
-                                    {renderBase10Blocks(num2)}
+                                    <div className="flex-1 w-full bg-white/40 p-4 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] border border-emerald-50 relative overflow-hidden min-h-[200px] flex items-center justify-center">
+                                        <div className="absolute top-4 left-4 text-[8px] font-black text-emerald-200 uppercase">Valor B</div>
+                                        <div className="transform scale-90 sm:scale-100">
+                                            {renderBase10Blocks(num2)}
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="flex items-center justify-center">
                                     <div className="w-16 h-1 bg-gray-200 rounded-full" />
                                 </div>
 
-                                <div className="bg-blue-900 p-12 rounded-[3.5rem] shadow-2xl relative overflow-hidden">
+                                <div className="bg-blue-900 p-6 sm:p-12 rounded-[2.5rem] sm:rounded-[3.5rem] shadow-2xl relative overflow-hidden">
                                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:20px_20px]" />
-                                    <div className="absolute top-6 left-10 text-[10px] font-black text-blue-400 uppercase tracking-widest">Visualización del Resultado</div>
-                                    <div className="relative z-10">
+                                    <div className="absolute top-4 left-6 sm:top-6 sm:left-10 text-[8px] sm:text-[10px] font-black text-blue-400 uppercase tracking-widest">Visualización del Resultado</div>
+                                    <div className="relative z-10 py-8">
                                         {op === '*' && num1 * num2 > 1000 ? (
                                             <div className="flex flex-col items-center gap-6">
                                                 <div 
@@ -358,7 +365,7 @@ const MathLabModal: React.FC<MathLabModalProps> = ({ onClose, grade, useGenZ = t
                                                 <p className="text-white font-black text-2xl tracking-tighter opacity-80">{result.toLocaleString()} unidades totales</p>
                                             </div>
                                         ) : (
-                                            <div className="bg-white/5 rounded-3xl p-4">
+                                            <div className="bg-white/5 rounded-2xl sm:rounded-3xl p-2 sm:p-4">
                                                 {renderBase10Blocks(result)}
                                             </div>
                                         )}
