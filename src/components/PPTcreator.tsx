@@ -130,28 +130,11 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
   const [tone, setTone] = useState('professional');
   const [keyTakeaway, setKeyTakeaway] = useState('');
 
-  // Stage 2.5: Deep Research
   const [deepResearch, setDeepResearch] = useState<DeepResearch | null>(null);
   const [isDeepResearchEnabled, setIsDeepResearchEnabled] = useState(true);
   const [isGeneratingResearch, setIsGeneratingResearch] = useState(false);
   const [editingResearchIndex, setEditingResearchIndex] = useState<number | null>(null);
   const [editResearchContent, setEditResearchContent] = useState('');
-
-  // Stage 3: Narrative Arc - Editable
-  const [isEditingNarrative, setIsEditingNarrative] = useState(false);
-  const [editingSlideIdx, setEditingSlideIdx] = useState<number | null>(null);
-  const [editTitle, setEditTitle] = useState('');
-  const [editSubtitle, setEditSubtitle] = useState('');
-  const [editBullets, setEditBullets] = useState('');
-  const [editParagraphs, setEditParagraphs] = useState('');
-  const [editImagePrompt, setEditImagePrompt] = useState('');
-  const [editExcelData, setEditExcelData] = useState('');
-  const [editChartType, setEditChartType] = useState<string | null>(null);
-  const [editChartData, setEditChartData] = useState('');
-  const [narrative, setNarrative] = useState<SlideContent[]>([]);
-
-  // Stage 3 Enhanced: Additional images
-  const [additionalImageInput, setAdditionalImageInput] = useState<HTMLInputElement | null>(null);
 
   // Stage 4: Design with Chart/Image
   const [selectedLayout, setSelectedLayout] = useState<'split' | 'grid' | 'focal' | 'dense_table' | 'technical_drawing' | 'bento_grid'>('split');
@@ -332,158 +315,35 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
       try {
         const contextString = researchContext || `Audience: ${audience}\nTone: ${tone}\nKey Takeaway: ${keyTakeaway}`;
         // RACE: 45s Timeout or AI Response
-        const skeletonPromise = geminiService.generateSkeleton(userContent, validSlides, contextString);
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 45000));
-        
-        skeleton = await Promise.race([skeletonPromise, timeoutPromise]) as any[];
-      } catch (err) {
-        console.error('[PPT] AI Skeleton generation failed or timed out:', err);
-      }
-      
-      if (skeleton && Array.isArray(skeleton) && skeleton.length > 0) {
-        const mappedContent: SlideContent[] = skeleton.map((s, idx) => ({
-          title: s.title || `Slide ${idx + 1}`,
-          subtitle: s.subtitle || '',
-          bullets: Array.isArray(s.content) ? s.content : [s.content || '...'],
-          paragraphs: Array.isArray(s.paragraphs) ? s.paragraphs : [],
-          imagePrompt: s.imagePrompt || '',
-          chartType: s.chartType === 'none' ? undefined : s.chartType as any,
-          tableData: s.tableData,
-          hasChart: s.chartType !== 'none' && !!s.tableData,
-          visualLayout: 'split'
-        }));
-        setNarrative(mappedContent);
-      } else {
-        console.warn('[PPT] Using instant fallback narrative due to delay/error');
-        const fallback: SlideContent[] = [];
-        const researchTopics = deepResearch?.topics || [];
-        const phases = lang === 'es' 
-          ? ['GANCHO: El Problema', 'EVIDENCIA: Datos Clave', 'ESTRATEGIA: El Camino', 'IMPACTO: Resultados']
-          : ['HOOK: The Challenge', 'EVIDENCE: Key Data', 'STRATEGY: The Path', 'IMPACT: Results'];
-        
-        for (let i = 0; i < validSlides; i++) {
-          const research = researchTopics[i % researchTopics.length];
-          const phase = phases[i % phases.length];
-          
-          fallback.push({
-            title: research?.title || `${phase} - ${userContent}`,
-            bullets: (research && research.content && research.content.length > 20) ? [
-              research.content.substring(0, 150) + '...',
-              'Análisis detallado de tendencias y proyecciones',
-              'Implicaciones estratégicas para el sector'
-            ] : [
-              'Definición de objetivos estratégicos clave',
-              'Análisis de datos y métricas de rendimiento',
-              'Posicionamiento competitivo y propuesta de valor'
-            ],
-            paragraphs: (research && research.content) ? [research.content] : [],
-            imagePrompt: `A high-end conceptual infographic visualization of ${research?.title || userContent}, 3D professional render, cinematic lighting, ${phase}`,
-            visualLayout: 'split'
-          });
-        }
-        setNarrative(fallback);
-      }
-      }
-      
-      if (nextStage !== undefined) {
-        setCurrentStage(nextStage as any);
-      } else {
-        setCurrentStage(3);
-      }
-    } catch (error) {
-      console.error('CRITICAL: Error building skeleton:', error);
-      alert(lang === 'es' 
-        ? 'Error al crear la estructura. Intentando con modo básico...' 
-        : 'Error creating skeleton. Attempting basic mode...');
-      
-      setNarrative([{
-        title: contentInput || 'Presentation',
-        bullets: ['Overview', 'Details', 'Conclusion'],
-        visualLayout: 'split'
-      }]);
-      setCurrentStage(3);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const generateQuestions = async () => {
+        const skeletonPromise = geminiService.generateSkeleton(userContent, validSlides, contextStr  const generateQuestions = async () => {
     if (!audience.trim() || !keyTakeaway.trim()) return;
-    if (!contentInput.trim() && contentSource !== 'upload') return; // Bug 3: guard empty topic
+    if (!contentInput.trim() && contentSource !== 'upload') return;
     
     if (isDeepResearchEnabled) {
       setIsGeneratingResearch(true);
       try {
-        const researchTopics = [
-          `${contentInput} - ${audience}`,
-          keyTakeaway,
-          `Industry analysis and trends for ${contentInput}`
-        ];
-        
         const researchData: DeepResearch = {
           id: Date.now().toString(),
-          topics: researchTopics.map((topic, idx) => ({
-            title: `Research Topic ${idx + 1}`,
-            content: '',
-            sources: []
-          })),
+          topics: [],
           createdAt: new Date()
         };
         
-        let drSucceeded = false;
-        try {
-          const researchResult = await geminiService.generateDeepResearch(contentInput, audience, keyTakeaway);
-          if (researchResult && Array.isArray(researchResult) && researchResult.length > 0) {
-            researchData.topics = researchResult.map((r: any, idx: number) => ({
-              title: r.title || `Topic ${idx + 1}`,
-              content: r.content || r.summary || (lang === 'es' ? 'Contenido detallado para este tema.' : 'Detailed content for this topic.'),
-              sources: r.sources || []
-            }));
-            drSucceeded = true;
-          }
-        } catch (e) {
-          console.error('[PPT] Deep research API error — falling back to direct skeleton:', e);
-        }
-
-        if (drSucceeded) {
+        const researchResult = await geminiService.generateDeepResearch(contentInput, audience, keyTakeaway);
+        if (researchResult && Array.isArray(researchResult) && researchResult.length > 0) {
+          researchData.topics = researchResult.map((r: any, idx: number) => ({
+            title: r.title || `Topic ${idx + 1}`,
+            content: r.content || r.summary || (lang === 'es' ? 'Contenido detallado.' : 'Detailed content.'),
+            sources: r.sources || []
+          }));
           setDeepResearch(researchData);
           setCurrentStage(2.5 as any);
-        } else {
-          // DR failed or returned empty — skip Stage 2.5, build skeleton directly
-          console.warn('[PPT] DR empty/failed, skipping Stage 2.5 and building skeleton directly');
-          await buildSkeleton();
         }
       } catch (error) {
         console.error('Deep research error:', error);
       } finally {
         setIsGeneratingResearch(false);
       }
-    } else {
-      await buildSkeleton();
     }
-  };
-
-  const proceedFromDeepResearch = async () => {
-    setIsLoading(true);
-    try {
-      const researchContext = deepResearch?.topics.map(t => `${t.title}:\n${t.content}`).join('\n\n') || '';
-      const fullContext = `Audience: ${audience}\nTone: ${tone}\nKey Takeaway: ${keyTakeaway}\n\nResearch Data:\n${researchContext}`;
-      
-      // Build skeleton and jump directly to Stage 5 (Final Render/Export)
-      await buildSkeleton(fullContext, 5);
-      
-      // Auto-set style if not already set
-      if (!selectedTheme || selectedTheme === 'auto') {
-        setSelectedTheme('professional');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const skipDeepResearch = async () => {
-    setDeepResearch(null);
-    await buildSkeleton();
   };
 
   const startEditResearch = (index: number) => {
@@ -501,116 +361,10 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
     setEditResearchContent('');
   };
 
-  const confirmNarrative = () => {
-    setCurrentSlideIndex(0);
-    setRenderedSlide(null);
-    setCurrentStage(4);
+  const proceedFromDeepResearch = () => {
+    alert(lang === 'es' ? 'Contexto guardado. Reconstrucción en curso...' : 'Context saved. Rebuild in progress...');
   };
-
-  const renderSlide = async (index: number) => {
-    if (index >= narrative.length || isFinalized) return;
-    setIsLoading(true);
-    
-    try {
-      const slide = narrative[index];
-      const style = selectedTheme;
-      
-      const rendered = await geminiService.generateProImageForSlide(
-        slide.title,
-        slide.subtitle || '',
-        slide.bullets,
-        style,
-        slide.chartType || 'none',
-        slide.tableData || '',
-        slide.generatedImage,
-        selectedLayout,
-        slide.paragraphs,
-        slide.imagePrompt,
-        slide.excelData,
-        slide.additionalImages
-      );
-      
-      setRenderedSlide(rendered);
-      setRenderedSlides(prev => {
-        const updated = [...prev];
-        updated[index] = rendered;
-        return updated;
-      });
-    } catch (error) {
-      console.error('Render error:', error);
-      // Fallback to simple SVG
-      const fallback = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080"><rect fill="${VISUAL_THEMES.find(t => t.id === selectedTheme)?.color || '#2563eb'}" width="1920" height="1080"/><text x="960" y="540" text-anchor="middle" fill="white" font-size="48">${narrative[index]?.title}</text></svg>`;
-      setRenderedSlide(fallback);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const nextSlide = () => {
-    if (currentSlideIndex < narrative.length - 1) {
-      setCurrentSlideIndex(prev => prev + 1);
-      setRenderedSlide(renderedSlides[currentSlideIndex + 1] || null);
-    } else {
-      setIsFinalized(true);
-      setCurrentStage(5);
-    }
-  };
-
-  const prevSlide = () => {
-    if (currentSlideIndex > 0) {
-      setCurrentSlideIndex(prev => prev - 1);
-      setRenderedSlide(renderedSlides[currentSlideIndex - 1] || null);
-    }
-  };
-
-  const deleteSlide = (index: number) => {
-    setNarrative(prev => prev.filter((_, i) => i !== index));
-    setRenderedSlides(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const exportAsPNG = () => {
-    renderedSlides.forEach((slide, i) => {
-      if (slide) {
-        const link = document.createElement('a');
-        link.href = slide;
-        link.download = `slide-${i + 1}.png`;
-        link.click();
-      }
-    });
-  };
-
-  const exportAsPDF = () => {
-    if (renderedSlides.filter(s => s).length === 0) {
-      alert(lang === 'es' ? 'No hay diapositivas renderizadas para exportar.' : 'No rendered slides to export.');
-      return;
-    }
-
-    const doc = new jsPDF({
-      orientation: 'landscape',
-      unit: 'px',
-      format: [1920, 1080]
-    });
-
-    let addedFirst = false;
-    renderedSlides.forEach((slide, i) => {
-      if (slide) {
-        if (addedFirst) doc.addPage([1920, 1080], 'landscape');
-        doc.addImage(slide, 'PNG', 0, 0, 1920, 1080);
-        addedFirst = true;
-      }
-    });
-
-    doc.save(`${contentInput || 'presentation'}.pdf`);
-  };
-
-  const exportAsPPTX = () => {
-    if (renderedSlides.filter(s => s).length === 0) {
-      alert(lang === 'es' ? 'No hay diapositivas renderizadas para exportar.' : 'No rendered slides to export.');
-      return;
-    }
-
-    const pres = new pptxgen();
-    pres.layout = 'LAYOUT_16x9';
+s.layout = 'LAYOUT_16x9';
 
     renderedSlides.forEach((slide, i) => {
       if (slide) {
@@ -989,557 +743,7 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
                 rows={4}
                 className="w-full p-3 rounded-xl border border-slate-200 dark:border-white/10 bg-transparent resize-none text-sm"
                 placeholder={lang === 'es' ? 'Párrafo 1\n\nPárrafo 2...' : 'Paragraph 1\n\nParagraph 2...'}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase text-slate-400">
-                {lang === 'es' ? 'Prompt para imagen IA' : 'AI Image Prompt'}
-              </label>
-              <input
-                type="text"
-                value={editImagePrompt}
-                onChange={(e) => setEditImagePrompt(e.target.value)}
-                placeholder={lang === 'es' ? 'Describe la imagen a generar...' : 'Describe the image to generate...'}
-                className="w-full p-3 rounded-xl border border-slate-200 dark:border-white/10 bg-transparent"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase text-slate-400">
-                {lang === 'es' ? 'Datos Excel/Tabla (copia y pega)' : 'Excel/Table Data (copy and paste)'}
-              </label>
-              <textarea
-                value={editExcelData}
-                onChange={(e) => setEditExcelData(e.target.value)}
-                rows={3}
-                placeholder={lang === 'es' ? 'Columna1, Columna2\nValor1, Valor2...' : 'Column1, Column2\nValue1, Value2...'}
-                className="w-full p-3 rounded-xl border border-slate-200 dark:border-white/10 bg-transparent resize-none text-sm"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase text-slate-400">
-                {lang === 'es' ? 'Tipo de Gráfico' : 'Chart Type'}
-              </label>
-              <div className="grid grid-cols-5 gap-2">
-                {CHART_TYPES.slice(0, 5).map((chart) => (
-                  <button
-                    key={chart.id}
-                    onClick={() => setEditChartType(editChartType === chart.id ? null : chart.id)}
-                    className={cn(
-                      "px-2 py-2 rounded-lg font-black text-[10px] uppercase flex flex-col items-center gap-1",
-                      editChartType === chart.id
-                        ? "bg-emerald-600 text-white"
-                        : "bg-slate-100 dark:bg-slate-800"
-                    )}
-                  >
-                    {chart.icon} {chart.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {editChartType && (
-              <div className="space-y-2">
-                <label className="text-xs font-black uppercase text-slate-400">
-                  {lang === 'es' ? 'Datos del gráfico (etiqueta, valor)' : 'Chart data (label, value)'}
-                </label>
-                <textarea
-                  value={editChartData}
-                  onChange={(e) => setEditChartData(e.target.value)}
-                  rows={3}
-                  placeholder={lang === 'es' ? 'Etiqueta1, 100\nEtiqueta2, 75' : 'Label1, 100\nLabel2, 75'}
-                  className="w-full p-3 rounded-xl border border-slate-200 dark:border-white/10 bg-transparent resize-none text-sm"
-                />
-              </div>
-            )}
-          </div>
-
-          <div className="flex gap-2">
-            <button
-              onClick={() => { setIsEditingNarrative(false); setEditingSlideIdx(null); }}
-              className="flex-1 py-3 bg-slate-200 dark:bg-slate-800 rounded-xl font-black uppercase text-sm"
-            >
-              {lang === 'es' ? 'Cancelar' : 'Cancel'}
-            </button>
-            <button
-              onClick={saveEditSlide}
-              className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-black uppercase text-sm"
-            >
-              <Check size={18} />
-              {lang === 'es' ? 'Guardar' : 'Save'}
-            </button>
-          </div>
-        </div>
-      );
-    }
-
     return (
-      <div className="flex-1 flex flex-col p-4 sm:p-8 space-y-4 sm:space-y-6 overflow-auto">
-        <div className="text-center space-y-2">
-          <h2 className="text-xl sm:text-2xl font-black uppercase tracking-widest">
-            {lang === 'es' ? 'Secuencia Infográfica: Narrativa' : 'Infographic Sequence: Narrative'}
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-400">
-            {lang === 'es' 
-              ? 'La IA ha compuesto una narrativa lógica para transmitir el conocimiento. Edita cada "momento visual" si es necesario.' 
-              : 'AI has composed a logical narrative for knowledge transmission. Edit each "visual moment" if needed.'}
-          </p>
-        </div>
-
-        <div className="flex-1 space-y-3 sm:space-y-4 overflow-auto">
-          {narrative.map((slide, i) => (
-            <div key={i} className="p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-white/10">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="w-6 sm:w-8 h-6 sm:h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs sm:text-sm font-black">
-                    {i + 1}
-                  </span>
-                  <div className="flex flex-col">
-                    <h3 className="font-black uppercase text-sm sm:text-base">{slide.title}</h3>
-                    <div className="flex gap-2 mt-0.5">
-                      {slide.paragraphs && slide.paragraphs.length > 0 && (
-                        <span className="text-[8px] font-black uppercase px-1.5 py-0.5 bg-blue-500/10 text-blue-600 rounded">Context</span>
-                      )}
-                      {slide.imagePrompt && (
-                        <span className="text-[8px] font-black uppercase px-1.5 py-0.5 bg-emerald-500/10 text-emerald-600 rounded">Image Prompt</span>
-                      )}
-                      {slide.hasChart && (
-                        <span className="text-[8px] font-black uppercase px-1.5 py-0.5 bg-amber-500/10 text-amber-600 rounded">Chart</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <button
-                  onClick={() => startEditSlide(i)}
-                  className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-black uppercase"
-                >
-                  {lang === 'es' ? 'Editar' : 'Edit'}
-                </button>
-              </div>
-              <ul className="space-y-1 ml-8 sm:ml-10">
-                {slide.bullets.map((bullet, j) => (
-                  <li key={j} className="text-xs sm:text-sm text-slate-400 flex items-start gap-2">
-                    <span className="text-blue-500 mt-1">•</span>
-                    {bullet}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-
-        <button
-          onClick={confirmNarrative}
-          className="w-full py-3 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest flex items-center justify-center gap-2 min-h-[48px]"
-        >
-          <ChevronRight />
-          {lang === 'es' ? 'Siguiente: Diseñar' : 'Next: Design & Enhance'}
-        </button>
-      </div>
-    );
-  };
-
-// Stage 4: Slide-by-Slide Design with Image & Chart
-  const renderStage4 = () => {
-    const currentSlide = narrative[currentSlideIndex];
-    
-    return (
-      <div className="flex-1 flex flex-col p-3 sm:p-4 lg:p-8 space-y-3 sm:space-y-4 overflow-auto">
-        <div className="flex items-center justify-between shrink-0">
-          <div>
-            <h2 className="text-base sm:text-xl font-black uppercase tracking-widest">
-              {lang === 'es' ? 'Etapa 4: Diseño' : 'Stage 4: Design'}
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-400">
-              {currentSlideIndex + 1} / {narrative.length}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={prevSlide}
-              disabled={currentSlideIndex === 0}
-              className="p-2 rounded-xl border disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center"
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <button
-              onClick={() => setCurrentSlideIndex(currentSlideIndex + 1)}
-              disabled={currentSlideIndex >= narrative.length - 1}
-              className="p-2 rounded-xl border disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center"
-            >
-              <ChevronRight size={20} />
-            </button>
-          </div>
-        </div>
-
-        {/* Image Controls */}
-        <div className="shrink-0">
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-xs font-black uppercase text-slate-400">
-              {lang === 'es' ? 'Imagen' : 'Image'}
-            </label>
-            {currentSlide?.hasImage && (
-              <button onClick={resetImageForSlide} className="text-xs text-red-500 font-black uppercase">
-                {lang === 'es' ? 'Eliminar' : 'Remove'}
-              </button>
-            )}
-          </div>
-          
-          {currentSlide?.hasImage && currentSlide?.generatedImage ? (
-            <div className="relative rounded-xl overflow-hidden border">
-              <img src={currentSlide.generatedImage} alt="Slide" className="w-full aspect-video object-cover" />
-            </div>
-          ) : currentSlide?.hasImage ? (
-            <div className="p-4 rounded-xl border border-purple-500/30 bg-purple-500/10 text-center">
-              <p className="text-xs text-purple-500">{lang === 'es' ? 'Imagen configurada' : 'Image configured'}</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {/* Image Source Selector */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setImageSource('upload')}
-                  className={cn(
-                    "flex-1 py-2 rounded-xl font-black text-xs uppercase flex items-center justify-center gap-2",
-                    imageSource === 'upload'
-                      ? "bg-purple-600 text-white"
-                      : "border border-slate-200 dark:border-white/10"
-                  )}
-                >
-                  <Upload size={14} />
-                  {lang === 'es' ? 'Subir' : 'Upload'}
-                </button>
-                <button
-                  onClick={() => setImageSource('ai')}
-                  className={cn(
-                    "flex-1 py-2 rounded-xl font-black text-xs uppercase flex items-center justify-center gap-2",
-                    imageSource === 'ai'
-                      ? "bg-purple-600 text-white"
-                      : "border border-slate-200 dark:border-white/10"
-                  )}
-                >
-                  <Sparkles size={14} />
-                  {lang === 'es' ? 'Generar IA' : 'AI Generate'}
-                </button>
-              </div>
-              
-              {/* Upload Option */}
-              {imageSource === 'upload' && (
-                <div className="p-3 border border-dashed border-slate-300 dark:border-white/20 rounded-xl text-center">
-                  <input
-                    ref={imageInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
-                  <button
-                    onClick={() => imageInputRef.current?.click()}
-                    className="w-full py-2 text-xs font-black uppercase text-slate-400"
-                  >
-                    {lang === 'es' ? 'Seleccionar imagen' : 'Select image'}
-                  </button>
-                </div>
-              )}
-              
-              {/* AI Generate Option */}
-              {imageSource === 'ai' && (
-                <div className="space-y-2">
-                  <input
-                    type="text"
-                    value={imagePrompt}
-                    onChange={(e) => setImagePrompt(e.target.value)}
-                    placeholder={lang === 'es' ? 'Describe la imagen...' : 'Describe the image...'}
-                    className="w-full p-2 rounded-xl border border-slate-200 dark:border-white/10 bg-transparent text-xs"
-                  />
-                  <button
-                    onClick={generateSlideImage}
-                    disabled={!imagePrompt.trim() || isGeneratingImage}
-                    className="w-full py-2 bg-purple-600 text-white rounded-xl font-black text-xs uppercase disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {isGeneratingImage ? (
-                      <RefreshCw size={14} className="animate-spin" />
-                    ) : (
-                      <Sparkles size={14} />
-                    )}
-                    {lang === 'es' ? 'Generar' : 'Generate'}
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Chart Type & Data Selection */}
-        {selectedChartType && (
-          <div className="p-3 rounded-xl border border-slate-200 dark:border-white/10 space-y-3 shrink-0">
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase text-slate-400">
-                {lang === 'es' ? 'Tipo de gráfico' : 'Chart type'}
-              </label>
-              <div className="flex gap-2">
-                {CHART_TYPES.map((chart) => (
-                  <button
-                    key={chart.id}
-                    onClick={() => setSelectedChartType(chart.id as any)}
-                    className={cn(
-                      "px-3 py-2 rounded-lg font-black text-xs uppercase flex items-center gap-1",
-                      selectedChartType === chart.id
-                        ? "bg-emerald-600 text-white"
-                        : "bg-slate-100 dark:bg-slate-800"
-                    )}
-                  >
-                    {chart.icon} {chart.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase text-slate-400">
-                {lang === 'es' ? 'Datos (etiqueta,valor - uno por línea)' : 'Data (label,value - one per line)'}
-              </label>
-              <textarea
-                value={chartInput}
-                onChange={(e) => setChartInput(e.target.value)}
-                placeholder={lang === 'es' ? 'Ej:\nVentas, 100\nGastos, 75\nBeneficio, 25' : 'Example:\nSales, 100\nExpenses, 75\nProfit, 25'}
-                rows={3}
-                className="w-full p-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent text-xs"
-              />
-              <button
-                onClick={addChartToSlide}
-                disabled={!chartInput.trim()}
-                className="w-full py-2 bg-emerald-600 text-white rounded-lg font-black text-xs uppercase disabled:opacity-50"
-              >
-                {lang === 'es' ? 'Agregar Gráfico' : 'Add Chart'}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Layout Selector */}
-        <div className="space-y-2 shrink-0">
-          <label className="text-xs font-black uppercase tracking-widest text-slate-400">
-            {lang === 'es' ? 'Estrategia Visual' : 'Visual Strategy'}
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { id: 'split', name: 'Split', icon: <Layers size={14} /> },
-              { id: 'focal', name: 'Focal', icon: <Target size={14} /> },
-              { id: 'bento_grid', name: 'Bento', icon: <Layout size={14} /> },
-              { id: 'technical_drawing', name: 'Technical', icon: <Settings size={14} /> },
-              { id: 'dense_table', name: 'Data Dense', icon: <Database size={14} /> },
-            ].map((layout) => (
-              <button
-                key={layout.id}
-                onClick={() => setSelectedLayout(layout.id as any)}
-                className={cn(
-                  "px-3 py-2 rounded-xl font-black text-[10px] uppercase transition-all flex items-center gap-2",
-                  selectedLayout === layout.id
-                    ? "bg-purple-600 text-white"
-                    : "border border-slate-200 dark:border-white/10"
-                )}
-              >
-                {layout.icon} <span>{layout.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Theme Selector */}
-        <div className="space-y-2 shrink-0">
-          {/* Style Selector with Search */}
-        <div className="space-y-2 shrink-0">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-black uppercase tracking-widest text-slate-400">
-              {lang === 'es' ? 'Estilo Visual' : 'Visual Style'}
-            </label>
-            <button 
-              onClick={() => setSelectedTheme('professional')}
-              className="text-[10px] text-blue-500 font-black uppercase"
-            >
-              {lang === 'es' ? 'Aleatorio' : 'Random'}
-            </button>
-          </div>
-          <div className="max-h-40 overflow-y-auto space-y-1 p-2 rounded-xl bg-slate-100 dark:bg-slate-900">
-            <div className="text-[10px] text-slate-500 mb-2">
-              {lang === 'es' 
-                ? `${VISUAL_THEMES.length} estilos disponibles` 
-                : `${VISUAL_THEMES.length} styles available`}
-            </div>
-            <div className="grid grid-cols-4 sm:grid-cols-6 gap-1">
-              {VISUAL_THEMES.map((theme) => (
-                <button
-                  key={theme.id}
-                  onClick={() => setSelectedTheme(theme.id)}
-                  title={theme.desc}
-                  className={cn(
-                    "px-2 py-1.5 rounded-lg font-black text-[9px] uppercase transition-all flex flex-col items-center gap-0.5",
-                    selectedTheme === theme.id
-                      ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
-                      : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/5 hover:border-blue-500"
-                  )}
-                >
-                  <span className="text-sm">{theme.icon}</span>
-                  <span className="truncate w-full text-center">{theme.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-          <p className="text-[10px] text-slate-500 italic">
-            {selectedTheme && VISUAL_THEMES.find(t => t.id === selectedTheme)?.desc}
-          </p>
-        </div>
-        </div>
-
-        {/* Slide Preview / Render Area */}
-        <div className="flex-1 flex items-center justify-center bg-slate-100 dark:bg-slate-900 rounded-xl sm:rounded-2xl overflow-hidden min-h-[150px] sm:min-h-[200px]">
-          {renderedSlide ? (
-            <img src={renderedSlide} alt={`Slide ${currentSlideIndex + 1}`} className="max-h-full max-w-full object-contain" />
-          ) : (
-            <div className="text-center p-4 sm:p-8">
-              <Paint size={40} className="mx-auto mb-2 sm:mb-4 text-slate-400" />
-              <p className="text-xs sm:text-sm text-slate-400">
-                {lang === 'es' ? 'Vista previa no disponible aún' : 'Preview not available yet'}
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Slide Content */}
-        <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-50 dark:bg-slate-900 shrink-0">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-black uppercase text-sm sm:text-base">{currentSlide?.title}</h3>
-            {currentSlide?.hasImage && <ImageIcon size={14} className="text-purple-500" />}
-            {currentSlide?.hasChart && <BarChart3 size={14} className="text-emerald-500" />}
-          </div>
-          {currentSlide?.subtitle && (
-            <p className="text-[10px] sm:text-xs text-slate-500 font-bold mb-2 italic">{currentSlide.subtitle}</p>
-          )}
-          <ul className="text-xs sm:text-sm text-slate-400 space-y-1">
-            {currentSlide?.bullets.map((bullet, j) => (
-              <li key={j}>• {bullet}</li>
-            ))}
-          </ul>
-          {currentSlide?.chartData && (
-            <div className="mt-2 p-2 bg-emerald-500/10 rounded-lg">
-              <p className="text-xs font-black text-emerald-500 uppercase">{currentSlide.chartData.length} {lang === 'es' ? 'datos' : 'data points'}</p>
-            </div>
-          )}
-        </div>
-
-        <div className="flex gap-2 sm:gap-4 shrink-0">
-          <button
-            onClick={() => renderSlide(currentSlideIndex)}
-            disabled={isLoading}
-            className="flex-1 py-3 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 min-h-[48px]"
-          >
-            {isLoading ? <RefreshCw className="animate-spin" /> : <Palette />}
-            {lang === 'es' ? 'Renderizar' : 'Render'}
-          </button>
-          
-          {currentSlideIndex < narrative.length - 1 ? (
-            <button
-              onClick={nextSlide}
-              className="flex-1 py-3 sm:py-4 bg-emerald-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest flex items-center justify-center gap-2 min-h-[48px]"
-            >
-              <ChevronRight />
-              {lang === 'es' ? 'Siguiente' : 'Next'}
-            </button>
-          ) : (
-            <button
-              onClick={() => {
-                setIsFinalized(true);
-                setCurrentStage(5);
-              }}
-              className="flex-1 py-3 sm:py-4 bg-emerald-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest flex items-center justify-center gap-2 min-h-[48px]"
-            >
-              <Check />
-              {lang === 'es' ? 'Finalizar' : 'Finalize'}
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  // Stage 5: Final Management & Export
-  const renderStage5 = () => (
-    <div className="flex-1 flex flex-col p-4 sm:p-8 space-y-4 sm:space-y-6 overflow-auto">
-      <div className="text-center space-y-2">
-        <h2 className="text-xl sm:text-2xl font-black uppercase tracking-widest">
-          {lang === 'es' ? 'Etapa 5: Exportar' : 'Stage 5: Export'}
-        </h2>
-        <p className="text-sm text-slate-400">
-          {lang === 'es' 
-            ? 'Tu presentación está lista' 
-            : 'Your presentation is ready'}
-        </p>
-      </div>
-
-      {/* Slides Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 overflow-auto">
-        {renderedSlides.map((slide, i) => (
-          <div key={i} className="relative group">
-            {slide ? (
-              <img 
-                src={slide} 
-                alt={`Slide ${i + 1}`} 
-                className="w-full aspect-video object-contain rounded-xl border" 
-              />
-            ) : (
-              <div className="w-full aspect-video bg-slate-200 dark:bg-slate-800 rounded-xl flex items-center justify-center">
-                <span className="text-slate-400">{i + 1}</span>
-              </div>
-            )}
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center gap-2">
-              <button 
-                onClick={() => deleteSlide(i)}
-                className="p-2 bg-red-500 text-white rounded-lg"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <button
-        onClick={() => {
-          setCurrentStage(4);
-          setCurrentSlideIndex(0);
-        }}
-        className="py-3 border border-slate-200 dark:border-white/10 rounded-xl font-black uppercase text-sm flex items-center justify-center gap-2 w-full sm:w-auto"
-      >
-        <Plus size={16} />
-        {lang === 'es' ? 'Agregar Diapositiva' : 'Add Slide'}
-      </button>
-
-      {/* Export Buttons */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-4">
-        <button
-          onClick={exportAsPNG}
-          className="py-3 sm:py-4 bg-slate-100 dark:bg-slate-800 rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm flex flex-col items-center gap-1 sm:gap-2"
-        >
-          <FileImage size={20} />
-          <span className="hidden sm:inline">PNG</span>
-        </button>
-        <button
-          onClick={exportAsPDF}
-          className="py-3 sm:py-4 bg-slate-100 dark:bg-slate-800 rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm flex flex-col items-center gap-1 sm:gap-2"
-        >
-          <FileText size={20} />
-          <span className="hidden sm:inline">PDF</span>
-        </button>
-        <button
-          onClick={exportAsPPTX}
-          className="py-3 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm flex flex-col items-center gap-1 sm:gap-2"
-        >
-          <Presentation size={20} />
-          <span className="hidden sm:inline">PPTX</span>
-        </button>
-      </div>
-    </div>
-  );
-
-  return (
     <div className={cn(
       "fixed inset-0 z-[100] flex flex-col font-sans overflow-hidden transition-colors duration-300",
       isDark ? "bg-corporate-950 text-white" : "bg-slate-50 text-slate-900"
@@ -1561,15 +765,15 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
               <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">
-                {lang === 'es' ? `Etapa ${currentStage}` : `Stage ${currentStage}`} / 6 • v5.1.0
+                {lang === 'es' ? `Contexto Activo` : `Active Context`} • v6.0.0
               </span>
             </div>
           </div>
         </div>
 
-        {/* Stage Indicator */}
+        {/* Stage Indicator (Simplified) */}
         <div className="flex items-center gap-1">
-          {[1, 2, 2.5, 3, 4, 5].map((stage) => (
+          {[1, 2, 2.5].map((stage) => (
             <div 
               key={stage}
               className={cn(
@@ -1601,7 +805,7 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
         </div>
       </div>
 
-{/* Stage Content */}
+      {/* Stage Content */}
       <AnimatePresence mode="wait">
         <motion.div
           key={currentStage}
@@ -1613,9 +817,6 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
           {currentStage === 1 && renderStage1()}
           {currentStage === 2 && renderStage2()}
           {currentStage === 2.5 && renderStage2_5()}
-          {currentStage === 3 && renderStage3()}
-          {currentStage === 4 && renderStage4()}
-          {currentStage === 5 && renderStage5()}
         </motion.div>
       </AnimatePresence>
     </div>
