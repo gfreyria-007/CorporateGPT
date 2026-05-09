@@ -54,7 +54,8 @@ export function PromptGenie({ isOpen, onClose, onApply, theme, initialPrompt = '
       const payload = {
         model: "gemini-2.0-flash",
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        tools: [{ googleSearch: {} }]
+        tools: [{ googleSearch: {} }],
+        config: { responseMimeType: "text/plain" }
       };
 
       const token = user ? await user.getIdToken() : null;
