@@ -98,6 +98,7 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [lastPoint, setLastPoint] = useState<{ x: number, y: number } | null>(null);
+  const [cursorPos, setCursorPos] = useState<{ x: number, y: number } | null>(null);
 
   const imageCanvasRef = useRef<HTMLCanvasElement>(null);
   const maskCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -141,19 +142,26 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
 
   const getCanvasCoords = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     const canvas = maskCanvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
+    if (!canvas) return { x: 0, y: 0, cssX: 0, cssY: 0 };
     const rect = canvas.getBoundingClientRect();
     let clientX: number, clientY: number;
-    if ('touches' in e) {
+    if ('touches' in e && e.touches.length > 0) {
       clientX = e.touches[0].clientX;
       clientY = e.touches[0].clientY;
     } else {
-      clientX = e.clientX;
-      clientY = e.clientY;
+      const mouseEvent = e as React.MouseEvent;
+      clientX = mouseEvent.clientX;
+      clientY = mouseEvent.clientY;
     }
+
+    const cssX = clientX - rect.left;
+    const cssY = clientY - rect.top;
+
     return {
-      x: (clientX - rect.left) * (canvasWidth / rect.width),
-      y: (clientY - rect.top) * (canvasHeight / rect.height)
+      x: cssX * (canvasWidth / rect.width),
+      y: cssY * (canvasHeight / rect.height),
+      cssX,
+      cssY
     };
   }, []);
 
@@ -190,11 +198,15 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
   }, [isDrawing, getCanvasCoords, brushSize, brushColor, mode, lastPoint]);
 
   const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
+    const { x, y, cssX, cssY } = getCanvasCoords(e);
+    setCursorPos({ x: cssX, y: cssY });
     setIsDrawing(true);
     draw(e);
   };
 
   const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
+    const { x, y, cssX, cssY } = getCanvasCoords(e);
+    setCursorPos({ x: cssX, y: cssY });
     if (isDrawing) {
       draw(e);
     }
@@ -203,6 +215,12 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
   const handleMouseUp = () => {
     setIsDrawing(false);
     setLastPoint(null);
+  };
+
+  const handleMouseLeave = () => {
+    setIsDrawing(false);
+    setLastPoint(null);
+    setCursorPos(null);
   };
 
   const clearMask = () => {
@@ -667,11 +685,11 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
                       ref={maskCanvasRef}
                       width={canvasWidth}
                       height={canvasHeight}
-                      className="absolute top-0 left-0 cursor-crosshair touch-none"
+                      className="absolute top-0 left-0 cursor-none touch-none z-40"
                       onMouseDown={handleMouseDown}
                       onMouseMove={handleMouseMove}
                       onMouseUp={handleMouseUp}
-                      onMouseLeave={handleMouseUp}
+                      onMouseLeave={handleMouseLeave}
                       onTouchStart={handleMouseDown}
                       onTouchMove={handleMouseMove}
                       onTouchEnd={handleMouseUp}
@@ -680,7 +698,19 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
                       <img 
                         src={editedImage} 
                         alt="Edited result"
-                        className="absolute top-0 left-0 w-full h-full object-contain"
+                        className="absolute top-0 left-0 w-full h-full object-contain pointer-events-none z-30"
+                      />
+                    )}
+                    {cursorPos && (
+                      <div 
+                        className="absolute pointer-events-none border-2 border-white mix-blend-difference rounded-full z-50"
+                        style={{
+                          left: cursorPos.x,
+                          top: cursorPos.y,
+                          width: brushSize * 2,
+                          height: brushSize * 2,
+                          transform: 'translate(-50%, -50%)'
+                        }}
                       />
                     )}
                   </div>

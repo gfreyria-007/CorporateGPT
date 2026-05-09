@@ -70,6 +70,7 @@ import { translations } from './lib/translations';
 import { canAccessTechie } from './lib/permissions';
 import { ImageModelSelector } from './components/ImageModelSelector';
 import ImageEditorModal from './Techie/src/components/ImageEditorModal';
+import { optimizePromptForImage } from './lib/promptOptimizer';
 
 export default function App() {
   // Auth & Profile
@@ -483,6 +484,11 @@ export default function App() {
 
     try {
       const idToken = await user.getIdToken();
+      
+      // ✨ Search Grounding: Optimize prompt using web search if applicable
+      const optimizedPrompt = await optimizePromptForImage(prompt, user.uid, idToken, lang);
+      console.log('[Image] Optimized Prompt:', optimizedPrompt.substring(0, 100) + '...');
+      
       let imgRes: any = null;
 
       const isImagenModel = modelId.startsWith('imagen-');
@@ -500,7 +506,7 @@ export default function App() {
             body: JSON.stringify({
               action: 'generateImage',
               model: modelId,
-              prompt: prompt,
+              prompt: optimizedPrompt,
               aspectRatio: '1:1'
             })
           });
@@ -532,7 +538,7 @@ export default function App() {
               action: 'generateContent',
               payload: {
                 model: geminiModel,
-                contents: [{ role: 'user', parts: [{ text: `Create a high-quality image of: ${prompt}. Make it look professional and visually stunning.` }] }],
+                contents: [{ role: 'user', parts: [{ text: `Create a high-quality image of: ${optimizedPrompt}. Make it look professional and visually stunning.` }] }],
                 config: {
                   temperature: 1.0,
                   responseModalities: ['IMAGE'],

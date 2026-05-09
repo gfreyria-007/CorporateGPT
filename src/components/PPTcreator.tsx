@@ -13,9 +13,8 @@ import { translations } from '../lib/translations';
 import * as geminiService from '../services/geminiService';
 
 import jsPDF from 'jspdf';
-import pptxgen from 'pptxgenjs';
 
-type Stage = 1 | 2 | 2.5 | 3 | 4 | 5;
+type Stage = 1 | 2 | 2.5;
 
 // New Stage 2.5 for Deep Research
 type Stage2_5 = 2.5;
@@ -114,7 +113,6 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
   user,
   isMobile = false 
 }) => {
-  const t = translations[lang || 'es'];
   const isDark = theme === 'dark';
 
   const [currentStage, setCurrentStage] = useState<Stage>(1);
@@ -136,168 +134,8 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
   const [editingResearchIndex, setEditingResearchIndex] = useState<number | null>(null);
   const [editResearchContent, setEditResearchContent] = useState('');
 
-  // Stage 4: Design with Chart/Image
-  const [selectedLayout, setSelectedLayout] = useState<'split' | 'grid' | 'focal' | 'dense_table' | 'technical_drawing' | 'bento_grid'>('split');
-  const [selectedChartType, setSelectedChartType] = useState<'bar' | 'pie' | 'line' | 'doughnut' | null>(null);
-  const [chartInput, setChartInput] = useState('');
-  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [selectedTheme, setSelectedTheme] = useState('bricks');
-  const [renderedSlides, setRenderedSlides] = useState<string[]>([]);
-  const [renderedSlide, setRenderedSlide] = useState<string | null>(null);
-  
-  // Image generation states
-  const [imageSource, setImageSource] = useState<'upload' | 'ai' | null>(null);
-  const [imagePrompt, setImagePrompt] = useState('');
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-  const imageInputRef = useRef<HTMLInputElement>(null);
-
   // Stage 5: Final
   const [isFinalized, setIsFinalized] = useState(false);
-
-  // Helper to update narrative
-  const updateSlideContent = (index: number, updates: Partial<SlideContent>) => {
-    setNarrative(prev => prev.map((slide, i) => 
-      i === index ? { ...slide, ...updates } : slide
-    ));
-  };
-
-  // Start editing a slide in Stage 3
-  const startEditSlide = (index: number) => {
-    const slide = narrative[index];
-    setEditingSlideIdx(index);
-    setEditTitle(slide.title);
-    setEditSubtitle(slide.subtitle || '');
-    setEditBullets(slide.bullets.join('\n'));
-    setEditParagraphs(slide.paragraphs?.join('\n\n') || '');
-    setEditImagePrompt(slide.imagePrompt || '');
-    setEditExcelData(slide.excelData || '');
-    setEditChartType(slide.chartType || null);
-    setEditChartData(slide.chartData?.map(d => `${d.label}, ${d.value}`).join('\n') || '');
-    setIsEditingNarrative(true);
-  };
-
-  // Save edited slide
-  const saveEditSlide = () => {
-    if (editingSlideIdx !== null) {
-      const currentSlide = narrative[editingSlideIdx];
-      const bullets = editBullets.split('\n').filter(b => b.trim());
-      const paragraphs = editParagraphs.split('\n\n').filter(p => p.trim());
-      const chartData = editChartData.split('\n').map(line => {
-        const [label, value] = line.split(',').map(s => s.trim());
-        return { label, value: parseFloat(value) || 0 };
-      }).filter(d => d.label && d.value > 0);
-      
-      updateSlideContent(editingSlideIdx, { 
-        title: editTitle, 
-        subtitle: editSubtitle,
-        bullets,
-        paragraphs: paragraphs.length > 0 ? paragraphs : undefined,
-        imagePrompt: editImagePrompt || undefined,
-        excelData: editExcelData || undefined,
-        chartType: editChartType as any,
-        chartData: chartData.length > 0 ? chartData : undefined,
-        hasChart: editChartType !== null && chartData.length > 0,
-        hasTable: !!editExcelData?.trim(),
-        hasImage: !!currentSlide?.generatedImage
-      });
-    }
-    setIsEditingNarrative(false);
-    setEditingSlideIdx(null);
-  };
-
-  // Add chart data to current slide
-  const addChartToSlide = () => {
-    if (!chartInput.trim() || !selectedChartType) return;
-    
-    // Parse "label,value" pairs
-    const dataPairs = chartInput.split('\n').map(line => {
-      const [label, value] = line.split(',').map(s => s.trim());
-      return { label, value: parseFloat(value) || 0 };
-    }).filter(p => p.label && p.value > 0);
-
-    if (dataPairs.length > 0) {
-      updateSlideContent(currentSlideIndex, {
-        chartType: selectedChartType as any,
-        chartData: dataPairs,
-        hasChart: true
-      });
-    }
-  };
-
-  // Toggle image for current slide
-  const toggleImageForSlide = () => {
-    updateSlideContent(currentSlideIndex, {
-      hasImage: !narrative[currentSlideIndex]?.hasImage
-    });
-  };
-
-  // Handle image upload
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = reader.result as string;
-      updateSlideContent(currentSlideIndex, {
-        generatedImage: base64,
-        hasImage: true
-      });
-    };
-    reader.readAsDataURL(file);
-  };
-
-  // Generate image with AI
-  const generateSlideImage = async () => {
-    if (!imagePrompt.trim()) return;
-    setIsGeneratingImage(true);
-    try {
-      const prompt = `${imagePrompt} - Professional presentation slide visual, 16:9 aspect ratio, clean corporate design, infographic style`;
-      
-      // Call the API directly
-      const res = await fetch('/api/gemini', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'generateImage',
-          model: 'imagen-4.0-fast-generate-001',
-          prompt: prompt,
-          aspectRatio: '16:9'
-        })
-      });
-      
-      const imgRes = await res.json();
-      
-      if (imgRes.error) throw new Error(imgRes.error);
-      
-      const imageBase64 = imgRes.imageBase64 || 
-                         imgRes.predictions?.[0]?.bytesBase64Encoded || 
-                         imgRes.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData)?.inlineData?.data;
-      
-      if (imageBase64) {
-        const base64Image = imageBase64.startsWith('data:') ? imageBase64 : `data:image/png;base64,${imageBase64}`;
-        updateSlideContent(currentSlideIndex, {
-          generatedImage: base64Image,
-          imagePrompt: imagePrompt,
-          hasImage: true
-        });
-      }
-    } catch (error) {
-      console.error('Image generation error:', error);
-    }
-    setIsGeneratingImage(false);
-  };
-
-  // Reset image state for current slide
-  const resetImageForSlide = () => {
-    updateSlideContent(currentSlideIndex, {
-      generatedImage: undefined,
-      imagePrompt: undefined,
-      hasImage: false
-    });
-    setImagePrompt('');
-    setImageSource(null);
-  };
 
   const goToStage2 = () => {
     setCurrentStage(2);
@@ -326,7 +164,6 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
           setDeepResearch(researchData);
           setCurrentStage(2.5 as any);
         } else {
-          // Fallback if research is empty
           console.warn('[PPT] Deep Research returned empty, moving to Stage 2.5 with placeholder');
           researchData.topics = [{
             title: lang === 'es' ? 'Resumen Ejecutivo' : 'Executive Summary',
@@ -343,9 +180,6 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
         setIsGeneratingResearch(false);
       }
     } else {
-      // If research is disabled, we would normally go to Stage 3, 
-      // but in this version we forced Stage 2.5 as the "Final Report".
-      // For now, let's just alert and stay here or move to 2.5 with basic info.
       setCurrentStage(2.5 as any);
     }
   };
@@ -365,8 +199,11 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
     setEditResearchContent('');
   };
 
+  const skipDeepResearch = () => {
+    setCurrentStage(2);
+  };
+
   const proceedFromDeepResearch = () => {
-    // Stage 3-5 are removed. This is the end of the research flow.
     setIsFinalized(true);
   };
 
@@ -560,7 +397,7 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
     </div>
   );
 
-  // Stage 2.5: Deep Research (NEW)
+  // Stage 2.5: Deep Research
   const renderStage2_5 = () => {
     if (editingResearchIndex !== null) {
       return (
@@ -679,65 +516,93 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
             className="flex-1 py-3 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest flex items-center justify-center gap-2 min-h-[48px] disabled:opacity-50"
           >
             {isLoading ? <RefreshCw className="animate-spin" /> : <ChevronRight />}
-            {lang === 'es' ? 'Generar Presentación' : 'Generate Presentation'}
+            {lang === 'es' ? 'Finalizar Reporte' : 'Finalize Report'}
           </button>
         </div>
       </div>
     );
   };
 
-  // Stage 3: Narrative Arc - Editable
-  const renderStage3 = () => {
-    const currentSlide = narrative[editingSlideIdx || 0];
-    
-    if (isEditingNarrative && editingSlideIdx !== null) {
-      return (
-        <div className="flex-1 flex flex-col p-4 sm:p-8 space-y-4 overflow-auto">
-          <div className="text-center space-y-2">
-            <h2 className="text-xl sm:text-2xl font-black uppercase tracking-widest">
-              {lang === 'es' ? 'Editar Diapositiva' : 'Edit Slide'}
+  const renderFinalStage = () => {
+    return (
+      <div className="flex-1 flex flex-col p-4 sm:p-8 space-y-6 sm:space-y-8 overflow-auto">
+        <div className="flex flex-col items-center text-center space-y-4">
+          <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded-full flex items-center justify-center animate-pulse">
+            <Check size={40} />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl sm:text-4xl font-black uppercase tracking-tighter">
+              {lang === 'es' ? 'Investigación de Alta Densidad Finalizada' : 'High-Density Research Finalized'}
             </h2>
-            <p className="text-xs sm:text-sm text-slate-400">
+            <p className="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto uppercase tracking-widest font-bold">
               {lang === 'es' 
-                ? 'Edita el título y puntos de esta diapositiva' 
-                : 'Edit title and bullets for this slide'}
+                ? 'Reporte estratégico generado con éxito v6.5.0' 
+                : 'Strategic report successfully generated v6.5.0'}
             </p>
           </div>
+        </div>
 
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase text-slate-400">
-                {lang === 'es' ? 'Título' : 'Title'}
-              </label>
-              <input
-                type="text"
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                className="w-full p-3 rounded-xl border border-slate-200 dark:border-white/10 bg-transparent font-black uppercase"
-              />
+        {/* Mini Preview of Pillars */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {deepResearch?.topics.slice(0, 4).map((topic, i) => (
+            <div key={i} className="p-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 rounded-lg bg-blue-600/10 text-blue-600 flex items-center justify-center text-[10px] font-black">
+                  {i + 1}
+                </div>
+                <h3 className="text-xs font-black uppercase truncate">{topic.title}</h3>
+              </div>
+              <p className="text-[10px] text-slate-500 line-clamp-3 leading-relaxed">
+                {topic.content}
+              </p>
             </div>
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase text-slate-400">
-                {lang === 'es' ? 'Puntos sin bullets (uno por línea)' : 'Bullet points (one per line)'}
-              </label>
-              <textarea
-                value={editBullets}
-                onChange={(e) => setEditBullets(e.target.value)}
-                rows={3}
-                className="w-full p-3 rounded-xl border border-slate-200 dark:border-white/10 bg-transparent resize-none text-sm"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase text-slate-400">
-                {lang === 'es' ? 'Párrafos (separados por línea vacía)' : 'Paragraphs (separated by empty line)'}
-              </label>
-              <textarea
-                value={editParagraphs}
-                onChange={(e) => setEditParagraphs(e.target.value)}
-                rows={4}
-                className="w-full p-3 rounded-xl border border-slate-200 dark:border-white/10 bg-transparent resize-none text-sm"
-                placeholder={lang === 'es' ? 'Párrafo 1\n\nPárrafo 2...' : 'Paragraph 1\n\nParagraph 2...'}
-    return (
+          ))}
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+          <button
+            onClick={() => {
+              const doc = new jsPDF();
+              doc.setFontSize(22);
+              doc.text(lang === 'es' ? 'Reporte: Deep Learning' : 'Deep Learning Report', 20, 20);
+              doc.setFontSize(10);
+              doc.setTextColor(100);
+              doc.text(`Generated by Catalizia CorporateGPT - ${new Date().toLocaleString()}`, 20, 28);
+              
+              let y = 45;
+              deepResearch?.topics.forEach((topic) => {
+                if (y > 250) { doc.addPage(); y = 20; }
+                doc.setTextColor(0);
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(14);
+                doc.text(topic.title.toUpperCase(), 20, y);
+                y += 10;
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(11);
+                const lines = doc.splitTextToSize(topic.content, 170);
+                doc.text(lines, 20, y);
+                y += (lines.length * 6) + 10;
+              });
+              doc.save(`CorporateGPT_Research_${Date.now()}.pdf`);
+            }}
+            className="flex-1 py-5 bg-blue-600 text-white rounded-[2rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-blue-700 transition-all shadow-xl hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <Download size={24} />
+            <span>{lang === 'es' ? 'Descargar Reporte PDF' : 'Download PDF Report'}</span>
+          </button>
+          <button
+            onClick={() => window.location.reload()}
+            className="py-5 px-10 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+          >
+            <RefreshCw size={24} />
+            <span>{lang === 'es' ? 'Nuevo' : 'New'}</span>
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  return (
     <div className={cn(
       "fixed inset-0 z-[100] flex flex-col font-sans overflow-hidden transition-colors duration-300",
       isDark ? "bg-corporate-950 text-white" : "bg-slate-50 text-slate-900"
@@ -759,13 +624,12 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
               <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">
-                {lang === 'es' ? `Contexto Activo` : `Active Context`} • v6.0.0
+                {lang === 'es' ? `Contexto Activo` : `Active Context`} • v6.5.0
               </span>
             </div>
           </div>
         </div>
 
-        {/* Stage Indicator (Simplified) */}
         <div className="flex items-center gap-1">
           {[1, 2, 2.5].map((stage) => (
             <div 
@@ -808,9 +672,13 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
           exit={{ opacity: 0, x: -20 }}
           className="flex-1 flex flex-col overflow-hidden"
         >
-          {currentStage === 1 && renderStage1()}
-          {currentStage === 2 && renderStage2()}
-          {currentStage === 2.5 && renderStage2_5()}
+          {isFinalized ? renderFinalStage() : (
+            <>
+              {currentStage === 1 && renderStage1()}
+              {currentStage === 2 && renderStage2()}
+              {currentStage === 2.5 && renderStage2_5()}
+            </>
+          )}
         </motion.div>
       </AnimatePresence>
     </div>

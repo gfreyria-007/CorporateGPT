@@ -75,6 +75,7 @@ const ImageCreationModal: React.FC<ImageCreationModalProps> = ({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [shapeStart, setShapeStart] = useState<{x: number, y: number} | null>(null);
   const [currentMousePos, setCurrentMousePos] = useState<{x: number, y: number} | null>(null);
+  const [cursorPos, setCursorPos] = useState<{ x: number, y: number } | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const maskCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -303,6 +304,7 @@ const ImageCreationModal: React.FC<ImageCreationModalProps> = ({
 
   const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
       const pos = getPointerPos(e);
+      setCursorPos(pos);
       setIsProjectDirty(true);
       if (activeTool === 'move') {
           const hit = [...objects].reverse().find(obj => {
@@ -352,6 +354,7 @@ const ImageCreationModal: React.FC<ImageCreationModalProps> = ({
       const clientX = 'touches' in e ? (e as React.TouchEvent).touches[0].clientX : (e as React.MouseEvent).clientX;
       const clientY = 'touches' in e ? (e as React.TouchEvent).touches[0].clientY : (e as React.MouseEvent).clientY;
       const pos = getPointerPos(e);
+      setCursorPos(pos);
       if (isPanning) {
           const dx = clientX - lastPanPos.x;
           const dy = clientY - lastPanPos.y;
@@ -416,11 +419,17 @@ const ImageCreationModal: React.FC<ImageCreationModalProps> = ({
                   opacity: 1 
               }]);
           }
-          setIsDrawing(false);
-          setCurrentPath([]);
           setShapeStart(null);
           setCurrentMousePos(null);
+          setIsDrawing(false);
+          setCurrentPath([]);
       }
+  };
+
+  const handleMouseLeave = () => {
+    setIsDrawing(false);
+    setIsPanning(false);
+    setCursorPos(null);
   };
 
   const generateBinaryMask = (): string | undefined => {
@@ -629,8 +638,20 @@ const ImageCreationModal: React.FC<ImageCreationModalProps> = ({
                             <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Empieza a dibujar o<br/>toca aquí para subir tu dibujo</p>
                         </div>
                     )}
-                    <canvas ref={canvasRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} className="absolute top-0 left-0 w-full h-full z-10" />
+                    <canvas ref={canvasRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseLeave} className="absolute top-0 left-0 w-full h-full z-10" />
                     <canvas ref={maskCanvasRef} className={`absolute top-0 left-0 w-full h-full z-20 pointer-events-none mix-blend-screen transition-opacity ${showMask ? 'opacity-50' : 'opacity-0'}`} />
+                    {cursorPos && (
+                      <div 
+                        className="absolute pointer-events-none border-2 border-white mix-blend-difference rounded-full z-50"
+                        style={{
+                          left: cursorPos.x,
+                          top: cursorPos.y,
+                          width: (activeTool === 'mask' ? maskSize : (activeTool === 'eraser' ? eraserSize : brushSize)) * 2,
+                          height: (activeTool === 'mask' ? maskSize : (activeTool === 'eraser' ? eraserSize : brushSize)) * 2,
+                          transform: 'translate(-50%, -50%)'
+                        }}
+                      />
+                    )}
                 </div>
             </div>
         </div>
