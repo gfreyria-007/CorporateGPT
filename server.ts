@@ -879,7 +879,21 @@ async function startServer() {
     app.use(express.static(distPath, { index: false }));
     app.get('*', (req, res) => {
       const htmlPath = path.join(distPath, 'index.html');
-      const html = readFileSync(htmlPath, 'utf-8');
+      let html = readFileSync(htmlPath, 'utf-8');
+      
+      // Inject runtime environment variables for the frontend
+      const envConfig = {
+        VITE_FIREBASE_API_KEY: process.env.VITE_FIREBASE_API_KEY,
+        VITE_FIREBASE_AUTH_DOMAIN: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+        VITE_FIREBASE_PROJECT_ID: process.env.VITE_FIREBASE_PROJECT_ID,
+        VITE_FIREBASE_STORAGE_BUCKET: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+        VITE_FIREBASE_MESSAGING_SENDER_ID: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+        VITE_FIREBASE_APP_ID: process.env.VITE_FIREBASE_APP_ID
+      };
+      
+      const scriptInjection = `<script>window.ENV_CONFIG = ${JSON.stringify(envConfig)};</script>`;
+      html = html.replace('</head>', `${scriptInjection}</head>`);
+      
       res.send(html);
     });
   }
