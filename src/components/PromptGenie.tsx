@@ -30,15 +30,22 @@ export function PromptGenie({ isOpen, onClose, onApply, theme, initialPrompt = '
     try {
       const isImage = mode === 'image';
       const prompt = isImage 
-        ? `You are an AI Image Prompt Expert with REAL-TIME WEB ACCESS. The user provided this seed: "${input}". 
-           First, use your search tool to verify any specific character identities, historical periods, or technical subjects mentioned. 
-           Then, generate 3 distinct, highly descriptive, cinematic, and professional image prompts that are FACTUALLY ACCURATE to the subject's identity.
-           CRITICAL: You MUST add deepness to the prompt. Include specific suggestions for:
-           - Lighting and illumination (e.g., volumetric lighting, cinematic shadows, golden hour)
-           - Artistic style and medium (e.g., cyberpunk, 8k resolution, hyperrealistic, octane render)
-           - Camera angles, lenses, and composition
-           - Texture, mood, and color palette
-           Format: Return exactly 3 options separated by "---". No numbering or preamble.`
+        ? `You are the visionary Head of Design at Pixar, crafting the ultimate visual specification for the CEO of Disney. 
+           The CEO provided this simple seed idea: "${input}". 
+           
+           First, use your search tool to verify any specific factual details, historical periods, or technical elements mentioned. 
+           
+           Then, generate 3 distinct, breathtaking, and hyper-professional image generation prompts. Elevate the seed idea by adding extreme cinematic depth and world-building.
+           
+           CRITICAL: You MUST add profound artistic depth to each prompt. Speak like a master cinematographer and art director. Include specific suggestions for:
+           - Emotional Resonance & Storytelling: What is the mood, atmosphere, and the unspoken story happening in the frame?
+           - Lighting & Illumination: (e.g., volumetric god rays, rim lighting, bioluminescence, golden hour, chiaroscuro)
+           - Camera & Optics: (e.g., 35mm lens, extreme wide shot, macro photography, shallow depth of field, low-angle dynamic perspective)
+           - Artistic Style & Render Engine: (e.g., Pixar 3D animation style, Unreal Engine 5 render, hyperrealistic octane render, Studio Ghibli cel-shaded)
+           - Texture, Materials & Color Grading: (e.g., subsurface scattering on skin, weathered metallic textures, teal and orange cinematic grading)
+           - Environment & World-Building: (e.g., atmospheric fog, floating dust motes, background environmental storytelling)
+           
+           Format: Return exactly 3 options separated by "---". Do not include numbering, explanations, or any preamble. Only the raw prompts.`
         : `You are a Prompt Engineering Expert with REAL-TIME WEB ACCESS. The user provided this simple prompt: "${input}". 
            Use your search tool to ground your response in the latest available data to prevent hallucinations.
            Generate 3 distinct, high-quality, professional versions of this prompt that are more descriptive, contextual, and structured. 
