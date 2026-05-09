@@ -277,9 +277,18 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
     const maskData = tempCtx.createImageData(canvas.width, canvas.height);
     const mData = maskData.data;
     
+    let isMaskEmpty = true;
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i + 3] > 10) {
+        isMaskEmpty = false;
+        break;
+      }
+    }
+
     for (let i = 0; i < data.length; i += 4) {
       const alpha = data[i + 3];
-      const val = alpha > 10 ? 255 : 0;
+      // If no mask was drawn, make the entire image editable (white mask)
+      const val = isMaskEmpty ? 255 : (alpha > 10 ? 255 : 0);
       mData[i] = val;
       mData[i + 1] = val;
       mData[i + 2] = val;
@@ -416,6 +425,7 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
       if (imageUrl) {
         setEditedImage(imageUrl);
         setGeneratedImages(prev => [imageUrl, ...prev]);
+        clearMask(); // Clear the mask so the user can immediately see the edited result
       } else {
         throw new Error('No image in response');
       }

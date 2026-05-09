@@ -593,7 +593,7 @@ async function startServer() {
                 contents: [{ role: 'user', parts: [{ text: `Research and expand the following image prompt into a highly detailed, professional description for an AI image generator. 
                 CRITICAL REQUIREMENT: Use your SEARCH TOOL to find EXACT factual details about any specific characters, entities, or styles mentioned (e.g. Spider-Man Noir costume details, specific color palettes, historical textures).
                 Prompt: ${payload.prompt}` }] }],
-                tools: [{ google_search: {} }],
+                tools: [{ googleSearch: {} }],
                 generationConfig: { temperature: 0.7, maxOutputTokens: 500 }
               })
             });
@@ -601,6 +601,9 @@ async function startServer() {
               const enhanceResult = await enhanceResponse.json();
               const enhancedText = enhanceResult.candidates?.[0]?.content?.parts?.[0]?.text;
               if (enhancedText) optimizedPrompt = enhancedText;
+              console.log("[IMAGEN] Prompt enhanced with search successfully.");
+            } else {
+              console.warn("[IMAGEN] Prompt enhancement API error:", await enhanceResponse.text());
             }
           } catch (e) {
             console.warn("[IMAGEN] Prompt enhancement failed:", e);
@@ -678,7 +681,7 @@ async function startServer() {
                     responseMimeType: restConfig.responseMimeType || "application/json"
                   },
                   systemInstruction: payload.systemInstruction || systemInstruction ? { parts: [{ text: payload.systemInstruction || systemInstruction }] } : undefined,
-                  tools: payload.tools || (payload.webSearch ? [{ google_search: {} }] : undefined)
+                  tools: payload.tools || (payload.webSearch ? [{ googleSearch: {} }] : undefined)
                 })
               });
 
