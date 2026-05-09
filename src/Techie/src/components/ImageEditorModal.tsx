@@ -349,9 +349,7 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, onClose, in
       }
 
       if (imageUrl) {
-        setEditedImage(imageUrl);
         setGeneratedImages(prev => [imageUrl, ...prev]);
-        setEditorMode('edit');
       } else {
         throw new Error('No image in response');
       }
