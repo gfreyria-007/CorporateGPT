@@ -305,15 +305,16 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
 
       <div className="w-full max-w-xs sm:max-w-md space-y-4 sm:space-y-6">
         <div className="space-y-2">
-          <label className="text-xs sm:text-sm font-black uppercase tracking-widest text-slate-400">
-            1. {lang === 'es' ? '¿Quién es tu audiencia?' : 'Who is your audience?'}
+          <label className="text-xs sm:text-sm font-black uppercase tracking-widest text-slate-400 flex justify-between">
+            <span>1. {lang === 'es' ? '¿Quién es tu audiencia?' : 'Who is your audience?'}</span>
+            <span className="text-[10px] text-slate-500">{lang === 'es' ? '(Opcional)' : '(Optional)'}</span>
           </label>
           <input
             type="text"
             value={audience}
             onChange={(e) => setAudience(e.target.value)}
-            placeholder={lang === 'es' ? 'Ej: Ejecutivos, Estudiantes...' : 'Ex: Executives, Students...'}
-            className="w-full p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-white/10 bg-transparent text-sm sm:text-base"
+            placeholder={lang === 'es' ? 'Ej: Ejecutivos, Estudiantes, Clientes...' : 'Ex: Executives, Students, Clients...'}
+            className="w-full p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-white/10 bg-transparent text-sm sm:text-base focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
           />
         </div>
 
@@ -329,8 +330,8 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
                 className={cn(
                   "py-3 rounded-xl font-black text-xs uppercase transition-all",
                   tone === t 
-                    ? "bg-blue-600 text-white" 
-                    : "border border-slate-200 dark:border-white/10"
+                    ? "bg-blue-600 text-white shadow-lg" 
+                    : "border border-slate-200 dark:border-white/10 hover:border-blue-400"
                 )}
               >
                 {t}
@@ -340,16 +341,17 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-black uppercase tracking-widest text-slate-400">
-            3. {lang === 'es' ? '¿Cuál es el mensaje clave?' : 'What is the key takeaway?'}
+          <label className="text-sm font-black uppercase tracking-widest text-slate-400 flex justify-between">
+            <span>3. {lang === 'es' ? '¿Cuál es el mensaje clave?' : 'What is the key takeaway?'}</span>
+            <span className="text-[10px] text-slate-500">{lang === 'es' ? '(Opcional)' : '(Optional)'}</span>
           </label>
           <textarea
             value={keyTakeaway}
             onChange={(e) => setKeyTakeaway(e.target.value)}
             placeholder={lang === 'es' 
-              ? 'Una frase que quieres que recuerden...' 
-              : 'One phrase you want them to remember...'}
-            className="w-full h-24 p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-transparent resize-none"
+              ? 'Una frase que quieres que recuerden (o déjalo en blanco)...' 
+              : 'One phrase you want them to remember (or leave blank)...'}
+            className="w-full h-24 p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-transparent resize-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
           />
         </div>
 
@@ -366,7 +368,7 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
                 onClick={() => setIsDeepResearchEnabled(!isDeepResearchEnabled)}
                 className={cn(
                   "w-12 h-6 rounded-full transition-all flex items-center",
-                  isDeepResearchEnabled ? "bg-purple-600" : "bg-slate-300 dark:bg-slate-600"
+                  isDeepResearchEnabled ? "bg-purple-600 shadow-[0_0_10px_rgba(147,51,234,0.5)]" : "bg-slate-300 dark:bg-slate-600"
                 )}
               >
                 <div className={cn(
@@ -375,10 +377,10 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
                 )} />
               </button>
             </div>
-            <p className="text-[10px] text-slate-500">
+            <p className="text-[10px] text-slate-500 font-medium">
               {lang === 'es' 
-                ? 'La IA generará investigación adicional antes de crear las diapositivas'
-                : 'AI will generate additional research before creating slides'}
+                ? 'Activa esto para que la IA busque en internet datos reales y tendencias recientes sobre tu tema antes de crear la presentación.'
+                : 'Enable this so AI searches the web for real data and recent trends about your topic before creating the presentation.'}
             </p>
           </div>
         )}
@@ -386,8 +388,8 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
         {(contentSource === 'text' || contentSource === 'ai') && (
           <button
             onClick={generateQuestions}
-            disabled={isLoading || !audience.trim() || !keyTakeaway.trim()}
-            className="w-full py-3 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 min-h-[48px]"
+            disabled={isLoading}
+            className="w-full py-3 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 min-h-[48px] shadow-lg hover:bg-blue-700 transition-all"
           >
             {isGeneratingResearch ? <RefreshCw className="animate-spin" /> : isLoading ? <RefreshCw className="animate-spin" /> : <ChevronRight />}
             {lang === 'es' ? 'Siguiente: Investigación' : 'Next: Research'}

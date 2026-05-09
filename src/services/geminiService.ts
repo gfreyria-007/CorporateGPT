@@ -455,28 +455,7 @@ Return ONLY this JSON structure:
     }
   ]
 }` }] }],
-    tools: [{ googleSearch: {} }],
-    config: { 
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          research: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                title: { type: Type.STRING },
-                content: { type: Type.STRING },
-                sources: { type: Type.ARRAY, items: { type: Type.STRING } }
-              },
-              required: ["title", "content"]
-            }
-          }
-        },
-        required: ["research"]
-      }
-    }
+    tools: [{ googleSearch: {} }]
   };
 
   const res = await fetch('/api/gemini', {
