@@ -741,7 +741,7 @@ return res.status(500).json({ error: 'IMAGE_GEN_FAILED', details: lastError || '
           const { systemInstruction, ...restConfig } = generationConfig;
           
           let requestedChatModel = payload.model || 'gemini-2.0-flash';
-          if (requestedChatModel === 'gemini-1.5-flash-latest') requestedChatModel = 'gemini-1.5-flash';
+          if (requestedChatModel === 'gemini-1.5-flash') requestedChatModel = 'gemini-1.5-flash-latest';
           if (requestedChatModel === 'gemini-1.5-pro-latest') requestedChatModel = 'gemini-1.5-pro';
 
           const CHAT_MODELS = [
@@ -749,7 +749,7 @@ return res.status(500).json({ error: 'IMAGE_GEN_FAILED', details: lastError || '
             'gemini-2.0-flash',
             'gemini-1.5-flash-latest',
             'gemini-2.0-flash-lite-preview-02-05',
-            'gemini-1.5-flash'
+            'gemini-1.5-pro-latest'
           ];
 
           let lastError = null;
