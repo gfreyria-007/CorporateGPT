@@ -303,19 +303,7 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
     setCurrentStage(2);
   };
 
-  const buildSkeleton = async (researchContext?: string, nextStage?: number) => {
-    const validSlides = Math.max(1, slideCount);
-    setIsLoading(true);
-    
-    try {
-      const userContent = contentInput.trim() || 'Professional Presentation';
-      console.log('[PPT] Building skeleton for:', userContent, 'Slides:', validSlides);
-      
-      let skeleton: any[] = [];
-      try {
-        const contextString = researchContext || `Audience: ${audience}\nTone: ${tone}\nKey Takeaway: ${keyTakeaway}`;
-        // RACE: 45s Timeout or AI Response
-        const skeletonPromise = geminiService.generateSkeleton(userContent, validSlides, contextStr  const generateQuestions = async () => {
+  const generateQuestions = async () => {
     if (!audience.trim() || !keyTakeaway.trim()) return;
     if (!contentInput.trim() && contentSource !== 'upload') return;
     
@@ -337,12 +325,28 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
           }));
           setDeepResearch(researchData);
           setCurrentStage(2.5 as any);
+        } else {
+          // Fallback if research is empty
+          console.warn('[PPT] Deep Research returned empty, moving to Stage 2.5 with placeholder');
+          researchData.topics = [{
+            title: lang === 'es' ? 'Resumen Ejecutivo' : 'Executive Summary',
+            content: lang === 'es' ? 'No se pudo generar investigación profunda. Por favor, revisa el tema e intenta de nuevo.' : 'Could not generate deep research. Please check the topic and try again.',
+            sources: []
+          }];
+          setDeepResearch(researchData);
+          setCurrentStage(2.5 as any);
         }
       } catch (error) {
         console.error('Deep research error:', error);
+        alert(lang === 'es' ? 'Error en investigación profunda. Intenta con un tema más específico.' : 'Deep research error. Try a more specific topic.');
       } finally {
         setIsGeneratingResearch(false);
       }
+    } else {
+      // If research is disabled, we would normally go to Stage 3, 
+      // but in this version we forced Stage 2.5 as the "Final Report".
+      // For now, let's just alert and stay here or move to 2.5 with basic info.
+      setCurrentStage(2.5 as any);
     }
   };
 
@@ -362,18 +366,8 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
   };
 
   const proceedFromDeepResearch = () => {
-    alert(lang === 'es' ? 'Contexto guardado. Reconstrucción en curso...' : 'Context saved. Rebuild in progress...');
-  };
-s.layout = 'LAYOUT_16x9';
-
-    renderedSlides.forEach((slide, i) => {
-      if (slide) {
-        const pptSlide = pres.addSlide();
-        pptSlide.addImage({ data: slide, x: 0, y: 0, w: '100%', h: '100%' });
-      }
-    });
-
-    pres.writeFile({ fileName: `${contentInput || 'presentation'}.pptx` });
+    // Stage 3-5 are removed. This is the end of the research flow.
+    setIsFinalized(true);
   };
 
   // Stage 1: Scope & Content Intake
