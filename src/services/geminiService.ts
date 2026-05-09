@@ -455,7 +455,7 @@ Return ONLY this JSON structure:
     }
   ]
 }` }] }],
-    tools: [{ google_search: {} }],
+    tools: [{ googleSearch: {} }],
     config: { 
       responseMimeType: "application/json",
       responseSchema: {
