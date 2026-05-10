@@ -1,4 +1,4 @@
-// Build 6.5.2 Production Release - [2026-04-29T22:56:00]
+// Build 6.5.3 Production Release - [2026-04-29T22:56:00]
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -73,6 +73,7 @@ import ImageEditorModal from './Techie/src/components/ImageEditorModal';
 import { optimizePromptForImage } from './lib/promptOptimizer';
 
 export default function App() {
+  useEffect(() => { console.log('?? CatalizIA Corporate GPT Build 6.5.3 - Active'); }, []);
   // Auth & Profile
   const { user, profile, loading, isSigningIn, signIn, signInWithApple, signInWithEmail, logout } = useAuth();
   
