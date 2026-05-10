@@ -217,3 +217,27 @@ a:focus-visible,
   outline-offset: 2px;
 }
 
+/* Hide scrollbar but keep scrollability (for horizontal tab bars) */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Techie / CorporateGPT bottom nav safe-area awareness */
+.techie-bottom-nav {
+  height: calc(64px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Canvas touch prevention (prevents scroll while drawing) */
+.touch-none {
+  touch-action: none;
+}
+
+/* Smooth overscroll for mobile card lists */
+.overscroll-contain {
+  overscroll-behavior: contain;
+}

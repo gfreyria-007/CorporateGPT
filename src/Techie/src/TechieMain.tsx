@@ -33,6 +33,7 @@ import {
 } from './types';
 import { TOOL_DEFINITIONS, GRADES } from './constants';
 import { Sparkles, GraduationCap, Calculator, Image as ImageIcon, Search, LayoutGrid, Zap, Crown, ChevronRight } from 'lucide-react';
+import { optimizePromptForImage } from '../../lib/promptOptimizer';
 import * as geminiService from './services/geminiService';
 import { fileToGenerativePart } from './utils/audio';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -72,7 +73,7 @@ const COSTS = {
 
 
 
-export const TechieMain: React.FC = () => {
+export const TechieMain: React.FC<{ onSwitchToCorporate?: () => void }> = ({ onSwitchToCorporate }) => {
   const { 
     user: currentUser, 
     profile: userProfile, 
@@ -131,6 +132,7 @@ export const TechieMain: React.FC = () => {
   const [isMuted, setIsMuted] = useState(false);
   const [showMathLab, setShowMathLab] = useState(false);
   const [showImageEditor, setShowImageEditor] = useState(false);
+  const [mobileNavTab, setMobileNavTab] = useState<'chat' | 'images' | 'tools' | 'menu'>('chat');
   const [editorImage, setEditorImage] = useState<string | undefined>(undefined);
 
   // --- Shared Model Selector State (same as CorporateGPT) ---
@@ -547,9 +549,19 @@ if (chatMode === 'researcher' && !isInitialGreeting) {
                        const parsed = JSON.parse(geminiService.cleanJsonString(response.text));
                        
 if (parsed.type === 'image-request') {
-                            setLoadingText(isSpanish ? "Creando imagen..." : "Creating image...");
+                            setLoadingText(isSpanish ? "Investigando para crear imagen..." : "Researching to create image...");
+                            
+                            // ? Search Grounding: Optimize prompt
+                            let finalPrompt = parsed.prompt;
+                            try {
+                              const idToken = await currentUser?.getIdToken();
+                              if (idToken && currentUser?.uid) {
+                                finalPrompt = await optimizePromptForImage(parsed.prompt, currentUser.uid, idToken, isSpanish ? 'es' : 'en');
+                              }
+                            } catch (e) { console.error("[Techie] Research failed:", e); }
+
                             const imageResult = await geminiService.generateImage(
-                               parsed.prompt,
+                               finalPrompt,
                                '16:9' as AspectRatio,
                                selectedGrade,
                                userName || 'Estudiante',
@@ -717,7 +729,23 @@ if (parsed.type === 'image-request') {
     <div className="flex flex-col h-screen overflow-hidden bg-pattern text-[#1e3a8a] font-sans">
 
 
-        <main className="flex-1 flex flex-col relative overflow-hidden">
+        <main className="flex-1 flex flex-col relative overflow-hidden pb-16 lg:pb-0">
+
+        {/* Mobile-only sticky header */}
+        <header className="lg:hidden flex items-center justify-between px-4 h-14 bg-gradient-to-r from-blue-700 to-indigo-700 shrink-0 sticky top-0 z-50">
+          <div className="flex items-center gap-2">
+            <span className="text-base font-black text-white tracking-tight">?? Techie</span>
+            <span className="text-[8px] bg-white/20 text-white font-black uppercase px-2 py-0.5 rounded-full tracking-widest backdrop-blur">Tutor IA</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher />
+            {currentUser?.photoURL && (
+              <button onClick={() => setShowSettingsModal(true)} className="w-9 h-9 rounded-full overflow-hidden border-2 border-blue-200 shrink-0">
+                <img src={currentUser.photoURL} alt="Profile" className="w-full h-full object-cover" />
+              </button>
+            )}
+          </div>
+        </header>
           {/* Trial banners removed - follows Corporate GPT trial/sub state */}
 
           {!canUseApp ? (
@@ -809,6 +837,107 @@ if (parsed.type === 'image-request') {
             />
           ) : (
             <>
+              {/* -- MOBILE: Gamified adventure launcher ---------------- */}
+              <div className="lg:hidden flex flex-col flex-1 min-h-0 overflow-y-auto overscroll-contain">
+
+                {/* XP / Streak hero bar */}
+                <div className="mx-4 mt-3 mb-2 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-3 flex items-center gap-3 shadow-lg shadow-blue-500/30">
+                  <button onClick={() => { closeAllModals(); setShowBackpack(true); }}
+                    className="flex flex-col items-center shrink-0 active:scale-90 transition-transform">
+                    <span className="text-[26px] leading-none">??</span>
+                    <span className="text-white text-[8px] font-black uppercase tracking-widest leading-none mt-0.5">
+                      {userProfile?.badges?.length || 0} logros
+                    </span>
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-[11px] font-black truncate mb-1">
+                      {userName ? `�Hola, ${userName}! ?` : '�Listo para aprender!'}
+                    </p>
+                    <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full transition-all duration-700"
+                        style={{ width: `${Math.min(100, ((userProfile?.badges?.length || 0) * 14) % 100 + 5)}%` }} />
+                    </div>
+                    <p className="text-blue-200 text-[8px] font-bold mt-0.5">
+                      {selectedGrade?.name || 'Selecciona tu nivel'}
+                    </p>
+                  </div>
+                  <div className="text-2xl shrink-0">??</div>
+                </div>
+
+                {/* Adventure cards OR chat messages */}
+                {messages.length > 0 ? (
+                  <div className="flex-1 overflow-y-auto">
+                    <ChatWindow
+                      messages={messages} isLoading={isChatLoading} loadingText={loadingText}
+                      onQuizAnswer={(q, o) => o.isCorrect && chatMode === 'default' && handleSendMessage('Siguiente paso?')}
+                      onSelection={(t) => handleSendMessage(t)}
+                      onImageClick={(u,p)=> { setPopupImage(u); setPopupPrompt(p); setShowImagePopup(true); }}
+                      onCreateFlashcards={async (t)=> {
+                        const cards = await geminiService.generateFlashcards(t);
+                        closeAllModals(); setFlashcards(cards); setShowFlashcards(true);
+                      }}
+                      onEditImage={(u) => { setImageCreationUrl(u); closeAllModals(); setShowImageCreationModal(true); setShowImagePopup(false); }}
+                      onQuizFinished={(res) => addMessage(Role.MODEL, res)}
+                      onAwardBadge={handleAwardBadge} onSaveProject={handleSaveProject}
+                      grade={selectedGrade || undefined} userName={userName} customKey={getCustomKey()}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex-1 px-4 py-2 space-y-3">
+                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] text-center">
+                      ? �Qu� aventura eliges hoy?
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { emoji:'??', label:'Preguntar', sub:'Tu tutor IA', color:'from-blue-500 to-blue-700', glow:'shadow-blue-500/40',
+                          action: () => { handleModeChange('default'); setTimeout(()=>{ (document.querySelector('textarea') as HTMLTextAreaElement)?.focus(); },150); } },
+                        { emoji:'??', label:'Crear Arte', sub:'Im�genes m�gicas', color:'from-purple-500 to-pink-600', glow:'shadow-purple-500/40',
+                          action: () => { closeAllModals(); setShowImageCreationModal(true); setMobileNavTab('images'); } },
+                        { emoji:'??', label:'Mate Lab', sub:'Paso a paso', color:'from-emerald-500 to-teal-600', glow:'shadow-emerald-500/40',
+                          action: () => { closeAllModals(); setShowMathLab(true); setMobileNavTab('tools'); } },
+                        { emoji:'??', label:'�Arcade!', sub:'Juega y aprende', color:'from-orange-500 to-red-500', glow:'shadow-orange-500/40',
+                          action: () => { closeAllModals(); setShowArcade(true); } },
+                        { emoji:'?', label:'Desaf�o', sub:'Quiz r�pido', color:'from-yellow-400 to-orange-500', glow:'shadow-yellow-500/40',
+                          action: () => { handleModeChange('quiz-master'); setTimeout(()=>{ (document.querySelector('textarea') as HTMLTextAreaElement)?.focus(); },150); } },
+                        { emoji:'??', label:'Investigar', sub:'Busca en la web', color:'from-cyan-500 to-blue-500', glow:'shadow-cyan-500/40',
+                          action: () => { handleModeChange('researcher'); setTimeout(()=>{ (document.querySelector('textarea') as HTMLTextAreaElement)?.focus(); },150); } },
+                      ].map((c,i) => (
+                        <button key={i} onClick={c.action}
+                          className={`relative bg-gradient-to-br ${c.color} rounded-2xl p-4 text-left shadow-lg ${c.glow} active:scale-95 transition-all duration-150 overflow-hidden`}>
+                          <div className="absolute top-0 left-0 right-0 h-px bg-white/30"/>
+                          <span className="text-3xl block mb-1.5 drop-shadow">{c.emoji}</span>
+                          <p className="text-white font-black text-sm leading-tight">{c.label}</p>
+                          <p className="text-white/70 font-bold text-[10px] mt-0.5">{c.sub}</p>
+                        </button>
+                      ))}
+                    </div>
+                    {(userProfile?.badges?.length ?? 0) > 0 && (
+                      <div className="bg-yellow-50 border border-yellow-100 rounded-2xl p-3">
+                        <p className="text-[9px] font-black text-yellow-600 uppercase tracking-widest mb-2">?? Tus medallas</p>
+                        <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
+                          {userProfile!.badges.slice(-8).map((b: any, i: number) => (
+                            <span key={i} className="text-2xl shrink-0">{b.icon}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Mobile chat input */}
+                <div className="shrink-0">
+                  <ChatInput onSendMessage={handleSendMessage} onDefaultMode={() => handleModeChange('default')}
+                    onModeChange={handleModeChange} chatMode={chatMode} isLoading={isChatLoading}
+                    explorerSettings={explorerSettings} onUpdateExplorerSettings={setExplorerSettings}
+                    selectedGrade={selectedGrade} onOpenFAQ={() => { closeAllModals(); setShowFAQ(true); }}
+                    selectedModel={selectedModel} onModelSelect={setSelectedModel} models={models} isLoadingModels={isLoadingModels}
+                  />
+                </div>
+              </div>
+
+              {/* -- DESKTOP: original layout ---------------------------- */}
+              <div className="hidden lg:flex flex-col flex-1 min-h-0">
+
               {/* Top controls: Model on one compact row */}
               <div className="shrink-0 px-2 sm:px-4 pt-2">
                 <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4">
@@ -875,6 +1004,7 @@ if (parsed.type === 'image-request') {
                 <Footer sessionTokensUsed={sessionTokensUsed} subscriptionLevel={userProfile?.subscriptionLevel} onOpenFAQ={() => { closeAllModals(); setShowFAQ(true); }} />
               </div>
 
+              </div>{/* end desktop-only wrapper */}
             </>
           )}
         </main>
@@ -887,10 +1017,15 @@ if (parsed.type === 'image-request') {
                     addMessage(Role.MODEL, "Por favor completa tu perfil primero.");
                     return;
                 }
-                setIsStudioLoading(true); 
+                setIsStudioLoading(true);
                 try {
+                    const idToken = await currentUser?.getIdToken();
+                    let finalP = p;
+                    if (idToken && currentUser?.uid) {
+                        finalP = await optimizePromptForImage(p, currentUser.uid, idToken, isSpanish ? 'es' : 'en');
+                    }
                     const customKey = getCustomKey();
-                    const res = await geminiService.generateImage(p, a, selectedGrade, userName, s, l, e, sz, src, customKey); 
+                    const res = await geminiService.generateImage(finalP, a, selectedGrade, userName, s, l, e, sz, src, customKey); 
                     if (res) { addMessage(Role.MODEL, { type: 'image', url: res.url, prompt: p }); setStudioHistory(prev => [{ type: 'image', url: res.url }, ...prev]); } 
                 } catch(e: any) { addMessage(Role.MODEL, e.message); }
 
@@ -901,8 +1036,13 @@ if (parsed.type === 'image-request') {
                     addMessage(Role.MODEL, "Por favor completa tu perfil primero.");
                     return;
                 }
-                setIsStudioLoading(true); 
+                setIsStudioLoading(true);
                 try {
+                    const idToken = await currentUser?.getIdToken();
+                    let finalP = p;
+                    if (idToken && currentUser?.uid) {
+                        finalP = await optimizePromptForImage(p, currentUser.uid, idToken, isSpanish ? 'es' : 'en');
+                    }
                     const customKey = getCustomKey();
                     const url = await geminiService.editImage(s, p, selectedGrade, m, style, system, customKey); 
                     if (url) { addMessage(Role.MODEL, { type: 'image', url, prompt: p }); setStudioHistory(prev => [{ type: 'image', url }, ...prev]); } 
@@ -942,7 +1082,7 @@ if (parsed.type === 'image-request') {
           />
         )}
         {userProfile && (
-          <SettingsModal 
+          <SettingsModal onSwitchToCorporate={onSwitchToCorporate} 
             isOpen={showSettingsModal} 
             onClose={() => setShowSettingsModal(false)} 
             userProfile={userProfile} 
@@ -1043,12 +1183,23 @@ lastError: lastErrorMsg,
         <ImageModelSelector 
           isOpen={showImageModelSelector}
           onClose={() => { setShowImageModelSelector(false); setPendingImagePrompt(''); }}
-          onSelectModel={(modelId, prompt) => {
+          onSelectModel={async (modelId, prompt) => {
             setShowImageModelSelector(false);
             setIsGeneratingImage(true);
-            // Route through image studio flow
+            
+            // ?? Prompt Genie: Research and optimize prompt before generating
+            let finalPrompt = prompt;
+            try {
+              const idToken = await currentUser?.getIdToken();
+              if (idToken && currentUser?.uid) {
+                finalPrompt = await optimizePromptForImage(prompt, currentUser.uid, idToken, isSpanish ? 'es' : 'en');
+              }
+            } catch (e) {
+              console.error("[Techie] Prompt Optimization Failed:", e);
+            }
+
             if (selectedGrade && userName) {
-              geminiService.generateImage(prompt, '1:1' as any, selectedGrade, userName, undefined, undefined, undefined, undefined, undefined, getCustomKey())
+              geminiService.generateImage(finalPrompt, '1:1' as any, selectedGrade, userName, undefined, undefined, undefined, undefined, undefined, getCustomKey())
                 .then(res => {
                   if (res) addMessage(Role.MODEL, { type: 'image', url: res.url, prompt });
                 })
@@ -1061,6 +1212,69 @@ lastError: lastErrorMsg,
           lang="es"
           isGenerating={isGeneratingImage}
         />
+
+        {/* ── Mobile Bottom Navigation Bar ─────────────────────────────── */}
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[900] bg-white border-t border-blue-100 techie-bottom-nav">
+          <div className="flex items-stretch h-16">
+            {([
+              {
+                id: 'chat' as const, label: 'Tutor',
+                icon: (active: boolean) => (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" strokeWidth={active ? 2.5 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                )
+              },
+              {
+                id: 'images' as const, label: 'Arte',
+                icon: (active: boolean) => (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" strokeWidth={active ? 2.5 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                )
+              },
+              {
+                id: 'tools' as const, label: 'Mate',
+                icon: (active: boolean) => (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" strokeWidth={active ? 2.5 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 2v4M12 18v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M2 12h4M18 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+                  </svg>
+                )
+              },
+              {
+                id: 'menu' as const, label: 'Yo',
+                icon: (active: boolean) => (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" strokeWidth={active ? 2.5 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+                  </svg>
+                )
+              },
+            ]).map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setMobileNavTab(tab.id);
+                  if (tab.id === 'images') { closeAllModals(); setShowImageCreationModal(true); }
+                  else if (tab.id === 'tools') { closeAllModals(); setShowMathLab(true); }
+                  else if (tab.id === 'menu') { closeAllModals(); setShowSettingsModal(true); }
+                }}
+                className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-1 transition-all active:scale-95 select-none ${
+                  mobileNavTab === tab.id ? 'text-blue-600' : 'text-slate-400'
+                }`}
+              >
+                {tab.icon(mobileNavTab === tab.id)}
+                <span className="text-[9px] font-black uppercase tracking-wide mt-0.5">{tab.label}</span>
+              </button>
+            ))}
+          </div>
+        </nav>
+
     </div>
   );
 };

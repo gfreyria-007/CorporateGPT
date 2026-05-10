@@ -686,7 +686,7 @@ export default function App() {
   // MOBILE ROUTER
   if (isMobile) {
     return (
-      <MobileWorkspace 
+      <MobileWorkspace onModeChange={setAppMode} 
         theme={theme}
         lang={lang}
         user={user}
@@ -1097,7 +1097,7 @@ export default function App() {
           <AnimatePresence mode="wait">
             {appMode === 'junior' && (
               <motion.div key="junior" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0">
-                  <TechieWorkspace 
+                  <TechieWorkspace onSwitchToCorporate={() => setAppMode('corporate')} 
                     user={user}
                     profile={profile}
                     theme={theme}

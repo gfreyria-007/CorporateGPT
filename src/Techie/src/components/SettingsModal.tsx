@@ -11,15 +11,15 @@ interface SettingsModalProps {
   onProfileUpdate: (updated: UserProfile) => void;
   onDeleteData: () => Promise<void>;
   onOpenFAQ: () => void;
-  selectedGrade: any;
-  onGradeChange: (g: any) => void;
   language: string;
   onLanguageChange: (l: string) => void;
+  onSwitchToCorporate?: () => void;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ 
     isOpen, onClose, userProfile, onProfileUpdate, onDeleteData, onOpenFAQ,
-    selectedGrade, onGradeChange, language, onLanguageChange
+    selectedGrade, onGradeChange, language, onLanguageChange,
+    onSwitchToCorporate
 }) => {
   const [apiKey, setApiKey] = useState(userProfile.personalApiKey || '');
   const [isSaving, setIsSaving] = useState(false);
@@ -73,6 +73,25 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           <div className="space-y-6">
+            {/* Platform Switcher */}
+            {onSwitchToCorporate && (
+              <button 
+                onClick={onSwitchToCorporate}
+                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-blue-900 to-black text-white rounded-2xl shadow-xl shadow-blue-900/20 active:scale-95 transition-all mb-4"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center text-sm font-black">💼</div>
+                  <div className="text-left">
+                    <p className="text-[10px] font-black uppercase tracking-tight">Corporate GPT</p>
+                    <p className="text-[8px] font-bold text-blue-300 uppercase tracking-tighter">Cambiar a Modo Trabajo</p>
+                  </div>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </button>
+            )}
+
             {/* Subscription Info */}
             <div className="bg-blue-50/50 p-6 rounded-3xl border border-blue-100">
               <label className="block text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2">Plan Actual</label>

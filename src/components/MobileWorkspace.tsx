@@ -33,6 +33,7 @@ import PPTcreator from './PPTcreator';
 import { SuperAdminPanel } from './SuperAdminPanel';
 import { CompanyPanel } from './CompanyPanel';
 import { LogOut, Terminal, Users } from 'lucide-react';
+import ImageEditorModal from '../Techie/src/components/ImageEditorModal';
 
 const useHaptic = () => {
   const trigger = useCallback((type: 'light' | 'medium' | 'heavy' = 'light') => {
@@ -117,8 +118,10 @@ export function MobileWorkspace({
   multimediaRemaining,
   isSuperAdmin,
   appMode = 'corporate',
-  onLogout
+  onLogout, onModeChange,
+  onImageModelSelect,
 }: any) {
+  const [imageStudioOpen, setImageStudioOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -377,51 +380,89 @@ export function MobileWorkspace({
         </AnimatePresence>
       </div>
 
-      {/* Bottom Navigation Bar - Native Feel with Safe Area */}
+      {/* Bottom Navigation Bar - 4 tabs matching design */}
       {activePanel === 'chat' && (
         <nav className={cn(
-          "bottom-nav-height border-t flex items-end justify-around px-2 z-[60] pt-2 pb-safe",
+          "bottom-nav-height border-t flex items-center justify-around px-1 z-[60] pb-safe",
           isDark ? "bg-corporate-950/95 border-white/5 backdrop-blur-xl" : "bg-white/95 border-slate-100 backdrop-blur-xl"
         )}>
-           <button 
-             onClick={() => handleAction(() => onOpenPanel('chat'))} 
-             className={cn(
-               "flex flex-col items-center gap-1 transition-all tap-target touch-manipulation min-w-[44px] min-h-[44px] justify-center rounded-2xl active:scale-95",
-               activePanel === 'chat' ? (isJunior ? "text-emerald-500" : "text-blue-500") : "text-slate-400 active:text-slate-600"
-             )}
-           >
-              <div className={cn("w-11 h-11 flex items-center justify-center rounded-2xl", 
-                activePanel === 'chat' && (isDark ? (isJunior ? "bg-emerald-500/10" : "bg-blue-500/10") : (isJunior ? "bg-emerald-50" : "bg-blue-50"))
-              )}>
-                 <MessageSquare size={22} strokeWidth={activePanel === 'chat' ? 2.5 : 2} />
-              </div>
-              <span className="text-[9px] font-black uppercase tracking-tighter">{isJunior ? 'Tutor' : 'Chat'}</span>
-           </button>
-           <button 
-             className="relative -top-2 min-w-[44px] min-h-[44px] flex flex-col items-center"
-             onClick={() => handleAction(() => onOpenPanel('knowledge'))}
-           >
-              <div className={cn(
-                "w-14 h-14 min-w-[56px] min-h-[56px] rounded-[1.75rem] flex items-center justify-center text-white shadow-2xl border-4 border-slate-50 dark:border-corporate-950 active:scale-95 transition-transform tap-target touch-manipulation",
-                isJunior ? "bg-emerald-500 shadow-emerald-500/40" : "bg-blue-600 shadow-blue-600/40"
-              )}>
-                 <Plus size={28} strokeWidth={3} />
-              </div>
-              <span className={cn("mt-1 text-[9px] font-black uppercase tracking-tighter",
-                isJunior ? "text-emerald-600" : "text-blue-600"
-              )}>{isJunior ? 'Nuevo' : 'GPTs'}</span>
-           </button>
-           <button 
-             onClick={() => handleAction(() => setIsMenuOpen(true))} 
-             className="flex flex-col items-center gap-1 text-slate-400 min-w-[44px] min-h-[44px] justify-center rounded-2xl active:scale-95 active:text-slate-600 tap-target touch-manipulation"
-           >
-              <div className="w-11 h-11 flex items-center justify-center rounded-2xl">
-                 <LayoutGrid size={22} />
-              </div>
-              <span className="text-[9px] font-black uppercase tracking-tighter">{isJunior ? 'Mochila' : 'More'}</span>
-           </button>
+          {/* Chat */}
+          <button
+            onClick={() => handleAction(() => onOpenPanel('chat'))}
+            className={cn(
+              "flex flex-col items-center gap-1 py-2 px-3 rounded-2xl transition-all tap-target touch-manipulation active:scale-95 min-w-[60px]",
+              activePanel === 'chat' ? (isJunior ? "text-emerald-500" : "text-blue-600") : "text-slate-400"
+            )}
+          >
+            <div className={cn("w-10 h-10 flex items-center justify-center rounded-xl",
+              activePanel === 'chat' && (isDark ? "bg-blue-500/15" : "bg-blue-50")
+            )}>
+              <MessageSquare size={20} strokeWidth={activePanel === 'chat' ? 2.5 : 2} />
+            </div>
+            <span className="text-[9px] font-black uppercase tracking-tighter">{isJunior ? 'Tutor' : 'Chat'}</span>
+          </button>
+
+          {/* Images */}
+          <button
+            onClick={() => handleAction(() => setImageStudioOpen(true))}
+            className={cn(
+              "flex flex-col items-center gap-1 py-2 px-3 rounded-2xl transition-all tap-target touch-manipulation active:scale-95 min-w-[60px]",
+              imageStudioOpen ? (isJunior ? "text-emerald-500" : "text-blue-600") : "text-slate-400"
+            )}
+          >
+            <div className={cn("w-10 h-10 flex items-center justify-center rounded-xl",
+              imageStudioOpen && (isDark ? "bg-blue-500/15" : "bg-blue-50")
+            )}>
+              <ImageIcon size={20} strokeWidth={imageStudioOpen ? 2.5 : 2} />
+            </div>
+            <span className="text-[9px] font-black uppercase tracking-tighter">Images</span>
+          </button>
+
+          {/* GPTs */}
+          <button
+            onClick={() => handleAction(() => onOpenPanel('knowledge'))}
+            className={cn(
+              "flex flex-col items-center gap-1 py-2 px-3 rounded-2xl transition-all tap-target touch-manipulation active:scale-95 min-w-[60px]",
+              "text-slate-400"
+            )}
+          >
+            <div className="w-10 h-10 flex items-center justify-center rounded-xl">
+              <Sparkles size={20} strokeWidth={2} />
+            </div>
+            <span className="text-[9px] font-black uppercase tracking-tighter">GPTs</span>
+          </button>
+
+          {/* Menu */}
+          <button
+            onClick={() => handleAction(() => setIsMenuOpen(true))}
+            className="flex flex-col items-center gap-1 py-2 px-3 text-slate-400 min-w-[60px] rounded-2xl active:scale-95 tap-target touch-manipulation"
+          >
+            <div className="w-10 h-10 flex items-center justify-center rounded-xl">
+              <Menu size={20} strokeWidth={2} />
+            </div>
+            <span className="text-[9px] font-black uppercase tracking-tighter">Menu</span>
+          </button>
         </nav>
       )}
+
+      {/* Image Studio Modal */}
+      <AnimatePresence>
+        {imageStudioOpen && (
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            className="fixed inset-0 z-[1500] bg-white dark:bg-corporate-950 flex flex-col"
+          >
+            <ImageEditorModal
+              isOpen={imageStudioOpen}
+              user={user}
+              onClose={() => setImageStudioOpen(false)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Side Drawer Menu - Enhanced with touch interactions */}
       <AnimatePresence>
@@ -526,10 +567,29 @@ export function MobileWorkspace({
                     <div>
                        <p className="text-sm font-black tracking-tight">{profile?.name || 'Corporate User'}</p>
                        <p className="text-[10px] font-bold text-blue-500 uppercase tracking-tighter">{profile?.role || 'Premium Access'}</p>
-                    </div>
-                 </div>
+
+                     </div>
+                  </div>
+
+                  {/* App Switcher for Mobile */}
+                  <div className="px-4 mb-6">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Cambiar de App</p>
+                    <button 
+                      onClick={() => handleAction(() => onModeChange?.('junior'))}
+                      className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-lg">??</div>
+                        <div className="text-left">
+                          <p className="text-xs font-black uppercase tracking-tight">Techie Tutor</p>
+                          <p className="text-[9px] font-bold text-blue-100 uppercase tracking-tighter">Modo Aprendizaje</p>
+                        </div>
+                      </div>
+                      <ChevronRight size={16} className="text-white/50" />
+                    </button>
+                  </div>
                  <button 
-                   onClick={() => handleAction(onLogout)}
+                   onClick={() => handleAction(onLogout, onModeChange)}
                    className="w-full py-4 bg-red-500/10 text-red-500 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] active:scale-95 active:bg-red-500/20 transition-all min-h-[44px] tap-target touch-manipulation"
                  >
                     Secure Logout

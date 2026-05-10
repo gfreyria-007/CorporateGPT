@@ -95,7 +95,7 @@ export const AdminPanel: React.FC<{ onClose: () => void, theme: 'light' | 'dark'
     <div className={cn("flex-1 flex flex-col h-full animate-in fade-in slide-in-from-right-4 font-sans transition-colors duration-500 relative z-50", 
       theme === 'dark' ? "bg-corporate-950 text-slate-200" : "bg-white text-corporate-900"
     )}>
-      <header className={cn("h-20 border-b flex items-center justify-between px-8 z-10 shrink-0",
+      <header className={cn("h-14 border-b flex items-center justify-between px-4 md:px-8 shrink-0",
         theme === 'dark' ? "bg-corporate-950 border-white/5 shadow-2xl" : "bg-white border-corporate-200 shadow-sm"
       )}>
         <div className="flex items-center gap-4">
@@ -120,9 +120,40 @@ export const AdminPanel: React.FC<{ onClose: () => void, theme: 'light' | 'dark'
         </button>
       </header>
 
+      {/* Mobile horizontal scrollable tab bar */}
+      <div className={cn("lg:hidden flex overflow-x-auto border-b shrink-0",
+        theme === 'dark' ? "bg-slate-950 border-white/5" : "bg-white border-slate-100"
+      )}>
+        {([
+          { id: 'overview' as const, label: 'Overview', icon: <BarChart size={13} /> },
+          { id: 'pending' as const, label: 'Pending', icon: <Clock size={13} />, count: users.filter((u: any) => u.role === 'pending').length },
+          { id: 'users' as const, label: 'Users', icon: <Users size={13} /> },
+          { id: 'flagged' as const, label: 'Flags', icon: <ShieldAlert size={13} /> },
+          { id: 'license' as const, label: 'Prod', icon: <CheckCircle2 size={13} /> },
+          { id: 'studio' as const, label: 'Studio', icon: <Palette size={13} /> },
+          { id: 'branding' as const, label: 'Brand', icon: <Monitor size={13} /> },
+          { id: 'settings' as const, label: 'Rules', icon: <Settings size={13} /> },
+        ]).map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-3 text-[10px] font-black uppercase tracking-wide whitespace-nowrap shrink-0 border-b-2 transition-all",
+              activeTab === tab.id
+                ? (theme === 'dark' ? "border-red-500 text-red-400" : "border-red-600 text-red-600 bg-red-50/50")
+                : (theme === 'dark' ? "border-transparent text-slate-500" : "border-transparent text-slate-400")
+            )}
+          >
+            {tab.icon}
+            <span className="ml-1">{tab.label}</span>
+            {tab.count ? <span className="ml-1 bg-red-500 text-white rounded-full px-1.5 text-[8px] font-black">{tab.count}</span> : null}
+          </button>
+        ))}
+      </div>
+
       <div className="flex-1 flex overflow-hidden">
         {/* Admin Sidebar */}
-        <nav className={cn("w-64 lg:w-72 border-r p-6 space-y-2 transition-all",
+        <nav className={cn("hidden lg:flex w-72 border-r p-6 space-y-2 flex-col transition-all shrink-0",
           theme === 'dark' ? "bg-slate-950 border-white/5" : "bg-white border-slate-200 shadow-xl z-20"
         )}>
 <AdminTabButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={<BarChart size={18} />} label="Overview" theme={theme} />
@@ -136,7 +167,7 @@ export const AdminPanel: React.FC<{ onClose: () => void, theme: 'light' | 'dark'
         </nav>
 
         {/* Console Content */}
-        <main className={cn("flex-1 overflow-y-auto p-10 custom-scrollbar",
+        <main className={cn("flex-1 overflow-y-auto p-4 md:p-6 lg:p-10 custom-scrollbar",
           theme === 'dark' ? "bg-slate-900" : "bg-slate-100/50"
         )}>
 {activeTab === 'overview' && (

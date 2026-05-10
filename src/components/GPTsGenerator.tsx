@@ -276,7 +276,7 @@ const handleNew = () => {
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: 320, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
-              className={cn("border-r flex flex-col shrink-0 transition-all",
+              className={cn("border-r flex flex-col shrink-0 w-full lg:w-80 max-h-[50vh] lg:max-h-none overflow-y-auto lg:overflow-auto",
                 theme === 'dark' ? "bg-slate-950 border-white/5" : "bg-white border-slate-100 shadow-xl z-20"
               )}
             >
@@ -304,7 +304,7 @@ const handleNew = () => {
         </AnimatePresence>
 
         {/* Editor */}
-        <div className={cn("flex-1 flex flex-col overflow-y-auto p-8 space-y-8 transition-all",
+        <div className={cn("flex-1 flex flex-col overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 transition-all",
           theme === 'dark' ? "bg-slate-900 shadow-inner" : "bg-slate-100/30"
         )}>
           <div className="max-w-2xl mx-auto w-full space-y-6">

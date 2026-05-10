@@ -180,31 +180,31 @@ export const CompanyPanel: React.FC<CompanyPanelProps> = ({ onClose, theme, lang
     <div className={cn("flex-1 flex flex-col h-full", 
       theme === 'dark' ? "bg-corporate-950 text-white" : "bg-white text-slate-900"
     )}>
-      <header className={cn("h-20 border-b flex items-center justify-between px-8 shrink-0",
+      <header className={cn("h-16 border-b flex items-center justify-between px-5 md:px-8 shrink-0",
         theme === 'dark' ? "border-white/5" : "border-slate-100"
       )}>
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
-            <Users size={20} />
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
+            <Users size={18} />
           </div>
           <div>
-            <h2 className="text-lg font-black tracking-tighter uppercase">{lang === 'en' ? 'Workspace Governance' : 'Gobernanza de Workspace'}</h2>
+            <h2 className="text-sm font-black tracking-tighter uppercase">{lang === 'en' ? 'Workspace Governance' : 'Gobernanza de Workspace'}</h2>
             <div className="flex items-center gap-2">
-               <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">{company?.name || 'Enterprise Neural Space'}</p>
+               <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest">{company?.name || 'Enterprise Neural Space'}</p>
                <span className="w-1 h-1 bg-slate-500 rounded-full" />
-               <span className="text-[10px] font-bold text-slate-500 uppercase">{company?.totalSeats || 0} SEATS TOTAL</span>
+               <span className="text-[9px] font-bold text-slate-500 uppercase hidden sm:inline">{company?.totalSeats || 0} SEATS</span>
             </div>
           </div>
         </div>
         <button onClick={onClose} className="p-2 hover:bg-slate-500/10 rounded-full transition-all">
-          <X size={24} />
+          <X size={22} />
         </button>
       </header>
 
-      <main className="flex-1 overflow-y-auto p-8 lg:p-12 space-y-12 custom-scrollbar">
+      <main className="flex-1 overflow-y-auto p-5 md:p-8 space-y-6 md:space-y-12 custom-scrollbar">
         {/* Seats Summary & Scaling */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className={cn("p-10 rounded-[3rem] border relative overflow-hidden group",
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-8">
+          <div className={cn("p-5 md:p-10 rounded-[2rem] md:rounded-[3rem] border relative overflow-hidden group",
             theme === 'dark' ? "bg-white/5 border-white/10" : "bg-white border-slate-100 shadow-2xl shadow-slate-200/40"
           )}>
             <div className="flex justify-between items-start mb-8">
@@ -238,7 +238,7 @@ export const CompanyPanel: React.FC<CompanyPanelProps> = ({ onClose, theme, lang
             </p>
           </div>
 
-          <div className={cn("p-10 rounded-[3rem] border col-span-1 lg:col-span-2 relative overflow-hidden",
+          <div className={cn("p-5 md:p-10 rounded-[2rem] md:rounded-[3rem] border col-span-1 lg:col-span-2 relative overflow-hidden",
             theme === 'dark' ? "bg-white/5 border-white/10" : "bg-white border-slate-100 shadow-2xl shadow-slate-200/40"
           )}>
              <div className="flex items-center gap-5 mb-8">
@@ -280,105 +280,146 @@ export const CompanyPanel: React.FC<CompanyPanelProps> = ({ onClose, theme, lang
           </div>
         </div>
 
-        {/* Members Table */}
-        <div className={cn("rounded-[3.5rem] border overflow-hidden",
-          theme === 'dark' ? "bg-white/5 border-white/10 shadow-2xl" : "bg-white border-slate-100 shadow-2xl shadow-slate-200/40"
+        {/* Members — card list on mobile, table on desktop */}
+        <div className={cn("rounded-[2.5rem] border overflow-hidden",
+          theme === 'dark' ? "bg-white/5 border-white/10 shadow-2xl" : "bg-white border-slate-100 shadow-xl shadow-slate-200/40"
         )}>
-          <div className="p-10 border-b border-inherit bg-inherit flex flex-col md:flex-row justify-between items-center gap-6">
+          {/* Section header */}
+          <div className="px-6 py-5 border-b border-inherit flex items-center justify-between">
             <div>
-              <h3 className="text-xl font-black uppercase tracking-tighter mb-1">{lang === 'en' ? 'Active Identities' : 'Identidades Activas'}</h3>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{lang === 'en' ? 'Verified Workspace Personnel' : 'Personal Verificado del Workspace'}</p>
+              <h3 className="text-base font-black uppercase tracking-tighter">{lang === 'en' ? 'Active Identities' : 'Identidades Activas'}</h3>
+              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">{lang === 'en' ? 'Verified Workspace Personnel' : 'Personal Verificado del Workspace'}</p>
             </div>
-            <div className="flex gap-4">
-               <div className="px-5 py-3 bg-blue-600/10 text-blue-500 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-blue-600/20">
-                  {members.length} AUTHORIZED
-               </div>
+            <div className="px-4 py-2 bg-blue-600/10 text-blue-500 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-600/20">
+              {members.length} {lang === 'en' ? 'Authorized' : 'Authorized'}
             </div>
           </div>
-          <div className="overflow-x-auto">
+
+          {/* Empty state */}
+          {members.length === 0 && (
+            <div className="px-6 py-12 text-center text-slate-400">
+              <Users size={32} className="mx-auto mb-3 opacity-20" />
+              <p className="text-[10px] font-black uppercase tracking-widest">{lang === 'en' ? 'No active identities' : 'No hay identidades activas en este momento.'}</p>
+              <p className="text-[9px] text-slate-500 mt-1">{lang === 'en' ? 'Invite members to get started.' : 'comenzar.'}</p>
+            </div>
+          )}
+
+          {/* Desktop table (hidden on mobile) */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-500 border-b border-inherit">
-                  <th className="px-10 py-6">{lang === 'en' ? 'Identity' : 'Identidad'}</th>
-                  <th className="px-10 py-6">{lang === 'en' ? 'Access Status' : 'Estado de Acceso'}</th>
-                  <th className="px-10 py-6">{lang === 'en' ? 'Security Layer' : 'Capa de Seguridad'}</th>
-                  <th className="px-10 py-6">{lang === 'en' ? 'Ecosystem Access' : 'Acceso al Ecosistema'}</th>
-                  <th className="px-10 py-6 text-right">{lang === 'en' ? 'Control' : 'Control'}</th>
+                  <th className="px-8 py-5">{lang === 'en' ? 'Identity' : 'Identidad'}</th>
+                  <th className="px-8 py-5">{lang === 'en' ? 'Access Status' : 'Estado de Acceso'}</th>
+                  <th className="px-8 py-5">{lang === 'en' ? 'Security Layer' : 'Capa de Seguridad'}</th>
+                  <th className="px-8 py-5">{lang === 'en' ? 'Ecosystem Access' : 'Acceso al Ecosistema'}</th>
+                  <th className="px-8 py-5 text-right">{lang === 'en' ? 'Control' : 'Control'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-inherit">
                 {members.map(m => (
                   <tr key={m.id} className="hover:bg-blue-600/[0.03] transition-colors group">
-                    <td className="px-10 py-8">
-                      <div className="flex items-center gap-5">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-xl relative overflow-hidden">
-                          {m.photoURL ? <img src={m.photoURL} alt="" className="w-full h-full object-cover" /> : m.email?.[0].toUpperCase()}
-                          <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-lg">
+                          {m.photoURL ? <img src={m.photoURL} alt="" className="w-full h-full object-cover rounded-2xl" /> : m.email?.[0].toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-black text-base tracking-tight leading-none mb-1">{m.displayName || 'Neural Entity'}</p>
-                          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">{m.email}</p>
+                          <p className="font-black text-sm tracking-tight">{m.displayName || 'Neural Entity'}</p>
+                          <p className="text-[10px] font-bold text-slate-500">{m.email}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-10 py-8">
-                      <span className={cn("inline-flex items-center gap-2 px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border",
+                    <td className="px-8 py-6">
+                      <span className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-black uppercase border",
                         m.lastActive ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-amber-500/10 text-amber-500 border-amber-500/20"
                       )}>
                         <div className={cn("w-1.5 h-1.5 rounded-full animate-pulse", m.lastActive ? "bg-emerald-500" : "bg-amber-500")} />
-                        {m.lastActive ? (lang === 'en' ? 'SYNCHRONIZED' : 'SINCRONIZADO') : (lang === 'en' ? 'PENDING' : 'PENDIENTE')}
+                        {m.lastActive ? 'SYNC' : 'PENDING'}
                       </span>
                     </td>
-                    <td className="px-10 py-8">
-                      <div className="flex items-center gap-3 text-slate-400 group-hover:text-blue-500 transition-colors">
-                        {m.authProvider === 'google' && <Shield size={16} />}
-                        {m.authProvider === 'apple' && <Shield size={16} />}
-                        {!m.authProvider && <Key size={16} />}
-                        <span className="text-[10px] font-black uppercase tracking-widest">{m.authProvider || 'MAGIC LINK'}</span>
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-2 text-slate-400">
+                        <Shield size={14} />
+                        <span className="text-[9px] font-black uppercase">{m.authProvider || 'MAGIC'}</span>
                       </div>
                     </td>
-                    <td className="px-10 py-8">
-                      <div className="flex items-center gap-3">
-                        <button 
-                          onClick={() => handleToggleAccess(m.id, 'corporate', m.permissions?.corporate !== false)}
-                          className={cn("px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all",
-                            m.permissions?.corporate !== false 
-                              ? "bg-blue-600/10 text-blue-500 border-blue-600/20" 
-                              : "bg-slate-100 dark:bg-white/5 text-slate-400 border-transparent grayscale"
-                          )}
-                        >
-                          Corporate
-                        </button>
-                        <button 
-                          onClick={() => handleToggleAccess(m.id, 'junior', m.permissions?.junior === true)}
-                          className={cn("px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all",
-                            m.permissions?.junior === true 
-                              ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" 
-                              : "bg-slate-100 dark:bg-white/5 text-slate-400 border-transparent grayscale"
-                          )}
-                        >
-                          Junior
-                        </button>
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => handleToggleAccess(m.id, 'corporate', m.permissions?.corporate !== false)}
+                          className={cn("px-3 py-1 rounded-lg text-[9px] font-black uppercase border transition-all",
+                            m.permissions?.corporate !== false ? "bg-blue-600/10 text-blue-500 border-blue-600/20" : "bg-slate-100 dark:bg-white/5 text-slate-400 border-transparent"
+                          )}>Corp</button>
+                        <button onClick={() => handleToggleAccess(m.id, 'junior', m.permissions?.junior === true)}
+                          className={cn("px-3 py-1 rounded-lg text-[9px] font-black uppercase border transition-all",
+                            m.permissions?.junior === true ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-slate-100 dark:bg-white/5 text-slate-400 border-transparent"
+                          )}>Junior</button>
                       </div>
                     </td>
-                    <td className="px-10 py-8 text-right">
+                    <td className="px-8 py-6 text-right">
                       {m.id !== user?.uid ? (
-                        <button 
-                          onClick={() => handleRemoveMember(m.id)}
-                          className="p-3 text-slate-400 hover:text-red-500 transition-all hover:bg-red-500/10 rounded-2xl border border-transparent hover:border-red-500/20 shadow-none hover:shadow-xl"
-                        >
-                          <Trash2 size={20} />
+                        <button onClick={() => handleRemoveMember(m.id)}
+                          className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all">
+                          <Trash2 size={16} />
                         </button>
                       ) : (
-                        <div className="px-4 py-2 bg-slate-100 dark:bg-white/5 rounded-xl text-[9px] font-black text-slate-500 uppercase tracking-widest inline-block">
-                           {lang === 'en' ? 'OWNER' : 'PROPIETARIO'}
-                        </div>
+                        <span className="px-3 py-1 bg-slate-100 dark:bg-white/5 rounded-lg text-[9px] font-black text-slate-500 uppercase">
+                          {lang === 'en' ? 'OWNER' : 'DUE\u00d1O'}
+                        </span>
                       )}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile cards (shown only on mobile) */}
+          <div className="md:hidden divide-y divide-inherit">
+            {members.map(m => (
+              <div key={m.id} className="p-5 space-y-4">
+                {/* Identity row */}
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-lg shrink-0">
+                    {m.photoURL ? <img src={m.photoURL} alt="" className="w-full h-full object-cover rounded-2xl" /> : m.email?.[0].toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-black text-sm tracking-tight truncate">{m.displayName || 'Neural Entity'}</p>
+                    <p className="text-[10px] font-bold text-slate-500 truncate">{m.email}</p>
+                  </div>
+                  <span className={cn("shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-black uppercase border",
+                    m.lastActive ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                  )}>
+                    <div className={cn("w-1.5 h-1.5 rounded-full animate-pulse", m.lastActive ? "bg-emerald-500" : "bg-amber-500")} />
+                    {m.lastActive ? 'SYNC' : 'PENDING'}
+                  </span>
+                </div>
+
+                {/* Controls row */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => handleToggleAccess(m.id, 'corporate', m.permissions?.corporate !== false)}
+                      className={cn("px-3 py-1.5 rounded-xl text-[9px] font-black uppercase border transition-all tap-target touch-manipulation",
+                        m.permissions?.corporate !== false ? "bg-blue-600/10 text-blue-500 border-blue-600/20" : "bg-slate-100 dark:bg-white/5 text-slate-400 border-transparent"
+                      )}>Corporate</button>
+                    <button onClick={() => handleToggleAccess(m.id, 'junior', m.permissions?.junior === true)}
+                      className={cn("px-3 py-1.5 rounded-xl text-[9px] font-black uppercase border transition-all tap-target touch-manipulation",
+                        m.permissions?.junior === true ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-slate-100 dark:bg-white/5 text-slate-400 border-transparent"
+                      )}>Junior</button>
+                  </div>
+                  {m.id !== user?.uid ? (
+                    <button onClick={() => handleRemoveMember(m.id)}
+                      className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all tap-target touch-manipulation">
+                      <Trash2 size={18} />
+                    </button>
+                  ) : (
+                    <span className="px-3 py-1.5 bg-slate-100 dark:bg-white/5 rounded-xl text-[9px] font-black text-slate-500 uppercase">
+                      {lang === 'en' ? 'OWNER' : 'DUE\u00d1O'}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
