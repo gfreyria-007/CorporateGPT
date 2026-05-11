@@ -14,10 +14,7 @@ import * as geminiService from '../services/geminiService';
 
 import jsPDF from 'jspdf';
 
-type Stage = 1 | 2 | 2.5;
-
-// New Stage 2.5 for Deep Research
-type Stage2_5 = 2.5;
+type Stage = 1 | 2 | 2.5 | 3 | 4;
 
 interface SlideContent {
   title: string;
@@ -93,19 +90,6 @@ const VISUAL_THEMES = [
   { id: 'midnight', name: 'Midnight', icon: '🌙', color: '#1e1e2e', desc: 'Deep night sky' },
 ];
 
-const CHART_TYPES = [
-  { id: 'bar', name: 'Barras', icon: <BarChart size={14} /> },
-  { id: 'line', name: 'Líneas', icon: <TrendingUp size={14} /> },
-  { id: 'pie', name: 'Circular', icon: <PieChart size={14} /> },
-  { id: 'doughnut', name: 'Donut', icon: <PieChart size={14} /> },
-  { id: 'area', name: 'Área', icon: <Activity size={14} /> },
-  { id: 'radar', name: 'Radar', icon: <Target size={14} /> },
-  { id: 'scatter', name: 'Dispersión', icon: <Sparkles size={14} /> },
-  { id: 'bubble', name: 'Burbujas', icon: <Sparkles size={14} /> },
-  { id: 'funnel', name: 'Embudo', icon: <Zap size={14} /> },
-  { id: 'waterfall', name: 'Cascada', icon: <BarChart3 size={14} /> },
-];
-
 export const PPTcreator: React.FC<PPTcreatorProps> = ({ 
   onClose, 
   theme, 
@@ -117,11 +101,14 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
 
   const [currentStage, setCurrentStage] = useState<Stage>(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Stage 1: Scope & Content
   const [slideCount, setSlideCount] = useState(5);
   const [contentSource, setContentSource] = useState<'text' | 'upload' | 'ai'>('text');
   const [contentInput, setContentInput] = useState('');
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   // Stage 2: Engagement
   const [audience, setAudience] = useState('');
@@ -133,17 +120,117 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
   const [isGeneratingResearch, setIsGeneratingResearch] = useState(false);
   const [editingResearchIndex, setEditingResearchIndex] = useState<number | null>(null);
   const [editResearchContent, setEditResearchContent] = useState('');
+  const [expandedTopics, setExpandedTopics] = useState<Set<number>>(new Set());
+
+  // Stage 3: Skeleton
+  const [slides, setSlides] = useState<SlideSkeleton[]>([]);
+  const [selectedStyle, setSelectedStyle] = useState('professional');
+  const [isGeneratingSlides, setIsGeneratingSlides] = useState(false);
 
   // Stage 5: Final
   const [isFinalized, setIsFinalized] = useState(false);
+  const [generatedImages, setGeneratedImages] = useState<{[key: string]: string}>({});
+
+  const toggleTopic = (idx: number) => {
+    const next = new Set(expandedTopics);
+    if (next.has(idx)) next.delete(idx);
+    else next.add(idx);
+    setExpandedTopics(next);
+  };
+
+  const generateFinalPresentation = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Generate images for each slide using the research context
+      const imageResults: {[key: string]: string} = {};
+      
+      for (const slide of slides) {
+        if (slide.imagePrompt) {
+          console.log(`[PPT] Generating image for slide: ${slide.title}`);
+          
+          // Prepare research context from deep research
+          const researchContext = deepResearch?.topics.map(t => t.content).join('\n\n');
+          
+          try {
+            const imageData = await geminiService.generateProImageForSlide(
+              slide.title,
+              slide.subtitle || '',
+              slide.content,
+              selectedStyle,
+              slide.chartType || 'none',
+              slide.tableData || '',
+              undefined,
+              slide.visualLayout || 'split',
+              slide.paragraphs,
+              slide.imagePrompt,
+              undefined,
+              undefined,
+              researchContext // Pass the research context here
+            );
+            
+            if (imageData) {
+              imageResults[slide.id] = imageData;
+              console.log(`[PPT] Image generated successfully for slide: ${slide.title}`);
+            }
+          } catch (imageError) {
+            console.warn(`[PPT] Failed to generate image for slide ${slide.title}:`, imageError);
+            // Continue without image if generation fails
+          }
+        }
+      }
+      
+      setGeneratedImages(imageResults);
+      setIsFinalized(true);
+      
+    } catch (error) {
+      console.error('[PPT] Final presentation generation error:', error);
+      setError(lang === 'es' ? 'Error al generar la presentación final' : 'Error generating final presentation');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const retryCurrentStage = () => {
+    setError(null);
+    // Retry logic based on current stage
+    switch (currentStage) {
+      case 1:
+        // Stay in stage 1, just clear error
+        break;
+      case 2:
+        // Retry research generation
+        generateQuestions();
+        break;
+      case 2.5:
+        // Regenerate research
+        generateQuestions();
+        break;
+      case 3:
+        // Regenerate skeleton
+        proceedFromDeepResearch();
+        break;
+      case 4:
+        // Regenerate final presentation
+        setIsFinalized(true);
+        break;
+    }
+  };
 
   const goToStage2 = () => {
     setCurrentStage(2);
   };
 
   const generateQuestions = async () => {
-    if (!audience.trim() || !keyTakeaway.trim()) return;
-    if (!contentInput.trim() && contentSource !== 'upload') return;
+    // Basic validation - at least content input is required
+    if (!contentInput.trim() && contentSource !== 'upload') {
+      setError(lang === 'es' ? 'Por favor, ingresa un tema o sube un archivo PDF' : 'Please enter a topic or upload a PDF file');
+      return;
+    }
+    
+    setError(null);
+    setIsLoading(true);
     
     if (isDeepResearchEnabled) {
       setIsGeneratingResearch(true);
@@ -154,33 +241,83 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
           createdAt: new Date()
         };
         
-        const researchResult = await geminiService.generateDeepResearch(contentInput, audience, keyTakeaway);
+        // Prepare comprehensive context for AI
+        const context = {
+          topic: contentInput,
+          audience: audience.trim() || 'general audience',
+          tone: tone,
+          keyTakeaway: keyTakeaway.trim() || 'main insights',
+          slideCount: slideCount
+        };
+        
+        console.log('[PPT] Sending context to deep research:', context);
+        
+        const researchResult = await geminiService.generateDeepResearch(
+          context.topic, 
+          context.audience, 
+          context.keyTakeaway,
+          context.tone,
+          context.slideCount
+        );
+        
+        console.log('[PPT] Deep research result:', researchResult);
+        
         if (researchResult && Array.isArray(researchResult) && researchResult.length > 0) {
           researchData.topics = researchResult.map((r: any, idx: number) => ({
-            title: r.title || `Topic ${idx + 1}`,
+            title: r.title || `Research Topic ${idx + 1}`,
             content: r.content || r.summary || (lang === 'es' ? 'Contenido detallado.' : 'Detailed content.'),
             sources: r.sources || []
           }));
           setDeepResearch(researchData);
-          setCurrentStage(2.5 as any);
+          setCurrentStage(2.5);
         } else {
-          console.warn('[PPT] Deep Research returned empty, moving to Stage 2.5 with placeholder');
+          console.warn('[PPT] Deep Research returned empty, creating placeholder research');
           researchData.topics = [{
             title: lang === 'es' ? 'Resumen Ejecutivo' : 'Executive Summary',
-            content: lang === 'es' ? 'No se pudo generar investigación profunda. Por favor, revisa el tema e intenta de nuevo.' : 'Could not generate deep research. Please check the topic and try again.',
+            content: lang === 'es' ? 
+              `Basado en tu tema: "${contentInput}". ${audience ? `Audiencia: ${audience}. ` : ''}${keyTakeaway ? `Mensaje clave: ${keyTakeaway}.` : ''}` :
+              `Based on your topic: "${contentInput}". ${audience ? `Audience: ${audience}. ` : ''}${keyTakeaway ? `Key takeaway: ${keyTakeaway}.` : ''}`,
             sources: []
           }];
           setDeepResearch(researchData);
-          setCurrentStage(2.5 as any);
+          setCurrentStage(2.5);
         }
       } catch (error) {
         console.error('Deep research error:', error);
-        alert(lang === 'es' ? 'Error en investigación profunda. Intenta con un tema más específico.' : 'Deep research error. Try a more specific topic.');
+        setError(lang === 'es' ? 'Error en investigación profunda. Intenta con un tema más específico.' : 'Deep research error. Try a more specific topic.');
+        // Create fallback research even on error
+        const fallbackResearch: DeepResearch = {
+          id: Date.now().toString(),
+          topics: [{
+            title: lang === 'es' ? 'Resumen Ejecutivo' : 'Executive Summary',
+            content: lang === 'es' ? 
+              `Basado en tu tema: "${contentInput}". ${audience ? `Audiencia: ${audience}. ` : ''}${keyTakeaway ? `Mensaje clave: ${keyTakeaway}.` : ''}` :
+              `Based on your topic: "${contentInput}". ${audience ? `Audience: ${audience}. ` : ''}${keyTakeaway ? `Key takeaway: ${keyTakeaway}.` : ''}`,
+            sources: []
+          }],
+          createdAt: new Date()
+        };
+        setDeepResearch(fallbackResearch);
+        setCurrentStage(2.5);
       } finally {
         setIsGeneratingResearch(false);
+        setIsLoading(false);
       }
     } else {
-      setCurrentStage(2.5 as any);
+      // Skip deep research but create minimal context
+      const minimalContext: DeepResearch = {
+        id: Date.now().toString(),
+        topics: [{
+          title: lang === 'es' ? 'Contexto Directo' : 'Direct Context',
+          content: lang === 'es' ? 
+            `Tema principal: "${contentInput}". ${audience ? `Audiencia: ${audience}. ` : ''}${keyTakeaway ? `Mensaje clave: ${keyTakeaway}.` : ''}` :
+            `Main topic: "${contentInput}". ${audience ? `Audience: ${audience}. ` : ''}${keyTakeaway ? `Key takeaway: ${keyTakeaway}.` : ''}`,
+          sources: []
+        }],
+        createdAt: new Date()
+      };
+      setDeepResearch(minimalContext);
+      setCurrentStage(2.5);
     }
   };
 
@@ -203,81 +340,214 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
     setCurrentStage(2);
   };
 
-  const proceedFromDeepResearch = () => {
-    setIsFinalized(true);
+  const proceedFromDeepResearch = async () => {
+    setIsLoading(true);
+    setIsGeneratingSlides(true);
+    setError(null);
+    
+    try {
+      // Prepare comprehensive context for skeleton generation
+      const researchContext = deepResearch?.topics.map(t => t.content).join('\n\n') || '';
+      
+      const context = {
+        topic: contentInput,
+        audience: audience.trim() || 'general audience',
+        tone: tone,
+        keyTakeaway: keyTakeaway.trim() || 'main insights',
+        slideCount: slideCount,
+        researchContext: researchContext,
+        visualStyle: selectedStyle
+      };
+      
+      console.log('[PPT] Sending context to skeleton generation:', context);
+      
+      const skeleton = await geminiService.generateSkeleton(
+        context.topic,
+        context.slideCount,
+        context.researchContext,
+        context.audience,
+        context.tone,
+        context.keyTakeaway,
+        context.visualStyle
+      );
+      
+      console.log('[PPT] Skeleton result:', skeleton);
+      
+      if (skeleton && Array.isArray(skeleton) && skeleton.length > 0) {
+        // Ensure each slide has required properties
+        const processedSlides = skeleton.map((slide, idx) => ({
+          id: slide.id || `slide-${idx + 1}`,
+          title: slide.title || `Slide ${idx + 1}`,
+          subtitle: slide.subtitle || '',
+          content: Array.isArray(slide.content) ? slide.content : [slide.content || ''],
+          paragraphs: Array.isArray(slide.paragraphs) ? slide.paragraphs : [slide.paragraphs || ''],
+          imagePrompt: slide.imagePrompt || '',
+          chartType: slide.chartType || 'none',
+          tableData: slide.tableData || '',
+          visualLayout: slide.visualLayout || 'split'
+        }));
+        
+        setSlides(processedSlides);
+        setCurrentStage(3);
+      } else {
+        // Generate fallback slides
+        const fallbackSlides: SlideSkeleton[] = Array.from({ length: slideCount }, (_, idx) => ({
+          id: `slide-${idx + 1}`,
+          title: lang === 'es' ? `Diapositiva ${idx + 1}` : `Slide ${idx + 1}`,
+          subtitle: '',
+          content: [lang === 'es' ? 'Contenido principal' : 'Main content'],
+          paragraphs: [lang === 'es' ? 'Explicación detallada' : 'Detailed explanation'],
+          imagePrompt: lang === 'es' ? `Visual para diapositiva ${idx + 1}` : `Visual for slide ${idx + 1}`,
+          chartType: 'none',
+          tableData: '',
+          visualLayout: 'split'
+        }));
+        
+        setSlides(fallbackSlides);
+        setCurrentStage(3);
+        setError(lang === 'es' ? 'No se pudieron generar las diapositivas. Se han creado diapositivas básicas.' : 'Could not generate slides. Basic slides have been created.');
+      }
+    } catch (error) {
+      console.error('Skeleton generation error:', error);
+      setError(lang === 'es' ? 'Error al generar el esqueleto de las diapositivas.' : 'Error generating slide skeleton.');
+      
+      // Generate fallback slides on error
+      const fallbackSlides: SlideSkeleton[] = Array.from({ length: slideCount }, (_, idx) => ({
+        id: `slide-${idx + 1}`,
+        title: lang === 'es' ? `Diapositiva ${idx + 1}` : `Slide ${idx + 1}`,
+        subtitle: '',
+        content: [lang === 'es' ? 'Contenido principal' : 'Main content'],
+        paragraphs: [lang === 'es' ? 'Explicación detallada' : 'Detailed explanation'],
+        imagePrompt: lang === 'es' ? `Visual para diapositiva ${idx + 1}` : `Visual for slide ${idx + 1}`,
+        chartType: 'none',
+        tableData: '',
+        visualLayout: 'split'
+      }));
+      
+      setSlides(fallbackSlides);
+      setCurrentStage(3);
+    } finally {
+      setIsLoading(false);
+      setIsGeneratingSlides(false);
+    }
+  };
+
+  const retryStage = async (stage: number) => {
+    setError(null);
+    setCurrentStage(stage as Stage);
   };
 
   // Stage 1: Scope & Content Intake
   const renderStage1 = () => (
-    <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 space-y-6 sm:space-y-8 overflow-auto">
-      <div className="text-center space-y-3 sm:space-y-4">
-        <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-widest">
+    <div className={cn("flex-1 flex flex-col items-center p-4 sm:p-8 space-y-6 sm:space-y-8 overflow-auto", isMobile ? "justify-start pt-12" : "justify-center")}>
+      <div className="text-center space-y-3 sm:space-y-4 w-full max-w-sm">
+        <h2 className="text-xl sm:text-2xl font-black uppercase tracking-widest">
           {lang === 'es' ? 'Etapa 1: Alcance' : 'Stage 1: Scope'}
         </h2>
-        <p className="text-sm sm:text-base text-slate-400">
+        <p className="text-xs sm:text-base text-slate-400">
           {lang === 'es' ? '¿Cuántas diapositivas necesitas?' : 'How many slides do you need?'}
         </p>
       </div>
 
-      <div className="w-full max-w-xs sm:max-w-md space-y-4 sm:space-y-6">
-        <div className="space-y-2">
+      <div className="w-full max-w-sm space-y-4 sm:space-y-6">
+        <div className="space-y-3">
           <label className="text-xs sm:text-sm font-black uppercase tracking-widest text-slate-400">
             {lang === 'es' ? 'Número de diapositivas' : 'Number of slides'}
           </label>
-          <input 
-            type="range" 
-            min="1" 
-            max="20" 
-            value={slideCount}
-            onChange={(e) => setSlideCount(parseInt(e.target.value))}
-            className="w-full h-2 bg-slate-200 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-600"
-          />
-          <div className="text-center text-xl sm:text-2xl font-black text-blue-600">{slideCount}</div>
+          <div className="space-y-2">
+            <input 
+              type="range" 
+              min="1" 
+              max="20" 
+              value={slideCount}
+              onChange={(e) => setSlideCount(parseInt(e.target.value))}
+              className="w-full h-2 bg-slate-200 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-600 touch-manipulation"
+            />
+            <div className="text-center text-lg sm:text-xl font-black text-blue-600">{slideCount}</div>
+          </div>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           <label className="text-xs sm:text-sm font-black uppercase tracking-widest text-slate-400">
             {lang === 'es' ? 'Fuente de contenido' : 'Content source'}
           </label>
-          <div className="grid grid-cols-3 gap-2 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
             {[
-              { id: 'text', label: lang === 'es' ? 'Texto' : 'Text Input', icon: <Type size={18} /> },
-              { id: 'upload', label: lang === 'es' ? 'Subir PDF' : 'Upload PDF', icon: <Upload size={18} /> },
-              { id: 'ai', label: lang === 'es' ? 'Generar IA' : 'AI Generate', icon: <Sparkles size={18} /> },
+              { id: 'text', label: lang === 'es' ? 'Texto' : 'Text Input', icon: <Type size={16} /> },
+              { id: 'upload', label: lang === 'es' ? 'Subir PDF' : 'Upload PDF', icon: <Upload size={16} /> },
+              { id: 'ai', label: lang === 'es' ? 'Generar IA' : 'AI Generate', icon: <Sparkles size={16} /> },
             ].map((option) => (
               <button
                 key={option.id}
-                onClick={() => setContentSource(option.id as any)}
+                onClick={() => {
+                  setContentSource(option.id as any);
+                  if (option.id === 'upload') {
+                    // Create file input for PDF upload
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = '.pdf';
+                    input.onchange = (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0];
+                      if (file) {
+                        setUploadedFile(file);
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                          const content = e.target?.result as string;
+                          setContentInput(lang === 'es' ? `Archivo PDF: ${file.name}` : `PDF File: ${file.name}`);
+                        };
+                        reader.readAsText(file);
+                      }
+                    };
+                    input.click();
+                  }
+                }}
                 className={cn(
-                  "p-3 sm:p-4 rounded-xl sm:rounded-2xl border flex flex-col items-center gap-1 sm:gap-2 transition-all",
+                  "p-3 sm:p-4 rounded-xl sm:rounded-2xl border flex flex-col items-center gap-1 sm:gap-2 transition-all active:scale-95 touch-manipulation min-h-[60px] sm:min-h-auto",
                   contentSource === option.id
                     ? "bg-blue-600 border-blue-600 text-white"
                     : "border-slate-200 dark:border-white/10 hover:border-blue-600"
                 )}
               >
                 {option.icon}
-                <span className="text-[10px] sm:text-xs font-black uppercase">{option.label}</span>
+                <span className="text-[9px] sm:text-xs font-black uppercase">{option.label}</span>
               </button>
             ))}
           </div>
+          
+          {contentSource === 'upload' && uploadedFile && (
+            <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+              <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+                <FileText size={16} />
+                <span className="text-sm font-medium">{uploadedFile.name}</span>
+                <span className="text-xs text-green-600 dark:text-green-400">({(uploadedFile.size / 1024 / 1024).toFixed(2)} MB)</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {(contentSource === 'text' || contentSource === 'ai') && (
-          <textarea
-            value={contentInput}
-            onChange={(e) => setContentInput(e.target.value)}
-            placeholder={contentSource === 'ai' 
-              ? (lang === 'es' ? 'Dale ideas a la IA: tema, objetivo, público objetivo...' : 'Give AI ideas: topic, goal, target audience...')
-              : (lang === 'es' ? 'Describe tu tema, objetivo y contenido principal...' : 'Describe your topic, objective, and main content...')
-            }
-            className="w-full h-32 sm:h-40 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-white/10 bg-transparent resize-none text-sm sm:text-base"
-          />
+          <div className="space-y-3">
+            <label className="text-xs sm:text-sm font-black uppercase tracking-widest text-slate-400">
+              {contentSource === 'ai' 
+                ? (lang === 'es' ? 'Ideas para la IA' : 'AI Ideas') 
+                : (lang === 'es' ? 'Tu tema' : 'Your Topic')}
+            </label>
+            <textarea
+              value={contentInput}
+              onChange={(e) => setContentInput(e.target.value)}
+              placeholder={contentSource === 'ai' 
+                ? (lang === 'es' ? 'Dale ideas a la IA: tema, objetivo, público objetivo...' : 'Give AI ideas: topic, goal, target audience...')
+                : (lang === 'es' ? 'Describe tu tema, objetivo y contenido principal...' : 'Describe your topic, objective, and main content...')
+              }
+              className="w-full h-32 sm:h-40 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-white/10 bg-transparent resize-none text-sm sm:text-base focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none touch-manipulation"
+            />
+          </div>
         )}
 
         <button
           onClick={goToStage2}
-          disabled={!contentInput.trim() && contentSource !== 'upload'}
-          className="w-full py-3 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 min-h-[48px]"
+          disabled={!contentInput.trim() && contentSource !== 'upload' && !uploadedFile}
+          className="w-full py-4 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-[54px] sm:min-h-[54px] shadow-xl hover:bg-blue-700 transition-all active:scale-95 touch-manipulation"
         >
           {contentSource === 'ai' ? <Sparkles size={18} /> : <ChevronRight />}
           {contentSource === 'ai' 
@@ -291,21 +561,21 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
 
   // Stage 2: Engagement Calibration
   const renderStage2 = () => (
-    <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 space-y-6 sm:space-y-8 overflow-auto">
-      <div className="text-center space-y-3 sm:space-y-4">
-        <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-widest">
+    <div className={cn("flex-1 flex flex-col items-center p-4 sm:p-8 space-y-6 sm:space-y-8 overflow-auto", isMobile ? "justify-start pt-12" : "justify-center")}>
+      <div className="text-center space-y-3 sm:space-y-4 w-full max-w-sm">
+        <h2 className="text-xl sm:text-2xl font-black uppercase tracking-widest">
           {lang === 'es' ? 'Etapa 2: Calibración' : 'Stage 2: Calibration'}
         </h2>
-        <p className="text-sm sm:text-base text-slate-400">
+        <p className="text-xs sm:text-base text-slate-400">
           {lang === 'es' 
             ? 'Responde estas preguntas para personalizar tu presentación' 
             : 'Answer these questions to customize your presentation'}
         </p>
       </div>
 
-      <div className="w-full max-w-xs sm:max-w-md space-y-4 sm:space-y-6">
-        <div className="space-y-2">
-          <label className="text-xs sm:text-sm font-black uppercase tracking-widest text-slate-400 flex justify-between">
+      <div className="w-full max-w-sm space-y-4 sm:space-y-6">
+        <div className="space-y-3">
+          <label className="text-xs sm:text-sm font-black uppercase tracking-widest text-slate-400 flex justify-between items-center">
             <span>1. {lang === 'es' ? '¿Quién es tu audiencia?' : 'Who is your audience?'}</span>
             <span className="text-[10px] text-slate-500">{lang === 'es' ? '(Opcional)' : '(Optional)'}</span>
           </label>
@@ -314,21 +584,21 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
             value={audience}
             onChange={(e) => setAudience(e.target.value)}
             placeholder={lang === 'es' ? 'Ej: Ejecutivos, Estudiantes, Clientes...' : 'Ex: Executives, Students, Clients...'}
-            className="w-full p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-white/10 bg-transparent text-sm sm:text-base focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+            className="w-full p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-white/10 bg-transparent text-sm sm:text-base focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none touch-manipulation"
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           <label className="text-sm font-black uppercase tracking-widest text-slate-400">
             2. {lang === 'es' ? '¿Qué tono prefieres?' : 'What tone do you prefer?'}
           </label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2">
             {['professional', 'casual', 'academic'].map((t) => (
               <button
                 key={t}
                 onClick={() => setTone(t)}
                 className={cn(
-                  "py-3 rounded-xl font-black text-xs uppercase transition-all",
+                  "py-3 px-2 sm:px-4 rounded-xl font-black text-xs uppercase transition-all active:scale-95 touch-manipulation min-h-[48px]",
                   tone === t 
                     ? "bg-blue-600 text-white shadow-lg" 
                     : "border border-slate-200 dark:border-white/10 hover:border-blue-400"
@@ -340,8 +610,8 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
           </div>
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-black uppercase tracking-widest text-slate-400 flex justify-between">
+        <div className="space-y-3">
+          <label className="text-sm font-black uppercase tracking-widest text-slate-400 flex justify-between items-center">
             <span>3. {lang === 'es' ? '¿Cuál es el mensaje clave?' : 'What is the key takeaway?'}</span>
             <span className="text-[10px] text-slate-500">{lang === 'es' ? '(Opcional)' : '(Optional)'}</span>
           </label>
@@ -351,7 +621,7 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
             placeholder={lang === 'es' 
               ? 'Una frase que quieres que recuerden (o déjalo en blanco)...' 
               : 'One phrase you want them to remember (or leave blank)...'}
-            className="w-full h-24 p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-transparent resize-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+            className="w-full h-24 sm:h-24 p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-transparent resize-none text-sm sm:text-base focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none touch-manipulation"
           />
         </div>
 
@@ -367,7 +637,7 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
               <button
                 onClick={() => setIsDeepResearchEnabled(!isDeepResearchEnabled)}
                 className={cn(
-                  "w-12 h-6 rounded-full transition-all flex items-center",
+                  "w-12 h-6 rounded-full transition-all flex items-center active:scale-95 touch-manipulation",
                   isDeepResearchEnabled ? "bg-purple-600 shadow-[0_0_10px_rgba(147,51,234,0.5)]" : "bg-slate-300 dark:bg-slate-600"
                 )}
               >
@@ -385,16 +655,23 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
           </div>
         )}
 
-        {(contentSource === 'text' || contentSource === 'ai') && (
+        <div className="flex gap-2 sm:gap-4 shrink-0 w-full pt-4">
+          <button
+            onClick={() => setCurrentStage(1)}
+            className="flex-1 py-4 border border-slate-200 dark:border-white/10 rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest flex items-center justify-center gap-2 min-h-[54px] active:scale-95 touch-manipulation"
+          >
+            <ChevronLeft size={18} />
+            {lang === 'es' ? 'Atrás' : 'Back'}
+          </button>
           <button
             onClick={generateQuestions}
             disabled={isLoading}
-            className="w-full py-3 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 min-h-[48px] shadow-lg hover:bg-blue-700 transition-all"
+            className="flex-1 py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-[54px] shadow-xl hover:bg-blue-700 transition-all active:scale-95 touch-manipulation"
           >
             {isGeneratingResearch ? <RefreshCw className="animate-spin" /> : isLoading ? <RefreshCw className="animate-spin" /> : <ChevronRight />}
-            {lang === 'es' ? 'Siguiente: Investigación' : 'Next: Research'}
+            {lang === 'es' ? 'Siguiente' : 'Next'}
           </button>
-        )}
+        </div>
       </div>
     </div>
   );
@@ -477,7 +754,7 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
                   </div>
                   <button
                     onClick={() => startEditResearch(i)}
-                    className="p-2 transition-opacity rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-blue-600 bg-blue-50 dark:bg-blue-900/20"
+                    className="p-3 transition-opacity rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-blue-600 bg-blue-50 dark:bg-blue-900/20 min-w-[40px] min-h-[40px] flex items-center justify-center"
                     title={lang === 'es' ? 'Editar este punto' : 'Edit this point'}
                   >
                     <Edit3 size={14} />
@@ -485,9 +762,15 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
                 </div>
 
                 <div className="flex-1 overflow-y-auto scrollbar-hide">
-                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap line-clamp-[8] group-hover:line-clamp-none transition-all">
+                  <p className={cn(
+                    "text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap transition-all",
+                    expandedTopics.has(i) ? "" : "line-clamp-[8]"
+                  )}>
                     {topic.content || (lang === 'es' ? 'Sin contenido' : 'No content')}
                   </p>
+                  <button onClick={() => toggleTopic(i)} className="mt-2 text-[10px] font-black uppercase text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                    {expandedTopics.has(i) ? (lang === 'es' ? 'Ver menos' : 'See less') : (lang === 'es' ? 'Ver más' : 'See more')}
+                  </button>
                 </div>
 
                 {topic.sources && topic.sources.length > 0 && (
@@ -508,7 +791,7 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
         <div className="flex gap-2 sm:gap-4 shrink-0">
           <button
             onClick={skipDeepResearch}
-            className="flex-1 py-3 sm:py-4 border border-slate-200 dark:border-white/10 rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest flex items-center justify-center gap-2 min-h-[48px]"
+            className="flex-1 py-4 border border-slate-200 dark:border-white/10 rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest flex items-center justify-center gap-2 min-h-[54px]"
           >
             <ChevronLeft />
             {lang === 'es' ? 'Atrás' : 'Back'}
@@ -516,15 +799,141 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
           <button
             onClick={proceedFromDeepResearch}
             disabled={isLoading}
-            className="flex-1 py-3 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest flex items-center justify-center gap-2 min-h-[48px] disabled:opacity-50"
+            className="flex-1 py-4 bg-blue-600 text-white rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-sm tracking-widest flex items-center justify-center gap-2 min-h-[54px] shadow-xl hover:bg-blue-700 transition-all disabled:opacity-50"
           >
             {isLoading ? <RefreshCw className="animate-spin" /> : <ChevronRight />}
-            {lang === 'es' ? 'Finalizar Reporte' : 'Finalize Report'}
+            {lang === 'es' ? 'Siguiente: Esqueleto' : 'Next: Skeleton'}
           </button>
         </div>
       </div>
     );
   };
+
+  const renderStage3 = () => (
+    <div className="flex-1 flex flex-col p-4 sm:p-8 space-y-4 sm:space-y-6 overflow-hidden">
+      <div className="text-center space-y-2 shrink-0">
+        <h2 className="text-lg sm:text-xl font-black uppercase tracking-widest">
+          {lang === 'es' ? 'Etapa 3: Esqueleto' : 'Stage 3: Skeleton'}
+        </h2>
+        <p className="text-xs sm:text-sm text-slate-400">
+          {lang === 'es' ? 'Revisa y ajusta el contenido de tus diapositivas' : 'Review and adjust your slide content'}
+        </p>
+      </div>
+
+      <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 pr-1 sm:pr-2 scrollbar-hide">
+        {slides.map((slide, i) => (
+          <motion.div 
+            key={i}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.05 }}
+            className="p-4 sm:p-5 rounded-xl sm:rounded-[2rem] border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 space-y-3 sm:space-y-4"
+          >
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className="w-8 h-8 rounded-lg sm:rounded-xl bg-blue-600 text-white flex items-center justify-center text-xs font-black shadow-lg">
+                {i + 1}
+              </span>
+              <input 
+                type="text"
+                value={slide.title}
+                onChange={(e) => {
+                  const next = [...slides];
+                  next[i].title = e.target.value;
+                  setSlides(next);
+                }}
+                className="flex-1 bg-transparent font-black uppercase text-sm outline-none focus:text-blue-600 transition-colors touch-manipulation"
+                placeholder={lang === 'es' ? 'Título de diapositiva' : 'Slide title'}
+              />
+            </div>
+            <textarea 
+              value={Array.isArray(slide.content) ? slide.content.join('\n') : slide.content}
+              onChange={(e) => {
+                const next = [...slides];
+                next[i].content = e.target.value.split('\n');
+                setSlides(next);
+              }}
+              className="w-full h-28 sm:h-32 bg-slate-50 dark:bg-black/20 p-3 sm:p-4 rounded-xl sm:rounded-2xl text-xs sm:text-sm text-slate-600 dark:text-slate-300 border-none resize-none focus:ring-1 focus:ring-blue-500/50 outline-none touch-manipulation"
+              placeholder={lang === 'es' ? 'Contenido de la diapositiva...' : 'Slide content...'}
+            />
+          </motion.div>
+        ))}
+      </div>
+
+      <div className="flex gap-2 sm:gap-4 shrink-0 pt-2 sm:pt-4">
+        <button
+          onClick={() => setCurrentStage(2.5)}
+          className="flex-1 py-3 sm:py-4 border border-slate-200 dark:border-white/10 rounded-xl sm:rounded-[2rem] font-black uppercase text-xs sm:text-sm tracking-widest flex items-center justify-center gap-2 min-h-[48px] sm:min-h-[54px] active:scale-95 touch-manipulation"
+        >
+          <ChevronLeft size={16} sm:size={18} />
+          {lang === 'es' ? 'Atrás' : 'Back'}
+        </button>
+        <button
+          onClick={() => setCurrentStage(4)}
+          className="flex-1 py-3 sm:py-4 bg-blue-600 text-white rounded-xl sm:rounded-[2rem] font-black uppercase text-xs sm:text-sm tracking-widest flex items-center justify-center gap-2 min-h-[48px] sm:min-h-[54px] shadow-xl active:scale-95 touch-manipulation"
+        >
+          {lang === 'es' ? 'Siguiente: Estilo' : 'Next: Style'}
+          <ChevronRight size={16} sm:size={18} />
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderStage4 = () => (
+    <div className="flex-1 flex flex-col p-4 sm:p-8 space-y-4 sm:space-y-6 overflow-hidden">
+      <div className="text-center space-y-2 shrink-0">
+        <h2 className="text-lg sm:text-xl font-black uppercase tracking-widest">
+          {lang === 'es' ? 'Etapa 4: Estilo Visual' : 'Stage 4: Visual Style'}
+        </h2>
+        <p className="text-xs sm:text-sm text-slate-400">
+          {lang === 'es' ? 'Selecciona la estética para tu presentación' : 'Select the aesthetic for your presentation'}
+        </p>
+      </div>
+
+      <div className="flex-1 overflow-y-auto pr-1 sm:pr-2 scrollbar-hide">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+          {VISUAL_THEMES.map((theme) => (
+            <button
+              key={theme.id}
+              onClick={() => setSelectedStyle(theme.id)}
+              className={cn(
+                "p-4 sm:p-6 rounded-xl sm:rounded-[2rem] border flex flex-col items-center gap-2 sm:gap-3 transition-all relative group active:scale-95 touch-manipulation min-h-[120px] sm:min-h-auto",
+                selectedStyle === theme.id
+                  ? "bg-blue-600 border-blue-600 text-white shadow-xl scale-[1.02]"
+                  : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-blue-500/50"
+              )}
+            >
+              <span className="text-2xl sm:text-3xl">{theme.icon}</span>
+              <span className="text-[9px] sm:text-xs font-black uppercase tracking-widest text-center">{theme.name}</span>
+              <span className="text-[8px] sm:text-[8px] opacity-60 text-center uppercase font-bold line-clamp-2">{theme.desc}</span>
+              {selectedStyle === theme.id && (
+                <div className="absolute top-2 sm:top-4 right-2 sm:right-4">
+                  <Check size={14} sm:size={16} />
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex gap-2 sm:gap-4 shrink-0 pt-2 sm:pt-4">
+        <button
+          onClick={() => setCurrentStage(3)}
+          className="flex-1 py-3 sm:py-4 border border-slate-200 dark:border-white/10 rounded-xl sm:rounded-[2rem] font-black uppercase text-xs sm:text-sm tracking-widest flex items-center justify-center gap-2 min-h-[48px] sm:min-h-[54px] active:scale-95 touch-manipulation"
+        >
+          <ChevronLeft size={16} sm:size={18} />
+          {lang === 'es' ? 'Atrás' : 'Back'}
+        </button>
+        <button
+          onClick={generateFinalPresentation}
+          disabled={isLoading}
+          className="flex-1 py-3 sm:py-4 bg-emerald-600 text-white rounded-xl sm:rounded-[2rem] font-black uppercase text-xs sm:text-sm tracking-widest flex items-center justify-center gap-2 min-h-[48px] sm:min-h-[54px] shadow-xl hover:bg-emerald-700 transition-all disabled:opacity-50"
+        >
+          {isLoading ? <RefreshCw className="animate-spin" /> : <Sparkles size={16} sm:size={18} />}
+          {lang === 'es' ? 'Generar Presentación con Imágenes' : 'Generate Presentation with Images'}
+        </button>
+      </div>
+    </div>
+  );
 
   const renderFinalStage = () => {
     return (
@@ -535,40 +944,128 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
           </div>
           <div className="space-y-2">
             <h2 className="text-2xl sm:text-4xl font-black uppercase tracking-tighter">
-              {lang === 'es' ? 'Investigación de Alta Densidad Finalizada' : 'High-Density Research Finalized'}
+              {lang === 'es' ? 'Presentación Finalizada' : 'Presentation Complete'}
             </h2>
             <p className="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto uppercase tracking-widest font-bold">
               {lang === 'es' 
-                ? 'Reporte estratégico generado con éxito v6.5.0' 
-                : 'Strategic report successfully generated v6.5.0'}
+                ? 'Investigación y diapositivas generadas con éxito v6.5.0' 
+                : 'Research and slides successfully generated v6.5.0'}
             </p>
+            {Object.keys(generatedImages).length > 0 && (
+              <p className="text-xs sm:text-sm text-emerald-600 dark:text-emerald-400">
+                {lang === 'es' ? `${Object.keys(generatedImages).length} imágenes generadas` : `${Object.keys(generatedImages).length} images generated`}
+              </p>
+            )}
           </div>
         </div>
 
         <div className="flex-1 overflow-hidden">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 h-full overflow-y-auto lg:overflow-visible pr-2 scrollbar-hide">
-            {deepResearch?.topics.map((topic, i) => (
-              <motion.div 
-                key={i} 
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: i * 0.05 }}
-                className="p-6 rounded-[2rem] bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-2xl transition-all flex flex-col h-fit lg:h-full group"
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm font-black shadow-lg">
-                    {i + 1}
-                  </div>
-                  <h3 className="text-sm font-black uppercase tracking-tight text-slate-800 dark:text-white line-clamp-1">{topic.title}</h3>
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-[6] group-hover:line-clamp-none transition-all leading-relaxed font-medium">
-                  {topic.content}
-                </p>
-                <div className="mt-auto pt-4 flex justify-end">
-                  <div className="w-8 h-1 bg-blue-600/20 rounded-full group-hover:w-full transition-all duration-500" />
-                </div>
-              </motion.div>
-            ))}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full overflow-y-auto lg:overflow-visible pr-2 scrollbar-hide">
+            {/* Research Summary */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-black uppercase tracking-widest text-slate-400">
+                {lang === 'es' ? 'Investigación Profunda' : 'Deep Research'}
+              </h3>
+              <div className="grid grid-cols-1 gap-4">
+                {deepResearch?.topics.map((topic, i) => (
+                  <motion.div 
+                    key={i} 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    className="p-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-blue-500/50 transition-all"
+                  >
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-black">
+                        {i + 1}
+                      </div>
+                      <h4 className="font-black uppercase text-sm tracking-tight text-slate-800 dark:text-white">
+                        {topic.title}
+                      </h4>
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                      {topic.content}
+                    </p>
+                    {topic.sources && topic.sources.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-1">
+                        {topic.sources.map((source, si) => (
+                          <span key={si} className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/20 rounded text-[8px] font-bold text-blue-600 dark:text-blue-400 uppercase">
+                            <LinkIcon size={6} />
+                            {source}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            {/* Generated Slides with Images */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-black uppercase tracking-widest text-slate-400">
+                {lang === 'es' ? 'Diapositivas Generadas' : 'Generated Slides'}
+              </h3>
+              <div className="grid grid-cols-1 gap-4">
+                {slides.map((slide, i) => (
+                  <motion.div 
+                    key={i} 
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    className="p-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-blue-500/50 transition-all"
+                  >
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-xs font-black">
+                        {i + 1}
+                      </div>
+                      <h4 className="font-black uppercase text-sm tracking-tight text-slate-800 dark:text-white">
+                        {slide.title}
+                      </h4>
+                    </div>
+                    
+                    {/* Generated Image */}
+                    {generatedImages[slide.id] && (
+                      <div className="mb-3 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800">
+                        <img 
+                          src={generatedImages[slide.id]} 
+                          alt={`Generated slide image: ${slide.title}`}
+                          className="w-full h-32 object-cover"
+                        />
+                      </div>
+                    )}
+                    
+                    <div className="space-y-2">
+                      <div className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                        {lang === 'es' ? 'Contenido:' : 'Content:'}
+                      </div>
+                      <ul className="text-xs text-slate-500 dark:text-slate-400 space-y-1">
+                        {slide.content.map((item, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <span className="text-emerald-500 mt-0.5">•</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/5">
+                      <div className="text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                        {lang === 'es' ? 'Estilo Visual:' : 'Visual Style:'}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">
+                          {VISUAL_THEMES.find(t => t.id === selectedStyle)?.icon || '🎨'}
+                        </span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                          {VISUAL_THEMES.find(t => t.id === selectedStyle)?.name || selectedStyle}
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -577,7 +1074,7 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
             onClick={() => {
               const doc = new jsPDF();
               doc.setFontSize(22);
-              doc.text(lang === 'es' ? 'Reporte: Deep Learning' : 'Deep Learning Report', 20, 20);
+              doc.text(lang === 'es' ? 'Presentación Completa' : 'Complete Presentation', 20, 20);
               doc.setFontSize(10);
               doc.setTextColor(100);
               doc.text(`Generated by Catalizia CorporateGPT - ${new Date().toLocaleString()}`, 20, 28);
@@ -596,19 +1093,47 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
                 doc.text(lines, 20, y);
                 y += (lines.length * 6) + 10;
               });
-              doc.save(`CorporateGPT_Research_${Date.now()}.pdf`);
+              
+              // Add slide information
+              doc.addPage();
+              doc.setFontSize(16);
+              doc.text("Generated Slides", 20, 20);
+              doc.setFontSize(12);
+              doc.text(`Total Slides: ${slides.length}`, 20, 35);
+              doc.text(`Images Generated: ${Object.keys(generatedImages).length}`, 20, 45);
+              doc.text(`Visual Style: ${selectedStyle}`, 20, 55);
+              
+              doc.save(`CorporateGPT_Presentation_${Date.now()}.pdf`);
             }}
             className="flex-1 py-5 bg-blue-600 text-white rounded-[2rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-blue-700 transition-all shadow-xl hover:scale-[1.02] active:scale-[0.98]"
           >
             <Download size={24} />
-            <span>{lang === 'es' ? 'Descargar Reporte PDF' : 'Download PDF Report'}</span>
+            <span>{lang === 'es' ? 'Descargar Presentación Completa' : 'Download Complete Presentation'}</span>
+          </button>
+          <button
+            onClick={() => {
+              // Download generated images
+              Object.entries(generatedImages).forEach(([slideId, imageData]) => {
+                const link = document.createElement('a');
+                link.href = imageData;
+                link.download = `slide_${slideId}_${Date.now()}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              });
+            }}
+            className="py-5 px-10 bg-emerald-600 text-white rounded-[2rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-emerald-700 transition-all shadow-xl hover:scale-[1.02] active:scale-[0.98]"
+            disabled={Object.keys(generatedImages).length === 0}
+          >
+            <Download size={24} />
+            <span>{lang === 'es' ? 'Descargar Imágenes' : 'Download Images'} ({Object.keys(generatedImages).length})</span>
           </button>
           <button
             onClick={() => window.location.reload()}
             className="py-5 px-10 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
           >
             <RefreshCw size={24} />
-            <span>{lang === 'es' ? 'Nuevo' : 'New'}</span>
+            <span>{lang === 'es' ? 'Nueva Presentación' : 'New Presentation'}</span>
           </button>
         </div>
       </div>
@@ -629,40 +1154,50 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
           <div className="w-8 sm:w-10 h-8 sm:h-10 bg-blue-600 rounded-lg sm:rounded-xl flex items-center justify-center text-white">
             <BrainCircuit size={18} />
           </div>
-          <div className="hidden sm:block">
+          <div className="block sm:block">
             <h1 className={cn(
-              "text-sm font-black uppercase tracking-widest italic",
+              "text-xs sm:text-sm font-black uppercase tracking-widest italic",
               isDark ? "text-white" : "text-slate-900"
             )}>PPT Creator</h1>
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">
+              <span className="text-[9px] sm:text-[10px] uppercase tracking-widest font-bold text-slate-400">
                 {lang === 'es' ? `Contexto Activo` : `Active Context`} • v6.5.0
               </span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
-          {[1, 2, 2.5].map((stage) => (
+        <div className="flex items-center gap-1 sm:gap-1">
+          {[1, 2, 2.5, 3, 4].map((stage) => (
             <div 
               key={stage}
               className={cn(
-                "w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full transition-all",
+                "w-2 sm:w-2 h-2 sm:h-2 rounded-full transition-all cursor-pointer active:scale-110",
                 currentStage === stage 
-                  ? "bg-blue-600 w-4 sm:w-6" 
+                  ? "bg-blue-600 w-6 sm:w-6" 
                   : currentStage > stage 
                     ? "bg-emerald-500" 
                     : "bg-slate-300 dark:bg-slate-700"
               )}
+              onClick={() => setCurrentStage(stage as Stage)}
+              title={`Stage ${stage}`}
             />
           ))}
         </div>
 
         <div className="flex items-center gap-2">
+          {error && (
+            <div className="text-[10px] font-black uppercase px-3 py-2 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-lg border border-red-500/20 min-h-[36px] flex items-center">
+              <span className="truncate">{error}</span>
+            </div>
+          )}
           <button 
-            onClick={() => window.location.reload()}
-            className="text-[10px] font-black uppercase px-2 py-1 hover:bg-slate-500/10 text-slate-500 rounded border border-slate-500/20"
+            onClick={() => {
+              setError(null);
+              window.location.reload();
+            }}
+            className="text-[10px] font-black uppercase px-3 py-2 hover:bg-slate-500/10 text-slate-500 rounded-lg border border-slate-500/20 min-h-[36px] flex items-center"
           >
             {lang === 'es' ? 'Reiniciar' : 'Reset'}
           </button>
@@ -690,7 +1225,41 @@ export const PPTcreator: React.FC<PPTcreatorProps> = ({
               {currentStage === 1 && renderStage1()}
               {currentStage === 2 && renderStage2()}
               {currentStage === 2.5 && renderStage2_5()}
+              {currentStage === 3 && renderStage3()}
+              {currentStage === 4 && renderStage4()}
             </>
+          )}
+          
+          {/* Error Display */}
+          {error && (
+            <div className="absolute bottom-4 left-4 right-4 bg-red-500/90 text-white p-4 rounded-lg shadow-lg z-50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <X size={18} />
+                  <span className="font-medium">{error}</span>
+                </div>
+                <button 
+                  onClick={() => setError(null)}
+                  className="text-white/80 hover:text-white"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="mt-2 flex gap-2">
+                <button 
+                  onClick={() => retryStage(currentStage)}
+                  className="px-3 py-1 bg-white/20 rounded text-sm hover:bg-white/30"
+                >
+                  {lang === 'es' ? 'Reintentar' : 'Retry'}
+                </button>
+                <button 
+                  onClick={() => setCurrentStage(1)}
+                  className="px-3 py-1 bg-white/20 rounded text-sm hover:bg-white/30"
+                >
+                  {lang === 'es' ? 'Volver al inicio' : 'Back to start'}
+                </button>
+              </div>
+            </div>
           )}
         </motion.div>
       </AnimatePresence>

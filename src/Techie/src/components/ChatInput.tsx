@@ -1,5 +1,6 @@
 import React, {useRef, useState, FormEvent, ChangeEvent, useEffect} from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Zap } from 'lucide-react';
 import ImageSourceModal from './ImageSourceModal';
 import { ExplorerSettings, Grade, ChatMode } from '../types';
 import { TOOL_DEFINITIONS } from '../constants';
@@ -46,6 +47,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const [isReviewMode, setIsReviewMode] = useState(false);
   const [showImageSourceModal, setShowImageSourceModal] = useState(false);
   const [showExplorerConfig, setShowExplorerConfig] = useState(false);
+  const [showMobileModelSelector, setShowMobileModelSelector] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -161,15 +163,40 @@ const ChatInput: React.FC<ChatInputProps> = ({
               
 
 
-              <div className="hidden lg:block w-48 shrink-0 self-end mb-1">
-                <ModelSelector 
-                  models={models} 
-                  selectedModel={selectedModel} 
-                  onSelect={onModelSelect} 
-                  isLoading={isLoadingModels} 
-                  lang={language as 'en' | 'es'}
-                  dataProtected={false}
-                />
+              <div className="relative self-end mb-1">
+                <button
+                  type="button"
+                  onClick={() => setShowMobileModelSelector(!showMobileModelSelector)}
+                  className="lg:hidden w-11 h-11 flex items-center justify-center bg-blue-50 text-blue-600 rounded-xl active:scale-95 transition-all"
+                >
+                  <Zap size={20} />
+                </button>
+                
+                <div className="hidden lg:block w-48 shrink-0">
+                  <ModelSelector 
+                    models={models} 
+                    selectedModel={selectedModel} 
+                    onSelect={onModelSelect} 
+                    isLoading={isLoadingModels} 
+                    lang={language as 'en' | 'es'}
+                    dataProtected={false}
+                  />
+                </div>
+
+                {showMobileModelSelector && (
+                  <div className="lg:hidden absolute bottom-full left-0 mb-4 w-[280px] z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
+                    <div className="bg-white p-4 rounded-[2rem] shadow-2xl border border-blue-50">
+                      <ModelSelector 
+                        models={models} 
+                        selectedModel={selectedModel} 
+                        onSelect={(m) => { onModelSelect(m); setShowMobileModelSelector(false); }} 
+                        isLoading={isLoadingModels} 
+                        lang={language as 'en' | 'es'}
+                        dataProtected={false}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
 

@@ -425,25 +425,35 @@ REQUIRED JSON RESPONSE:
   catch { return { title: '', subtitle: '', sections: [], conclusions: [] }; }
 }
 
-export async function generateDeepResearch(topic: string, audience: string, keyTakeaway: string): Promise<any[]> {
+export async function generateDeepResearch(
+  topic: string, 
+  audience: string, 
+  keyTakeaway: string,
+  tone: string = 'professional',
+  slideCount: number = 5
+): Promise<any[]> {
   const payload = {
     model: "gemini-2.0-flash",
     contents: [{ role: "user", parts: [{ text: `You are a World-Class Strategic Research Analyst.
     
 Topic: ${topic}
 Audience: ${audience}
+Tone: ${tone}
 Key Takeaway: ${keyTakeaway}
+Slide Count: ${slideCount}
 
 TASK: Perform an EXHAUSTIVE deep research report on this topic. 
 You must use your search tool to gather real-world data, current trends (2025-2026 context), and verified facts.
 
 REQUIREMENTS:
-1. Provide at least 5-7 highly detailed strategic pillars or thematic sections.
+1. Provide exactly ${slideCount} highly detailed strategic pillars or thematic sections.
 2. For EACH section, write at least 6-8 dense paragraphs of professional analysis.
 3. Total report length must be at least 2000 tokens. 
 4. Include specific numbers, statistics, and industry benchmarks.
 5. Provide specific sources and citations for each pillar.
-6. NO hallucinations. If data is unavailable, state the current market consensus.
+6. Match the requested tone: ${tone}.
+7. Tailor the content for the specified audience: ${audience}.
+8. NO hallucinations. If data is unavailable, state the current market consensus.
 
 Return ONLY this JSON structure:
 {
@@ -476,7 +486,15 @@ Return ONLY this JSON structure:
   }
 }
 
-export async function generateSkeleton(prompt: string, count: number = 10, additionalContext?: string): Promise<SlideSkeleton[]> {
+export async function generateSkeleton(
+  prompt: string, 
+  count: number = 10, 
+  additionalContext?: string,
+  audience?: string,
+  tone?: string,
+  keyTakeaway?: string,
+  visualStyle?: string
+): Promise<SlideSkeleton[]> {
   const systemInstruction = `You are a Master Infographic Storyteller & Strategic Architect at Catalizia. 
   Current Date context: ${new Date().toISOString().split('T')[0]}. The current year is 2026.
   The user is creating a visual journey on: "${prompt}".
@@ -501,6 +519,9 @@ export async function generateSkeleton(prompt: string, count: number = 10, addit
   - Professional, visionary, and visually oriented.
   - NO generic jargon. Use specific industry insights.
   - Respond in the SAME language as the prompt.
+  - Match the requested tone: ${tone || 'professional'}.
+  - Tailor for audience: ${audience || 'general audience'}.
+  - Use visual style: ${visualStyle || 'professional'}.
   - Return ONLY JSON.`;
 
   const payload = {
@@ -688,7 +709,8 @@ export async function generateProImageForSlide(
   paragraphs?: string[],
   imagePrompt?: string,
   excelData?: string,
-  additionalImages?: string[]
+  additionalImages?: string[],
+  researchContext?: string
 ): Promise<string> {
   const stylePrompts: Record<string, string> = {
     auto: 'Premium corporate presentation, clean modern design, dynamic composition',
@@ -740,6 +762,59 @@ export async function generateProImageForSlide(
   const hasImage = !!userImage || !!imagePrompt;
   const hasExcel = !!excelData?.trim();
   
+  // Perform online research if no research context provided
+  let enhancedContext = researchContext;
+  if (!researchContext && content.length > 0) {
+    try {
+      console.log('[IMAGE] Performing online research for image generation...');
+      
+      const researchResponse = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'generateContent',
+          payload: {
+            model: 'gemini-2.0-flash',
+            contents: [{ role: 'user', parts: [{ text: `
+You are a Research Analyst specializing in visual content creation. 
+
+Research and expand the following presentation topic with current, factual information that would enhance image generation:
+
+PRESENTATION CONTEXT:
+- Main Topic: ${title}
+- Subtitle: ${subtitle}
+- Key Content Points: ${contentText}
+- Style: ${style}
+- Chart Type: ${chartType !== 'none' ? chartType : 'None specified'}
+- Layout: ${layout}
+
+RESEARCH REQUIREMENTS:
+1. Use search tools to find current, factual information about the main topic
+2. Identify relevant statistics, trends, or visual elements that could enhance the image
+3. Consider the specified style and how it relates to current design trends
+4. If chart data is provided, find ways to represent it accurately
+5. Return concise, factual research findings that would improve image generation
+
+Return only the relevant research findings that should be incorporated into the image generation process.
+            ` }] }],
+            tools: [{ googleSearch: {} }],
+            generationConfig: { temperature: 0.3, maxOutputTokens: 1000 }
+          }
+        })
+      });
+      
+      if (researchResponse.ok) {
+        const researchResult = await researchResponse.json();
+        enhancedContext = researchResult.candidates?.[0]?.content?.parts?.[0]?.text;
+        console.log('[IMAGE] Research context generated successfully');
+      } else {
+        console.warn('[IMAGE] Research generation failed:', await researchResponse.text());
+      }
+    } catch (error) {
+      console.warn('[IMAGE] Research generation error:', error);
+    }
+  }
+  
   const prompt = `You are a World-Class Graphic Information Designer.
 Task: Create a masterpiece INFOGRAPHIC POSTER for the slide: "${title}: ${subtitle}".
 
@@ -749,12 +824,12 @@ CONTENT CONTEXT:
 - Nuanced Insight: ${subtitle}
 - Key Points: ${contentText}
 ${paragraphText ? `- Detailed Paragraphs: ${paragraphText}` : ''}
+${enhancedContext ? `- RESEARCH CONTEXT: ${enhancedContext}` : ''}
 - User Image: ${userImage ? 'Include the user-provided image in the design' : ''}
 ${imagePrompt ? `- AI Image Prompt: ${imagePrompt} - incorporate this conceptual image` : ''}
 ${hasExcel ? `- Excel/Table Data: ${excelData} - display this data in a styled table or information block` : ''}
 
 VISUAL STYLE: ${stylePrompt}
-
 LAYOUT: ${layout} (split/grid/bento/focal/technical/dense_table)
 
 CORE VISUAL STRATEGY:
@@ -762,6 +837,8 @@ CORE VISUAL STRATEGY:
 - Use a POWERFUL CONCEPTUAL METAPHOR matching the ${style} style
 - ${hasExcel ? 'INTEGRATE the Excel data into a styled table or info-block within the design' : ''}
 - ${hasImage ? 'COMBINE the provided image(s) creatively into the composition' : 'CREATE a bespoke conceptual illustration matching the content'}
+- ${enhancedContext ? 'INCORPORATE factual, current information from the research context to ensure accuracy and relevance' : ''}
+- ${chartType !== 'none' ? `INCLUDE a professional ${chartType} chart visualization based on the provided data` : ''}
 
 CRITICAL REQUIREMENTS:
 1. 16:9 cinematic aspect ratio, ultra-high definition
@@ -770,9 +847,12 @@ CRITICAL REQUIREMENTS:
 4. Specific harmonious ${style} color palette
 5. The image must look like a standalone professional poster from a top-tier design agency
 6. High contrast, premium textures, polished finish
-7. No generic "stock photo" feel - bespoke data-driven illustration`;
+7. No generic "stock photo" feel - bespoke data-driven illustration
+8. ${enhancedContext ? 'BASED ON CURRENT RESEARCH: Incorporate factual, up-to-date information from the research context' : 'BASED ON PROVIDED CONTENT: Ensure visual elements accurately represent the presentation content'}`;
 
-  // Use Imagen for PPT slide image generation
+  // Use Imagen for PPT slide image generation with research-backed prompts
+  console.log('[IMAGE] Generating image with enhanced prompt...');
+  
   const res = await fetch('/api/gemini', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

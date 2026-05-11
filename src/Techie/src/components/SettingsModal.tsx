@@ -11,9 +11,11 @@ interface SettingsModalProps {
   onProfileUpdate: (updated: UserProfile) => void;
   onDeleteData: () => Promise<void>;
   onOpenFAQ: () => void;
-  language: string;
-  onLanguageChange: (l: string) => void;
+  language: any;
+  onLanguageChange: (l: any) => void;
   onSwitchToCorporate?: () => void;
+  selectedGrade?: Grade;
+  onGradeChange?: (g: Grade) => void;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ 

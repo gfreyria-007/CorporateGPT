@@ -1098,7 +1098,7 @@ if (parsed.type === 'image-request') {
                 }
             }}
             language={language}
-            onLanguageChange={(l) => {
+            onLanguageChange={(l: any) => {
                 setLanguage(l);
                 addMessage(Role.SYSTEM, l === 'es' ? 'Cambiando a Español 🇪🇸' : 'Switching to English 🇺🇸');
             }}

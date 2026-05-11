@@ -797,25 +797,226 @@ async function startServer() {
         }
       }
 
-      if (action === 'generateImage') {
-        const response = await fetch('https://openrouter.ai/api/v1/images/generations', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-          },
-          body: JSON.stringify({
-            model: 'black-forest-labs/flux-1-schnell',
-            prompt: payload.prompt,
-            aspect_ratio: payload.aspectRatio || '16:9'
-          })
-        });
+      // Handle Pro Image for Slide generation with research capability
+      if (action === 'generateProImageForSlide') {
+        const { 
+          title, 
+          subtitle, 
+          content, 
+          style, 
+          chartType = 'none', 
+          tableData = '', 
+          userImage, 
+          layout = 'split', 
+          paragraphs, 
+          imagePrompt, 
+          excelData, 
+          additionalImages, 
+          researchContext 
+        } = payload;
 
-        if (response.ok) {
-          const result = await response.json();
-          const imageUrl = result.data?.[0]?.url;
+        let optimizedPrompt = imagePrompt || `${title}: ${subtitle}. Content: ${content.join(', ')}. Style: ${style}`;
+        
+        // Perform research if context provided or if no image prompt exists
+        if (researchContext || (!imagePrompt && content.length > 0)) {
+          try {
+            console.log('[PRO-IMAGE] Performing research for prompt enhancement...');
+            const researchPrompt = researchContext || 
+              `Research and provide current, accurate information about: ${title} ${subtitle}. Focus on visual design elements, color schemes, and layout best practices for ${style} style presentations.`;
+            
+            const enhanceResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ 
+                  role: 'user', 
+                  parts: [{ 
+                    text: `You are a professional presentation designer and visual content researcher. 
+CRITICAL REQUIREMENT: Use your SEARCH TOOL to find current, accurate information about:
+Topic: ${researchPrompt}
+Style: ${style}
+Focus: Visual design elements, color schemes, layout best practices, current trends, and accurate factual details
+
+Enhance this image prompt with research-backed, detailed visual descriptions:` 
+                  }] 
+                }],
+                tools: [{ googleSearch: {} }],
+                generationConfig: { temperature: 0.7, maxOutputTokens: 500 }
+              })
+            });
+
+            if (enhanceResponse.ok) {
+              const enhanceResult = await enhanceResponse.json();
+              const enhancedText = enhanceResult.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (enhancedText) {
+                optimizedPrompt = enhancedText;
+                console.log('[PRO-IMAGE] Prompt enhanced with research successfully.');
+              }
+            } else {
+              console.warn('[PRO-IMAGE] Prompt enhancement API error:', await enhanceResponse.text());
+            }
+          } catch (e) {
+            console.warn('[PRO-IMAGE] Prompt enhancement failed:', e);
+          }
+        }
+
+        try {
+          // Use Imagen model for professional image generation
+          const IMAGE_MODELS = [
+            'imagen-3.0-generate-001',
+            'imagen-4.0-fast-generate-001'
+          ];
+
+          let lastError = null;
+          for (const model of IMAGE_MODELS) {
+            try {
+              const instance: any = { prompt: optimizedPrompt };
+              if (userImage) instance.image = { bytesBase64Encoded: userImage };
+              
+              const parameters: any = { 
+                sampleCount: 1, 
+                aspectRatio: layout === 'split' ? '16:9' : '1:1'
+              };
+
+              const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:predict?key=${apiKey}`;
+              const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                  instances: [instance], 
+                  parameters 
+                })
+              });
+
+              if (response.ok) {
+                const result = await response.json();
+                if (result.predictions?.[0]?.bytesBase64Encoded || result.imageBase64) {
+                  await trackUsage(userId, true);
+                  clearTimeout(timeout);
+                  return res.status(200).json({ 
+                    imageUrl: result.predictions?.[0]?.bytesBase64Encoded,
+                    enhancedPrompt: optimizedPrompt,
+                    modelUsed: model
+                  });
+                }
+              } else {
+                const errBody = await response.json().catch(() => ({}));
+                lastError = errBody.error?.message || `Status ${response.status}`;
+              }
+            } catch (err: any) {
+              lastError = err.message;
+            }
+          }
+
+          throw new Error(`All image models exhausted. Last error: ${lastError}`);
+        } catch (err: any) {
           clearTimeout(timeout);
-          return res.status(200).json({ imageBase64: imageUrl, modelUsed: 'flux-1-schnell' });
+          return res.status(500).json({ error: err.message });
+        }
+      }
+
+      // Handle Techie Image generation with educational research capability
+      if (action === 'generateImage') {
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+          return res.status(500).json({ error: 'GEMINI_API_KEY is missing in local server' });
+        }
+
+        const { 
+          prompt, 
+          aspectRatio, 
+          grade, 
+          userName,
+          style = 'none', 
+          lighting = 'none',
+          embeddedText,
+          imageSize = '1K',
+          sourceImage,
+          customKey,
+          researchContext 
+        } = payload;
+
+        if (!prompt) {
+          return res.status(400).json({ error: 'Prompt is required for image generation' });
+        }
+
+        let optimizedPrompt = prompt;
+
+        // Perform educational research to enhance prompt accuracy
+        if (!researchContext && prompt) {
+          try {
+            console.log('[TECHIE IMAGE] Performing educational research for prompt enhancement...');
+            
+            const researchPrompt = `Educational content about: ${prompt}. Student Level: ${grade?.name || 'unknown'}. Focus: Age-appropriate, accurate, and engaging educational content.`;
+            
+            const enhanceResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ 
+                  role: 'user', 
+                  parts: [{ 
+                    text: `You are an Educational Content Research Specialist. 
+
+Research and provide current, accurate educational information about:
+Topic: ${researchPrompt}
+Style: ${style !== 'none' ? style : 'Standard educational'}
+Focus: Educational content accuracy and age-appropriate details
+
+Enhance the image prompt with educational research and age-appropriate details:` 
+                  }] 
+                }],
+                tools: [{ googleSearch: {} }],
+                generationConfig: { temperature: 0.7, maxOutputTokens: 500 }
+              })
+            });
+
+            if (enhanceResponse.ok) {
+              const enhanceResult = await enhanceResponse.json();
+              const enhancedText = enhanceResult.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (enhancedText) {
+                optimizedPrompt = enhancedText;
+                console.log('[TECHIE IMAGE] Prompt enhanced with educational research successfully.');
+              }
+            } else {
+              console.warn('[TECHIE IMAGE] Educational research API error:', await enhanceResponse.text());
+            }
+          } catch (e) {
+            console.warn('[TECHIE IMAGE] Educational research failed:', e);
+          }
+        }
+
+        // Use OpenRouter for actual image generation after research
+        try {
+          const response = await fetch('https://openrouter.ai/api/v1/images/generations', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+            },
+            body: JSON.stringify({
+              model: 'black-forest-labs/flux-1-schnell',
+              prompt: optimizedPrompt,
+              aspect_ratio: aspectRatio || '16:9'
+            })
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            const imageUrl = result.data?.[0]?.url;
+            clearTimeout(timeout);
+            await trackUsage(userId, true);
+            return res.status(200).json({ 
+              url: imageUrl, 
+              enhancedPrompt: optimizedPrompt,
+              modelUsed: 'flux-1-schnell' 
+            });
+          } else {
+            throw new Error('Image generation failed');
+          }
+        } catch (err: any) {
+          clearTimeout(timeout);
+          return res.status(500).json({ error: err.message });
         }
       }
 

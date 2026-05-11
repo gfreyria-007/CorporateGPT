@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
+import { ModelSelector } from './ModelSelector';
 import { GPTsGenerator } from './GPTsGenerator';
 import { EcoModeBanner } from './EcoModeBanner';
 import PPTcreator from './PPTcreator';
@@ -119,10 +120,11 @@ export function MobileWorkspace({
   isSuperAdmin,
   appMode = 'corporate',
   onLogout, onModeChange,
-  onImageModelSelect,
+  onImageModelSelect, models, selectedModel, onSelectModel, isLoadingModels, dataProtectionEnabled,
 }: any) {
   const [imageStudioOpen, setImageStudioOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const isJunior = appMode === 'junior';
@@ -311,6 +313,32 @@ export function MobileWorkspace({
                 isDark ? "bg-corporate-950/90 border-white/5" : "bg-white/90 border-slate-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]"
               )}>
                 <div className="relative max-w-lg mx-auto">
+                  <div className="flex items-center gap-2 mb-2">
+                    <button 
+                      onClick={() => setIsModelSelectorOpen(!isModelSelectorOpen)}
+                      className={cn(
+                        "flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                        isDark ? "bg-white/5 text-slate-400" : "bg-slate-100 text-slate-500"
+                      )}
+                    >
+                      <Zap size={14} className="text-blue-500" />
+                      {selectedModel === 'openrouter/auto' ? 'Auto Router' : (models.find(m => m.id === selectedModel)?.name || 'Selector')}
+                    </button>
+                    {isModelSelectorOpen && (
+                      <div className="absolute bottom-full left-0 w-full mb-4 z-[100] animate-in slide-in-from-bottom-4 fade-in duration-300">
+                        <div className={cn("p-4 rounded-[2rem] shadow-2xl border backdrop-blur-2xl", isDark ? "bg-corporate-900/95 border-white/5" : "bg-white/95 border-slate-100")}>
+                          <ModelSelector 
+                            models={models}
+                            selectedModel={selectedModel}
+                            onSelect={(id) => { onSelectModel(id); setIsModelSelectorOpen(false); }}
+                            isLoading={isLoadingModels}
+                            lang={lang}
+                            dataProtected={dataProtectionEnabled}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   <textarea 
                     rows={1}
                     value={chatInputValue}

@@ -146,13 +146,68 @@ export const generateImage = async (
     embeddedText?: string,
     imageSize: ImageSize = '1K',
     sourceImage?: string, // Opcional para Image-to-Image
-    customKey?: string // Keeping for signature compatibility if needed, but unused
+    customKey?: string, // Keeping for signature compatibility if needed, but unused
+    researchContext?: string // NEW: Add research context for educational accuracy
 
 ): Promise<{ url: string, enhancedPrompt: string } | null> => {
 
     
     if (moderatePrompt(prompt)) {
         throw new Error(GUARDRAIL_ERROR);
+    }
+
+    // Perform educational research to enhance prompt accuracy
+    let enhancedPrompt = prompt;
+    if (!researchContext && prompt) {
+        try {
+            console.log('[TECHIE IMAGE] Performing educational research for prompt enhancement...');
+            
+            const researchResponse = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'generateContent',
+                    payload: {
+                        model: 'gemini-2.0-flash',
+                        contents: [{ role: 'user', parts: [{ text: `
+You are an Educational Content Research Specialist. 
+
+Research and provide current, accurate educational information about:
+Topic: ${prompt}
+Student Level: ${grade.name} (approximately ${grade.age} years old)
+Focus: Educational content accuracy and age-appropriate details
+Style: ${style !== 'none' ? STUDIO_STYLES[style]?.prompt || style : 'Standard educational'}
+
+RESEARCH REQUIREMENTS:
+1. Use search tools to find current, factual information about the topic
+2. Ensure content is age-appropriate for ${grade.name} students
+3. Identify key educational concepts that should be represented visually
+4. Consider the specified style and educational context
+5. Return factual information that would enhance educational image generation
+
+Return only the relevant educational research findings.
+                        ` }] }],
+                        tools: [{ googleSearch: {} }],
+                        generationConfig: { temperature: 0.3, maxOutputTokens: 800 }
+                    }
+                })
+            });
+            
+            if (researchResponse.ok) {
+                const researchResult = await researchResponse.json();
+                const researchInfo = researchResult.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (researchInfo) {
+                    enhancedPrompt = `Educational Topic: ${prompt}. Current Research Context: ${researchInfo}.`;
+                    console.log('[TECHIE IMAGE] Educational research context added successfully');
+                }
+            } else {
+                console.warn('[TECHIE IMAGE] Educational research failed:', await researchResponse.text());
+            }
+        } catch (error) {
+            console.warn('[TECHIE IMAGE] Educational research error:', error);
+        }
+    } else if (researchContext) {
+        enhancedPrompt = `Educational Topic: ${prompt}. Research Context: ${researchContext}.`;
     }
 
 
@@ -166,8 +221,8 @@ export const generateImage = async (
         - STYLE: Educational, clear, professionally rendered.
         - PURE VISUAL REPRESENTATION ONLY.
     `;
-
-    let finalPrompt = `Subject: ${prompt}. ${strictConstraints}`;
+    
+    let finalPrompt = `Subject: ${enhancedPrompt}. ${strictConstraints}`;
     if (style !== 'none' && STUDIO_STYLES[style]) {
         finalPrompt += ` Style: ${STUDIO_STYLES[style].prompt}.`;
     }
@@ -212,7 +267,7 @@ export const generateImage = async (
             } else {
                 finalUrl = `data:image/png;base64,${imageBase64}`;
             }
-            return { url: finalUrl, enhancedPrompt: 'Generación de Imagen via OpenRouter' };
+            return { url: finalUrl, enhancedPrompt: `Enhanced with educational research: ${enhancedPrompt}` };
         }
     } catch (e: any) {
         console.error("Image generation failed", e);
@@ -526,7 +581,8 @@ export const getChatResponse = async (
                     history,
                     temperature: (mode === 'explorer' || mode === 'math-viva') ? temperature : 0.3,
                     systemInstruction: (SAFETY_MANDATE + "\n" + systemInstruction).trim(),
-                    useJson: true
+                    useJson: true,
+                    customKey
                 }
             })
         });
@@ -571,8 +627,10 @@ export const getChatResponse = async (
 export const reviewHomework = async (imagePart: any, text: string, grade: Grade, userName: string | null, age: number | null, customKey?: string, useGenZ: boolean = true) => {
   const personaStyle = useGenZ ? `Eres un tutor Gen-Z cool y brillante.` : `Eres un tutor académico formal y serio.`;
   const prompt = `Revisa esta tarea para nivel ${grade.name}. ${personaStyle} Usa INTERNET para verificar si la información es correcta. Lenguaje adecuado para ${age} años. JSON format only.`;
-  try {
-    const res = await fetch('/api/techie', {
+    try {
+        console.log('[TECHIE IMAGE] Generating image with enhanced prompt...');
+        
+        const res = await fetch('/api/techie', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -580,7 +638,8 @@ export const reviewHomework = async (imagePart: any, text: string, grade: Grade,
             payload: {
                 model: 'openrouter/auto',
                 contents: [{ parts: [imagePart, { text: prompt }] }],
-                useJson: true
+                useJson: true,
+                    customKey
             }
         })
     });
@@ -604,7 +663,8 @@ export const analyzeImage = async (imagePart: any, text: string, grade: Grade, u
                     model: 'openrouter/auto',
                     contents: [{ parts: [imagePart, { text: text || "Analiza" }] }],
                     systemInstruction,
-                    useJson: true
+                    useJson: true,
+                    customKey
                 }
             })
         });
@@ -666,7 +726,7 @@ export const getDeepResearchResponse = async (topic: string, grade: Grade, userN
     }
 };
 
-export const generateTopicQuiz = async (topic: string, grade: Grade, count: number = 10): Promise<ExamQuestion[]> => {
+export const generateTopicQuiz = async (topic: string, grade: Grade, count: number = 10, customKey?: string): Promise<ExamQuestion[]> => {
     const prompt = `Usa INTERNET para generar un examen de ${count} preguntas REALES y actualizadas sobre: ${topic} para nivel escolar ${grade.name}. JSON format.`;
     try {
         const res = await fetch('/api/techie', {
@@ -677,7 +737,8 @@ export const generateTopicQuiz = async (topic: string, grade: Grade, count: numb
                 payload: {
                     model: 'openrouter/auto',
                     contents: [{ parts: [{ text: prompt }] }],
-                    useJson: true
+                    useJson: true,
+                    customKey
                 }
             })
         });
@@ -700,7 +761,8 @@ export const generateFlashcards = async (text: string): Promise<Flashcard[]> => 
                 payload: {
                     model: 'openrouter/auto',
                     contents: [{ parts: [{ text: prompt }] }],
-                    useJson: true
+                    useJson: true,
+                    customKey
                 }
             })
         });

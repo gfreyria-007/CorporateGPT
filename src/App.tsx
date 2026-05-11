@@ -710,6 +710,13 @@ export default function App() {
         multimediaRemaining={multimediaRemaining}
         isSuperAdmin={isSuperAdmin}
         appMode={appMode}
+        onLogout={logout}
+        onImageModelSelect={handleImageModelSelect}
+        models={models}
+        selectedModel={selectedModel}
+        onSelectModel={setSelectedModel}
+        isLoadingModels={isLoadingModels}
+        dataProtectionEnabled={dataProtectionEnabled}
       />
     );
   }
