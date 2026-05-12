@@ -106,7 +106,7 @@ function testResearchLogic() {
     // Check for research-related keywords
     const researchKeywords = [
       'online research',
-      'googleSearch',
+      'google_search',
       '/api/gemini',
       'RESEARCH CONTEXT',
       'enhancedContext',
@@ -199,7 +199,7 @@ function testServerSideResearch() {
     
     // Check for research enhancement in server
     const researchChecks = [
-      'googleSearch',
+      'google_search',
       'prompt enhancement',
       'optimizedPrompt',
       'researchContext',

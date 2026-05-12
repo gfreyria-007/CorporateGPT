@@ -130,7 +130,7 @@ async function testProImageWithResearch() {
     expect(researchCall[0]).toBe('/api/gemini');
     expect(researchCall[1].method).toBe('POST');
     expect(researchCall[1].body).toContain('generateContent');
-    expect(researchCall[1].body).toContain('googleSearch');
+    expect(researchCall[1].body).toContain('google_search');
     expect(researchCall[1].body).toContain('Sustainable Business Strategies');
     
     // Second call should be image generation
@@ -263,7 +263,7 @@ async function testTechieImageWithResearch() {
     expect(researchCall[0]).toBe('/api/gemini');
     expect(researchCall[1].method).toBe('POST');
     expect(researchCall[1].body).toContain('generateContent');
-    expect(researchCall[1].body).toContain('googleSearch');
+    expect(researchCall[1].body).toContain('google_search');
     expect(researchCall[1].body).toContain('Photosynthesis process');
     expect(researchCall[1].body).toContain('High School');
     
