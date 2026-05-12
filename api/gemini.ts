@@ -91,7 +91,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               responseMimeType: restConfig.responseMimeType || (restConfig.responseModalities?.includes('IMAGE') ? undefined : "application/json")
             },
             systemInstruction: payload.systemInstruction || systemInstruction ? { parts: [{ text: payload.systemInstruction || systemInstruction }] } : undefined,
-            tools: payload.tools // Only include tools if explicitly provided
+            tools: payload.tools?.map((t: any) => t.googleSearch ? { google_search: t.googleSearch } : t)
           })
         });
 
@@ -105,6 +105,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         if (!response.ok) {
+          console.error("[GEMINI PROXY] Error Response:", result);
           throw new Error(result.error?.message || `Gemini API Error (Status ${response.status})`);
         }
         
@@ -115,8 +116,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         let rawText = '';
-        if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
-          rawText = result.candidates[0].content.parts[0].text;
+        if (result.candidates?.[0]?.content?.parts) {
+          rawText = result.candidates[0].content.parts.map((p: any) => p.text || '').join('').trim();
         }
         
         // ROBUST JSON EXTRACTION: Find the first { and the last }

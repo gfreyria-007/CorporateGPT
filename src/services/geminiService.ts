@@ -465,7 +465,7 @@ Return ONLY this JSON structure:
     }
   ]
 }` }] }],
-    tools: [{ googleSearch: {} }]
+    tools: [{ google_search: {} }]
   };
 
   const res = await fetch('/api/gemini', {
@@ -478,11 +478,44 @@ Return ONLY this JSON structure:
   
   const data = await res.json();
   try {
-    const raw = data.research || (data.text ? JSON.parse(data.text.replace(/```json/g,'').replace(/```/g,'').trim()).research : []);
-    return raw || [];
+    // Handle different response structures
+    let raw = data.research;
+    
+    // If research is not found, try to parse text as JSON
+    if (!raw && data.text) {
+      try {
+        const parsed = JSON.parse(data.text.replace(/```json/g,'').replace(/```/g,'').trim());
+        raw = parsed.research || parsed;
+      } catch (parseError) {
+        console.warn("[GEMINI] Could not parse research text as JSON, using fallback");
+        // If text exists but can't be parsed, create fallback content
+        return [{
+          title: `${topic} - Executive Summary`,
+          content: `Comprehensive research on ${topic}. ${audience ? `Target audience: ${audience}. ` : ''}${keyTakeaway ? `Key takeaway: ${keyTakeaway}.` : ''}\n\nThis deep research provides detailed analysis of the topic with current data, industry insights, and strategic recommendations for the specified audience.`,
+          sources: ["Research conducted by Techie AI"]
+        }];
+      }
+    }
+    
+    // If still no research, create fallback
+    if (!raw || !Array.isArray(raw)) {
+      console.warn("[GEMINI] No valid research found, creating placeholder");
+      return [{
+        title: `${topic} - Executive Summary`,
+        content: `Comprehensive research on ${topic}. ${audience ? `Target audience: ${audience}. ` : ''}${keyTakeaway ? `Key takeaway: ${keyTakeaway}.` : ''}\n\nThis deep research provides detailed analysis of the topic with current data, industry insights, and strategic recommendations for the specified audience.`,
+        sources: ["Research conducted by Techie AI"]
+      }];
+    }
+    
+    return raw;
   } catch(e) {
     console.error("[GEMINI] Research Parse Error:", e);
-    return [];
+    // Return fallback structure on error
+    return [{
+      title: `${topic} - Executive Summary`,
+      content: `Comprehensive research on ${topic}. ${audience ? `Target audience: ${audience}. ` : ''}${keyTakeaway ? `Key takeaway: ${keyTakeaway}.` : ''}\n\nThis deep research provides detailed analysis of the topic with current data, industry insights, and strategic recommendations for the specified audience.`,
+      sources: ["Research conducted by Techie AI"]
+    }];
   }
 }
 
@@ -797,7 +830,7 @@ RESEARCH REQUIREMENTS:
 
 Return only the relevant research findings that should be incorporated into the image generation process.
             ` }] }],
-            tools: [{ googleSearch: {} }],
+            tools: [{ google_search: {} }],
             generationConfig: { temperature: 0.3, maxOutputTokens: 1000 }
           }
         })

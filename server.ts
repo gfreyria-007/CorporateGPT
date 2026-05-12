@@ -593,7 +593,7 @@ async function startServer() {
                 contents: [{ role: 'user', parts: [{ text: `Research and expand the following image prompt into a highly detailed, professional description for an AI image generator. 
                 CRITICAL REQUIREMENT: Use your SEARCH TOOL to find EXACT factual details about any specific characters, entities, or styles mentioned (e.g. Spider-Man Noir costume details, specific color palettes, historical textures).
                 Prompt: ${payload.prompt}` }] }],
-                tools: [{ googleSearch: {} }],
+                tools: [{ google_search: {} }],
                 generationConfig: { temperature: 0.7, maxOutputTokens: 500 }
               })
             });
@@ -603,14 +603,15 @@ async function startServer() {
               if (enhancedText) optimizedPrompt = enhancedText;
               console.log("[IMAGEN] Prompt enhanced with search successfully.");
             } else {
-              console.warn("[IMAGEN] Prompt enhancement API error:", await enhanceResponse.text());
+              const errTxt = await enhanceResponse.text();
+              console.warn("[IMAGEN] Prompt enhancement API error:", errTxt);
             }
           } catch (e) {
             console.warn("[IMAGEN] Prompt enhancement failed:", e);
           }
 
           const IMAGE_MODELS = [
-            finalModel.startsWith('imagen') ? finalModel : null,
+            finalModel && finalModel.startsWith('imagen') ? finalModel : null,
             'imagen-3.0-generate-001',
             'imagen-4.0-fast-generate-001'
           ].filter(Boolean) as string[];
@@ -618,12 +619,26 @@ async function startServer() {
           let lastError = null;
           for (const model of IMAGE_MODELS) {
             try {
+              console.log(`[IMAGEN] Attempting Model: ${model}`);
               const instance: any = { prompt: optimizedPrompt };
               if (payload.sourceImage) instance.image = { bytesBase64Encoded: payload.sourceImage };
-              const parameters: any = { sampleCount: 1, aspectRatio: payload.aspectRatio || '1:1' };
+              
+              const parameters: any = { 
+                sampleCount: 1, 
+                aspectRatio: payload.aspectRatio || '1:1' 
+              };
+
               if (payload.maskImage) {
-                parameters.editMode = 'inpainting-insert';
+                // Modern structure
+                parameters.maskConfig = {
+                  mask: { image: { bytesBase64Encoded: payload.maskImage } }
+                };
+                parameters.editConfig = {
+                  editMode: 'inpainting-insert'
+                };
+                // Compatibility structure
                 parameters.mask = { image: { bytesBase64Encoded: payload.maskImage } };
+                parameters.editMode = 'inpainting-insert';
               }
               
               const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:predict?key=${apiKey}`;
@@ -639,12 +654,15 @@ async function startServer() {
                   await trackUsage(userId, true);
                   return res.status(200).json(result);
                 }
+                console.warn(`[IMAGEN] ${model} returned empty prediction`);
               } else {
                 const errBody = await response.json().catch(() => ({}));
                 lastError = errBody.error?.message || `Status ${response.status}`;
+                console.error(`[IMAGEN] ${model} API Error:`, lastError);
               }
             } catch (err: any) {
               lastError = err.message;
+              console.error(`[IMAGEN] ${model} Request Error:`, err.message);
             }
           }
           return res.status(500).json({ error: 'IMAGE_GEN_FAILED', details: lastError || 'All models exhausted' });
@@ -681,7 +699,7 @@ async function startServer() {
                     responseMimeType: restConfig.responseMimeType || "application/json"
                   },
                   systemInstruction: payload.systemInstruction || systemInstruction ? { parts: [{ text: payload.systemInstruction || systemInstruction }] } : undefined,
-                  tools: payload.tools || (payload.webSearch ? [{ googleSearch: {} }] : undefined)
+                  tools: (payload.tools || (payload.webSearch ? [{ google_search: {} }] : undefined))?.map((t: any) => t.googleSearch ? { google_search: t.googleSearch } : t)
                 })
               });
 
@@ -695,8 +713,8 @@ async function startServer() {
               await trackUsage(userId, !!hasImage);
 
               let rawText = '';
-              if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
-                rawText = result.candidates[0].content.parts[0].text;
+              if (result.candidates?.[0]?.content?.parts) {
+                rawText = result.candidates[0].content.parts.map((p: any) => p.text || '').join('').trim();
               }
 
               const cleanJson = (rawText || '').replace(/```json/g, '').replace(/```/g, '').trim();
@@ -840,7 +858,7 @@ Focus: Visual design elements, color schemes, layout best practices, current tre
 Enhance this image prompt with research-backed, detailed visual descriptions:` 
                   }] 
                 }],
-                tools: [{ googleSearch: {} }],
+                tools: [{ google_search: {} }],
                 generationConfig: { temperature: 0.7, maxOutputTokens: 500 }
               })
             });
@@ -966,7 +984,7 @@ Focus: Educational content accuracy and age-appropriate details
 Enhance the image prompt with educational research and age-appropriate details:` 
                   }] 
                 }],
-                tools: [{ googleSearch: {} }],
+                tools: [{ google_search: {} }],
                 generationConfig: { temperature: 0.7, maxOutputTokens: 500 }
               })
             });

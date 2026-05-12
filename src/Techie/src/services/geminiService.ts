@@ -187,7 +187,7 @@ RESEARCH REQUIREMENTS:
 
 Return only the relevant educational research findings.
                         ` }] }],
-                        tools: [{ googleSearch: {} }],
+                        tools: [{ google_search: {} }],
                         generationConfig: { temperature: 0.3, maxOutputTokens: 800 }
                     }
                 })

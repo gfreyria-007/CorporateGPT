@@ -30,22 +30,11 @@ export function PromptGenie({ isOpen, onClose, onApply, theme, initialPrompt = '
     try {
       const isImage = mode === 'image';
       const prompt = isImage 
-        ? `You are the visionary Head of Design at Pixar, crafting the ultimate visual specification for the CEO of Disney. 
-           The CEO provided this simple seed idea: "${input}". 
-           
-           First, use your search tool to verify any specific factual details, historical periods, or technical elements mentioned. 
-           
-           Then, generate 3 distinct, breathtaking, and hyper-professional image generation prompts. Elevate the seed idea by adding extreme cinematic depth and world-building.
-           
-           CRITICAL: You MUST add profound artistic depth to each prompt. Speak like a master cinematographer and art director. Include specific suggestions for:
-           - Emotional Resonance & Storytelling: What is the mood, atmosphere, and the unspoken story happening in the frame?
-           - Lighting & Illumination: (e.g., volumetric god rays, rim lighting, bioluminescence, golden hour, chiaroscuro)
-           - Camera & Optics: (e.g., 35mm lens, extreme wide shot, macro photography, shallow depth of field, low-angle dynamic perspective)
-           - Artistic Style & Render Engine: (e.g., Pixar 3D animation style, Unreal Engine 5 render, hyperrealistic octane render, Studio Ghibli cel-shaded)
-           - Texture, Materials & Color Grading: (e.g., subsurface scattering on skin, weathered metallic textures, teal and orange cinematic grading)
-           - Environment & World-Building: (e.g., atmospheric fog, floating dust motes, background environmental storytelling)
-           
-           Format: Return exactly 3 options separated by "---". Do not include numbering, explanations, or any preamble. Only the raw prompts.`
+        ? `You are a visionary Art Director with SEARCH POWERS. Seed: "${input}".
+           1. Use your search tool to verify canonical details (e.g. Spiderman Noir wears a trench coat/fedora).
+           2. Generate 3 distinct, breathtaking prompts based RIGOROUSLY on these facts.
+           3. Include master-level details: cinematic lighting (chiaroscuro, volumetric), camera (35mm, low-angle), and textures.
+           Format: Return exactly 3 options separated by "---". No numbering or chat.`
         : `You are a Prompt Engineering Expert with REAL-TIME WEB ACCESS. The user provided this simple prompt: "${input}". 
            Use your search tool to ground your response in the latest available data to prevent hallucinations.
            Generate 3 distinct, high-quality, professional versions of this prompt that are more descriptive, contextual, and structured. 
@@ -54,7 +43,7 @@ export function PromptGenie({ isOpen, onClose, onApply, theme, initialPrompt = '
       const payload = {
         model: "gemini-2.0-flash",
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        tools: [{ googleSearch: {} }],
+        tools: [{ google_search: {} }],
         config: { responseMimeType: "text/plain" }
       };
 
@@ -71,7 +60,12 @@ export function PromptGenie({ isOpen, onClose, onApply, theme, initialPrompt = '
       
       const text = result.text || '';
       const options = text.split('---').map((s: string) => s.trim()).filter(Boolean);
-      setSuggestions(options);
+      
+      if (options.length > 0) {
+        setSuggestions(options);
+      } else {
+        throw new Error("Empty response from model");
+      }
     } catch (error) {
       console.error("Genie error:", error);
       // Fallback
@@ -179,9 +173,18 @@ export function PromptGenie({ isOpen, onClose, onApply, theme, initialPrompt = '
                   )}
                   {isGenerating && (
                     <div className="space-y-3">
-                       {[1, 2].map(i => (
-                         <div key={i} className="h-16 w-full bg-slate-500/5 rounded-2xl animate-pulse" />
+                       {[1, 2, 3].map(i => (
+                         <div key={i} className="h-20 w-full bg-slate-500/5 rounded-2xl animate-pulse flex items-center px-4 gap-4">
+                           <div className="w-10 h-10 bg-slate-500/10 rounded-xl" />
+                           <div className="flex-1 space-y-2">
+                             <div className="h-3 bg-slate-500/10 rounded w-3/4" />
+                             <div className="h-2 bg-slate-500/10 rounded w-1/2" />
+                           </div>
+                         </div>
                        ))}
+                       <div className="text-center">
+                         <p className="text-[10px] font-black text-indigo-500 animate-pulse uppercase tracking-[0.2em]">Consulting Intelligence Pipeline & Web Sources...</p>
+                       </div>
                     </div>
                   )}
                 </div>
