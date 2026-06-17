@@ -73,6 +73,11 @@
     background-color: hsla(253,16%,7%,1);
   }
 
+.bg-dot-pattern {
+  background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
   .glass-card {
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(24px) saturate(180%);
