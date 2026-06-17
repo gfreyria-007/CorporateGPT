@@ -10,6 +10,18 @@
       {
         "source": "/api/health",
         "destination": "/health.json"
+      },
+      {
+        "source": "/api/techie",
+        "function": "techie"
+      },
+      {
+        "source": "/api/models",
+        "function": "models"
+      },
+      {
+        "source": "/api/gemini",
+        "function": "gemini"
       }
     ]
   }

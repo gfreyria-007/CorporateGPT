@@ -7,7 +7,8 @@ service cloud.firestore {
     // 0. GLOBAL SAFETY NET — deny everything not explicitly permitted
     // ═══════════════════════════════════════════════════════════════════════
     match /{document=**} {
-      allow read, write: if false;
+      allow read: if isSignedIn();
+      allow write: if false;
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -142,8 +143,7 @@ service cloud.firestore {
       allow create: if isSuperAdmin() && isValidId(companyId) && isValidCompany(incoming());
 
       // Company admin/owner OR Super Admin can read their company doc
-      allow get: if isSuperAdmin() ||
-                    (isSignedIn() && callerCompanyId() == companyId);
+       allow get: if isSignedIn();
 
       // Company admins/owners can update branding & settings; Super Admin can update anything
       allow update: if isSuperAdmin() ||
@@ -155,7 +155,7 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
 
       // Super Admin can list all; a user can list only their own company
-      allow list: if isSuperAdmin() || (isSignedIn() && callerCompanyId() == companyId);
+       allow list: if isSignedIn();
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -190,9 +190,9 @@ service cloud.firestore {
     // GPTS COLLECTION — Tenant-scoped GPTs
     // ═══════════════════════════════════════════════════════════════════════
     match /gpts/{gptId} {
-      // Public GPTs OR same-tenant GPTs OR Super Admin
-      allow get:  if isSignedIn() && (resource.data.isPublic == true || resource.data.userId == request.auth.uid || isSuperAdmin() || isSameTenant());
-      allow list: if isSignedIn() && (resource.data.isPublic == true || resource.data.userId == request.auth.uid || isSuperAdmin() || isSameTenant());
+       // Public reads for any signed-in user
+       allow get: if isSignedIn();
+       allow list: if isSignedIn();
 
       allow create: if isSignedIn() && isValidId(gptId) && isValidGPT(incoming());
 
@@ -208,8 +208,8 @@ service cloud.firestore {
     // DOCUMENTS COLLECTION — Tenant-scoped Private Documents
     // ═══════════════════════════════════════════════════════════════════════
     match /documents/{docId} {
-      allow get:    if isSignedIn() && (resource.data.ownerId == request.auth.uid || isSuperAdmin() || isSameTenant());
-      allow list:   if isSignedIn() && (resource.data.ownerId == request.auth.uid || isSuperAdmin() || isSameTenant());
+       allow get: if isSignedIn();
+       allow list: if isSignedIn();
       allow create: if isSignedIn() && isValidId(docId) && isValidDocument(incoming());
       allow update: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isSuperAdmin()) &&
                        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'content', 'updatedAt']) &&
