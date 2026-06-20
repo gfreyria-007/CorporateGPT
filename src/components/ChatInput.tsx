@@ -136,6 +136,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             className="w-full bg-white dark:bg-corporate-900 border-2 border-slate-100 dark:border-white/5 rounded-[2.5rem] py-6 pl-28 pr-8 focus:border-blue-600/50 shadow-sm focus:shadow-2xl focus:shadow-blue-500/10 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-900 dark:text-white font-bold text-lg"
             disabled={isLoading}
             id="chat-input-field"
+            data-testid="chat-input"
           />
           
           <div className="absolute right-6 top-1/2 -translate-y-1/2 flex gap-2 pointer-events-none opacity-0 group-focus-within:opacity-100 transition-opacity z-10">

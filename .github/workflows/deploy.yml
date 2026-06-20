@@ -1,0 +1,39 @@
+name: Deploy Corporate_GPT to Vercel
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint and type check
+        run: npm run lint
+
+      - name: Run security audit (fail on high severity)
+        run: npm audit --audit-level=high
+
+      - name: Build project
+        run: npm run build
+
+      - name: Deploy to Vercel
+        env:
+          VER: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          npm i -g vercel
+          vercel --prod --token ${{ secrets.VERCEL_TOKEN }} --confirm
